@@ -1,0 +1,12 @@
+error_counter=0;
+error_occured=139
+while [ ${error_counter} -le 50 -a ${error_occured} -eq 139 ]; do
+    ${RUNTIME} -Xmx1024m -cp ${ECJ_JAR} org.eclipse.jdt.internal.compiler.batch.Main ${1+"$@"}
+    error_occured=$?
+    if [ ${error_occured} -eq 139 ]; then
+        echo "ecj crashed - silently trying again"
+        error_counter=$(( $error_counter + 1 ))
+    fi
+done
+
+exit ${error_occured}
