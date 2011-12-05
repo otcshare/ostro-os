@@ -10,7 +10,7 @@ ICEDTEA = "NEEDS TO BE SET"
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
 
-INC_PR = "r11"
+INC_PR = "r12"
 
 SRC_URI = "\
   ${ICEDTEA_URI} \
@@ -426,7 +426,14 @@ RPROVIDES_${JDKPN}-vm-shark = "java2-vm"
 RPROVIDES_${JDKPN}-vm-zero = "java2-vm"
 RPROVIDES_${JDKPN}-vm-cacao = "java2-vm"
 
-RDEPENDS_${JDKPN}-java = "java2-vm"
+# Even though a vm is a hard dependency it is set as RRECOMMENDS so a single vm can get uninstalled:
+# root@beaglebone:~/java# opkg remove openjdk-6-vm-shark 
+# No packages removed.
+# Collected errors:
+#  * print_dependents_warning: Package openjdk-6-vm-shark is depended upon by packages:
+#  * print_dependents_warning: 	openjdk-6-java
+#  * print_dependents_warning: These might cease to work if package openjdk-6-vm-shark is removed.
+RRECOMMENDS_${JDKPN}-java = "java2-vm"
 
 # For some reason shark and cacao do not automatically depends on -common.
 # So we add that manually.
