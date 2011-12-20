@@ -4,8 +4,8 @@ LICENSE = "AL2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=1dece7821bf3fd70fe1309eaa37d52a2"
 
 SRC_URI = " \
-	   http://www.apache.org/dist/excalibur/avalon-framework/source/${BP}-src.tar.gz;name=archive \
-	   http://www.apache.org/dist/avalon/logkit/source/logkit-1.2.2-src.tar.gz;name=logkit \
+	   http://archive.apache.org/dist/excalibur/avalon-framework/source/${BP}-src.tar.gz;name=archive \
+	   http://archive.apache.org/dist/avalon/logkit/source/logkit-1.2.2-src.tar.gz;name=logkit \
 	  "
 
 inherit java-library

@@ -2,7 +2,7 @@ require jakarta-commons.inc
 
 DESCRIPTION = "discovering, or finding, implementations for pluggable interfaces"
 
-SRC_URI = "http://www.apache.org/dist/commons/discovery/source/${BP}-src.tar.gz"
+SRC_URI = "http://archive.apache.org/dist/commons/discovery/source/${BP}-src.tar.gz"
 
 DEPENDS += "commons-logging"
 RDEPENDS_${PN} = "libcommons-logging-java"

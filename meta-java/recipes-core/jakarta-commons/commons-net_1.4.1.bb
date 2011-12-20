@@ -3,7 +3,7 @@ require jakarta-commons.inc
 DESCRIPTION = "Java Internet protocol suite library"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=3b83ef96387f14655fc854ddc3c6bd57"
 
-SRC_URI = "http://www.apache.org/dist/commons/net/source/${BP}-src.tar.gz"
+SRC_URI = "http://archive.apache.org/dist/commons/net/source/${BP}-src.tar.gz"
 
 S = "${WORKDIR}/${BP}"
 

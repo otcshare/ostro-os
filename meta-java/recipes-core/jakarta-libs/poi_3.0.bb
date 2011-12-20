@@ -2,7 +2,7 @@ DESCRIPTION = "Java library for manipulating various file formats based upon Mic
 LICENSE = "AL2.0"
 AUTHOR = "Apache Software Foundation"
 
-SRC_URI = "http://www.apache.org/dist/jakarta/poi/release/src/${BPN}-src-${PV}-FINAL-20070503.tar.gz"
+SRC_URI = "http://archive.apache.org/dist/jakarta/poi/release/src/${BPN}-src-${PV}-FINAL-20070503.tar.gz"
 
 S = "${WORKDIR}/${BPN}-3.0-rc4"
 
