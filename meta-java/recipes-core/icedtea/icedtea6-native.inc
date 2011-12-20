@@ -190,7 +190,7 @@ do_install() {
 
 	install -d ${JDK_INSTALL_DIR}
 
-	for F in bootstrap/icedtea/{bin,include,jre,lib}
+	for F in bootstrap/icedtea/bin bootstrap/icedtea/include bootstrap/icedtea/jre bootstrap/icedtea/lib
 	do
 		cp -RL $F ${JDK_INSTALL_DIR}
 	done
