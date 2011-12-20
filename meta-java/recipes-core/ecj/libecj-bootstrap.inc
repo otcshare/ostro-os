@@ -2,8 +2,8 @@
 
 DESCRIPTION = "JDT Core Batch Compiler - Jar only"
 HOMEPAGE = "http://www.eclipse.org/"
-LICENSE = "EPL-1"
-LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/EPL-1;md5=d830412fb40c35122cb4d78375d30f76"
+LICENSE = "EPL-1.0"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/EPL-1.0;md5=57f8d5e2b3e98ac6e088986c12bf94e6"
 
 DEPENDS = "fastjar-native jikes-initial virtual/java-initial"
 
