@@ -3,7 +3,7 @@ AUTHOR = "Apache Software Foundation"
 LICENSE = "AL2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=372b1e91335021ca74173b2ab4dc97dd"
 
-SRC_URI = "http://www.apache.org/dist/jakarta/oro/source/jakarta-${BP}.tar.gz"
+SRC_URI = "http://archive.apache.org/dist/jakarta/oro/source/jakarta-${BP}.tar.gz"
 
 inherit java-library
 

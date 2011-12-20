@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = " \
                     file://LICENSE.serializer.txt;md5=86d3f3a95c324c9479bd8986968f4327 \
                    "
 
-SRC_URI = "http://www.apache.org/dist/xerces/j/Xerces-J-src.${PV}.tar.gz"
+SRC_URI = "http://archive.apache.org/dist/xerces/j/Xerces-J-src.${PV}.tar.gz"
 
 S = "${WORKDIR}/xerces-2_9_1"
 

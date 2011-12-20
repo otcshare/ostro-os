@@ -3,7 +3,7 @@ require jakarta-commons.inc
 DESCRIPTION = "Generic configuration interface for Java applications"
 
 SRC_URI = " \
-	   http://www.apache.org/dist/commons/configuration/source/${BP}-src.tar.gz;name=archive \
+	   http://archive.apache.org/dist/commons/configuration/source/${BP}-src.tar.gz;name=archive \
 	   http://ftp.hosting-studio.de/pub/linux/apache/ant/source/apache-ant-1.7.1-src.tar.bz2;name=ant \
           "
 
