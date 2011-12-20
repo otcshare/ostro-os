@@ -4,7 +4,7 @@ require ${PN}.inc
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
-PR = "${INC_PR}.0"
+PR = "${INC_PR}.1"
 
 SRC_URI = "\
 	http://icedtea.classpath.org/download/source/icedtea6-${PV}.tar.gz;name=iced \
@@ -15,6 +15,7 @@ SRC_URI = "\
 	file://disable-library-checks.patch \
 	file://build-hacks-native.patch \
 	file://icedtea-sane-x86-arch-name.patch \
+        file://icedtea-fix-jar-path.patch \
 	${ICEDTEA_PATCHES} \
 	"
 SRC_URI[ojdk.md5sum] = "94db01691ab38f98b7d42b2ebf4d5c0b"
