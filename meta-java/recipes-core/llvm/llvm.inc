@@ -20,7 +20,7 @@
 DESCRIPTION = "The Low Level Virtual Machine"
 HOMEPAGE = "http://llvm.org"
 # 3-clause BSD-like
-LICENSE = "University of Illinois/NCSA Open Source License"
+LICENSE = "NCSA"
 LIC_FILES_CHKSUM = "file://LICENSE.TXT;md5=0ac5f799a2d89477c75b0a378b221855"
 
 DEPENDS = "llvm${LLVM_RELEASE}-native llvm-common"
