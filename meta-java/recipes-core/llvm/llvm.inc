@@ -29,8 +29,6 @@ DEPENDS_virtclass-native = "llvm-common-native cmake-native perl-native"
 
 SRC_URI = "http://llvm.org/releases/${PV}/llvm-${PV}.tgz"
 
-#SRC_URI_append_libc-uclibc = " file://arm_fenv_uclibc.patch "
-
 S = "${WORKDIR}/llvm-${PV}"
 
 inherit cmake perlnative
