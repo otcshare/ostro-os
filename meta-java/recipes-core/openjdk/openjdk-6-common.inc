@@ -10,7 +10,7 @@ ICEDTEA = "NEEDS TO BE SET"
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
 
-INC_PR = "r12"
+INC_PR = "r13"
 
 SRC_URI = "\
   ${ICEDTEA_URI} \
@@ -19,6 +19,7 @@ SRC_URI = "\
   ${JAF_URI} \
   ${JAXP_URI} \
   ${CACAO_URI} \
+  ${JAMVM_URI} \
   ${OEPATCHES} \
   ${ICEDTEAPATCHES} \
   file://jvm.cfg \
@@ -33,7 +34,7 @@ PROVIDES += "${JDKPN} ${PACKAGES}"
 DEPENDS = "giflib libpng jpeg cups \
 	   xalan-j xerces-j rhino \
 	   freetype libxinerama libxt libxp libxrender libxtst libxi \
-	   alsa-lib libffi llvm2.9\
+	   alsa-lib libffi llvm2.8 \
            ant-native \
            fastjar-native \
 	   icedtea6-native \
@@ -88,7 +89,7 @@ EXTRA_OECONF = "\
 	--with-java=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/java \
 	--with-javac=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/javac \
 	--with-javah=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/javah \
-	--with-jar=${STAGING_BINDIR_NATIVE}/fastjar \
+	--with-jar=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/jar \
 	--with-rmic=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/rmic \
 	--with-xalan2-jar=${STAGING_DATADIR_JAVA}/xalan2.jar \
 	--with-xalan2-serializer-jar=${STAGING_DATADIR_JAVA}/serializer.jar \
@@ -103,7 +104,7 @@ EXTRA_OECONF = "\
 	--with-pkgversion=${PV} \
 	--with-cc-for-build=${BUILD_CC} \
         --enable-zero \
-        --with-additional-vms=shark,cacao \
+        --with-additional-vms=${WITH_ADDITIONAL_VMS} \
         --enable-openjdk-cross-compilation \
        "
 
@@ -238,12 +239,12 @@ EXTRA_OEMAKE += 'DIST_NAME="${DIST_NAME}" DIST_ID="${DIST_ID}"'
 
 # llvm configure and compiles stuff
 
-export WANT_LLVM_RELEASE = "2.9"
+export WANT_LLVM_RELEASE = "2.8"
 
 # Provides the target architecture to the configure script.
 export LLVM_CONFIGURE_ARCH="${@get_llvm_configure_arch(d)}"
 
-OE_LAUNCHER_LDFLAGS = "-Wl,-rpath-link,${STAGING_LIBDIR}/llvm2.9"
+OE_LAUNCHER_LDFLAGS = "-Wl,-rpath-link,${STAGING_LIBDIR}/llvm${WANT_LLVM_RELEASE} -Wl,-rpath,/usr/lib/llvm${WANT_LLVM_RELEASE}"
 
 EXTRA_OEMAKE += 'OE_LAUNCHER_LDFLAGS="${OE_LAUNCHER_LDFLAGS}"'
 
@@ -252,9 +253,6 @@ EXTRA_OEMAKE += 'OE_LAUNCHER_LDFLAGS="${OE_LAUNCHER_LDFLAGS}"'
 QEMU = "qemu-${TARGET_ARCH} ${QEMU_OPTIONS} -s 1048576 -L ${STAGING_DIR_TARGET}"
 
 EXTRA_OEMAKE += 'QEMU="${QEMU}"'
-
-# Name of the directory containing the compiled output
-BUILD_DIR = "build/linux-${JDK_ARCH}"
 
 # The build of OpenJDK is a 3-part process. For better restartability and overrideability they have been split into
 # three functions.
@@ -277,12 +275,12 @@ do_compilestepone() {
         rm -rf bootstrap/ecj/jre/lib/${JDK_ARCH} || true
 
                 # Provide a symlink to the target arch's libjvm.so (to link against)
-        ln -s `pwd`/openjdk-ecj/${BUILD_DIR}/j2sdk-image/jre/lib/${JDK_ARCH} bootstrap/jdk1.6.0/jre/lib/${JDK_ARCH}
+        ln -s `pwd`/${BUILD_DIR_ECJ}/j2sdk-image/jre/lib/${JDK_ARCH} bootstrap/jdk1.6.0/jre/lib/${JDK_ARCH}
 
         # fake j2sdk-image
-        rm openjdk-ecj/${BUILD_DIR}/j2sdk-image/include || true
-        cp -ar openjdk-ecj/${BUILD_DIR}/hotspot/import/include openjdk-ecj/${BUILD_DIR}/j2sdk-image/
-        install -d openjdk-ecj/${BUILD_DIR}/j2sdk-image/bin
+        rm ${BUILD_DIR_ECJ}/j2sdk-image/include || true
+        cp -ar ${BUILD_DIR_ECJ}/hotspot/import/include ${BUILD_DIR_ECJ}/j2sdk-image/
+        install -d ${BUILD_DIR_ECJ}/j2sdk-image/bin
 }
 addtask compilestepone after do_configure before do_compilesteptwo
 
@@ -294,7 +292,7 @@ do_compilesteptwo() {
 	rm stamps/icedtea-against-ecj.stamp stamps/icedtea-ecj.stamp || true
 	oe_runmake icedtea-against-ecj
 
-	ln -sf ../openjdk-ecj/${BUILD_DIR}/j2sdk-image bootstrap/icedtea
+	ln -sf ../${BUILD_DIR_ECJ}/j2sdk-image bootstrap/icedtea
 
 	#	Replace all executables with symlinks to their native equivalents.
 	for F in `find ${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin -type f`
@@ -316,7 +314,7 @@ do_compile() {
 
 do_install() {
 	install -d ${D}${libdir_jvm}
-	cp -R ${S}/build/openjdk/${BUILD_DIR}/j2sdk-image ${D}${JDK_HOME}
+	cp -R ${S}/build/${BUILD_DIR}/j2sdk-image ${D}${JDK_HOME}
 
 	chmod u+rw -R ${D}${JDK_HOME}
 
@@ -360,6 +358,7 @@ PACKAGES = " \
             ${JDKPN}-vm-shark \
             ${JDKPN}-vm-zero \
             ${JDKPN}-vm-cacao \
+	    ${JDKPN}-vm-jamvm \
             ${JDKPN}-common \
            "
 
@@ -401,6 +400,8 @@ FILES_${JDKPN}-vm-shark = "${JDK_HOME}/jre/lib/arm/shark/"
 
 FILES_${JDKPN}-vm-cacao = "${JDK_HOME}/jre/lib/arm/cacao/"
 
+FILES_${JDKPN}-vm-jamvm = "${JDK_HOME}/jre/lib/arm/jamvm/"
+
 FILES_${JDKPN}-common = "${JDK_HOME}/jre/ASSEMBLY_EXCEPTION \
                           ${JDK_HOME}/jre/THIRD_PARTY_README \
                           ${JDK_HOME}/jre/LICENSE \
@@ -425,6 +426,7 @@ RDEPENDS_${JDKPN}-common = "librhino-java"
 RPROVIDES_${JDKPN}-vm-shark = "java2-vm"
 RPROVIDES_${JDKPN}-vm-zero = "java2-vm"
 RPROVIDES_${JDKPN}-vm-cacao = "java2-vm"
+RPROVIDES_${JDKPN}-vm-jamvm = "java2-vm"
 
 # Even though a vm is a hard dependency it is set as RRECOMMENDS so a single vm can get uninstalled:
 # root@beaglebone:~/java# opkg remove openjdk-6-vm-shark 
@@ -439,11 +441,13 @@ RRECOMMENDS_${JDKPN}-java = "java2-vm"
 # So we add that manually.
 RDEPENDS_${JDKPN}-vm-shark = "${JDKPN}-common"
 RDEPENDS_${JDKPN}-vm-cacao = "${JDKPN}-common"
+RDEPENDS_${JDKPN}-vm-jamvm = "${JDKPN}-common"
 
 # There is a symlink to a .so but this one is valid.
 INSANE_SKIP_${JDKPN}-vm-shark = "dev-so"
 INSANE_SKIP_${JDKPN}-vm-zero = "dev-so"
 INSANE_SKIP_${JDKPN}-vm-cacao = "dev-so"
+INSANE_SKIP_${JDKPN}-vm-jamvm = "dev-so"
 INSANE_SKIP_${JDKPN}-common = "dev-so"
 
 FILES_${JDKPN}-jdk = " \
@@ -459,53 +463,75 @@ RDEPENDS_${JDKPN}-jdk = "${JDKPN}-jre"
 FILES_${JDKPN}-doc = "${JDK_HOME}/man"
 
 pkg_postinst_${JDKPN}-vm-shark () {
-        if  grep -q "\-cacao KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
-          sed -i -e "/\-cacao KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
-          echo "-cacao KNOWN" >> ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          sed -i -e "/\-shark.*/d" -e "s|\(^\-server*\)|\-shark KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+	else
+          sed -i -e "/\-shark.*/\-shark KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
         fi 
-
-	sed -i -e "/\-shark.*/d" -e "s|\(^\-server*\)|\-shark KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
 }
 
 pkg_prerm_${JDKPN}-vm-shark () {
 	sed -i -e "/^\-shark.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg 
-        if  grep -q "\-cacao KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
-          sed -i -e "/\-cacao KNOWN/d" -e  "s|\(^\-server*\)|\-cacao KNOWN\n\1|" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        if grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg | head -1`
+          sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/arm/jvm.cfg
         fi
+
+        echo "-shark ERROR" >> ${JDK_HOME}/jre/lib/arm/jvm.cfg
 }
 
 pkg_postinst_${JDKPN}-vm-cacao () {
-        if  grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "\-shark KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
-          sed -i -e "/\-cacao.*/d" -e  "s|\(^\-server*\)|\-cacao KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
-        else 
-	  sed -i -e "s|^\-cacao.*|\-cacao KNOWN|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
-        fi
+        if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          sed -i -e "/\-cacao.*/d" -e "s|\(^\-server*\)|\-cacao KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+	else
+          sed -i -e "/\-cacao.*/\-cacao KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        fi 
 }
 
 pkg_prerm_${JDKPN}-vm-cacao () {
-     if  grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "\-shark KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
-	sed -i -e "/\-cacao.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+	sed -i -e "/^\-cacao.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg 
+        if grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg | head -1`
+          sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        fi
+
         echo "-cacao ERROR" >> ${JDK_HOME}/jre/lib/arm/jvm.cfg
-      else
-	sed -i -e "s|^\-cacao.*|\-cacao ERROR|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
-      fi
+}
+
+pkg_postinst_${JDKPN}-vm-jamvm () {
+        if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          sed -i -e "/\-jamvm.*/d" -e "s|\(^\-server*\)|\-jamvm KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+	else
+          sed -i -e "/\-jamvm.*/\-jamvm KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        fi 
+}
+
+pkg_prerm_${JDKPN}-vm-jamvm () {
+	sed -i -e "/^\-jamvm.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg 
+        if grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg | head -1`
+          sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        fi
+
+        echo "-jamvm ERROR" >> ${JDK_HOME}/jre/lib/arm/jvm.cfg
 }
 
 pkg_postinst_${JDKPN}-vm-zero () {
- if  grep -q "\-cacao KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg  && ! grep -q "\-shark KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
-   sed -i -e "/\-cacao KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
-   echo "-cacao KNOWN" >> ${JDK_HOME}/jre/lib/arm/jvm.cfg
- fi
+        if grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+           FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg | head -1`
+           sed -i -e "/${FIRST_KNOWN}/d" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+           echo ${FIRST_KNOWN} >> ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        fi
 
- sed -i -e "s|^\-server.*|\-server KNOWN|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        sed -i -e "s|^\-server.*|\-server KNOWN|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
 }
 
 pkg_prerm_${JDKPN}-vm-zero () {
- if  grep -q "\-cacao KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg  && ! grep -q "\-shark KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
-   sed -i -e "/\-cacao KNOWN/d" -e  "s|\(^\-server*\)|\-cacao KNOWN\n\1|" ${JDK_HOME}/jre/lib/arm/jvm.cfg
- fi
-
- sed -i -e "s|^\-server.*|\-server ERROR|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+	sed -i -e "/^\-server.*/\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg 
+        if grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+          FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg | head -1`
+          sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+        fi
 }
 
 pkg_postinst_${JDKPN}-jre () {
