@@ -1,5 +1,7 @@
 require llvm.inc
 
+SRC_URI_append_libc-uclibc = " file://arm_fenv_uclibc.patch "
+
 PARALLEL_MAKE_virtclass-native = ""
 
 EXTRA_OECMAKE = "\
