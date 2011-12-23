@@ -1,5 +1,7 @@
 require classpath.inc
 
+LIC_FILES_CHKSUM = "file://LICENSE;md5=92acc79f1f429143f4624d07b253702a"
+
 SRC_URI += " \
             file://SimpleName.diff;striplevel=0 \
             file://ecj_java_dir.patch \
