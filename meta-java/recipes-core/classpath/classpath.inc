@@ -1,10 +1,11 @@
 DESCRIPTION = "GNU Classpath standard Java libraries"
 HOMEPAGE = "http://www.gnu.org/software/classpath/"
 SECTION = "libs"
-PRIORITY = "optional"
-LICENSE = "Classpath"
-PBN = "classpath"
 
+# GPLv2 + custom linking exception
+LICENSE = "Classpath"
+
+PBN = "classpath"
 
 inherit autotools java
 
