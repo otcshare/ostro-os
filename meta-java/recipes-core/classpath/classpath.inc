@@ -59,6 +59,9 @@ do_install() {
 	mv ${D}${libdir}/security ${D}${libdir}/${PBN}
 }
 
+# We really have valid non-symlink .so files
+INSANE_SKIP_${PN} = "dev-so"
+
 # Defines the packages that this classpath recipe creates.
 # This allows the classpath-minimal variants to override this
 # again.
