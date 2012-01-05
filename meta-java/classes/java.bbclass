@@ -39,7 +39,7 @@ oe_jarinstall() {
       destname=$1
       ;;
     -*)
-      oefatal "oe_jarinstall: unknown option: $1"
+      bbfatal "oe_jarinstall: unknown option: $1"
       ;;
     *)
       break;
@@ -105,7 +105,7 @@ oe_makeclasspath() {
               fi
               ;;
           -*)
-              oefatal "oe_makeclasspath: unknown option: $1"
+              bbfatal "oe_makeclasspath: unknown option: $1"
               ;;
           *)
               file=$dir/$1.jar
@@ -146,7 +146,7 @@ oe_java_simple_wrapper() {
       output=$1
       ;;
     -*)
-      oefatal "oe_java_simple_wrapper: unknown option: $1"
+      bbfatal "oe_java_simple_wrapper: unknown option: $1"
       ;;
     *)
       if [ $mainclass ]
