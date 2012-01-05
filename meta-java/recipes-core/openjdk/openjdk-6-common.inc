@@ -158,7 +158,7 @@ def get_llvm_configure_arch(d):
   elif arch == "powerpc":
     arch = "powerpc"
   else:
-    oefatal("Your target architecture is not supported by this recipe");
+    bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
 
   return arch
 
