@@ -153,7 +153,7 @@ def get_llvm_configure_arch(d):
     arch = "x86"
   elif arch == "arm":
     arch = "arm"
-  elif arch == "mipsel":
+  elif arch == "mipsel" or arch == "mips":
     arch = "mips"
   elif arch == "powerpc":
     arch = "powerpc"
