@@ -181,7 +181,7 @@ do_configure_prepend() {
   ln -sf ${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/jre/lib/rt.jar ${WORKDIR}/fake-jdk/jre/lib/rt.jar
 
   symlinked=false
-  echo "Creating symlinks for fake-jdk"
+  bbnote "Creating symlinks for fake-jdk"
   mkdir -p ${WORKDIR}/fake-jdk/include
   for i in `find ${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/include` ;do
 	bn=`basename $i`
@@ -196,9 +196,9 @@ do_configure_prepend() {
   # in such a complicated build can't be wrong.
   if [ x$symlinked = xfalse ]
   then
-    echo"Build b0rken! Have not created any symlinks for fake-jdk!"
+    bberror "Build b0rken! Have not created any symlinks for fake-jdk!"
   else
-    echo "fake-jdk setup appears sane."
+    bbnote "fake-jdk setup appears sane."
   fi
 }
 
@@ -268,7 +268,7 @@ do_compilestepone() {
         ln -s ${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/lib/tools.jar bootstrap/ecj/lib/tools.jar
 
         # First build hotspot to get a libjvm.so (to link corba in the icedtea-ecj build)
-        echo "1/3 Building Hotspot"
+        bbnote "1/3 Building Hotspot"
         oe_runmake hotspot
 
         # Remove spurious libarch directory/symlink
@@ -286,7 +286,7 @@ addtask compilestepone after do_configure before do_compilesteptwo
 
 # This part can be shared between cacao and hotspot-zero builds.
 do_compilesteptwo() {
-	echo "2/3 Building bootstrap JDK"
+	bbnote "2/3 Building bootstrap JDK"
 
 	# Now cross-compile bootstrap JDK
 	rm stamps/icedtea-against-ecj.stamp stamps/icedtea-ecj.stamp || true
@@ -298,7 +298,7 @@ do_compilesteptwo() {
 	for F in `find ${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin -type f`
 	do
 		bf=`basename $F`
-		echo "Creating symlink for:" $bf
+		bbnote "Creating symlink for:" $bf
 		ln -sf $F bootstrap/icedtea/bin/$bf
 	done
 }
@@ -306,7 +306,7 @@ addtask compilesteptwo after do_compilestepone before do_compile
 
 do_compile() {
 
-	echo "3/3 Building final JDK"
+	bbnote "3/3 Building final JDK"
 
 	# Build the final Hotspot + OpenJDK
 	oe_runmake icedtea-against-icedtea \
@@ -327,7 +327,7 @@ do_install() {
 	for F in `find ${D}${JDK_HOME}/jre/bin -type f`
 	do
 		bf=`basename $F`
-		echo "replace:" $bf
+		bbnote "replace:" $bf
 		rm ${D}${JDK_HOME}/bin/$bf
 		ln -s ${JDK_HOME}/jre/bin/$bf ${D}${JDK_HOME}/bin/$bf
 	done
