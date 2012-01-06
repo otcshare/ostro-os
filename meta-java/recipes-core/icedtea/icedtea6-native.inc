@@ -139,7 +139,7 @@ do_compile() {
 
 
 	# First build hotspot to get a libjvm.so
-	echo "1/2 Building Hotspot"
+	bbnote "1/2 Building Hotspot"
 	oe_runmake hotspot
 
 	# Remove the strange recursive symlink that is created here (If it is not there, then just skip this).
@@ -154,11 +154,11 @@ do_compile() {
 	common_dir=openjdk-ecj/build/linux-$arch/tmp/sun
 	for D in javax.sound/jsoundalsa sun.awt.X11/xawt sun.awt/jawt;
 	do
-		echo "creating $common_dir/$D/obj64/.files_compiled"
+		bbnote "creating $common_dir/$D/obj64/.files_compiled"
 		install -d $common_dir/$D/obj64
 		touch $common_dir/$D/obj64/.files_compiled
 
-		echo "creating $common_dir/$D/obj/.files_compiled"
+		bbnote "creating $common_dir/$D/obj/.files_compiled"
 		install -d $common_dir/$D/obj
 		touch $common_dir/$D/obj/.files_compiled
 	done
@@ -166,7 +166,7 @@ do_compile() {
         # now use the jni.h from the hotspot
         #cp 
 
-	echo "2/2 Running make icedtea-against-ecj"
+	bbnote "2/2 Running make icedtea-against-ecj"
         # Now cross-compile bootstrap JDK
         rm stamps/icedtea-against-ecj.stamp stamps/icedtea-ecj.stamp || true
         oe_runmake icedtea-against-ecj
