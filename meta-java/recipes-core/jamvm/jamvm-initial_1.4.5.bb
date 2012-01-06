@@ -32,12 +32,10 @@ EXTRA_OECONF = "\
 # jamvm-initial has to run some binaries which need lots of memory.
 CFLAGS += "-DDEFAULT_MAX_HEAP=512*MB"
 
-do_compile() {
-  oe_runmake \
-    JAVAC=jikes-initial \
-    GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath-initial/glibj.zip
-}
-
+# Enforce usage of jikes-initial.
+EXTRA_OMAKE = "JAVAC=${STAGING_BINDIR_NATIVE}/jikes-initial \
+               GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath-inital/glibj.zip \
+              "
 do_install_append() {
   install -d ${D}${bindir}/
   install -m 0755 ${WORKDIR}/java-initial ${D}${bindir}/
