@@ -33,9 +33,9 @@ EXTRA_OECONF = "\
 CFLAGS += "-DDEFAULT_MAX_HEAP=512*MB"
 
 # Enforce usage of jikes-initial.
-EXTRA_OMAKE = "JAVAC=${STAGING_BINDIR_NATIVE}/jikes-initial \
-               GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath-inital/glibj.zip \
-              "
+EXTRA_OEMAKE = "JAVAC=${STAGING_BINDIR_NATIVE}/jikes-initial \
+                GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath-inital/glibj.zip \
+               "
 do_install_append() {
   install -d ${D}${bindir}/
   install -m 0755 ${WORKDIR}/java-initial ${D}${bindir}/
