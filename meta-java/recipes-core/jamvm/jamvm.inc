@@ -30,9 +30,9 @@ ARM_INSTRUCTION_SET = "arm"
 EXTRA_OECONF = "--with-classpath-install-dir=${prefix} --libdir=${libdir}/jamvm --enable-ffi"
 
 # Enforce usage of ecj-initial.
-EXTRA_OMAKE_virtclass-native = "JAVAC=${STAGING_BINDIR_NATIVE}/ecj-initial \
-                                GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath/glibj.zip \
-                               "
+EXTRA_OEMAKE = "JAVAC=${STAGING_BINDIR_NATIVE}/ecj-initial \
+                GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath/glibj.zip \
+               "
 
 do_install_append_virtclass-native() {
 	install -d ${D}${bindir}
