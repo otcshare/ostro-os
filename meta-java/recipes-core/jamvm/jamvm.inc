@@ -40,6 +40,7 @@ do_install_append_virtclass-native() {
 }
 
 PRIVATE_LIBS = "libjvm.so"
+INSANE_SKIP_${PN} = "dev-so"
 
 FILES_${PN} += "${libdir}/jamvm/lib*.so"
 
