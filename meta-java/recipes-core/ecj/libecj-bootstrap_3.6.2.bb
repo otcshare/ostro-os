@@ -1,5 +1,7 @@
 require libecj-bootstrap.inc
 
+PR = "${INC_PR}.0"
+
 SRC_URI = " http://mirrors.ibiblio.org/pub/mirrors/eclipse/eclipse/downloads/drops/R-3.6.2-201102101200/ecjsrc-${PV}.zip"
 
 SRC_URI[md5sum] = "3f3ca1973dd7a21780525c9ffba7a263"
