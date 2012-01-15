@@ -1,7 +1,7 @@
 Index: openjdk/hotspot/make/linux/makefiles/launcher.make
 ===================================================================
 --- openjdk/hotspot/make/linux/makefiles/launcher.make	2011-12-20 10:33:37.000000000 +0100
-+++ /openjdk/hotspot/make/linux/makefiles/launcher.make	2011-12-20 10:37:54.055022618 +0100
++++ openjdk/hotspot/make/linux/makefiles/launcher.make	2011-12-20 10:37:54.055022618 +0100
 @@ -51,7 +51,7 @@
  else
    LAUNCHER.o                 = launcher.o
