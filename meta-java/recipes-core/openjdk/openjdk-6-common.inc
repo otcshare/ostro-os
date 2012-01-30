@@ -466,7 +466,7 @@ pkg_postinst_${JDKPN}-vm-shark () {
         if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
           sed -i -e "/\-shark.*/d" -e "s|\(^\-server*\)|\-shark KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
 	else
-          sed -i -e "/\-shark.*/\-shark KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+          sed -i -e "s/\-shark.*/\-shark KNOWN/" ${JDK_HOME}/jre/lib/arm/jvm.cfg
         fi 
 }
 
@@ -484,7 +484,7 @@ pkg_postinst_${JDKPN}-vm-cacao () {
         if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
           sed -i -e "/\-cacao.*/d" -e "s|\(^\-server*\)|\-cacao KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
 	else
-          sed -i -e "/\-cacao.*/\-cacao KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+          sed -i -e "s/\-cacao.*/\-cacao KNOWN/" ${JDK_HOME}/jre/lib/arm/jvm.cfg
         fi 
 }
 
@@ -499,10 +499,10 @@ pkg_prerm_${JDKPN}-vm-cacao () {
 }
 
 pkg_postinst_${JDKPN}-vm-jamvm () {
-        if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
+        if grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/arm/jvm.cfg && ! grep -q "KNOWN" ${JDK_HOME}/jre/lib/arm/jvm.cfg; then
           sed -i -e "/\-jamvm.*/d" -e "s|\(^\-server*\)|\-jamvm KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
 	else
-          sed -i -e "/\-jamvm.*/\-jamvm KNOWN/d" ${JDK_HOME}/jre/lib/arm/jvm.cfg
+          sed -i -e "s/\-jamvm.*/\-jamvm KNOWN/" ${JDK_HOME}/jre/lib/arm/jvm.cfg
         fi 
 }
 
