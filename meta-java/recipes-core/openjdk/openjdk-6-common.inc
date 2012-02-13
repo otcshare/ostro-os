@@ -10,7 +10,7 @@ ICEDTEA = "NEEDS TO BE SET"
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
 
-INC_PR = "r14"
+INC_PR = "r15"
 
 SRC_URI = "\
   ${ICEDTEA_URI} \
@@ -117,8 +117,8 @@ def get_jdk_arch(d):
   jdk_arch = bb.data.getVar('TARGET_ARCH', d, 1)
   if jdk_arch == "x86_64":
     jdk_arch = "amd64"
-  elif (jdk_arch == "i586" or jdk_arch == "i686"):
-    jdk_arch = "i586"
+  elif (jdk_arch == "i486" or jdk_arch == "i586" or jdk_arch == "i686"):
+    jdk_arch = "i386"
 
   return jdk_arch
 
