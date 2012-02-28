@@ -1,7 +1,7 @@
 DESCRIPTION = "dom4j is a simple and flexible Java library for working with XML, XPath and XSLT"
 LICENSE = "BSD"
 
-HOMEPAGE = "http://dom4j.org
+HOMEPAGE = "http://dom4j.org"
 
 DEPENDS = "fastjar-native xerces-j xalan-j xpp2 xpp3 jaxen"
 
