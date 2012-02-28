@@ -5,21 +5,21 @@
 # the Debian distribution.
 
 # Jar location on target
-datadir_java ?= ${datadir}/java
+datadir_java ?= "${datadir}/java"
 
 # JNI library location on target
-libdir_jni ?= ${libdir}/jni
+libdir_jni ?= "${libdir}/jni"
 
 # JVM bundle location on target
-libdir_jvm ?= ${libdir}/jvm
+libdir_jvm ?= "${libdir}/jvm"
 
-STAGING_DATADIR_JAVA ?= ${STAGING_DATADIR}/java
-STAGING_LIBDIR_JNI ?= ${STAGING_LIBDIR}/jni
-STAGING_LIBDIR_JVM ?= ${STAGING_LIBDIR}/jvm
+STAGING_DATADIR_JAVA ?= "${STAGING_DATADIR}/java"
+STAGING_LIBDIR_JNI ?= "${STAGING_LIBDIR}/jni"
+STAGING_LIBDIR_JVM ?= "${STAGING_LIBDIR}/jvm"
 
-STAGING_DATADIR_JAVA_NATIVE ?= ${STAGING_DATADIR_NATIVE}/java
-STAGING_LIBDIR_JNI_NATIVE ?= ${STAGING_LIBDIR_NATIVE}/jni
-STAGING_LIBDIR_JVM_NATIVE ?= ${STAGING_LIBDIR_NATIVE}/jvm
+STAGING_DATADIR_JAVA_NATIVE ?= "${STAGING_DATADIR_NATIVE}/java"
+STAGING_LIBDIR_JNI_NATIVE ?= "${STAGING_LIBDIR_NATIVE}/jni"
+STAGING_LIBDIR_JVM_NATIVE ?= "${STAGING_LIBDIR_NATIVE}/jvm"
 
 oe_jarinstall() {
   # Purpose: Install a jar file and create all the given symlinks to it.

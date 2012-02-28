@@ -1,7 +1,7 @@
 DESCRIPTION = "Parses, manipulates, and outputs XML using standard Java constructs"
 LICENSE = "BSD"
 
-HOMEPAGE = "http://jdom.org/
+HOMEPAGE = "http://jdom.org/"
 
 DEPENDS = "fastjar-native jaxen"
 

@@ -1,7 +1,7 @@
 DESCRIPTION = "XPath library written in Java"
 LICENSE = "BSD"
 
-HOMEPAGE = "http://jaxen.codehaus.org/
+HOMEPAGE = "http://jaxen.codehaus.org/"
 
 DEPENDS = "fastjar-native xerces-j xom"
 
