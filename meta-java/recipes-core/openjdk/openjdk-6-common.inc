@@ -307,7 +307,7 @@ do_compile() {
 	bbnote "3/3 Building final JDK"
 
 	# Build the final Hotspot + OpenJDK
-	oe_runmake icedtea-against-icedtea \
+	oe_runmake icedtea-against-icedtea
 }
 
 do_install() {
