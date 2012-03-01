@@ -54,7 +54,7 @@ DEPENDS_append = " qemu-native "
 # No package should directly depend on this (it should require
 # java2-runtime instead).
 PRIVATE_LIBS = "\
-	libunpack.so libverify.so libjava.so libzip.so libnpt.so \ 
+	libunpack.so libverify.so libjava.so libzip.so libnpt.so \
 	libjava_crw_demo.so libhprof.so libnet.so libnio.so \
 	libmanagement.so libinstrument.so libjsound.so libjsoundalsa.so \
 	libj2pcsc.so libj2pkcs11.so libj2gss.so libmlib_image.so \
@@ -127,14 +127,14 @@ JDK_HOME = "${libdir_jvm}/${JDK_DIR}"
 
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
-# e.g. "-j 4". 
+# e.g. "-j 4".
 def get_jdk_jobs(d):
 	import bb
 
 	pm = bb.data.getVar('PARALLEL_MAKE', d, 1);
 	if not pm:
 		return "1"
-	
+
 	pm = pm.split(" ");
 	if (len(pm) == 2):
 		return pm[1]
@@ -323,7 +323,7 @@ do_install() {
 
 	# JRE is a subset of JDK. So to save space and resemble what the BIG distros
 	# do we create symlinks from the JDK binaries to their counterparts in the
-	# JRE folder (which have to exist by that time b/c of dependencies). 
+	# JRE folder (which have to exist by that time b/c of dependencies).
 	for F in `find ${D}${JDK_HOME}/jre/bin -type f`
 	do
 		bf=`basename $F`
@@ -429,7 +429,7 @@ RPROVIDES_${JDKPN}-vm-cacao = "java2-vm"
 RPROVIDES_${JDKPN}-vm-jamvm = "java2-vm"
 
 # Even though a vm is a hard dependency it is set as RRECOMMENDS so a single vm can get uninstalled:
-# root@beaglebone:~/java# opkg remove openjdk-6-vm-shark 
+# root@beaglebone:~/java# opkg remove openjdk-6-vm-shark
 # No packages removed.
 # Collected errors:
 #  * print_dependents_warning: Package openjdk-6-vm-shark is depended upon by packages:
@@ -467,11 +467,11 @@ pkg_postinst_${JDKPN}-vm-shark () {
           sed -i -e "/\-shark.*/d" -e "s|\(^\-server*\)|\-shark KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
 	else
           sed -i -e "s/\-shark.*/\-shark KNOWN/" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
-        fi 
+        fi
 }
 
 pkg_prerm_${JDKPN}-vm-shark () {
-	sed -i -e "/^\-shark.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg 
+	sed -i -e "/^\-shark.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
         if grep -q "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg; then
           FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg | head -1`
           sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
@@ -485,11 +485,11 @@ pkg_postinst_${JDKPN}-vm-cacao () {
           sed -i -e "/\-cacao.*/d" -e "s|\(^\-server*\)|\-cacao KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
 	else
           sed -i -e "s/\-cacao.*/\-cacao KNOWN/" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
-        fi 
+        fi
 }
 
 pkg_prerm_${JDKPN}-vm-cacao () {
-	sed -i -e "/^\-cacao.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg 
+	sed -i -e "/^\-cacao.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
         if grep -q "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg; then
           FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg | head -1`
           sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
@@ -503,11 +503,11 @@ pkg_postinst_${JDKPN}-vm-jamvm () {
           sed -i -e "/\-jamvm.*/d" -e "s|\(^\-server*\)|\-jamvm KNOWN\n\1|" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
 	else
           sed -i -e "s/\-jamvm.*/\-jamvm KNOWN/" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
-        fi 
+        fi
 }
 
 pkg_prerm_${JDKPN}-vm-jamvm () {
-	sed -i -e "/^\-jamvm.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg 
+	sed -i -e "/^\-jamvm.*/d" -e "/^$/d" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
         if grep -q "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg && grep -q "\-server ERROR" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg; then
           FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg | head -1`
           sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
@@ -527,7 +527,7 @@ pkg_postinst_${JDKPN}-vm-zero () {
 }
 
 pkg_prerm_${JDKPN}-vm-zero () {
-	sed -i -e "/^\-server.*/\-server ERROR" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg 
+	sed -i -e "/^\-server.*/\-server ERROR" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
         if grep -q "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg; then
           FIRST_KNOWN=`grep "KNOWN" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg | head -1`
           sed -i -e "/${FIRST_KNOWN}/d" -e  "s|\(^\-server*\)|${FIRST_KNOWN}\n\1|" ${JDK_HOME}/jre/lib/${JDK_ARCH}/jvm.cfg
