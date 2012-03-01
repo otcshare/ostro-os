@@ -32,7 +32,7 @@ PN = "${JDKPN}-jre"
 PROVIDES += "${JDKPN} ${PACKAGES}"
 
 DEPENDS = "giflib libpng jpeg cups \
-	   xalan-j xerces-j rhino \
+	   rhino \
 	   freetype libxinerama libxt libxp libxrender libxtst libxi \
 	   alsa-lib libffi llvm2.8 \
            ant-native \
@@ -80,24 +80,18 @@ JAVA_HOME[unexport] = "1"
 EXTRA_OECONF = "\
 	--disable-docs \
 	--disable-pulse-java \
-        --disable-plugin \
 	\
-	--with-ecj=${STAGING_BINDIR_NATIVE}/foo \
 	--with-ecj-jar=${STAGING_DATADIR_JAVA_NATIVE}/ecj-bootstrap.jar \
 	--with-java=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/java \
 	--with-javac=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/javac \
 	--with-javah=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/javah \
 	--with-jar=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/jar \
 	--with-rmic=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/rmic \
-	--with-xalan2-jar=${STAGING_DATADIR_JAVA}/xalan2.jar \
-	--with-xalan2-serializer-jar=${STAGING_DATADIR_JAVA}/serializer.jar \
-	--with-xerces2-jar=${STAGING_DATADIR_JAVA}/xercesImpl.jar \
+	--with-native2ascii=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/native2ascii \
 	--with-rhino=${STAGING_DATADIR_JAVA}/rhino.jar \
+	--without-ant-home \
 	--with-openjdk-src-dir=${WORKDIR}/openjdk-src-dir \
-	--with-gcj-home=${WORKDIR}/fake-jdk \
 	--with-parallel-jobs=${JDK_JOBS} \
-	\
-	--with-libgcj-jar=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/jre/lib/rt.jar \
 	\
 	--with-pkgversion=${PV} \
 	--with-cc-for-build=${BUILD_CC} \
