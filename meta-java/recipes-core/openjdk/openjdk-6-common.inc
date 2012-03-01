@@ -10,7 +10,7 @@ ICEDTEA = "NEEDS TO BE SET"
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
 
-INC_PR = "r16"
+INC_PR = "r17"
 
 SRC_URI = "\
   ${ICEDTEA_URI} \
@@ -38,7 +38,6 @@ DEPENDS = "giflib libpng jpeg cups \
            ant-native \
            fastjar-native \
 	   icedtea6-native \
-           cacaoh-openjdk-native \
            zip-native \
           "
 
@@ -74,8 +73,7 @@ export ALT_CUPS_HEADERS_PATH = "${STAGING_INCDIR}"
 export ALT_FREETYPE_HEADERS_PATH = "${STAGING_INCDIR}/freetype2"
 export ALT_FREETYPE_LIB_PATH = "${STAGING_LIBDIR}"
 export CACAO_CONFIGURE_ARGS = "\
-	${@['','--enable-softfloat'][bb.data.getVar('TARGET_FPU',d,1) == 'soft']} \
-	--with-cacaoh=${STAGING_BINDIR_NATIVE}/cacaoh-openjdk-0.99.4"
+	${@['','--enable-softfloat'][bb.data.getVar('TARGET_FPU',d,1) == 'soft']}"
 
 JAVA_HOME[unexport] = "1"
 
