@@ -1,5 +1,9 @@
 require openjdk-6-common.inc
 
+LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
+
+FILESPATH =. "${FILE_DIRNAME}/openjdk-6-6b24:"
+
 # needed for dis-asm.h
 DEPENDS += "binutils"
 
@@ -7,7 +11,7 @@ EXTRA_OECONF += "\
         --with-jdk-home=${WORKDIR}/fake-jdk \
 	--with-jar=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native/bin/jar \
 	--with-out-rhino \
-	--with-jaxws-drop-zip=${DL_DIR}/${JAXWS_FILE} \ 
+	--with-jaxws-drop-zip=${DL_DIR}/${JAXWS_FILE} \
 	--with-jaf-drop-zip=${DL_DIR}/${JAF_FILE} \
 	--with-jaxp-drop-zip=${DL_DIR}/${JAXP_FILE} \
 	--with-cacao-src-zip=${DL_DIR}/${CACAO_VERSION}.tar.gz \
@@ -15,8 +19,8 @@ EXTRA_OECONF += "\
 	--with-openjdk-src-zip=${DL_DIR}/openjdk-6-src-${OPENJDK_VERSION}-${OPENJDK_DATE}.tar.gz \
 "
 
-# List of additional JVM to include in the build.
-WITH_ADDITIONAL_VMS = "shark,cacao,jamvm"
+# List of additional JVM to include in the build, shark is disabled since 1.11.1
+WITH_ADDITIONAL_VMS = "cacao,jamvm"
 
 # Name of the directory containing the compiled output
 BUILD_DIR = "openjdk.build"
@@ -26,8 +30,6 @@ BUILD_DIR_ECJ = "openjdk.build-ecj"
 ARM_INSTRUCTION_SET_armv4t = "ARM"
 
 ICEDTEA_URI = "http://icedtea.classpath.org/download/source/${ICEDTEA}.tar.gz;name=iced"
-SRC_URI[iced.md5sum] = "c381d987f8d2facece8c54e98fd547f8"
-SRC_URI[iced.sha256sum] = "15491d7f2f81436aaf87f964d923b95b4bda8f6689198b4999961070b6c68851"
 
 OPENJDK_VERSION = "b24"
 OPENJDK_DATE = "14_nov_2011"
@@ -51,8 +53,14 @@ SRC_URI[jaxp.md5sum] = "9eea471ad474040265c688858fcf09aa"
 SRC_URI[jaxp.sha256sum] = "c1a5348e17b330a7e4b18431e61a40efd2ba99a7da71102cf2c604478ef96012"
 
 CACAO_URI = "http://icedtea.classpath.org/download/drops/cacao/${CACAO_VERSION}.tar.gz;name=cacao"
+CACAO_VERSION = "cff92704c4e0"
+SRC_URI[cacao.md5sum] = "40b811b8b7f01b51cd21e62255691bc7"
+SRC_URI[cacao.sha256sum] = "dc768c9d097fb056ad34fc6d5a57e8fd4f3b24bf515be92acc5ee4208160eb3f"
 
 JAMVM_URI = "http://icedtea.classpath.org/download/drops/jamvm/jamvm-${JAMVM_VERSION}.tar.gz;name=jamvm"
+JAMVM_VERSION = "4617da717ecb05654ea5bb9572338061106a414d"
+SRC_URI[jamvm.md5sum] = "740c2587502831cac6797d1233a7e27b"
+SRC_URI[jamvm.sha256sum] = "47fce7bd556c1b1d29a93b8c45497e0d872b48b7f535066b303336f29d0f0d8d"
 
 # Allow overriding this separately
 OEPATCHES = "\
