@@ -127,7 +127,7 @@ def get_jdk_jobs(d):
 	if not pm:
 		return "1"
 
-	pm = pm.split(" ");
+	pm = pm.split("j");
 	if (len(pm) == 2):
 		return pm[1]
 
