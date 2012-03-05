@@ -53,6 +53,6 @@ do_removebinaries() {
 
 addtask removebinaries after do_unpack before do_patch
 
-do_install() {
+do_install_append() {
   oe_jarinstall ${JARFILENAME} ${ALTJARFILENAMES}
 }
