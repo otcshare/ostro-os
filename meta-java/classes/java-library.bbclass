@@ -32,7 +32,7 @@ JPN ?= "${@java_package_name(d)}"
 
 DEPENDS_prepend = "virtual/javac-native fastjar-native "
 
-PACKAGES = "${JPN}"
+PACKAGES += "${JPN}"
 
 PACKAGE_ARCH_${JPN} = "all"
 
