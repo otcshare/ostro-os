@@ -1,4 +1,4 @@
-DESCRIPTION = "JUnit is a testing framework for Java"
+DESCRIPTION = "Full Java CommAPI implementation"
 DEPENDS = "fastjar-native"
 LICENSE = "CLOSED"
 
