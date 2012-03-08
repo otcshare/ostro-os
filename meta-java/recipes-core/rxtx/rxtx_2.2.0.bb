@@ -1,6 +1,8 @@
 DESCRIPTION = "Full Java CommAPI implementation"
 DEPENDS = "fastjar-native"
-LICENSE = "CLOSED"
+LICENSE = "RXTXv2.1"
+LIC_FILES_CHKSUM = "file://COPYING;md5=32303a23463f90b12a7d1dafb8deabf4"
+PR = "r1"
 
 SRC_URI = "http://rxtx.qbang.org/pub/rxtx/rxtx-2.2pre2.zip \
            file://zsystem_init_exception.patch \
