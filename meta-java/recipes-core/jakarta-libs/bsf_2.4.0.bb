@@ -14,7 +14,7 @@ do_compile() {
   mkdir -p build
 
   oe_makeclasspath cp -s commons-logging jacl rhino bcel xalan2
-  
+
 	# Remove netrexx and jython support
   rm -Rf src/org/apache/bsf/engines/netrexx
   rm -Rf src/org/apache/bsf/engines/jython
@@ -28,6 +28,5 @@ do_compile() {
 SRC_URI[md5sum] = "7e58b2a009c0f70ab36bbef420b25c07"
 SRC_URI[sha256sum] = "5ab58cf5738c144f4d85a4a442c2f33be2c4c502dca6e29e0c570c2a51ae6ae9"
 
-NATIVE_INSTALL_WORKS = "1"
 BBCLASSEXTEND = "native"
 

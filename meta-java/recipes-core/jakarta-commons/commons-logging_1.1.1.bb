@@ -15,5 +15,4 @@ COMPILE_FINDARGS = "-name '*.java' -and -not -name '*Avalon*'"
 SRC_URI[md5sum] = "e5cfa8cca13152d7545fde6b1783c60a"
 SRC_URI[sha256sum] = "b49a79fa78ebfae15dc46ae6f0144fee6b94ab608a25518c54609d3419909eb2"
 
-NATIVE_INSTALL_WORKS = "1"
 BBCLASSEXTEND = "native"
