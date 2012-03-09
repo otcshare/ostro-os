@@ -20,5 +20,3 @@ do_install() {
   install -d ${D}${bindir}
   install -m 0755 jikes-initial ${D}${bindir}
 }
-
-NATIVE_INSTALL_WORKS = "1"

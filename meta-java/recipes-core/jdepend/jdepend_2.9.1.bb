@@ -21,5 +21,4 @@ do_compile() {
 SRC_URI[md5sum] = "0cbaf43493cd30838bee261f69e76fe9"
 SRC_URI[sha256sum] = "b9f34236aaea5ddc070caa29794d2f5ae79bc12e199bec6ebba6c29093a17a9e"
 
-NATIVE_INSTALL_WORKS = "1"
 BBCLASSEXTEND = "native"
