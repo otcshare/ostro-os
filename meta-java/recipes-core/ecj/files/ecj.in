@@ -1,12 +1,18 @@
-error_counter=0;
-error_occured=139
-while [ ${error_counter} -le 50 -a ${error_occured} -eq 139 ]; do
+error_counter=1
+error_max=21
+error_occured=true
+error_number=0
+while [ ${error_counter} -le ${error_max} -a ${error_occured} == true ]; do
     ${RUNTIME} -Xmx1024m -cp ${ECJ_JAR} org.eclipse.jdt.internal.compiler.batch.Main ${1+"$@"}
-    error_occured=$?
-    if [ ${error_occured} -eq 139 ]; then
-        echo "ecj crashed - silently trying again"
+    error_number=$?
+    if [ ${error_number} -eq 139 -o ${error_number} -eq 134 ]; then
+        echo "ecj crashed ${error_counter} - silently trying again"
+        error_occured=true
         error_counter=$(( $error_counter + 1 ))
+    else
+        error_occured=false
     fi
 done
 
-exit ${error_occured}
+exit ${error_number}
+
