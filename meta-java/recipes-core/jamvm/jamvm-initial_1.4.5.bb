@@ -7,6 +7,8 @@ DEPENDS = "zlib-native classpath-initial jikes-initial libffi-native"
 
 PROVIDES = "virtual/java-initial"
 
+PR = "r1"
+
 S = "${WORKDIR}/jamvm-${PV}"
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/jamvm/jamvm-${PV}.tar.gz \
