@@ -1,7 +1,7 @@
 DESCRIPTION = "Harness to build the source code from OpenJDK using Free Software build tools"
 HOMEPAGE = "http://icedtea.classpath.org"
 LICENSE  = "GPL with Classpath Exception"
-INC_PR = "r4"
+INC_PR = "r5"
 
 DEPENDS = "virtual/javac-native virtual/java-native classpath-native \
 	   xalan-j-native xerces-j-native rhino-native \
