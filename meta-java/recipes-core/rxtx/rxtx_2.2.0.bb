@@ -2,7 +2,7 @@ DESCRIPTION = "Full Java CommAPI implementation"
 DEPENDS = "fastjar-native"
 LICENSE = "RXTXv2.1"
 LIC_FILES_CHKSUM = "file://COPYING;md5=32303a23463f90b12a7d1dafb8deabf4"
-PR = "r1"
+PR = "r2"
 
 SRC_URI = "http://rxtx.qbang.org/pub/rxtx/rxtx-2.2pre2.zip \
            file://zsystem_init_exception.patch \
@@ -33,10 +33,10 @@ do_configure_prepend() {
     sed -e 's,bin/javah,bin/gjavah,g' \
         -e 's,bin/jar,bin/fastjar,g' \
         -e 's,\$(TOP)/libtool,\$(TOP)/\${host_alias}-libtool,g' -i ${S}/configure.in
-    rm ${S}/acinclude.m4 \
-       ${S}/aclocal.m4 \
-       ${S}/ltconfig \
-       ${S}/ltmain.sh
+    rm -f ${S}/acinclude.m4 \
+          ${S}/aclocal.m4 \
+          ${S}/ltconfig \
+          ${S}/ltmain.sh
 }
 
 do_install_prepend() {
