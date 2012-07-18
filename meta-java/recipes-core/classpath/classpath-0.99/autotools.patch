@@ -1,0 +1,118 @@
+Index: classpath-0.99/configure.ac
+===================================================================
+--- classpath-0.99.orig/configure.ac	2012-03-08 19:03:15.000000000 +0100
++++ classpath-0.99/configure.ac	2012-07-18 23:16:41.047796558 +0200
+@@ -42,6 +42,9 @@
+ AC_CONFIG_HEADERS([include/config.h])
+ AC_PREFIX_DEFAULT(/usr/local/classpath)
+ 
++AC_PROG_MKDIR_P
++AM_ICONV_LINK
++
+ dnl -----------------------------------------------------------
+ dnl Enable collections.jar (disabled by default)
+ dnl -----------------------------------------------------------
+@@ -382,6 +385,7 @@
+ AC_PROG_CC
+ AM_PROG_CC_C_O
+ AC_PROG_CPP
++AM_PROG_CC_C_O
+ 
+ # Handle -Werror default case.
+ if test "$ENABLE_WERROR" = default; then
+Index: classpath-0.99/examples/Makefile.am
+===================================================================
+--- classpath-0.99.orig/examples/Makefile.am	2008-09-14 18:49:43.000000000 +0200
++++ classpath-0.99/examples/Makefile.am	2012-07-18 23:17:58.604498498 +0200
+@@ -96,9 +96,9 @@
+ endif
+ 
+ $(EXAMPLE_ZIP): $(EXAMPLE_JAVA_FILES)
+-	@mkdir_p@ classes/gnu/classpath/examples/icons
++	$(MKDIR_P) classes/gnu/classpath/examples/icons
+ 	cp $(EXAMPLE_ICONS) classes/gnu/classpath/examples/icons
+-	@mkdir_p@ classes/gnu/classpath/examples/swing
++	$(MKDIR_P) classes/gnu/classpath/examples/swing
+ 	cp $(EXAMPLE_HTML) classes/gnu/classpath/examples/swing
+ 	$(JCOMPILER) -d classes $(EXAMPLE_JAVA_FILES) 
+ 	(cd classes; \
+Index: classpath-0.99/lib/Makefile.am
+===================================================================
+--- classpath-0.99.orig/lib/Makefile.am	2011-05-29 11:07:06.000000000 +0200
++++ classpath-0.99/lib/Makefile.am	2012-07-18 23:18:55.769018757 +0200
+@@ -83,18 +83,18 @@
+ resources: copy-vmresources.sh
+ 	@list=`cd $(top_srcdir)/resource && $(FIND) gnu java javax org -name \*\.properties -print -o -name \*\.css -print`; for p in $$list; do \
+           dirname=`dirname $$p`; \
+-          if ! test -d "$$dirname"; then @mkdir_p@ "$$dirname"; fi; \
++          if ! test -d "$$dirname"; then $(MKDIR_P) "$$dirname"; fi; \
+ 	  cp $(top_srcdir)/resource/$$p $$p; \
+ 	done
+ 	@list=`cd $(top_srcdir)/resource && $(FIND) META-INF -name CVS -prune -o -name .svn -prune -o -name \*\.in -prune -o -type f -print`; for p in $$list; do \
+           dirname=`dirname $$p`; \
+-          if ! test -d "$$dirname"; then @mkdir_p@ "$$dirname"; fi; \
++          if ! test -d "$$dirname"; then $(MKDIR_P) "$$dirname"; fi; \
+ 	  cp $(top_srcdir)/resource/$$p $$p; \
+ 	done
+ 	@$(SHELL) ./copy-vmresources.sh
+ 	@list=`cd $(top_srcdir) && $(FIND) gnu/javax/swing/plaf/gtk/icons -name *.png -type f -print`; for p in $$list; do \
+           dirname=`dirname $$p`; \
+-          if ! test -d "$$dirname"; then @mkdir_p@ "$$dirname"; fi; \
++          if ! test -d "$$dirname"; then $(MKDIR_P) "$$dirname"; fi; \
+ 	  cp $(top_srcdir)/$$p $$p; \
+ 	done
+ 	touch resources
+@@ -102,7 +102,7 @@
+ classes: genclasses
+ 
+ $(top_builddir)/gnu/java/locale/LocaleData.java: $(top_srcdir)/scripts/generate-locale-list.sh 
+-	@mkdir_p@ $(top_builddir)/gnu/java/locale
++	$(MKDIR_P) $(top_builddir)/gnu/java/locale
+ 	$(top_srcdir)/scripts/generate-locale-list.sh > $(top_builddir)/gnu/java/locale/LocaleData.java
+ 
+ genclasses: gen-classlist.sh standard.omit $(top_builddir)/gnu/java/locale/LocaleData.java gen-xpath-parser
+@@ -160,7 +160,7 @@
+ 	-rm -rf lists
+ 
+ dist-hook:
+-	@mkdir_p@ $(distdir)
++	$(MKDIR_P) $(distdir)
+ 	cp -pdfR $(top_srcdir)/gnu $(top_srcdir)/java $(top_srcdir)/javax $(top_srcdir)/org $(top_srcdir)/sun $(top_srcdir)/vm $(top_srcdir)/resource $(distdir)/..
+ # Delete not wanted files.
+ 	$(FIND) $(distdir)/../gnu $(distdir)/../java $(distdir)/../javax $(distdir)/../org $(distdir)/../sun $(distdir)/../vm $(distdir)/../resource -name CVS -print | xargs rm -fr
+Index: classpath-0.99/tools/Makefile.am
+===================================================================
+--- classpath-0.99.orig/tools/Makefile.am	2012-07-18 23:13:23.782018215 +0200
++++ classpath-0.99/tools/Makefile.am	2012-07-18 23:20:02.701629749 +0200
+@@ -314,11 +314,11 @@
+ # so they get also included.
+ $(TOOLS_ZIP): $(ALL_TOOLS_FILES)
+ 	@rm -rf classes asm
+-	@mkdir_p@ classes asm 
++	$(MKDIR_P) classes asm
+ if CREATE_GJDOC
+ if CREATE_GJDOC_PARSER
+ ## Generate antlr sources.
+-	@mkdir_p@ $(gjdoc_gendir)/gnu/classpath/tools/gjdoc/expr
++	$(MKDIR_P) $(gjdoc_gendir)/gnu/classpath/tools/gjdoc/expr
+ 	$(ANTLR) -o $(gjdoc_gendir)/gnu/classpath/tools/gjdoc/expr/ \
+ 	  $(srcdir)/gnu/classpath/tools/gjdoc/expr/java-expression.g
+ endif
+@@ -348,7 +348,7 @@
+ 	       sun/rmi/rmic $(GJDOC_EX) -name \*.properties -print -o -name \*.jav -print`; \
+ 	for p in $$list; do \
+ 	  dirname=classes/`dirname $$p`; \
+-	  if ! test -d "$$dirname"; then @mkdir_p@ "$$dirname"; fi; \
++	  if ! test -d "$$dirname"; then $(MKDIR_P) "$$dirname"; fi; \
+ 	  echo "  cp $(srcdir)/resource/$$p classes/$$p"; \
+ 	  cp $(srcdir)/resource/$$p classes/$$p; \
+ 	done
+@@ -356,7 +356,7 @@
+ ## Copy over gjdoc resource files.
+ 	for res in $(gjdoc_resources); do \
+ 	  dir=classes/`dirname $$res`; \
+-	  if ! test -d "$$dir"; then @mkdir_p@ "$$dir"; fi; \
++	  if ! test -d "$$dir"; then $(MKDIR_P) "$$dir"; fi; \
+ 	  echo "  cp $(srcdir)/resource/gnu/classpath/tools/gjdoc/$$res classes/$$res"; \
+ 	  cp $(srcdir)/resource/gnu/classpath/tools/gjdoc/$$res classes/$$res; \
+ 	done 

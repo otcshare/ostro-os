@@ -2,18 +2,13 @@ DESCRIPTION = "GNU Classpath standard Java libraries - For native Java-dependent
 HOMEPAGE = "http://www.gnu.org/software/classpath/"
 LICENSE = "Classpath"
 
-DEPENDS = "ecj-initial fastjar-native zip-native gettext-native"
+DEPENDS = "fastjar-native zip-native"
 
-PR = "r1"
-
-inherit autotools native
+inherit autotools native gettext
 
 SRC_URI = "${GNU_MIRROR}/classpath/classpath-${PV}.tar.gz"
 
-do_configure_prepend () {
-
-	cp ${STAGING_DATADIR_NATIVE}/gettext/config.rpath ${S}
-}
+INC_PR = "r5"
 
 export JAVA="${STAGING_BINDIR_NATIVE}/java-initial"
 export JAVAC="${STAGING_BINDIR_NATIVE}/ecj-initial"
@@ -33,4 +28,3 @@ EXTRA_OECONF = " \
                 --enable-tools \
                 --includedir=${STAGING_INCDIR}/classpath \
                "
-
