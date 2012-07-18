@@ -65,8 +65,6 @@ EXTRA_OECMAKE = "\
 # We need to reset this to avoid breakage as we build out of tree
 TOOLCHAIN_OPTIONS = ""
 
-PACKAGES = "${PN}-dbg ${PN}-doc ${PN}-dev ${PN}"
-
 PACKAGES_DYNAMIC = "llvm-*"
 
 # the difference to the non-native build is that we do not need
