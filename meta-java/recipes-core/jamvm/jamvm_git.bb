@@ -3,10 +3,10 @@
 
 require jamvm.inc
 
-SRCREV = "4617da717ecb05654ea5bb9572338061106a414d"
+SRCREV = "2fdfc86c4c52c14668bcb87fec8cd8ba87e24fc3"
 PV = "1.5.5+1.6.0-devel+git${SRCPV}"
 
-PR = "r2"
+PR = "r3"
 
 SRC_URI = "git://git.berlios.de/jamvm;protocol=git \
            file://jamvm-jni_h-noinst.patch \
