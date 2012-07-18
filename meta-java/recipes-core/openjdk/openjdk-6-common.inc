@@ -41,7 +41,7 @@ DEPENDS = "giflib libpng jpeg cups \
            zip-native \
           "
 
-DEPENDS_append_libc-uclibc = " libiconv "
+DEPENDS_append_libc-uclibc = " virtual/libiconv "
 
 # The OpenJDK build with interpreter optimizations for ARM depends on a binary
 # that generates constants for an assembler source file. There is no other
