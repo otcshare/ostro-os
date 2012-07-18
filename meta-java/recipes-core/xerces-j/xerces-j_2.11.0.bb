@@ -2,16 +2,16 @@ DESCRIPTION = "Reference implementation of XNI, the Xerces Native Interface, and
 AUTHOR = "Apache Software Foundation"
 LICENSE = "AL2.0"
 LIC_FILES_CHKSUM = " \
-                    file://LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57 \
-                    file://LICENSE.DOM-documentation.html;md5=b05e182e1962778d7b207cbf3fe4acef \
-                    file://LICENSE.DOM-software.html;md5=3aec153ae803c31acdae63bac18506b9 \
-                    file://LICENSE.resolver.txt;md5=86d3f3a95c324c9479bd8986968f4327 \
-                    file://LICENSE.serializer.txt;md5=86d3f3a95c324c9479bd8986968f4327 \
+                    file://LICENSE;md5=d273d63619c9aeaf15cdaf76422c4f87 \
+                    file://LICENSE.DOM-documentation.html;md5=77c27084ca92e9a8efe9314f284acc05 \
+                    file://LICENSE.DOM-software.html;md5=1f920675d8473fd5cbabf133a7e39e0d \
+                    file://LICENSE.resolver.txt;md5=d229da563da18fe5d58cd95a6467d584 \
+                    file://LICENSE.serializer.txt;md5=d229da563da18fe5d58cd95a6467d584 \
                    "
 
 SRC_URI = "http://archive.apache.org/dist/xerces/j/Xerces-J-src.${PV}.tar.gz"
 
-S = "${WORKDIR}/xerces-2_9_1"
+S = "${WORKDIR}/xerces-2_11_0"
 
 inherit java-library
 
@@ -54,7 +54,7 @@ do_compile() {
 
 }
 
-SRC_URI[md5sum] = "e340cba4a2abf4f0f833488380821153"
-SRC_URI[sha256sum] = "13af0062a72a4a0d541ca5336391eafa4d580258cacf4a5e062ea584ca950592"
+SRC_URI[md5sum] = "d01fc11eacbe43b45681cb85ac112ebf"
+SRC_URI[sha256sum] = "f59a5ef7b51bd883f2e9bda37a9360692e6c5e439b98d9b6ac1953e1f98b0680"
 
 BBCLASSEXTEND = "native"
