@@ -1,6 +1,6 @@
 require classpath.inc
 
-LIC_FILES_CHKSUM = "file://LICENSE;md5=af0004801732bc4b20d90f351cf80510"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=92acc79f1f429143f4624d07b253702a"
 
 SRC_URI += " \
             file://sun-security-getproperty.patch;striplevel=0 \
