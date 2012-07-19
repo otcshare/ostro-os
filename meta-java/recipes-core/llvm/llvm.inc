@@ -26,6 +26,7 @@ LIC_FILES_CHKSUM = "file://LICENSE.TXT;md5=0ac5f799a2d89477c75b0a378b221855"
 DEPENDS = "llvm${LLVM_RELEASE}-native llvm-common"
 DEPENDS_virtclass-native = "llvm-common-native cmake-native perl-native"
 
+INC_PR = "r2"
 
 SRC_URI = "http://llvm.org/releases/${PV}/llvm-${PV}.tgz"
 
