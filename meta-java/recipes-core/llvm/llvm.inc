@@ -85,9 +85,8 @@ PACKAGES_virtclass-native = ""
 PACKAGES_DYNAMIC_virtclass-native = ""
 
 python populate_packages_prepend () {
-        libllvm_libdir = bb.data.expand('${libdir}/llvm${LLVM_RELEASE}', d)
-
-        do_split_packages(d, libllvm_libdir, '^lib(.*)\.so$', 'libllvm-%s', 'Split package for %s', allow_dirs=True)
+    libllvm_libdir = bb.data.expand('${libdir}/llvm${LLVM_RELEASE}', d)
+    do_split_packages(d, libllvm_libdir, '^lib(.*)\.so$', 'libllvm-%s', 'Split package for %s', allow_dirs=True)
 }
 
 FILES_${PN} = ""
@@ -104,25 +103,25 @@ FILES_${PN}-dev = " \
                  "
 
 do_install() {
-	# Install into a private directory to be able to reorganize the files.
+    # Install into a private directory to be able to reorganize the files.
 
-        cd ${OECMAKE_BUILDPATH}
+    cd ${OECMAKE_BUILDPATH}
 
-        oe_runmake DESTDIR=${WORKDIR}/llvm-install install
+    oe_runmake DESTDIR=${WORKDIR}/llvm-install install
 
-	# Create our custom target directories
-	install -d ${D}${bindir}/llvm${LLVM_RELEASE}
-	install -d ${D}${includedir}/llvm${LLVM_RELEASE}
-	install -d ${D}${libdir}/llvm${LLVM_RELEASE}
+    # Create our custom target directories
+    install -d ${D}${bindir}/llvm${LLVM_RELEASE}
+    install -d ${D}${includedir}/llvm${LLVM_RELEASE}
+    install -d ${D}${libdir}/llvm${LLVM_RELEASE}
 
-	#	Move headers into their own directory
-	cp -R ${WORKDIR}/llvm-install/${prefix}/include/llvm \
-	${D}${includedir}/llvm${LLVM_RELEASE}/
-	cp -R ${WORKDIR}/llvm-install/${prefix}/include/llvm-c \
-	${D}${includedir}/llvm${LLVM_RELEASE}/
+    #	Move headers into their own directory
+    cp -R ${WORKDIR}/llvm-install/${prefix}/include/llvm \
+    ${D}${includedir}/llvm${LLVM_RELEASE}/
+    cp -R ${WORKDIR}/llvm-install/${prefix}/include/llvm-c \
+    ${D}${includedir}/llvm${LLVM_RELEASE}/
 
-	find ${WORKDIR}/llvm-install/${prefix}/lib -name "*" -maxdepth 1 -exec \
-	install {} ${D}${libdir}/llvm${LLVM_RELEASE} \;
+    find ${WORKDIR}/llvm-install/${prefix}/lib -name "*" -maxdepth 1 -exec \
+    install {} ${D}${libdir}/llvm${LLVM_RELEASE} \;
 
 	#	I dont know another way out. Binaries are installed into a special subdir
 	find ${WORKDIR}/llvm-install/${prefix}/bin -name "*" -maxdepth 1 -exec \
@@ -148,7 +147,7 @@ do_install() {
         install -d ${SYSROOT_DESTDIR}${bindir_crossscripts}
         install -m 0755 bin/llvm-config${LLVM_RELEASE} ${SYSROOT_DESTDIR}${bindir_crossscripts}
 }
- 
+
 do_install_virtclass-native() {
 	# Install into a private directory to be able to reorganize the files.
 
@@ -194,22 +193,21 @@ do_install_virtclass-native() {
 # Retrieve the target in a way that is compatible to the arch
 # value in llvm (>= 2.5)
 def get_llvm_arch(d):
-  import bb;
+    import bb;
 
-  arch = bb.data.getVar('TARGET_ARCH', d, 1)
-  if arch == "x86_64" or arch == "i486" or arch == "i586" or arch == "i686":
-    arch = "X86"
-  elif arch == "arm":
-    arch = "ARM"
-  elif arch == "mipsel" or arch == "mips":
-    arch = "mips"
-  elif arch == "powerpc":
-    arch = "PowerPC"
-  else:
-    bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
+    arch = bb.data.getVar('TARGET_ARCH', d, 1)
+    if arch == "x86_64" or arch == "i486" or arch == "i586" or arch == "i686":
+        arch = "X86"
+    elif arch == "arm":
+        arch = "ARM"
+    elif arch == "mipsel" or arch == "mips":
+        arch = "mips"
+    elif arch == "powerpc":
+        arch = "PowerPC"
+    else:
+        bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
 
-  return arch
-
+    return arch
 
 BBCLASSEXTEND = "native"
 
