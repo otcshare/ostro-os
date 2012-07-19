@@ -104,15 +104,15 @@ EXTRA_OECONF = "\
 # OpenJDK uses slightly different names for certain arches. We need to know
 #	this to create some files which are expected by the build.
 def get_jdk_arch(d):
-  import bb
+    import bb
 
-  jdk_arch = bb.data.getVar('TARGET_ARCH', d, 1)
-  if jdk_arch == "x86_64":
-    jdk_arch = "amd64"
-  elif (jdk_arch == "i486" or jdk_arch == "i586" or jdk_arch == "i686"):
-    jdk_arch = "i386"
+    jdk_arch = bb.data.getVar('TARGET_ARCH', d, 1)
+    if jdk_arch == "x86_64":
+        jdk_arch = "amd64"
+    elif (jdk_arch == "i486" or jdk_arch == "i586" or jdk_arch == "i686"):
+        jdk_arch = "i386"
 
-  return jdk_arch
+    return jdk_arch
 
 JDK_ARCH = "${@get_jdk_arch(d)}"
 JDK_HOME = "${libdir_jvm}/${JDK_DIR}"
@@ -121,38 +121,38 @@ JDK_HOME = "${libdir_jvm}/${JDK_DIR}"
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
 # e.g. "-j 4".
 def get_jdk_jobs(d):
-	import bb
+    import bb
 
-	pm = bb.data.getVar('PARALLEL_MAKE', d, 1);
-	if not pm:
-		return "1"
+    pm = bb.data.getVar('PARALLEL_MAKE', d, 1);
+    if not pm:
+        return "1"
 
-	pm = pm.split("j");
-	if (len(pm) == 2):
-		return pm[1]
+    pm = pm.split("j");
+    if (len(pm) == 2):
+        return pm[1]
 
-	# Whatever found in PARALLEL_MAKE was not suitable.
-	return "1"
+    # Whatever found in PARALLEL_MAKE was not suitable.
+    return "1"
 
 JDK_JOBS = "${@get_jdk_jobs(d)}"
 
 # A function that is needed in the Shark builds.
 def get_llvm_configure_arch(d):
-  import bb;
+    import bb;
 
-  arch = bb.data.getVar('TARGET_ARCH', d, 1)
-  if arch == "x86_64" or arch == "i486" or arch == "i586" or arch == "i686":
-    arch = "x86"
-  elif arch == "arm":
-    arch = "arm"
-  elif arch == "mipsel" or arch == "mips":
-    arch = "mips"
-  elif arch == "powerpc":
-    arch = "powerpc"
-  else:
-    bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
+    arch = bb.data.getVar('TARGET_ARCH', d, 1)
+    if arch == "x86_64" or arch == "i486" or arch == "i586" or arch == "i686":
+        arch = "x86"
+    elif arch == "arm":
+        arch = "arm"
+    elif arch == "mipsel" or arch == "mips":
+        arch = "mips"
+    elif arch == "powerpc":
+        arch = "powerpc"
+    else:
+        bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
 
-  return arch
+    return arch
 
 # Custom preparation of the sources which:
 # - cleans up the sources
