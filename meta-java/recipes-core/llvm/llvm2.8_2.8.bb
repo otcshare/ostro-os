@@ -4,7 +4,7 @@ require llvm.inc
 LICENSE = "NCSA"
 LIC_FILES_CHKSUM = "file://LICENSE.TXT;md5=0ac5f799a2d89477c75b0a378b221855"
 
-PR = "r1"
+PR = "${INC_PR}.0"
 
 SRC_URI += " \
             file://30may-llvm2.8-pr399-ppc-arm.patch \
