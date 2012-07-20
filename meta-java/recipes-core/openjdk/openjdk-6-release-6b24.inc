@@ -81,6 +81,7 @@ ICEDTEAPATCHES = "\
 	file://icedtea-fix-xrender.patch;apply=no \
 	file://icedtea-shark-arm-linux-cpu-detection.patch;apply=no \
         file://icedtea-zero-hotspotfix.patch;apply=no \
+        file://icedtea-jdk-powerpc-atomic64.patch;apply=no \
 	"
 
 ICEDTEAPATCHES_append_libc-uclibc = " \
@@ -105,6 +106,7 @@ DISTRIBUTION_PATCHES = "\
 	patches/icedtea-fix-xrender.patch \
 	patches/icedtea-shark-arm-linux-cpu-detection.patch \
 	patches/icedtea-zero-hotspotfix.patch \
+	patches/icedtea-jdk-powerpc-atomic64.patch \
 	"
 
 DISTRIBUTION_PATCHES_append_libc-uclibc = "\
