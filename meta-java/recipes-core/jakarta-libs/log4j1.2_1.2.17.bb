@@ -3,15 +3,14 @@ AUTHOR = "Apache Software Foundation"
 LICENSE = "AL2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=f4ce41a6d1028498fcacde12f589bce7"
 
-SRC_URI = "http://archive.apache.org/dist/logging/log4j/${PV}/apache-log4j-${PV}.tar.gz"
+SRC_URI = "http://archive.apache.org/dist/logging/log4j/${PV}/log4j-${PV}.tar.gz"
 
 inherit java-library
-
-S = "${WORKDIR}/apache-log4j-${PV}"
 
 DEPENDS = "gnumail gnujaf"
 DEPENDS_virtclass-native = "gnumail-native gnujaf-native"
 
+S = "${WORKDIR}/apache-log4j-${PV}"
 
 JARFILENAME = "log4j-${PV}.jar"
 ALTJARFILENAMES = "log4j-1.2.jar log4j1.2.jar"
@@ -29,8 +28,8 @@ do_compile() {
   fastjar -C build -c -f ${JARFILENAME} .
 }
 
-SRC_URI[md5sum] = "10f04abe4d68d5a89e8eb167e4e45e1a"
-SRC_URI[sha256sum] = "f5d9f6aa78b9156ae2de2a32d0f26507d2e73db4993d501db2e79f0bd803ab31"
+SRC_URI[md5sum] = "8218714e41ee0c6509dcfeafa2e1f53f"
+SRC_URI[sha256sum] = "a528e3771ee6234661b5eb0fa02e14faee89dfec38de94088c163ddf2a0a8663"
 
 BBCLASSEXTEND = "native"
 
