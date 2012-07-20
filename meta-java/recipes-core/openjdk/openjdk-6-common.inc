@@ -109,6 +109,10 @@ def get_jdk_arch(d):
     jdk_arch = bb.data.getVar('TARGET_ARCH', d, 1)
     if jdk_arch == "x86_64":
         jdk_arch = "amd64"
+    elif jdk_arch == "powerpc":
+        jdk_arch = "ppc"
+    elif jdk_arch == "powerpc64":
+        jdk_arch = "ppc64"
     elif (jdk_arch == "i486" or jdk_arch == "i586" or jdk_arch == "i686"):
         jdk_arch = "i386"
 
@@ -323,7 +327,6 @@ do_install() {
 		rm ${D}${JDK_HOME}/bin/$bf
 		ln -s ${JDK_HOME}/jre/bin/$bf ${D}${JDK_HOME}/bin/$bf
 	done
-
         install -m644 ${WORKDIR}/jvm.cfg  ${D}${JDK_HOME}/jre/lib/${JDK_ARCH}/
 }
 
