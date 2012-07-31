@@ -151,7 +151,7 @@ def get_llvm_configure_arch(d):
         arch = "arm"
     elif arch == "mipsel" or arch == "mips":
         arch = "mips"
-    elif arch == "powerpc":
+    elif arch == "powerpc" or arch == "powerpc64":
         arch = "powerpc"
     else:
         bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
