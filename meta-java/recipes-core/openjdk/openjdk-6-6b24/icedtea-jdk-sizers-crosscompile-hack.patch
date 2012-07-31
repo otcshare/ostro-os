@@ -1,0 +1,61 @@
+Disable xawt and jawt along with sizes generation which does not work well if
+you cant generated sizes in cross env. So for architectures which dont have
+working qemu this is an option
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+Upstream-Status: Inappropriate [Cross-compile specific hack]
+
+--- openjdk/jdk/make/sun/xawt/Makefile.khem	2012-07-21 23:54:47.396405922 -0700
++++ openjdk/jdk/make/sun/xawt/Makefile	2012-07-21 23:55:52.032405922 -0700
+@@ -245,18 +245,19 @@
+ 	    $(SIZER_DIR) $(XLIBTYPES) "sizer" $(subst .,,$(suffix $(basename $@)))
+ 
+ $(SIZES): $(SIZERS)
+-	@if [ "$(DOHACK)$@" = "true$(PREDEFINED_SIZES)" ]; then \
+-	    $(ECHO) COPYING $(PREDEFINED_SIZES_TMPL) into $@; \
+-	    $(CP) $(PREDEFINED_SIZES_TMPL) $@; \
+-	    $(CHMOD) +w $@;\
+-	else	\
+-	    $(ECHO) GENERATING $@; \
+-	    $(QEMU) $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
+-	fi
+-	@if [ "$(DOCOMPARE)$(suffix $@)" = "true.64" ]; then \
+-	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
+-	    $(DIFF) $@ $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
+-	fi	
++	touch $(SIZES)
++#	@if [ "$(DOHACK)$@" = "true$(PREDEFINED_SIZES)" ]; then \
++#	    $(ECHO) COPYING $(PREDEFINED_SIZES_TMPL) into $@; \
++#	    $(CP) $(PREDEFINED_SIZES_TMPL) $@; \
++#	    $(CHMOD) +w $@;\
++#	else	\
++#	    $(ECHO) GENERATING $@; \
++#	    $(QEMU) $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
++#	fi
++#	@if [ "$(DOCOMPARE)$(suffix $@)" = "true.64" ]; then \
++#	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
++#	    $(DIFF) $@ $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
++#	fi	
+ 
+ $(TEMPDIR)/.gen.wrappers: $(SIZES) $(WRAPPER_GENERATOR_CLASS) $(XLIBTYPES)
+ 	$(BOOT_JAVA_CMD) -cp $(WRAPPER_GENERATOR_TEMPDIR) WrapperGenerator \
+--- openjdk/jdk/make/sun/Makefile.khem	2011-11-14 14:11:40.000000000 -0800
++++ openjdk/jdk/make/sun/Makefile	2012-07-22 00:42:04.980409296 -0700
+@@ -50,7 +50,7 @@
+     MOTIF_SUBDIRS   = motif12 motif21
+   endif
+   HEADLESS_SUBDIR = headless
+-  XAWT_SUBDIR     = xawt
++  XAWT_SUBDIR     =
+ endif
+ 
+ ifndef OPENJDK
+@@ -65,7 +65,7 @@
+ 	  awt splashscreen $(XAWT_SUBDIR) $(MOTIF_SUBDIRS) \
+           $(HEADLESS_SUBDIR) $(DGA_SUBDIR) \
+ 	  font jpeg cmm applet rmi beans $(JDBC_SUBDIR) \
+-	  jawt text nio launcher management $(ORG_SUBDIR) \
++	  text nio launcher management $(ORG_SUBDIR) \
+           native2ascii serialver tools jconsole
+ 
+ all build clean clobber::
