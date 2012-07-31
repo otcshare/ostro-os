@@ -83,7 +83,12 @@ ICEDTEAPATCHES = "\
         file://icedtea-zero-hotspotfix.patch;apply=no \
         file://icedtea-jdk-powerpc-atomic64.patch;apply=no \
 	"
-
+ICEDTEAPATCHES_append_e5500-64b = " \
+        file://icedtea-jdk-sizers-crosscompile-hack.patch;apply=no \
+	"
+ICEDTEAPATCHES_append_e5500 = " \
+        file://icedtea-jdk-sizers-crosscompile-hack.patch;apply=no \
+	"
 ICEDTEAPATCHES_append_libc-uclibc = " \
         file://icedtea-hotspot-isfinte.patch;apply=no \
         file://icedtea-hotspot-glibc-version.patch;apply=no \
@@ -119,5 +124,11 @@ DISTRIBUTION_PATCHES_append_libc-uclibc = "\
         patches/icedtea-jdk-unpack-uclibc.patch \
 	patches/icedtea-hotspot-dlvsym-uclibc.patch \
         "
+DISTRIBUTION_PATCHES_append_e5500-64b = " \
+       patches/icedtea-jdk-sizers-crosscompile-hack.patch \
+       "
 
+DISTRIBUTION_PATCHES_append_e5500 = " \
+       patches/icedtea-jdk-sizers-crosscompile-hack.patch \
+       "
 export DISTRIBUTION_PATCHES
