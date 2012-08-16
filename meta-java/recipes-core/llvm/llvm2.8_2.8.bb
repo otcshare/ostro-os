@@ -16,7 +16,7 @@ SRC_URI_append_arm = " file://llvm-mc_disable.patch "
 
 LLVM_RELEASE = "2.8"
 
-EXTRA_OECMAKE_append-arm = " -DBUILD_SHARED_LIBS:BOOL=OFF "
+EXTRA_OECMAKE_append_arm = " -DBUILD_SHARED_LIBS:BOOL=OFF "
 
 SRC_URI[md5sum] = "220d361b4d17051ff4bb21c64abe05ba"
 SRC_URI[sha256sum] = "25addb742f1c6cc12877ed0ee924dda962d848368ee095be8e48342ae613d43b"
