@@ -4,8 +4,8 @@ LICENSE  = "GPL-2.0-with-classpath-exception"
 PRIORITY = "optional"
 SECTION  = "libs"
 
-# Name of the icedtea tarball and top-level directory.
-ICEDTEA = "NEEDS TO BE SET"
+ICEDTEA_VERSION = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1].split("-")[1] or '1.0'}"
+ICEDTEA = "icedtea6-${ICEDTEA_VERSION}"
 
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
