@@ -1,5 +1,5 @@
 DESCRIPTION = "Lexical analyzer generator for Java"
-LICENSE = "GPL MPL"
+LICENSE = "GPL-2.0 MPL-1.1"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=b8ba559ba419681dbf8280b6721df0af"
 
 BBCLASSEXTEND = "native"
