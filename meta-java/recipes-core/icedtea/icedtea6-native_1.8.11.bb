@@ -4,7 +4,7 @@ require ${PN}.inc
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
-PR = "${INC_PR}.2"
+PR = "${INC_PR}.3"
 
 SRC_URI = "\
 	http://icedtea.classpath.org/download/source/icedtea6-${PV}.tar.gz;name=iced \
@@ -44,6 +44,7 @@ ICEDTEA_PATCHES = "\
         file://icedtea-jdk-sane-x86-arch.patch;apply=no \
         file://icedtea-unbreak-float.patch;apply=no \
         file://icedtea-jdk-avoid-cdef-collision.patch;apply=no \
+	file://icedtea-hotspot-dont-return-booleans.patch;apply=no \
 	"
 
 export DISTRIBUTION_PATCHES = "\
@@ -54,6 +55,7 @@ export DISTRIBUTION_PATCHES = "\
         patches/icedtea-jdk-sane-x86-arch.patch \
 	patches/icedtea-unbreak-float.patch \
         patches/icedtea-jdk-avoid-cdef-collision.patch \
+	patches/icedtea-hotspot-dont-return-booleans.patch \
 	"
 
 EXTRA_OECONF += " --with-jaxws-drop-zip=${DL_DIR}/jdk6-jaxws-2009_10_27.zip \
