@@ -21,7 +21,7 @@ RPROVIDES_${PN} = "${PBN}"
 RPROVIDES_${PN}-common = "${PBN}-common"
 RPROVIDES_${PN}-gtk = "${PBN}-awt"
 
-PR = "r0"
+PR = "r1"
 
 SRC_URI = "${GNU_MIRROR}/classpath/classpath-${PV}.tar.gz"
 
@@ -37,6 +37,7 @@ EXTRA_OECONF = "\
   --with-vm=java \
   --disable-Werror \
   --with-antlr-jar=${STAGING_DATADIR_JAVA_NATIVE}/antlr.jar \
+  --with-gmp=${STAGING_LIBDIR}/.. \
   --disable-alsa \
   --disable-dssi \
   --disable-qt4-peer \
