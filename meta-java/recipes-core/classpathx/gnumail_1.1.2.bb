@@ -1,6 +1,7 @@
 DESCRIPTION = "GNU's free implementation of the JavaMail API specification"
 AUTHOR = "GNU ClasspathX"
-LICENSE = "GPL+libraryexception"
+LICENSE = "GPL-2.0-with-GCC-exception"
+PR = "r1"
 LIC_FILES_CHKSUM = "file://COPYING;md5=14bc6ee8b2e2b409be599212867d126e"
 
 SRC_URI = "http://ftp.gnu.org/gnu/classpathx/mail-${PV}.tar.gz \

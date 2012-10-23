@@ -1,7 +1,9 @@
 DESCRIPTION = "Provides a mean to type data and locate components suitable for performing various kinds of action on it."
 AUTHOR = "GNU ClasspathX"
-LICENSE = "GPL+libraryexception"
+LICENSE = "GPL-2.0-with-GCC-exception"
 LIC_FILES_CHKSUM = "file://COPYING;md5=a916467b91076e631dd8edb7424769c7"
+
+PR = "r1"
 
 SRC_URI = "http://ftp.gnu.org/gnu/classpathx/activation-${PV}.tar.gz \
            file://datadir_java.patch \

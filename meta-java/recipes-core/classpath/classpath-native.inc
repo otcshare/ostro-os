@@ -1,6 +1,6 @@
 DESCRIPTION = "GNU Classpath standard Java libraries - For native Java-dependent programs"
 HOMEPAGE = "http://www.gnu.org/software/classpath/"
-LICENSE = "Classpath"
+LICENSE = "GPL-2.0 & SAX-PD"
 
 DEPENDS = "fastjar-native zip-native"
 
@@ -8,7 +8,7 @@ inherit autotools native gettext
 
 SRC_URI = "${GNU_MIRROR}/classpath/classpath-${PV}.tar.gz"
 
-INC_PR = "r5"
+INC_PR = "r6"
 
 export JAVA="${STAGING_BINDIR_NATIVE}/java-initial"
 export JAVAC="${STAGING_BINDIR_NATIVE}/ecj-initial"

@@ -1,6 +1,9 @@
 DESCRIPTION = "Reference implementation of XNI, the Xerces Native Interface, and also a fully conforming XML Schema processor."
 AUTHOR = "Apache Software Foundation"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
+
+PR = "r1"
+
 LIC_FILES_CHKSUM = " \
                     file://LICENSE;md5=d273d63619c9aeaf15cdaf76422c4f87 \
                     file://LICENSE.DOM-documentation.html;md5=77c27084ca92e9a8efe9314f284acc05 \
