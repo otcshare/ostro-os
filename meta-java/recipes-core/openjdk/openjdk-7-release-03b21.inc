@@ -96,6 +96,7 @@ ICEDTEAPATCHES = "\
 ICEDTEAPATCHES_append_powerpc = " \
 	file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
 	file://icedtea-jdk-ppc64-jvm-cfg.patch;apply=no \
+	file://icedtea-jdk-powerpc-atomic64.patch;apply=no \
         "
 ICEDTEAPATCHES_append_powerpc64 = " \
 	file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
@@ -139,6 +140,7 @@ DISTRIBUTION_PATCHES_append_libc-uclibc = "\
 DISTRIBUTION_PATCHES_append_powerpc = " \
 	patches/icedtea-jdk-nio-use-host-cc.patch \
 	patches/icedtea-jdk-ppc64-jvm-cfg.patch \
+	patches/icedtea-jdk-powerpc-atomic64.patch \
         "
 DISTRIBUTION_PATCHES_append_powerpc64 = " \
 	patches/icedtea-jdk-nio-use-host-cc.patch \
