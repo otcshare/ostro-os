@@ -14,8 +14,9 @@ do_unpackpost() {
 	mkdir -p src
 
 	# Prevent deletion by do_removebinaries.
-	mv src.jar src.zip
-
+	if [ -e src.jar ]; then
+		mv src.jar src.zip
+	fi
 	unzip src.zip -d src
 }
 

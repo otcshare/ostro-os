@@ -25,17 +25,18 @@ do_unpackpost() {
   fi
 
   # Remove crap.
-  rm about.html build.xml
+  rm -f about.html build.xml
   rm -rf META-INF
 
   # Move source into separate subdir.
-  mv org source/
-
+  if [ -d org ]; then
+    mv org source/
+  fi
   # Remove stuff unneeded for the bootstrap compiler.
   rm -rf source/org/eclipse/jdt/internal/compiler/apt
   rm -rf source/org/eclipse/jdt/internal/compiler/tool
   rm -rf source/org/eclipse/jdt/internal/antadapter
-  rm source/org/eclipse/jdt/core/JDTCompilerAdapter.java
+  rm -f source/org/eclipse/jdt/core/JDTCompilerAdapter.java
 
   # Make a copy of the remaining source to get the embedded
   # resources.
