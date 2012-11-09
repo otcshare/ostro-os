@@ -33,7 +33,7 @@ PROVIDES += "${JDKPN} ${PACKAGES}"
 
 DEPENDS = "giflib libpng jpeg cups \
 	   rhino \
-	   freetype libxinerama libxt libxp libxrender libxtst libxi \
+	   freetype libxinerama libxt libxrender libxtst libxi \
 	   alsa-lib libffi llvm2.8 \
            ant-native \
            fastjar-native \
