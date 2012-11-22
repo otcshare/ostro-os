@@ -41,7 +41,7 @@ DEPENDS = " \
            gtk+ glib-2.0 \
            cups fontconfig \
 	   rhino \
-	   libxt libxp libxinerama libxrender libxtst libxi \
+	   libxt libxinerama libxrender libxtst libxi \
 	   freetype alsa-lib libffi llvm2.8 \
           "
 DEPENDS_arm = " \
@@ -51,7 +51,7 @@ DEPENDS_arm = " \
            gtk+ glib-2.0 \
            cups fontconfig \
            rhino \
-           libxt libxp libxinerama libxrender libxtst libxi \
+           libxt libxinerama libxrender libxtst libxi \
            freetype alsa-lib libffi \
           "
 
