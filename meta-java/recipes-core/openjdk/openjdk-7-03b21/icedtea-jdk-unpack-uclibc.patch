@@ -1,0 +1,10 @@
+--- openjdk/jdk/make/com/sun/java/pack/Makefile
++++ openjdk/jdk/make/com/sun/java/pack/Makefile
+@@ -103,6 +103,7 @@ else
+   OTHER_LDLIBS  += -lc $(LIBCXX)
+ # setup the list of libraries to link in...
+ ifeq ($(PLATFORM), linux)
++  OTHER_LDLIBS  += -lpthread
+ ifeq ("$(CC_VER_MAJOR)", "3")
+   OTHER_LDLIBS  += -Wl,-Bstatic -lgcc_eh -Wl,-Bdynamic
+ endif

@@ -1,0 +1,13 @@
+Index: icedtea-2.1/Makefile.am
+===================================================================
+--- icedtea-2.1.orig/Makefile.am
++++ icedtea-2.1/Makefile.am
+@@ -1210,7 +1210,7 @@ endif
+ clean-extract-cacao: clean-cacao
+ 	rm -f stamps/extract-cacao.stamp
+ 
+-stamps/extract-jamvm.stamp:
++stamps/extract-jamvm.stamp: stamps/download-jamvm.stamp
+ if BUILD_JAMVM
+ 	set -e ; \
+ 	if ! test -d jamvm ; \

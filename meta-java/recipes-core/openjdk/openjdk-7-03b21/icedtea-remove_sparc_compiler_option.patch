@@ -1,0 +1,13 @@
+Index: openjdk/jdk/make/common/shared/Compiler-gcc.gmk
+===================================================================
+--- openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2012-05-26 14:43:49.342875981 +0200
++++ openjdk/jdk/make/common/shared/Compiler-gcc.gmk	2012-05-26 15:21:25.514903711 +0200
+@@ -133,7 +133,7 @@
+     REQUIRED_GCC_VER = 4.0.*
+   endif
+   # Option used to create a shared library
+-  SHARED_LIBRARY_FLAG = -shared -mimpure-text
++  SHARED_LIBRARY_FLAG = -shared
+   SUN_COMP_VER := $(shell $(CC) --verbose 2>&1 )
+ 
+ endif
