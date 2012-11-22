@@ -1,0 +1,36 @@
+diff --git openjdk/hotspot/make/linux/makefiles/zeroshark.make b/hotspot/make/linux/makefiles/zeroshark.make
+index 4cf1826..4c0105b 100644
+--- openjdk/hotspot/make/linux/makefiles/zeroshark.make
++++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
+@@ -32,26 +32,27 @@ Obj_Files += cppInterpreter_arm.o
+ Obj_Files += thumb2.o
+ 
+ CFLAGS += -DHOTSPOT_ASM
++CCFLAGS += -DHOTSPOT_ASM
+ 
+ cppInterpreter_arm.o:	offsets_arm.s bytecodes_arm.s
+ thumb2.o:		offsets_arm.s
+ 
+ offsets_arm.s:	mkoffsets
+ 	@echo Generating assembler offsets
+-	./mkoffsets > $@
++	$(QEMU) ./mkoffsets > $@
+ 
+ bytecodes_arm.s: bytecodes_arm.def mkbc
+ 	@echo Generatine ARM assembler bytecode sequences
+-	$(CC_COMPILE) -E -x c++ - < $< | ./mkbc - $@ $(COMPILE_DONE)
++	$(CC_COMPILE) -E -x c++ - < $< | $(QEMU) ./mkbc - $@ $(COMPILE_DONE)
+ 
+ mkbc:	$(GAMMADIR)/tools/mkbc.c
+ 	@echo Compiling mkbc tool
+-	$(CC_COMPILE) -o $@ $< $(COMPILE_DONE)
++	$(CC_COMPILE) -static -o $@ $< $(COMPILE_DONE)
+ 
+ mkoffsets:	asm_helper.cpp
+ 	@echo Compiling offset generator
+ 	$(QUIETLY) $(REMOVE_TARGET)
+-	$(CC_COMPILE) -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
++	$(CC_COMPILE) -static -DSTATIC_OFFSETS -o $@ $< $(COMPILE_DONE)
+ 
+ endif
+ 

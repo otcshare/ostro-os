@@ -1,0 +1,31 @@
+diff --git openjdk/corba/make/Makefile openjdk/corba/make/Makefile
+index aef5c1b..62e2216 100644
+--- openjdk/corba/make/Makefile
++++ openjdk/corba/make/Makefile
+@@ -134,7 +134,7 @@ default: all
+ #----- classes.jar
+ 
+ CLASSES_JAR = $(LIB_DIR)/classes.jar
+-$(CLASSES_JAR):
++$(CLASSES_JAR): build
+ 	$(MKDIR) -p $(@D)
+ 	$(BOOT_JAR_CMD) -cf $@ -C $(CLASSES_DIR) .
+ 
+@@ -144,6 +144,7 @@ SRC_ZIP_FILES = $(shell $(FIND) $(SRC_CLASSES_DIR) \( -name \*-template \) -prun
+ 
+ SRC_ZIP = $(LIB_DIR)/src.zip
+ $(SRC_ZIP): $(SRC_ZIP_FILES)
++	$(MKDIR) -p $(@D)
+ 	abs_src_zip=`cd $(@D) ; pwd`/$(@F) ; \
+ 	( cd $(SRC_CLASSES_DIR) ; $(FIND) . \( -name \*-template \) -prune -o -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ; \
+ 	( cd $(GENSRC_DIR) ; $(FIND) . -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ;
+@@ -153,7 +154,8 @@ $(SRC_ZIP): $(SRC_ZIP_FILES)
+ BIN_ZIP_FILES = $(BUILD_DIR/lib/orb.idl $(BUILD_DIR)/lib/ir.idl
+ 
+ BIN_ZIP = $(LIB_DIR)/bin.zip
+-$(BIN_ZIP): $(BIN_ZIP_FILES)
++$(BIN_ZIP): build $(BIN_ZIP_FILES)
++	$(MKDIR) -p $(@D)
+ 	abs_bin_zip=`cd $(@D) ; pwd`/$(@F) ; \
+ 	( cd $(BUILD_DIR) ; $(FIND) lib -name "*.idl" -print | $(ZIP) -q $$abs_bin_zip -@ ) ;
+ 

@@ -1,0 +1,13 @@
+Index: icedtea-2.1/Makefile.am
+===================================================================
+--- icedtea-2.1.orig/Makefile.am
++++ icedtea-2.1/Makefile.am
+@@ -18,7 +18,7 @@ JAXP_SHA256SUM = 8ce48c704f38285207ee6dc
+ JAXWS_SHA256SUM = 823ca6b8fd780bf1b1565a90cfc8ec6f0ee422a5d25ffb20b1ce0272dc4955aa
+ JDK_SHA256SUM = 5f8b5edbebb358730425e64a31eaa11c346467ba10ffe1848f2d2ad2ea53bc3d
+ LANGTOOLS_SHA256SUM = c77dd42d83f06d18fa8aa65c93d137608a2e02cf24b68fc10d7b1c0bcc12a93c
+-OPENJDK_SHA256SUM = ada790b4754f521ebfad0dd909ea29b92b2b3c1b84b2e99d32673343727d95d7
++OPENJDK_SHA256SUM = 758227833982371e3a94def84226a947f8dbbd176517f313b8cb96840bdea41e
+ 
+ CACAO_VERSION = a567bcb7f589
+ CACAO_SHA256SUM = d49f79debc131a5694cae6ab3ba2864e7f3249ee8d9dc09aae8afdd4dc6b09f9
