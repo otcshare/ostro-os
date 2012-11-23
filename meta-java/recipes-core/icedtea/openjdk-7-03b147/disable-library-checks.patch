@@ -1,8 +1,8 @@
-Index: icedtea-2.1/configure.ac
+Index: icedtea-2.1.3/configure.ac
 ===================================================================
---- icedtea-2.1.orig/configure.ac
-+++ icedtea-2.1/configure.ac
-@@ -171,71 +171,19 @@ IT_CHECK_FOR_LCMS
+--- icedtea-2.1.3.orig/configure.ac	2012-10-17 10:18:59.262849964 +0200
++++ icedtea-2.1.3/configure.ac	2012-11-23 09:39:02.244405345 +0100
+@@ -171,7 +171,6 @@
  IT_CHECK_FOR_GTK
  IT_CHECK_FOR_GIO
  IT_CHECK_FOR_FONTCONFIG
@@ -10,45 +10,7 @@ Index: icedtea-2.1/configure.ac
  IT_CHECK_FOR_SYSCALLS
  AC_CONFIG_FILES([remove-intree-libraries.sh])
  
--dnl Check for Xproto headers and libraries.
--PKG_CHECK_MODULES(XPROTO, xproto,[XPROTO_FOUND=yes],[XPROTO_FOUND=no])
--if test "x${XPROTO_FOUND}" = xno
--then
--  AC_MSG_ERROR([Could not find Xproto headers - \
--  Try installing xorg-x11-proto-devel.])
--fi
--AC_SUBST(XT_CFLAGS)
--AC_SUBST(XT_LIBS)
--
--dnl Check for libXt headers and libraries.
--PKG_CHECK_MODULES(XT, xt,[XT_FOUND=yes],[XT_FOUND=no])
--if test "x${XT_FOUND}" = xno
--then
--  AC_MSG_ERROR([Could not find Xt - \
--  Try installing libXt-devel.])
--fi
--AC_SUBST(XT_CFLAGS)
--AC_SUBST(XT_LIBS)
--
--dnl Check for libXp headers and libraries.
--PKG_CHECK_MODULES(XP, xp,[XP_FOUND=yes],[XP_FOUND=no])
--if test "x${XP_FOUND}" = xno
--then
--  AC_MSG_ERROR([Could not find Xp - \
--  Try installing libXp-devel.])
--fi
--AC_SUBST(XP_CFLAGS)
--AC_SUBST(XP_LIBS)
--
- dnl Check for libX11 headers and libraries.
- PKG_CHECK_MODULES(X11, x11,[X11_FOUND=yes],[X11_FOUND=no])
- if test "x${X11_FOUND}" = xno
- then
--  AC_MSG_ERROR([Could not find x11 - \
--  Try installing libX11-devel.])
-+   AC_MSG_ERROR([Could not find x11 - \
-+   Try installing libX11-devel.])
- fi
+@@ -205,17 +204,6 @@
  AC_SUBST(X11_CFLAGS)
  AC_SUBST(X11_LIBS)
  
@@ -63,20 +25,10 @@ Index: icedtea-2.1/configure.ac
 -AC_SUBST(XINERAMA_CFLAGS)
 -AC_SUBST(XINERAMA_LIBS)
 -
--if test "x${ENABLE_XRENDER}" = "xyes"
--then
--  PKG_CHECK_MODULES(XRENDER, xrender, [XRENDER_FOUND=yes], [XRENDER_FOUND=no])
--  if test "x${XRENDER_FOUND}" = xno
--  then
--    AC_MSG_ERROR([Could not find Xrender extension - \
--Try installing libXrender-devel or configure --disable-xrender.])
--  fi
--fi
--
- if test "x${ENABLE_SYSTEMTAP}" = xyes; then
- AC_CHECK_HEADER([sys/sdt.h], [SDT_H_FOUND='yes'],
-                 [SDT_H_FOUND='no';
-@@ -297,16 +245,6 @@ public:
+ if test "x${ENABLE_XRENDER}" = "xyes"
+ then
+   PKG_CHECK_MODULES(XRENDER, xrender, [XRENDER_FOUND=yes], [XRENDER_FOUND=no])
+@@ -287,16 +275,6 @@
    AC_CONFIG_FILES([tapset/jstack.stp])
  fi
  
@@ -93,7 +45,7 @@ Index: icedtea-2.1/configure.ac
  dnl Check for freetype2 headers and libraries.
  PKG_CHECK_MODULES(FREETYPE2, freetype2,[FREETYPE2_FOUND=yes]
  	,[FREETYPE2_FOUND=no])
-@@ -318,19 +256,6 @@ fi
+@@ -308,19 +286,6 @@
  AC_SUBST(FREETYPE2_CFLAGS)
  AC_SUBST(FREETYPE2_LIBS)
  
