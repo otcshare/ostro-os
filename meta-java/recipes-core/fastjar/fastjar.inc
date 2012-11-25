@@ -19,4 +19,9 @@ ALTERNATIVE_NAME = "jar"
 ALTERNATIVE_LINK = "${bindir}/jar"
 ALTERNATIVE_PATH = "${bindir}/fastjar"
 
+# update-aternatives does not work for native class
+do_install_append_class-native () {
+	ln -s fastjar ${D}${bindir}/jar
+}
+
 BBCLASSEXTEND = "native"
