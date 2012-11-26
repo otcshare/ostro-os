@@ -10,7 +10,7 @@ ICEDTEA = "NEEDS TO BE SET"
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
 
-INC_PR = "r2"
+INC_PR = "r3"
 
 SRC_URI = " \
   ${ICEDTEA_URI} \
@@ -139,6 +139,7 @@ EXTRA_OECONF = " \
 	--with-jaxws-src-zip=${WORKDIR}/${JAXWS_FILE} \
 	--with-jdk-src-zip=${WORKDIR}/${JDK_FILE} \
 	--with-langtools-src-zip=${WORKDIR}/${LANGTOOLS_FILE} \
+        ${WITH_ADDITIONAL_VMS} \
 	--with-cacao-src-zip=${WORKDIR}/${CACAO_FILE} \
 	--with-jamvm-src-zip=${WORKDIR}/${JAMVM_FILE} \
 	\
