@@ -89,9 +89,10 @@ export CACAO_CONFIGURE_ARGS = " \
 
 JAVA_HOME[unexport] = "1"
 
-WITH_ADDITIONAL_VMS ?= "--with-additional-vms=shark,cacao,jamvm"
+# disable shark until it is fully working again
+# WITH_ADDITIONAL_VMS ?= "--with-additional-vms=shark,cacao,jamvm"
 
-WITH_ADDITIONAL_VMS_arm = "--with-additional-vms=cacao,jamvm"
+WITH_ADDITIONAL_VMS ?= "--with-additional-vms=cacao,jamvm"
 
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
