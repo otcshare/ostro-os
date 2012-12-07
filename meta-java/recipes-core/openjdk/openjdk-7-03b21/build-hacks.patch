@@ -59,7 +59,7 @@ Index: icedtea-2.1/Makefile.am
  CONFIGURE_ARGS = @CONFIGURE_ARGS@
  ADD_ZERO_CONFIGURE_ARGS = \
 -	--with-jdk-home=$(BUILD_OUTPUT_DIR)/j2sdk-image \
-+	--with-jdk-home=$(abs_top_builddir)/bootstrap/jdk7.6.0 \
++	--with-jdk-home=$(abs_top_builddir)/bootstrap/jdk1.6.0 \
  	--disable-bootstrap --enable-zero
  if ADD_SHARK_BUILD
  ADD_ZERO_CONFIGURE_ARGS += \
