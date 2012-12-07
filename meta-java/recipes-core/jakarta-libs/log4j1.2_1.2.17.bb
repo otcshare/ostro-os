@@ -1,9 +1,9 @@
 DESCRIPTION = "Java library to help the programmer output log statements to a variety of output targets"
 AUTHOR = "Apache Software Foundation"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=f4ce41a6d1028498fcacde12f589bce7"
 
-PR = "r1"
+PR = "r2"
 
 SRC_URI = "http://archive.apache.org/dist/logging/log4j/${PV}/log4j-${PV}.tar.gz"
 
