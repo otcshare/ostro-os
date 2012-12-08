@@ -1,18 +1,18 @@
 DESCRIPTION = "Lexical analyzer generator for Java"
-LICENSE = "GPL-2.0 MPL-1.1"
-LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=b8ba559ba419681dbf8280b6721df0af"
+LICENSE = "MPL-2.0"
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=8e2372bdbf22c99279ae4599a13cc458"
 
 BBCLASSEXTEND = "native"
 
 inherit java-library
 
 SRC_URI = "\
-	ftp://ftp.mozilla.org/pub/mozilla.org/js/rhino1_7R2.zip \
+	https://github.com/downloads/mozilla/rhino/rhino1_7R4.zip \
 	file://rhino \
 	file://rhino-jsc \
 	"
 
-S = "${WORKDIR}/rhino1_7R2"
+S = "${WORKDIR}/rhino1_7R4"
 
 PACKAGES = "${JPN} rhino"
 
@@ -21,18 +21,18 @@ RDEPENDS_${PN} = "java2-runtime ${JPN}"
 RDEPENDS_${PN}_virtclass-native = ""
 
 do_compile() {
-  mkdir -p build
+	mkdir -p build
 
 	# Compatibility fix for jamvm which has non-genericised
-  # java.lang classes. :(
+	# java.lang classes. :(
 	bcp_arg="-bootclasspath ${STAGING_DATADIR_NATIVE}/classpath/glibj.zip"
 
-  javac $bcp_arg -source 1.5 -sourcepath src -d build `find src -name "*.java"`
+	javac $bcp_arg -source 1.6 -sourcepath src -d build `find src -name "*.java"`
 
 	mkdir -p build/org/mozilla/javascript/resources
 	cp src/org/mozilla/javascript/resources/*.properties build/org/mozilla/javascript/resources
 
-  fastjar -m ${S}/src/manifest -C build -c -f ${JARFILENAME} .
+	fastjar -m ${S}/src/manifest -C build -c -f ${JARFILENAME} .
 }
 
 do_install_append() {
@@ -42,5 +42,5 @@ do_install_append() {
 	install -m 0755 ${WORKDIR}/rhino-jsc ${D}${bindir}
 }
 
-SRC_URI[md5sum] = "40d0a9abec8169e42920214b37fa8e0e"
-SRC_URI[sha256sum] = "677f7dc1b67a1587bc03974d5f0720474a56b8f29835e1d860739908df8462dc"
+SRC_URI[md5sum] = "ad67a3dff135e3a70f0c3528a2d6edf2"
+SRC_URI[sha256sum] = "9eb08f85bbe7c8e0b9eaffb1cf4984b31fb679f3c8a682acc3bb8ac20626c61e"
