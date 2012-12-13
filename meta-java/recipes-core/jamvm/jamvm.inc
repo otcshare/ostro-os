@@ -47,4 +47,7 @@ FILES_${PN} += "${libdir}/jamvm/lib*.so"
 ALTERNATIVE_NAME = "java"
 ALTERNATIVE_PATH = "${bindir}/jamvm"
 ALTERNATIVE_PRIORITY = "4"
+# shared state for jamvm-native does not work
+# since the paths are hardcoded
+SSTATE_MIRRORS_class-native = ""
 
