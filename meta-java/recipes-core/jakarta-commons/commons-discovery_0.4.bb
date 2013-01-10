@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "discovering, or finding, implementations for pluggable interfaces"
 
 SRC_URI = "http://archive.apache.org/dist/commons/discovery/source/${BP}-src.tar.gz"

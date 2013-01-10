@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "Robust, high-performance, file upload capability for Java servlets and web applications"
 
 SRC_URI = "http://archive.apache.org/dist/commons/fileupload/source/${BP}-src.tar.gz"

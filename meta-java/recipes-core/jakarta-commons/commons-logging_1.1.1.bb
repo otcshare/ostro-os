@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "Java Internet protocol suite library"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=d273d63619c9aeaf15cdaf76422c4f87"
 

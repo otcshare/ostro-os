@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "Converts XML to a Java object by a set of mapping rules."
 
 SRC_URI = "http://archive.apache.org/dist/commons/digester/source/${BP}-src.tar.gz"
