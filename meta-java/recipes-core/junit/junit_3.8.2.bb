@@ -1,8 +1,9 @@
 DESCRIPTION = "JUnit is a testing framework for Java"
 AUTHOR = "junit.org"
 HOMEPAGE = "http://www.junit.org"
-LICENSE = "CPL"
+LICENSE = "CPL-1.0"
 LIC_FILES_CHKSUM = "file://cpl-v10.html;md5=67a4b75d42edcbd82d2878eba913691b"
+PR = "r1"
 
 SRC_URI = "http://downloads.sourceforge.net/junit/junit${PV}.zip"
 
