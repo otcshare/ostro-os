@@ -5,7 +5,7 @@ require classpath-native.inc
 
 DESCRIPTION="Java1.4-compatible GNU Classpath variant that is used as bootclasspath for jikes-native."
 LIC_FILES_CHKSUM = "file://COPYING;md5=af0004801732bc4b20d90f351cf80510"
-DEPENDS += "jikes-native" 
+DEPENDS += "jikes-native"
 
 PR = "${INC_PR}.0"
 
