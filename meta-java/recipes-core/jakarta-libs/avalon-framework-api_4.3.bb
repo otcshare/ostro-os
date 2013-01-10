@@ -1,7 +1,8 @@
 DESCRIPTION = "Common way for components to be created, initialized, configured, started. (API-only)"
 AUTHOR = "Apache Software Foundation"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=1dece7821bf3fd70fe1309eaa37d52a2"
+PR = "r1"
 
 SRC_URI = " \
 	   http://archive.apache.org/dist/excalibur/avalon-framework/source/${BP}-src.tar.gz;name=archive \
