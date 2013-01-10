@@ -1,7 +1,8 @@
 DESCRIPTION = "Perl5-compatible regular expressions library for Java"
 AUTHOR = "Apache Software Foundation"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=372b1e91335021ca74173b2ab4dc97dd"
+PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/jakarta/oro/source/jakarta-${BP}.tar.gz"
 
