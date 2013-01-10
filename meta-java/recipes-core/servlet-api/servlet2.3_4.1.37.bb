@@ -1,7 +1,8 @@
 DESCRIPTION = "Servlet API 2.3 (from Tomcat 4.1)"
 AUTHOR = "Apache Software Foundation"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
+PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/tomcat/tomcat-4/v${PV}/src/apache-tomcat-${PV}-src.tar.gz"
 
