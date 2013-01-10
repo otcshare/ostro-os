@@ -1,5 +1,7 @@
-LICENSE = "AL2.0"
 AUTHOR = "Apache Software Foundation"
+LICENSE = "Apache-2.0"
+
+INC_PR = "r0"
 
 inherit java-library
 

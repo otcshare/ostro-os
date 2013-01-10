@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "Java argument parsing helper classes"
 
 SRC_URI = "http://archive.apache.org/dist/commons/cli/source/${BP}-src.tar.gz"

@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "Generic configuration interface for Java applications"
 
 SRC_URI = " \

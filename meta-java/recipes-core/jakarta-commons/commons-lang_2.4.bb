@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+PR = "${INC_PR}.1"
+
 DESCRIPTION = "Set of Java classes that provide helper methods for the standard java.lang classes"
 
 SRC_URI = "http://archive.apache.org/dist/commons/lang/source/${BP}-src.tar.gz"
