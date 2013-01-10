@@ -1,8 +1,9 @@
 DESCRIPTION = "Another Neat Tool - build system for Java"
 AUTHOR = "Apache Software Foundation"
 HOMEPAGE = "http://ant.apache.org"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=503bb72c4dd62dd216d6820d5b869442"
+PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/ant/source/apache-ant-${PV}-src.tar.gz \
 	   file://ant \
