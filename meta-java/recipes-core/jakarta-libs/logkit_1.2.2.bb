@@ -1,7 +1,8 @@
 DESCRIPTION = "Logging toolkit designed for secure performance orientated logging in Java applications"
 AUTHOR = "Apache Software Foundation"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=f1a1c8e1996e51c4dbc73e592a2ecf05"
+PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/avalon/logkit/source/${BP}-src.tar.gz"
 
