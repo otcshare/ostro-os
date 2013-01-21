@@ -73,7 +73,6 @@ ICEDTEA_PATCHES = " \
 	file://fix-checksums.patch \
         "
 
-
 OPENJDK_PATCHES = " \
         file://icedtea-ecj-disable-compilation.patch;apply=no \
 	file://icedtea-unbreak-float.patch;apply=no \
@@ -83,9 +82,6 @@ OPENJDK_PATCHES = " \
 	file://icedtea-flags.patch;apply=no \
         "
 
-#	file://icedtea-disable-desktop-dirs.patch;apply=no \
-
-
 export DISTRIBUTION_PATCHES = " \
         patches/icedtea-ecj-disable-compilation.patch \
 	patches/icedtea-unbreak-float.patch \
@@ -94,6 +90,3 @@ export DISTRIBUTION_PATCHES = " \
         patches/icedtea-jdk-sane-x86-arch.patch \
 	patches/icedtea-flags.patch \
         "
-
-#	patches/icedtea-disable-desktop-dirs.patch \
-
