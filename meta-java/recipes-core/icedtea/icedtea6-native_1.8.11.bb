@@ -2,6 +2,8 @@
 # is unable to compile itself yet (some issue with the built-in XML parser).
 require ${PN}.inc
 
+FILESPATH =. "${FILE_DIRNAME}/icedtea6-native-${PV}:"
+
 LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
 PR = "${INC_PR}.3"
