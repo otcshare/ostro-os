@@ -79,6 +79,7 @@ OEPATCHES = "\
 	file://fix-checksums.patch \
 	file://jamvm-extract.patch \
 	file://cacao-loadavg.patch;apply=no \
+        file://cacao-arm-ucontext.patch;apply=no \
 	"
 
 # Allow overriding this separately
