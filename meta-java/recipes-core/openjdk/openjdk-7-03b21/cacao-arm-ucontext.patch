@@ -1,0 +1,24 @@
+Index: cacao-a567bcb7f589/src/vm/jit/arm/linux/md-os.c
+===================================================================
+--- cacao-a567bcb7f589/src/vm/jit/arm/linux/md-os.c	2013-01-26 21:30:54.206581090 +0100
++++ cacao-a567bcb7f589/src/vm/jit/arm/linux/md-os.c	2013-01-26 21:31:34.406991316 +0100
+@@ -28,19 +28,7 @@
+ 
+ #include <stdint.h>
+ 
+-#define ucontext broken_glibc_ucontext
+-#define ucontext_t broken_glibc_ucontext_t
+ #include <ucontext.h>
+-#undef ucontext
+-#undef ucontext_t
+-
+-typedef struct ucontext {
+-   unsigned long     uc_flags;
+-   struct ucontext  *uc_link;
+-   stack_t           uc_stack;
+-   struct sigcontext uc_mcontext;
+-   sigset_t          uc_sigmask;
+-} ucontext_t;
+ 
+ #define scontext_t struct sigcontext
+ 
