@@ -42,17 +42,7 @@ DEPENDS = " \
            cups fontconfig \
 	   rhino \
 	   libxt libxinerama libxrender libxtst libxi \
-	   freetype alsa-lib libffi llvm2.8 \
-          "
-DEPENDS_arm = " \
-           icedtea7-native zip-native ant-native \
-           zlib \
-           jpeg libpng giflib \
-           gtk+ glib-2.0 \
-           cups fontconfig \
-           rhino \
-           libxt libxinerama libxrender libxtst libxi \
-           freetype alsa-lib libffi \
+	   freetype alsa-lib libffi \
           "
 
 DEPENDS_append_libc-uclibc = " virtual/libiconv "
