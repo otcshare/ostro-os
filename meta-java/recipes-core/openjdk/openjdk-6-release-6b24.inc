@@ -68,6 +68,7 @@ OEPATCHES = "\
 	file://cacao-loadavg-makefile.patch \
 	file://fix_hotspot_crosscompile.patch \
 	file://cacao-loadavg.patch;apply=no \
+	file://cacao-arm-ucontext.patch;apply=no \
 	"
 
 # Allow overriding this separately
