@@ -2,8 +2,6 @@ require openjdk-7-release-03b21.inc
 
 PR = "${INC_PR}.0"
 
-ICEDTEA = "icedtea-2.1.6"
-
 SRC_URI[iced.md5sum] = "f1118898beda7f94ce1731b78e9d2890"
 SRC_URI[iced.sha256sum] = "e6a65923acb29b87b9f8492adc6f00152b489441e788b64e2869301cc7fa29ba"
 
