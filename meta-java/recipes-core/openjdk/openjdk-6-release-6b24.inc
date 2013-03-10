@@ -32,31 +32,31 @@ ICEDTEA_URI = "http://icedtea.classpath.org/download/source/${ICEDTEA}.tar.gz;na
 
 OPENJDK_VERSION = "b24"
 OPENJDK_DATE = "14_nov_2011"
-OPENJDK_URI = "http://download.java.net/openjdk/jdk6/promoted/${OPENJDK_VERSION}/openjdk-6-src-${OPENJDK_VERSION}-${OPENJDK_DATE}.tar.gz;subdir=openjdk-src-dir;name=openjdk"
+OPENJDK_URI = "http://download.java.net/openjdk/jdk6/promoted/${OPENJDK_VERSION}/openjdk-6-src-${OPENJDK_VERSION}-${OPENJDK_DATE}.tar.gz;subdir=openjdk-src-dir;name=openjdk;unpack=false"
 SRC_URI[openjdk.md5sum] = "0eabdd360169144336e50081b8d01001"
 SRC_URI[openjdk.sha256sum] = "f84e7f0938f4939660ff8f9c2aa164d301faa8a519f2324ceb05ad34b2e09227"
 
 JAXWS_FILE = "jdk6-jaxws2_1_6-2011_06_13.zip"
-JAXWS_URI = "http://icedtea.classpath.org/download/drops/${JAXWS_FILE};name=jaxws"
+JAXWS_URI = "http://icedtea.classpath.org/download/drops/${JAXWS_FILE};name=jaxws;unpack=false"
 SRC_URI[jaxws.md5sum] = "8fd91b09b643a19a912b8a75e7a7a9d5"
 SRC_URI[jaxws.sha256sum] = "229040544e791f44906e8e7b6f6faf503c730a5d854275135f3925490d5c3be3"
 
 JAF_FILE = "jdk6-jaf-b20.zip"
-JAF_URI = "http://icedtea.classpath.org/download/drops/${JAF_FILE};name=jaf"
+JAF_URI = "http://icedtea.classpath.org/download/drops/${JAF_FILE};name=jaf;unpack=false"
 SRC_URI[jaf.md5sum] = "bc95c133620bd68c161cac9891592901"
 SRC_URI[jaf.sha256sum] = "78c7b5c9d6271e88ee46abadd018a61f1e9645f8936cc8df1617e5f4f5074012"
 
 JAXP_FILE = "jaxp144_03.zip"
-JAXP_URI = "http://icedtea.classpath.org/download/drops/${JAXP_FILE};name=jaxp"
+JAXP_URI = "http://icedtea.classpath.org/download/drops/${JAXP_FILE};name=jaxp;unpack=false"
 SRC_URI[jaxp.md5sum] = "9eea471ad474040265c688858fcf09aa"
 SRC_URI[jaxp.sha256sum] = "c1a5348e17b330a7e4b18431e61a40efd2ba99a7da71102cf2c604478ef96012"
 
-CACAO_URI = "http://icedtea.classpath.org/download/drops/cacao/${CACAO_VERSION}.tar.gz;name=cacao"
+CACAO_URI = "http://icedtea.classpath.org/download/drops/cacao/${CACAO_VERSION}.tar.gz;name=cacao;unpack=false"
 CACAO_VERSION = "cff92704c4e0"
 SRC_URI[cacao.md5sum] = "40b811b8b7f01b51cd21e62255691bc7"
 SRC_URI[cacao.sha256sum] = "dc768c9d097fb056ad34fc6d5a57e8fd4f3b24bf515be92acc5ee4208160eb3f"
 
-JAMVM_URI = "http://icedtea.classpath.org/download/drops/jamvm/jamvm-${JAMVM_VERSION}.tar.gz;name=jamvm"
+JAMVM_URI = "http://icedtea.classpath.org/download/drops/jamvm/jamvm-${JAMVM_VERSION}.tar.gz;name=jamvm;unpack=false"
 JAMVM_VERSION = "4617da717ecb05654ea5bb9572338061106a414d"
 SRC_URI[jamvm.md5sum] = "740c2587502831cac6797d1233a7e27b"
 SRC_URI[jamvm.sha256sum] = "47fce7bd556c1b1d29a93b8c45497e0d872b48b7f535066b303336f29d0f0d8d"
