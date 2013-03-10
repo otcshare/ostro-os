@@ -14,7 +14,9 @@ PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
 PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
 
 For openjdk6:
-PREFERRED_VERSION_openjdk-6-jre = "6b24-1.11.8"
+PREFERRED_VERSION_openjdk-6-jre = "6b24-1.11.9"
+or
+PREFERRED_VERSION_openjdk-6-jre = "6b27-1.12.4"
 PREFERRED_VERSION_icedtea6-native = "1.8.11"
 
 For openjdk7:
