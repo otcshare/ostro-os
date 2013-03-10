@@ -2,8 +2,8 @@ require openjdk-6-release-6b24.inc
 
 PR = "${INC_PR}.0"
 
-SRC_URI[iced.md5sum] = "3dd02bc93e7f1cd7d59c0aef20f6c9f7"
-SRC_URI[iced.sha256sum] = "62620b5544d5e1df7508d7c777fb78532c75eec43b99c8c7d1a3c84f352c1ea3"
+SRC_URI[iced.md5sum] = "1826c4bfb4faae1e820dd8997428a831"
+SRC_URI[iced.sha256sum] = "0c134bea8d48c77ad5d41d4a0f98f471c381faaa0ef0c215d48687e709e93f3f"
 
 ICEDTEAPATCHES += "file://icedtea-jdk-rmi-crosscompile.patch;apply=no"
 
