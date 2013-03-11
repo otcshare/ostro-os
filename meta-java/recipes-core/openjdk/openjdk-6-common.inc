@@ -369,6 +369,8 @@ FILES_${JDKPN}-dbg = "\
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/native_threads/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/server/.debug \
         ${JDK_HOME}/jre/lib/${JDK_ARCH}/shark/.debug \
+        ${JDK_HOME}/jre/lib/${JDK_ARCH}/cacao/.debug \
+        ${JDK_HOME}/jre/lib/${JDK_ARCH}/jamvm/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/headless/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/xawt/.debug \
        "
