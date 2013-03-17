@@ -9,7 +9,7 @@ PBN = "classpath"
 
 inherit autotools java gettext
 
-DEPENDS = "virtual/javac-native fastjar-native zip-native gmp antlr-native gtk+ gconf libxtst"
+DEPENDS = "virtual/javac-native fastjar-native zip-native gmp antlr-native gtk+ gconf libxtst file"
 
 RPROVIDES_${PN} = ""
 
@@ -21,7 +21,7 @@ RPROVIDES_${PN} = "${PBN}"
 RPROVIDES_${PN}-common = "${PBN}-common"
 RPROVIDES_${PN}-gtk = "${PBN}-awt"
 
-PR = "r2"
+PR = "r3"
 
 SRC_URI = "${GNU_MIRROR}/classpath/classpath-${PV}.tar.gz"
 
