@@ -12,8 +12,7 @@ inherit java-library autotools
 
 S = "${WORKDIR}/mail-${PV}"
 
-DEPENDS = "gnujaf inetlib"
-DEPENDS_virtclass-native = "gnujaf-native inetlib-native"
+DEPENDS += "gnujaf inetlib"
 
 export JAVAC = "${STAGING_BINDIR_NATIVE}/javac"
 export JAVA = "${STAGING_BINDIR_NATIVE}/java"
