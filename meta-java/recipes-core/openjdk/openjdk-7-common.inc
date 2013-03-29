@@ -175,7 +175,7 @@ def get_llvm_configure_arch(d):
     elif arch == "powerpc" or arch == "powerpc64":
         arch = "powerpc"
     else:
-        bb.error("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
+        bb.warn("%s does not support %s yet" % (bb.data.getVar('PN', d, 1), arch) );
 
     return arch
 
