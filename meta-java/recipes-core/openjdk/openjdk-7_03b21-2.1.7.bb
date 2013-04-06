@@ -2,8 +2,8 @@ require openjdk-7-release-03b21.inc
 
 PR = "${INC_PR}.0"
 
-SRC_URI[iced.md5sum] = "f1118898beda7f94ce1731b78e9d2890"
-SRC_URI[iced.sha256sum] = "e6a65923acb29b87b9f8492adc6f00152b489441e788b64e2869301cc7fa29ba"
+SRC_URI[iced.md5sum] = "07803e0bd726c48bf4fbdb2f5406493b"
+SRC_URI[iced.sha256sum] = "e23d7715b9b27635f721414614be4bc5e52d32fb9739bc2e5dd1abcd8183dbee"
 
 HOTSPOT_CHANGESET = "d8b22e079abe"
 SRC_URI[hotspot.md5sum] = "378a2933f0484c2d460ecc7c1bed5a09"
@@ -21,9 +21,9 @@ JAXWS_CHANGESET = "52bbe659af64"
 SRC_URI[jaxws.md5sum] = "785f18b5b50bf6c6d761b2ccb45d52e6"
 SRC_URI[jaxws.sha256sum] = "d8acabf54c1a4fe02e45ac4bdfe1ff9f3e7a3abc12884fcacd580bce9063a7c5"
 
-JDK_CHANGESET = "78fbbfe20edb"
-SRC_URI[jdk.md5sum] = "fded1abb32ea304b63636b452b4e3340"
-SRC_URI[jdk.sha256sum] = "7eeee7d8479f97ab0eb66be3845224b8b4073de8829ed819175faf9ca2f3b5ca"
+JDK_CHANGESET = "2989f7467d83"
+SRC_URI[jdk.md5sum] = "049c1798d8c5542a6c9de87be7cb8020"
+SRC_URI[jdk.sha256sum] = "77471cc8744c6ec842ee158408a400db0f566f19ac978580c76d7af8ef24e154"
 
 LANGTOOLS_CHANGESET = "ac6983a8bd4a"
 SRC_URI[langtools.md5sum] = "d333560b41d639829dc8e4e06084dee5"
