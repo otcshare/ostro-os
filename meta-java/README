@@ -20,7 +20,7 @@ PREFERRED_VERSION_openjdk-6-jre = "6b27-1.12.4"
 PREFERRED_VERSION_icedtea6-native = "1.8.11"
 
 For openjdk7:
-PREFERRED_VERSION_openjdk-7-jre = "03b21-2.1.6"
+PREFERRED_VERSION_openjdk-7-jre = "03b21-2.1.7"
 PREFERRED_VERSION_icedtea7-native = "2.1.3"
 
 Sometimes the following is needed:
