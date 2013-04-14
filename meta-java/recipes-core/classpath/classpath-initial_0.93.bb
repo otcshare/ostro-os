@@ -7,7 +7,7 @@ DESCRIPTION="Java1.4-compatible GNU Classpath variant that is used as bootclassp
 LIC_FILES_CHKSUM = "file://COPYING;md5=af0004801732bc4b20d90f351cf80510"
 DEPENDS += "jikes-native"
 
-PR = "${INC_PR}.1"
+PR = "${INC_PR}.2"
 
 SRC_URI += " \
 	    file://autotools.patch \
@@ -26,7 +26,6 @@ EXTRA_OECONF = " \
                 --disable-plugin \
                 --disable-dssi \
                 --disable-examples \
-                --disable-tools \
                 --with-glibj-dir=${STAGING_DATADIR_NATIVE}/classpath-initial \
                 --with-native-libdir=${STAGING_LIBDIR_NATIVE}/classpath-initial \
                 --includedir=${STAGING_INCDIR_NATIVE}/classpath-initial \
@@ -39,8 +38,7 @@ EXTRA_OEMAKE += "pkgdatadir=${STAGING_DATADIR_NATIVE}/classpath-initial"
 # remove files clashing with classpath-native in sysroot
 do_install_append() {
 
-	FILES='gappletviewer gjarsigner gkeytool gjar gnative2ascii gserialver grmiregistry gtnameserv gorbd grmid'
-	for i in ${FILES}
+	for i in gappletviewer gjarsigner gkeytool gjar gnative2ascii gserialver grmiregistry gtnameserv gorbd grmid
 	do
 		rm ${D}${bindir}/${i}
 	done
