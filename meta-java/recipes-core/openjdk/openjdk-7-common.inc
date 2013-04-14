@@ -237,6 +237,7 @@ FILES_${JDKPN}-dbg = "\
         ${JDK_HOME}/jre/lib/${JDK_ARCH}/jamvm/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/headless/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/xawt/.debug \
+	${JDK_HOME}/jre/lib/${JDK_ARCH}/client/.debug \
        "
 
 FILES_${JDKPN}-demo = "${JDK_HOME}/demo ${JDK_HOME}/sample"
