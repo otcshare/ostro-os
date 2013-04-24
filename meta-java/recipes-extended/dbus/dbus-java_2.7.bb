@@ -40,7 +40,7 @@ do_compile () {
 
   # Generated shell scripts will have staging paths inside them.
 	rm bin/*
-  
+
 	# Generate them again with target paths.
 	oe_runmake \
 		JAVAC="oefatal \"No Java compilation expected here.\"" \
@@ -66,7 +66,7 @@ do_install () {
   oe_jarinstall ${JPN}-${PV}.jar ${JPN}.jar dbus.jar
   oe_jarinstall dbus-java-viewer-${PV}.jar dbus-java-viewer.jar dbus-viewer.jar
   oe_jarinstall dbus-java-bin-${PV}.jar dbus-java-bin.jar dbus-bin.jar
-  
+
   install -d ${D}${bindir}
   install bin/DBusViewer ${D}${bindir}
   install bin/DBusCall ${D}${bindir}
@@ -84,9 +84,9 @@ do_install () {
 
 # ${JPN} must be last otherwise it would pick up dbus-viewer*.jar
 # and dbus-bin*.jar
-PACKAGES = "dbus-java-viewer dbus-java-viewer-doc dbus-java-bin dbus-java-bin-doc ${JPN}"
+PACKAGES = "${PN}-viewer ${PN}-viewer-doc ${PN}-bin ${PN}-bin-doc ${JPN}"
 
-FILES_dbus-java-viewer = "${datadir}/java/dbus-java-viewer*.jar ${bindir}/DBusViewer"
-FILES_dbus-java-viewer-doc = "${mandir}/DBusViewer*"
-FILES_dbus-java-bin = "${datadir}/java/dbus-java-bin*.jar ${bindir}"
-FILES_dbus-java-bin-doc = "${mandir} ${docdir}/${JPN}"
+FILES_${PN}-viewer = "${datadir}/java/dbus-java-viewer*.jar ${bindir}/DBusViewer"
+FILES_${PN}-viewer-doc = "${mandir}/DBusViewer*"
+FILES_${PN}-bin = "${datadir}/java/dbus-java-bin*.jar ${bindir}"
+FILES_${PN}-bin-doc = "${mandir} ${docdir}/${JPN}"
