@@ -2,7 +2,7 @@ require openjdk-6-release-6b24.inc
 
 FILESPATH =. "${FILE_DIRNAME}/openjdk-6-6b27:"
 
-OEPATCHES += "file://remove_libxp.patch"
+EXTRA_OECONF += "--disable-downloading"
 
 OPENJDK_VERSION = "b27"
 OPENJDK_DATE = "26_oct_2012"
@@ -22,3 +22,6 @@ SRC_URI[jaxp.md5sum] = "0ace787aa12177d201947e8ba0ba9bdd"
 SRC_URI[jaxp.sha256sum] = "490f696218c1fed9cb180680af883fe309b414fec232e9cec19645e12ad0b43c"
 
 
+ICEDTEAPATCHES += "file://icedtea-jdk-rmi-crosscompile.patch;apply=no"
+
+DISTRIBUTION_PATCHES += "patches/icedtea-jdk-rmi-crosscompile.patch"
