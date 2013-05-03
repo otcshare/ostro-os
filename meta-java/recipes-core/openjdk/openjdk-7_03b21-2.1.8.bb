@@ -1,0 +1,36 @@
+require openjdk-7-release-03b21.inc
+
+PR = "${INC_PR}.0"
+
+
+SRC_URI[iced.md5sum] = "2921e31983a3874860cd784548af3ab9"
+SRC_URI[iced.sha256sum] = "ea68180fe8b40732ccea41cdd6c628de4f660b20fccb4cd87ab35f0727c08b11"
+
+OPENJDK_CHANGESET = "c1c649636704"
+SRC_URI[openjdk.md5sum] = "8da834a30f5f2b022b5c30bc14caef66"
+SRC_URI[openjdk.sha256sum] = "19018c45d97cecd9c753a6fc4b52af57cc93b65e3ee303c0750a7961171d5f3d"
+
+CORBA_CHANGESET = "313f1ee32118"
+SRC_URI[corba.md5sum] = "2c45acbfbc6af4bdcc16a2bb258ac5e4"
+SRC_URI[corba.sha256sum] = "9326c1fc0dedcbc2af386cb73b80727416e24664ccbf766221450f6e2138e952"
+
+JAXP_CHANGESET = "c04b95aa746c"
+SRC_URI[jaxp.md5sum] = "213491d6555fa4e380f8878e55b17e20"
+SRC_URI[jaxp.sha256sum] = "9df7d4d04168c9c6e57c5b51ca3a54defe5e892d56a256b3d3deda3b12173e63"
+
+JAXWS_CHANGESET = "d04602077b14"
+SRC_URI[jaxws.md5sum] = "628d1847ded0f020722ca5fb94e0969a"
+SRC_URI[jaxws.sha256sum] = "1ca9cb115591eb20143cf0d88a57f07fb631ea41246d05017e30a6ae3766517d"
+
+JDK_CHANGESET = "acaa2de9f547"
+SRC_URI[jdk.md5sum] = "46b123734ac2c028248647b07c76907d"
+SRC_URI[jdk.sha256sum] = "bbfa99c5d9900d16a9359fbdfd1cca9cbfd49095a823eb06ca56d75bca0a8eaf"
+
+LANGTOOLS_CHANGESET = "c63c8a2164e4"
+SRC_URI[langtools.md5sum] = "01715103e35a972a747c5f43f75cb4c0"
+SRC_URI[langtools.sha256sum] = "46d93bd9069d86ea233464d5a9777b12f0a027142b9ac665e3b244f69a5416b6"
+
+HOTSPOT_CHANGESET = "2c4981784101"
+SRC_URI[hotspot.md5sum] = "097f2fbd2fca7c40b2c502fcb343432e"
+SRC_URI[hotspot.sha256sum] = "977617c76292f1de33b83daba80815a743159a9d050be2326ae41e20923e3a2b"
+
