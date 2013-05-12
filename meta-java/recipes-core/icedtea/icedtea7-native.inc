@@ -35,6 +35,8 @@ B = "${S}/build"
 # openjdk looks in /usr/include and /usr/lib for freetype by default.
 export ALT_FREETYPE_HEADERS_PATH = "${STAGING_INCDIR}/freetype2"
 export ALT_FREETYPE_LIB_PATH = "${STAGING_LIBDIR}"
+export LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${STAGING_LIBDIR}/classpath:${STAGING_LIBDIR}/jamvm"
+export BOOTCLASSPATH = "${STAGING_DATADIR}/jamvm/classes.zip:${STAGING_DATADIR}/classpath/glibj.zip"
 
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
@@ -55,10 +57,8 @@ def get_jdk7_native_jobs(d):
     # Whatever found in PARALLEL_MAKE was not suitable.
     return "1"
 
-JDK_JOBS = "${@get_jdk7_native_jobs(d)}"
-
 EXTRA_OECONF = "\
-	--with-parallel-jobs=${JDK_JOBS} \
+	--with-parallel-jobs=${@get_jdk7_native_jobs(d)} \
 	\
         --disable-tests \
         --disable-hotspot-tests \
@@ -88,8 +88,6 @@ JDK_DIR = "icedtea7-native"
 JDK_INSTALL_DIR = "${D}/${libdir_jvm}/${JDK_DIR}"
 
 do_configure_prepend() {
-        echo "Configure with parallel-jobs: ${JDK_JOBS}"
-
         case "${TRANSLATED_TARGET_ARCH}" in
                 x86-64)
                         libarch=amd64
@@ -248,3 +246,5 @@ do_install() {
 	# Fix missing write permissions on the files.
 	chmod ug+w -R ${JDK_INSTALL_DIR}
 }
+
+get_jdk7_native_jobs[vardepsexclude] += "ICEDTEA_PARALLEL_MAKE"
