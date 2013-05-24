@@ -19,14 +19,15 @@ def java_package_name(d):
   pre=""
   post=""
 
-  pn = bb.data.getVar('PN', d, 1)
-  if not pn.startswith("lib"):
+  bpn = bb.data.getVar('BPN', d, 1)
+  ml = bb.data.getVar('MLPREFIX', d, 1)
+  if not bpn.startswith("lib"):
     pre='lib'
 
-  if not pn.endswith("-java"):
+  if not bpn.endswith("-java"):
     post='-java'
 
-  return pre + pn + post
+  return ml + pre + bpn + post
 
 JPN ?= "${@java_package_name(d)}"
 
