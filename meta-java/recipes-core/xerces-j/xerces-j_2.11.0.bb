@@ -45,11 +45,11 @@ do_compile() {
   oe_makeclasspath bcp -s jaxp-1.3 resolver
 	bcp=$bcp:${STAGING_DATADIR_NATIVE}/classpath/glibj.zip
 
-  javac -sourcepath src -d build -bootclasspath $bcp `find src -name "*.java"`
+  javac -sourcepath src -d build -cp $bcp `find src -name "*.java"`
 
   (cd src && find org ! -name "*.java" -exec cp {} ../build/{} \;)
 
-  fastjar -C build -c -m src/manifest.xerces -f ${JARFILENAME} .
+  fastjar cfm ${JARFILENAME} src/manifest.xerces -C build .
 
   # Like Debian we provide a symlink called xmlParserAPIs.jar pointing to the JAXP
   # classes.
