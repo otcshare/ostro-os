@@ -29,7 +29,7 @@ do_compile() {
 
 	javac -d build Main.java
 
-	fastjar -C build -c -f ${BP}.jar .
+	fastjar cf ${BP}.jar -C build .
 }
 
 do_install_append() {

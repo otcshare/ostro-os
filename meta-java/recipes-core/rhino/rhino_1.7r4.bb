@@ -32,7 +32,7 @@ do_compile() {
 	mkdir -p build/org/mozilla/javascript/resources
 	cp src/org/mozilla/javascript/resources/*.properties build/org/mozilla/javascript/resources
 
-	fastjar -m ${S}/src/manifest -C build -c -f ${JARFILENAME} .
+	fastjar cfm ${JARFILENAME} ${S}/src/manifest -C build .
 }
 
 do_install_append() {

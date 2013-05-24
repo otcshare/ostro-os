@@ -50,7 +50,7 @@ do_compile() {
   echo "VERSION=${PV}" > build/org/apache/tools/ant/version.txt
   echo "DATE=`date -R`" >> build/org/apache/tools/ant/version.txt
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 
   oe_makeclasspath cp -s ecj-bootstrap jsch bsf xalan2 xercesImpl resolver gnumail gnujaf bcel regexp log4j1.2 antlr oro junit jdepend commons-net commons-logging
   cp=${STAGING_DATADIR_JAVA_NATIVE}/ant.jar:${STAGING_DATADIR}/classpath/tools.zip:$cp

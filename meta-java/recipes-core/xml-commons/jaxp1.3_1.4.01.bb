@@ -24,7 +24,7 @@ do_compile() {
 
   cp LICENSE.*.txt README.*.txt build/license
 
-  fastjar -c -m manifest.commons -f ${JARFILENAME} -C build .
+  fastjar cfm ${JARFILENAME} manifest.commons -C build .
 }
 
 SRC_URI[md5sum] = "2fea8e97a5d4d1a24bd05f5f62f3e04e"

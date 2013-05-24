@@ -44,8 +44,8 @@ do_compile() {
   mkdir -p build-serializer/org/apache/xml
   mv build/org/apache/xml/serializer build-serializer/org/apache/xml
 
-  fastjar -C build -c -f ${JARFILENAME} .
-  fastjar -C build-serializer -c -f serializer-${PV}.jar .
+  fastjar cf ${JARFILENAME} -C build .
+  fastjar cf serializer-${PV}.jar -C build-serializer .
 }
 
 do_install_append() {

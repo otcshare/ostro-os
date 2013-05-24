@@ -22,7 +22,7 @@ do_compile() {
 
   javac -sourcepath src -cp $cp -d build `find src -name "*.java"`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 

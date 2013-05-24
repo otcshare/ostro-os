@@ -19,7 +19,7 @@ do_compile() {
 
   javac -sourcepath src/tcljava:src/jacl -d build `find src/tcljava src/jacl -name "*.java"`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "a7ec8300e8933164e854460c73ac6269"

@@ -55,8 +55,8 @@ do_compile() {
   # Some projects have manifest, some have not. This works for both.
   if [ -f src/conf/MANIFEST.MF ]
   then
-    fastjar -C build -c -m src/conf/MANIFEST.MF -f ${JARFILENAME} .
+    fastjar cfm ${JARFILENAME} src/conf/MANIFEST.MF -C build .
   else
-    fastjar -C build -c -f ${JARFILENAME} .
+    fastjar cf ${JARFILENAME} -C build .
   fi
 }

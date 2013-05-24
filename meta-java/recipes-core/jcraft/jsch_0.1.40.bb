@@ -20,7 +20,7 @@ do_compile() {
 
   javac -sourcepath src -cp $cp -d build `find src -name "*.java"`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "b59cec19a487e95aed68378976b4b566"
