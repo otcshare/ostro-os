@@ -7,6 +7,7 @@ PR = "r1"
 
 SRC_URI = "http://ftp.gnu.org/gnu/classpathx/activation-${PV}.tar.gz \
            file://datadir_java.patch \
+           file://MimeType-symbols-fix.patch \
           "
 
 inherit autotools java-library
@@ -26,7 +27,7 @@ do_compile() {
 
   javac -sourcepath source -d build `find source -name "*.java"`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "de50d7728e8140eb404f2b4554321f8c"
