@@ -17,12 +17,12 @@ do_compile() {
 	#	Allow reaching method definitions from logkit (stupid cyclic dependency).
 	srcpath=src/java:${WORKDIR}/logkit-1.2.2-dev/src/java
 
-  javac -sourcepath $srcpath -d build `find src/java -name "*.java"`
+  javac -encoding ISO-8859-1 -sourcepath $srcpath -d build `find src/java -name "*.java"`
 
 	# Remove classes that belong to logkit ...
 	rm -rf ${S}/build/org/apache/log
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 
