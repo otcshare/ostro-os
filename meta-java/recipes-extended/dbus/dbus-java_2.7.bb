@@ -1,15 +1,15 @@
 DESCRIPTION = "A pure Java D-Bus Implementation"
-DESCRIPTION_dbus-java-viewer = "${DESCRIPTION} (DBusViewer Binary)"
-DESCRIPTION_dbus-java-bin = "${DESCRIPTION} (Binaries)"
+DESCRIPTION_${PN}-viewer = "${DESCRIPTION} (DBusViewer Binary)"
+DESCRIPTION_${PN}-bin = "${DESCRIPTION} (Binaries)"
 AUTHOR = "Matthew Johnson <dbus@matthew.ath.cx>"
 HOMEPAGE = "http://dbus.freedesktop.org/doc/dbus-java"
 SECTION = "libs"
 LICENSE = "LGPL-2.1 & AFL-2.1"
 
 DEPENDS = "libmatthew docbook-utils-native docbook-sgml-dtd-4.1-native fastjar-native"
-RDEPENDS_dbus-java-viewer = "java2-runtime libunixsocket-java dbus-java-bin libmatthew-debug-java ${JPN}"
-RDEPENDS_dbus-java-bin = "java2-runtime libunixsocket-java libmatthew-debug-java ${JPN}"
-RSUGGESTS_libdbus-java = "libunixsocket-java"
+RDEPENDS_${PN}-viewer = "java2-runtime libunixsocket-java ${PN}-bin libmatthew-debug-java ${JPN}"
+RDEPENDS_${PN}-bin = "java2-runtime libunixsocket-java libmatthew-debug-java ${JPN}"
+RSUGGESTS_${JPN} = "libunixsocket-java"
 
 PR = "r0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=72cc739fb93ae32741edbae802490e92"
@@ -25,7 +25,7 @@ inherit java-library
 # jamvm-native unfortunately contains non-generificed java/lang/reflect classes
 # which are accessed in this package. Work around this by setting the bootclasspath
 # explicitly.
-JCFLAGS = "-bootclasspath ${STAGING_DATADIR}/classpath/glibj.zip"
+#JCFLAGS = "-bootclasspath ${STAGING_DATADIR}/classpath/glibj.zip"
 
 do_compile () {
   oe_runmake \
