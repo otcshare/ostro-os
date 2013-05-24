@@ -27,7 +27,7 @@ do_compile() {
 
   cp -R src/main/resources/* build/
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "8218714e41ee0c6509dcfeafa2e1f53f"

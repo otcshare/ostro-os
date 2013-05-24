@@ -39,7 +39,7 @@ do_compile() {
   cp src/share/dtd/web-jsptaglibrary*.dtd build/javax/servlet/jsp/resources
   cp src/share/dtd/jspxml.* build/javax/servlet/jsp/resources
 
-  fastjar -C build -c -m src/etc/manifest -f ${JARFILENAME} .
+  fastjar cfm ${JARFILENAME} src/etc/manifest -C build .
 }
 
 SRC_URI[md5sum] = "fe50177a25a084ad1abf4a201d08c2a6"

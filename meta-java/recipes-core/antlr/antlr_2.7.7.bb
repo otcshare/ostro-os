@@ -18,7 +18,7 @@ do_compile() {
 
   javac -sourcepath . -d build `find antlr -name "*.java"`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 do_install_virtclass_native() {

@@ -28,7 +28,7 @@ do_compile() {
 
 	javac -d build `find . -name "*.java"`
 
-	fastjar -C build -c -f ${BP}.jar .
+	fastjar cf ${BP}.jar -C build .
 }
 
 do_install_append() {

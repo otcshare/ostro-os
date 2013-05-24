@@ -33,7 +33,7 @@ do_compile() {
 
   (cd src && find org -name "*.xml" -o -name "*.txt" -o -name "*.src" -exec cp {} ../build/{} \;)
 
-  fastjar -C build -c -m src/manifest.resolver -f ${JARFILENAME} org
+  fastjar cfm ${JARFILENAME} src/manifest.resolver -C build  org
 }
 
 SRC_URI[md5sum] = "46d52acdb67ba60f0156043f30108766"

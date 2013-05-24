@@ -24,7 +24,7 @@ do_compile() {
 
   (cd src/java && find . -name "*.properties" -exec cp {} ../../build/{} \;)
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "996ee20d6b5785ab71f4692f64d10f9c"
