@@ -9,16 +9,17 @@ SRC_URI = "http://downloads.sourceforge.net/junit/junit${PV}.zip"
 
 S = "${WORKDIR}/junit${PV}"
 
+DEPENDS += "unzip-native"
+
 inherit java-library
 
 do_unpackpost() {
 	mkdir -p src
-
 	# Prevent deletion by do_removebinaries.
 	if [ -e src.jar ]; then
 		mv src.jar src.zip
 	fi
-	unzip src.zip -d src
+	unzip -o src.zip -d src
 }
 
 addtask unpackpost before do_removebinaries after do_unpack
@@ -27,11 +28,11 @@ do_compile() {
   mkdir -p build
 
 	# Workaround for jamvm.
-	bcp=${STAGING_DATADIR_NATIVE}/classpath/glibj.zip
+	#bcp=${STAGING_DATADIR_NATIVE}/classpath/glibj.zip
 
-  javac -bootclasspath $bcp -sourcepath src -d build `find src -name "*.java"`
+  javac -sourcepath src -d build `find src -name "*.java"`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "9b8963ba2147a64bd5f1574b6fd289cb"
