@@ -16,9 +16,9 @@ do_compile() {
 
   oe_makeclasspath cp -s xercesImpl regexp
 
-  javac -sourcepath src/java -d build -cp $cp `find src/java -name \*.java`
+  javac -encoding ISO-8859-1 -sourcepath src/java -d build -cp $cp `find src/java -name \*.java`
 
-  fastjar -C build -c -f ${JARFILENAME} .
+  fastjar cf ${JARFILENAME} -C build .
 }
 
 SRC_URI[md5sum] = "905b7e718e30e7ca726530ecf106e532"
