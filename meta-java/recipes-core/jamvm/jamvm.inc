@@ -50,4 +50,6 @@ ALTERNATIVE_PRIORITY = "4"
 # shared state for jamvm-native does not work
 # since the paths are hardcoded
 #SSTATE_MIRRORS_class-native = ""
+export LD_LIBRARY_PATH
+export BOOTCLASSPATH
 
