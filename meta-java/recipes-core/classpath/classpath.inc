@@ -28,6 +28,8 @@ SRC_URI = "${GNU_MIRROR}/classpath/classpath-${PV}.tar.gz"
 S = "${WORKDIR}/${PBN}-${PV}"
 
 export JAVA = "java"
+export LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${STAGING_LIBDIR_NATIVE}/classpath:${STAGING_LIBDIR_NATIVE}/jamvm"
+export BOOTCLASSPATH = "${STAGING_DATADIR_NATIVE}/jamvm/classes.zip:${STAGING_DATADIR_NATIVE}/classpath/glibj.zip"
 
 EXTRA_OECONF = "\
   --with-glibj \
