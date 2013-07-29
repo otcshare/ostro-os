@@ -1,0 +1,31 @@
+Index: git/src/classlib/gnuclasspath/annotations.c
+===================================================================
+--- git.orig/src/classlib/gnuclasspath/annotations.c	2013-07-29 10:44:38.597241346 +0000
++++ git/src/classlib/gnuclasspath/annotations.c	2013-07-29 11:03:42.927744962 +0000
+@@ -247,7 +247,7 @@
+     return anno;
+ }
+ 
+-Object *parseAnnotations(Class *class, AnnotationData *annotations) {
++Object *parseAnnotations(Class *class, AttributeData *annotations) {
+     if(!anno_inited && !initAnnotation())
+         return NULL;
+ 
+@@ -290,7 +290,7 @@
+ }
+ 
+ Object *getMethodParameterAnnotations(MethodBlock *mb) {
+-    AnnotationData *annotations;
++    AttributeData *annotations;
+     Object **outer_array_data;
+     Object *outer_array;
+     int no_params, i;
+@@ -342,7 +342,7 @@
+ }
+ 
+ Object *getMethodDefaultValue(MethodBlock *mb) {
+-    AnnotationData *annotations;
++    AttributeData *annotations;
+ 
+     if(!anno_inited && !initAnnotation())
+         return NULL;
