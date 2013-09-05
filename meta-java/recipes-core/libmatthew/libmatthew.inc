@@ -46,6 +46,9 @@ do_install() {
     oe_libinstall -so libunix-java ${D}${libdir_jni}
 }
 
+do_install_append() {
+    rm ${D}${datadir_java}/${PN}.jar
+}
 PACKAGES = "\
 	libcgi-java libcgi-jni libcgi-jni-dbg \
 	libunixsocket-java libunixsocket-jni libunixsocket-jni-dbg \
