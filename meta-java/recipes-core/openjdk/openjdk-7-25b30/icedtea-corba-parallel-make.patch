@@ -1,5 +1,5 @@
 diff --git openjdk/corba/make/Makefile openjdk/corba/make/Makefile
-index aef5c1b..62e2216 100644
+index d81c66c..4f750e8 100644
 --- openjdk/corba/make/Makefile
 +++ openjdk/corba/make/Makefile
 @@ -134,7 +134,7 @@ default: all
@@ -20,7 +20,7 @@ index aef5c1b..62e2216 100644
  	( cd $(SRC_CLASSES_DIR) ; $(FIND) . \( -name \*-template \) -prune -o -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ; \
  	( cd $(GENSRC_DIR) ; $(FIND) . -type f -print | $(ZIP) -q $$abs_src_zip -@ ) ;
 @@ -153,7 +154,8 @@ $(SRC_ZIP): $(SRC_ZIP_FILES)
- BIN_ZIP_FILES = $(BUILD_DIR/lib/orb.idl $(BUILD_DIR)/lib/ir.idl
+ BIN_ZIP_FILES = $(BUILD_DIR)/lib/orb.idl $(BUILD_DIR)/lib/ir.idl
  
  BIN_ZIP = $(LIB_DIR)/bin.zip
 -$(BIN_ZIP): $(BIN_ZIP_FILES)

@@ -1,17 +1,50 @@
---- openjdk/hotspot/make/linux/makefiles/buildtree.make
-+++ openjdk/hotspot/make/linux/makefiles/buildtree.make
-@@ -402,7 +402,7 @@ test_gamma:  $(BUILDTREE_MAKE) $(GAMMADIR)/make/test/Queens.java
- 	echo "rm -f Queens.class"; \
- 	echo "\$${JAVA_HOME}/bin/javac -d . $(GAMMADIR)/make/test/Queens.java"; \
- 	echo '[ -f gamma_g ] && { gamma=gamma_g; }'; \
--	echo './$${gamma:-gamma} $(TESTFLAGS) Queens < /dev/null'; \
-+	 echo 'echo Silently skipping the execution of the gamma program'; \
- 	) > $@
- 	$(QUIETLY) chmod +x $@
+diff --git openjdk/corba/make/common/shared/Platform.gmk openjdk/corba/make/common/shared/Platform.gmk
+index fb575fa..e0426ad 100644
+--- openjdk/corba/make/common/shared/Platform.gmk
++++ openjdk/corba/make/common/shared/Platform.gmk
+@@ -152,9 +152,13 @@ ifeq ($(SYSTEM_UNAME), Linux)
+   OS_NAME = linux
+   OS_VERSION := $(shell uname -r)
+   # Arch and OS name/version
+-  mach := $(shell uname -m)
+-  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
+-    mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++  ifdef CROSS_COMPILE_ARCH
++    mach := $(CROSS_COMPILE_ARCH)
++  else
++    mach := $(shell uname -m)
++    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
++      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++    endif
+   endif
+   archExpr = case "$(mach)" in \
+                 i[3-9]86) \
+diff --git openjdk/hotspot/make/linux/makefiles/build_vm_def.sh openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
+index ea81ff6..68b0d71 100644
+--- openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
++++ openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
+@@ -1,10 +1,12 @@
+ #!/bin/sh
  
+ # If we're cross compiling use that path for nm
+-if [ "$CROSS_COMPILE_ARCH" != "" ]; then 
+-NM=$ALT_COMPILER_PATH/nm
+-else
+-NM=nm
++if [ "$NM" == "" ]; then
++  if [ "$CROSS_COMPILE_ARCH" != "" ]; then 
++    NM=$ALT_COMPILER_PATH/nm
++  else
++    NM=nm
++  fi
+ fi
+ 
+ $NM --defined-only $* \
+diff --git openjdk/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+index 6fe5191..765fc6d 100644
 --- openjdk/hotspot/make/linux/makefiles/gcc.make
 +++ openjdk/hotspot/make/linux/makefiles/gcc.make
-@@ -160,7 +160,7 @@ CFLAGS_WARN/DEFAULT = $(WARNINGS_ARE_ERRORS) $(ACCEPTABLE_WARNINGS)
+@@ -164,7 +164,7 @@ CFLAGS_WARN/DEFAULT = $(WARNINGS_ARE_ERRORS) $(ACCEPTABLE_WARNINGS)
  CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@)) 
  
  # The flags to use for an Optimized g++ build
@@ -20,7 +53,7 @@
  
  # Hotspot uses very unstrict aliasing turn this optimization off
  OPT_CFLAGS += -fno-strict-aliasing
-@@ -204,15 +204,7 @@ LFLAGS += -Wl,-relax
+@@ -208,15 +208,7 @@ LFLAGS += -Wl,-relax
  endif
  
  # Enable linker optimization
@@ -37,6 +70,8 @@
  
  # Use $(MAPFLAG:FILENAME=real_file_name) to specify a map file.
  MAPFLAG = -Xlinker --version-script=FILENAME
+diff --git openjdk/hotspot/make/linux/makefiles/launcher.make openjdk/hotspot/make/linux/makefiles/launcher.make
+index 0c102ea..f4dfbf6 100644
 --- openjdk/hotspot/make/linux/makefiles/launcher.make
 +++ openjdk/hotspot/make/linux/makefiles/launcher.make
 @@ -50,8 +50,8 @@ ifeq ($(LINK_INTO),AOUT)
@@ -49,21 +84,25 @@
 +  LIBS_LAUNCHER             += -l$(JVM) $(LIBS) -lstdc++
  endif
  
- LINK_LAUNCHER = $(LINK.c)
+ LINK_LAUNCHER = $(LINK.CC)
+diff --git openjdk/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
+index b0ffd9a..4e8c47c 100644
 --- openjdk/hotspot/make/linux/makefiles/vm.make
 +++ openjdk/hotspot/make/linux/makefiles/vm.make
-@@ -272,6 +272,7 @@ ifeq ($(SHARK_BUILD), true)
+@@ -292,6 +292,7 @@ ifeq ($(SHARK_BUILD), true)
    LIBS_VM   += $(LLVM_LIBS)
  endif
  
 +LFLAGS_VM += $(OE_LDFLAGS)
- LINK_VM = $(LINK_LIB.c)
+ LINK_VM = $(LINK_LIB.CC)
  
  # rule for building precompiled header
+diff --git openjdk/jdk/make/common/Defs-linux.gmk openjdk/jdk/make/common/Defs-linux.gmk
+index 69e1177..dc7f8e6 100644
 --- openjdk/jdk/make/common/Defs-linux.gmk
 +++ openjdk/jdk/make/common/Defs-linux.gmk
-@@ -125,35 +125,13 @@ else
- endif
+@@ -165,35 +165,13 @@ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+   endif
  endif
  
 -#
@@ -99,8 +138,8 @@
  CFLAGS_REQUIRED_hppa    +=
  CFLAGS_REQUIRED_i586    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
  CFLAGS_REQUIRED_ia64    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
-@@ -232,7 +210,7 @@ ifeq ($(DEBUG_BINARIES), true)
-   CFLAGS_REQUIRED += $(DEBUG_FLAG)
+@@ -283,7 +261,7 @@ ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+   endif
  endif
  
 -CFLAGS_OPT      = $(CC_OPT)
@@ -108,7 +147,7 @@
  CFLAGS_DBG      = $(DEBUG_FLAG)
  CFLAGS_COMMON += $(CFLAGS_REQUIRED)
  
-@@ -308,7 +286,7 @@ LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
+@@ -359,7 +337,7 @@ LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
  #
  # -L paths for finding and -ljava
  #
@@ -117,6 +156,67 @@
  LDFLAGS_COMMON += -L$(LIBDIR)/$(LIBARCH)
  LDFLAGS_COMMON += -Wl,-soname=$(LIB_PREFIX)$(LIBRARY).$(LIBRARY_SUFFIX)
  
+diff --git openjdk/jdk/make/common/shared/Platform.gmk openjdk/jdk/make/common/shared/Platform.gmk
+index c23e96e..484afca 100644
+--- openjdk/jdk/make/common/shared/Platform.gmk
++++ openjdk/jdk/make/common/shared/Platform.gmk
+@@ -159,9 +159,9 @@ ifeq ($(SYSTEM_UNAME), Linux)
+     mach := $(CROSS_COMPILE_ARCH)
+   else
+     mach := $(shell uname -m)
+-  endif
+-  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
+-    mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
++      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
++    endif
+   endif
+   archExpr = case "$(mach)" in \
+                 i[3-9]86) \
+diff --git openjdk/jdk/make/java/nio/Makefile openjdk/jdk/make/java/nio/Makefile
+index cd336a2..1e5f8e5 100644
+--- openjdk/jdk/make/java/nio/Makefile
++++ openjdk/jdk/make/java/nio/Makefile
+@@ -934,8 +934,12 @@ else
+ $(SCH_GEN)/SocketOptionRegistry.java: $(GENSOR_EXE)
+ 	$(prep-target)
+ 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(SOR_COPYRIGHT_YEARS)" > $@
++ifdef CROSS_COMPILE_ARCH
++	$(QEMU) $(GENSOR_EXE) >> $@
++else
+ 	$(GENSOR_EXE) >> $@
+ endif
++endif
+ #
+ # Generated sun.nio.cs SingleByte classes
+ #
+@@ -969,8 +973,12 @@ else
+ $(SFS_GEN)/UnixConstants.java: $(GENUC_EXE)
+ 	$(prep-target)
+ 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENUC_COPYRIGHT_YEARS)" > $@
++ifdef CROSS_COMPILE_ARCH
++	$(QEMU) $(GENUC_EXE) >> $@
++else
+ 	$(GENUC_EXE) >> $@
+ endif
++endif
+ 
+ GENSC_SRC = $(PLATFORM_SRC)/native/sun/nio/fs/genSolarisConstants.c
+ 
+@@ -991,7 +999,11 @@ else
+ $(SFS_GEN)/SolarisConstants.java: $(GENSC_EXE)
+ 	$(prep-target)
+ 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENSC_COPYRIGHT_YEARS)" > $@
++ifdef CROSS_COMPILE_ARCH
++	$(QEMU) $(GENSC_EXE) >> $@
++else
+ 	$(GENSC_EXE) >> $@
+ endif
++endif
+ 
+ .PHONY: sources 
+diff --git openjdk/jdk/make/sun/awt/mawt.gmk openjdk/jdk/make/sun/awt/mawt.gmk
+index b6e0d99..edc530e 100644
 --- openjdk/jdk/make/sun/awt/mawt.gmk
 +++ openjdk/jdk/make/sun/awt/mawt.gmk
 @@ -151,22 +151,6 @@ else
@@ -142,7 +242,7 @@
  
  # Use -lXmu for EditRes support
  LIBXMU_DBG	= -lXmu
-@@ -181,7 +165,7 @@ ifeq ($(PLATFORM), linux)
+@@ -181,7 +165,7 @@ ifneq (,$(findstring $(PLATFORM), linux macosx))
  OTHER_CFLAGS += -DMLIB_NO_LIBSUNMATH
  # XXX what is this define below? Isn't it motif-related?
  OTHER_CFLAGS += -DXMSTRINGDEFINES=1
@@ -164,9 +264,9 @@
  CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
              -I$(SHARE_SRC)/native/$(PKGDIR)/../font \
              -I$(PLATFORM_SRC)/native/$(PKGDIR)/../font \
-@@ -258,12 +236,6 @@ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
-         -I$(PLATFORM_SRC)/native/$(PKGDIR) \
-         $(EVENT_MODEL)
+@@ -269,12 +247,6 @@ LDFLAGS  += -L$(MOTIF_LIB) -L$(OPENWIN_LIB)
+ endif # !HEADLESS
+ endif # PLATFORM
  
 -ifeq ($(PLATFORM), linux)
 -  # Checking for the X11/extensions headers at the additional location
@@ -174,115 +274,14 @@
 -                        $(wildcard /usr/include/X11/extensions))
 -endif
 -
- ifeq ($(PLATFORM), solaris)
-   CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions
- endif
-diff --git openjdk/corba/make/common/shared/Platform.gmk openjdk/corba/make/common/shared/Platform.gmk
-index e21f4d0..5f071a7 100644
---- openjdk/corba/make/common/shared/Platform.gmk
-+++ openjdk/corba/make/common/shared/Platform.gmk
-@@ -152,9 +152,13 @@ ifeq ($(SYSTEM_UNAME), Linux)
-   OS_NAME = linux
-   OS_VERSION := $(shell uname -r)
-   # Arch and OS name/version
--  mach := $(shell uname -m)
--  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
--    mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
-+  ifdef CROSS_COMPILE_ARCH
-+    mach := $(CROSS_COMPILE_ARCH)
-+  else
-+    mach := $(shell uname -m)
-+    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
-+      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
-+    endif
-   endif
-   archExpr = case "$(mach)" in \
-                 i[3-9]86) \
-diff --git openjdk/jdk/make/common/shared/Platform.gmk openjdk/jdk/make/common/shared/Platform.gmk
-index 5b21888..3b9297f 100644
---- openjdk/jdk/make/common/shared/Platform.gmk
-+++ openjdk/jdk/make/common/shared/Platform.gmk
-@@ -159,9 +159,9 @@ ifeq ($(SYSTEM_UNAME), Linux)
-     mach := $(CROSS_COMPILE_ARCH)
-   else
-     mach := $(shell uname -m)
--  endif
--  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
--    mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
-+    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
-+      mach := $(shell (dpkg-architecture -qDEB_BUILD_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/powerpc$$/ppc/;s/hppa/parisc/')
-+    endif
-   endif
-   archExpr = case "$(mach)" in \
-                 i[3-9]86) \
-diff --git openjdk/hotspot/make/linux/makefiles/build_vm_def.sh openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
-index ea81ff6..6a3765b 100644
---- openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
-+++ openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
-@@ -1,10 +1,12 @@
- #!/bin/sh
- 
- # If we're cross compiling use that path for nm
--if [ "$CROSS_COMPILE_ARCH" != "" ]; then 
--NM=$ALT_COMPILER_PATH/nm
--else
--NM=nm
-+if [ "$NM" == "" ]; then
-+  if [ "$CROSS_COMPILE_ARCH" != "" ]; then 
-+    NM=$ALT_COMPILER_PATH/nm
-+  else
-+    NM=nm
-+  fi
- fi
- 
- $NM --defined-only $* \
-diff --git openjdk/jdk/make/java/nio/Makefile openjdk/jdk/make/java/nio/Makefile
-index 8130b9b..7906531 100644
---- openjdk/jdk/make/java/nio/Makefile
-+++ openjdk/jdk/make/java/nio/Makefile
-@@ -834,8 +834,12 @@ else
- $(SCH_GEN)/SocketOptionRegistry.java: $(GENSOR_EXE)
- 	$(prep-target)
- 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(SOR_COPYRIGHT_YEARS)" > $@
-+ifdef CROSS_COMPILE_ARCH
-+	$(QEMU) $(GENSOR_EXE) >> $@
-+else
- 	$(GENSOR_EXE) >> $@
- endif
-+endif
- #
- # Generated sun.nio.cs SingleByte classes
- #
-@@ -869,8 +873,12 @@ else
- $(SFS_GEN)/UnixConstants.java: $(GENUC_EXE)
- 	$(prep-target)
- 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENUC_COPYRIGHT_YEARS)" > $@
-+ifdef CROSS_COMPILE_ARCH
-+	$(QEMU) $(GENUC_EXE) >> $@
-+else
- 	$(GENUC_EXE) >> $@
- endif
-+endif
- 
- GENSC_SRC = $(PLATFORM_SRC)/native/sun/nio/fs/genSolarisConstants.c
- 
-@@ -891,7 +899,11 @@ else
- $(SFS_GEN)/SolarisConstants.java: $(GENSC_EXE)
- 	$(prep-target)
- 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENSC_COPYRIGHT_YEARS)" > $@
-+ifdef CROSS_COMPILE_ARCH
-+	$(QEMU) $(GENSC_EXE) >> $@
-+else
- 	$(GENSC_EXE) >> $@
- endif
-+endif
- 
- .PHONY: sources 
+ ifeq ($(PLATFORM), macosx))
+   CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions \
+               -I$(OPENWIN_HOME)/include 
 diff --git openjdk/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
-index e7d54e2..ce8819c 100644
+index 53d31f3..183c063 100644
 --- openjdk/jdk/make/sun/xawt/Makefile
 +++ openjdk/jdk/make/sun/xawt/Makefile
-@@ -188,20 +188,6 @@ else
+@@ -198,20 +198,6 @@ else
    CPPFLAGS += -I$(PLATFORM_SRC)/native/common/deps/glib2
  endif
  
@@ -303,19 +302,36 @@ index e7d54e2..ce8819c 100644
  # We have some odd logic here because some Solaris 10 updates
  # have a render.h file that suggests gradients are supported, but
  # the Xrender.h doesn't have the corresponding type definitions.
-@@ -312,11 +298,7 @@ XLIBTYPES=$(PLATFORM_SRC)/classes/sun/awt/X11/generator/xlibtypes.txt
+@@ -292,16 +278,10 @@ ifeq ($(ARCH_DATA_MODEL), 32)
+ SIZERS = $(SIZER).32
+ SIZERS_C = $(SIZER_32_C)
+ SIZES = $(WRAPPER_GENERATOR_DIR)/sizes.32
+-ifdef CROSS_COMPILE_ARCH
+-CFLAGS_32 = -m32
+-endif
+ else # !32
+ SIZERS = $(SIZER).64
+ SIZERS_C = $(SIZER_64_C)
+ SIZES = $(WRAPPER_GENERATOR_DIR)/sizes.64
+-ifdef CROSS_COMPILE_ARCH
+-CFLAGS_64 = -m64
+-endif
+ endif # 32
+ endif # !macosx
+ endif # solaris
+@@ -337,11 +317,7 @@ WRAPPER_GENERATOR_TEMPDIR=$(TEMPDIR)/sun/awt/X11/generator
+ WRAPPER_GENERATOR_CLASS=$(WRAPPER_GENERATOR_TEMPDIR)/WrapperGenerator.class 
+ XLIBTYPES=$(PLATFORM_SRC)/classes/sun/awt/X11/generator/xlibtypes.txt
+ 
+-ifndef CROSS_COMPILE_ARCH
+ SIZERS_CC = $(CC)
+-else
+-SIZERS_CC = $(HOST_CC)
+-endif
  
  $(SIZERS): $(SIZERS_C) 
  	$(prep-target)
--ifndef CROSS_COMPILE_ARCH
- 	$(CC) $(CFLAGS_$(subst .,,$(suffix $@))) $(CPPFLAGS) -o $@ $(SIZER)$(suffix $@).c
--else
--	$(HOST_CC) $(CPPFLAGS) -o $@ $(SIZER)$(suffix $@).c
--endif
- 
- $(WRAPPER_GENERATOR_CLASS): $(WRAPPER_GENERATOR_JAVA)
- 	$(prep-target)
-@@ -329,6 +311,16 @@ $(SIZERS_C): $(WRAPPER_GENERATOR_CLASS) $(XLIBTYPES)
+@@ -358,6 +334,16 @@ $(SIZERS_C): $(WRAPPER_GENERATOR_CLASS) $(XLIBTYPES)
  	    $(SIZER_DIR) $(XLIBTYPES) "sizer" $(subst .,,$(suffix $(basename $@)))
  
  $(SIZES): $(SIZERS)
@@ -332,7 +348,7 @@ index e7d54e2..ce8819c 100644
  	@if [ "$(DOHACK)$@" = "true$(PREDEFINED_SIZES)" ]; then \
  	    $(ECHO) COPYING $(PREDEFINED_SIZES_TMPL) into $@; \
  	    $(CP) $(PREDEFINED_SIZES_TMPL) $@; \
-@@ -337,6 +329,7 @@ $(SIZES): $(SIZERS)
+@@ -366,6 +352,7 @@ $(SIZES): $(SIZERS)
  	    $(ECHO) GENERATING $@; \
  	    $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
  	fi

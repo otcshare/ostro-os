@@ -1,7 +1,9 @@
+diff --git openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h
+index c24c781..ccdc41a 100644
 --- openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h
 +++ openjdk/jdk/src/share/native/java/lang/fdlibm/include/fdlibm.h
-@@ -26,13 +26,11 @@
- 
+@@ -32,13 +32,11 @@
+ #endif
  #include "jfdlibm.h"
  
 -#ifdef __NEWVALID       /* special setup for Sun test regime */
