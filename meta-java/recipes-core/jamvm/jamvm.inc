@@ -35,6 +35,9 @@ do_configure_append_virtclass-native() {
 
 EXTRA_OECONF = "--with-classpath-install-dir=${prefix} --libdir=${libdir}/jamvm --enable-ffi"
 
+# Needed for big compilation targets like OpenJDK
+CFLAGS_append_virtclass-native = " -DDEFAULT_MAX_HEAP=1024*MB"
+
 # Enforce usage of ecj-initial.
 EXTRA_OEMAKE = "JAVAC=${STAGING_BINDIR_NATIVE}/ecj-initial \
                 GLIBJ_ZIP=${STAGING_DATADIR_NATIVE}/classpath/glibj.zip \
