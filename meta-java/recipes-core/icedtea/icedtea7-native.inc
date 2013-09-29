@@ -35,8 +35,6 @@ B = "${S}/build"
 # openjdk looks in /usr/include and /usr/lib for freetype by default.
 export ALT_FREETYPE_HEADERS_PATH = "${STAGING_INCDIR}/freetype2"
 export ALT_FREETYPE_LIB_PATH = "${STAGING_LIBDIR}"
-export LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${STAGING_LIBDIR}/classpath:${STAGING_LIBDIR}/jamvm"
-export BOOTCLASSPATH = "${STAGING_DATADIR}/jamvm/classes.zip:${STAGING_DATADIR}/classpath/glibj.zip"
 
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,

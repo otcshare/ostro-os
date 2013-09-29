@@ -26,6 +26,12 @@ inherit java autotools update-alternatives
 # This uses 32 bit arm, so force the instruction set to arm, not thumb
 ARM_INSTRUCTION_SET = "arm"
 
+do_configure_append_virtclass-native() {
+	sed -i -e"s|STAGING_LIBDIR_NATIVE|${STAGING_LIBDIR_NATIVE}|g" \
+		-e "s|STAGING_DATADIR_NATIVE|${STAGING_DATADIR_NATIVE}|g" \
+	${WORKDIR}/java
+}
+
 
 EXTRA_OECONF = "--with-classpath-install-dir=${prefix} --libdir=${libdir}/jamvm --enable-ffi"
 
@@ -36,7 +42,8 @@ EXTRA_OEMAKE = "JAVAC=${STAGING_BINDIR_NATIVE}/ecj-initial \
 
 do_install_append_virtclass-native() {
 	install -d ${D}${bindir}
-	ln -s ${bindir}/jamvm ${D}${bindir}/java
+	install -m 0755 ${WORKDIR}/java ${D}${bindir}/java
+
 }
 
 PRIVATE_LIBS = "libjvm.so"

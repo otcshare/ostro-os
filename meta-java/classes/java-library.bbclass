@@ -9,9 +9,6 @@
 # to set JPN manually!
 
 inherit java
-export LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:${STAGING_LIBDIR_NATIVE}/classpath:${STAGING_LIBDIR_NATIVE}/jamvm"
-export BOOTCLASSPATH = "${STAGING_DATADIR_NATIVE}/jamvm/classes.zip:${STAGING_DATADIR_NATIVE}/classpath/glibj.zip"
-
 
 # use java_stage for native packages
 JAVA_NATIVE_STAGE_INSTALL = "1"
