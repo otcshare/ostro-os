@@ -46,8 +46,8 @@ SRC_URI[cacao.sha256sum] = "4966514c72ee7ed108b882d9b6e65c3adf8a8f9c2dccb029f971
 JAMVM_VERSION = "0972452d441544f7dd29c55d64f1ce3a5db90d82"
 JAMVM_FILE = "jamvm-${JAMVM_VERSION}.tar.gz"
 JAMVM_URI = "http://icedtea.classpath.org/download/drops/jamvm/${JAMVM_FILE};name=jamvm;unpack=false"
-SRC_URI[jamvm.md5sum] = "740c2587502831cac6797d1233a7e27b"
-SRC_URI[jamvm.sha256sum] = "47fce7bd556c1b1d29a93b8c45497e0d872b48b7f535066b303336f29d0f0d8d"
+SRC_URI[jamvm.md5sum] = "f4616713ec609e35aa8070811bd952aa"
+SRC_URI[jamvm.sha256sum] = "bfa706402ac934d24f7119eb78f6be65e91439a4b2e49dbcc21e288137808f03"
 
 # Allow overriding this separately
 OEPATCHES = "\
