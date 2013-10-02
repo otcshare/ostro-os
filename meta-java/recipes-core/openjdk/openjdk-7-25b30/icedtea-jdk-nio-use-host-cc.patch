@@ -1,17 +1,17 @@
-diff --git openjdk/jdk/make/java/nio/Makefile openjdk/jdk/make/java/nio/Makefile
-index 7906531..afa5d46 100644
---- openjdk/jdk/make/java/nio/Makefile
-+++ openjdk/jdk/make/java/nio/Makefile
-@@ -823,7 +823,7 @@ $(TEMPDIR)/$(GENSOR_SRC) : $(GENSOR_SRC)
+Index: openjdk/jdk/make/java/nio/Makefile
+===================================================================
+--- openjdk/jdk/make/java/nio/Makefile	2013-10-01 21:20:11.000000000 -0700
++++ openjdk/jdk/make/java/nio/Makefile	2013-10-01 21:30:40.901837422 -0700
+@@ -918,7 +918,7 @@
+ ifeq ($(PLATFORM), macosx)
+   NIO_CC=$(HOST_CC)
+ else
+-  NIO_CC=$(CC)
++  NIO_CC=$(CC_FOR_BUILD)
+ endif
  
  $(GENSOR_EXE) : $(TEMPDIR)/$(GENSOR_SRC)
- 	$(prep-target)
--	($(CD) $(TEMPDIR); $(CC) $(CPPFLAGS) $(LDDFLAGS) \
-+	($(CD) $(TEMPDIR); $(CC_FOR_BUILD) $(CPPFLAGS) $(LDDFLAGS) \
- 	   -o genSocketOptionRegistry$(EXE_SUFFIX) $(GENSOR_SRC))
- 
- ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
-@@ -834,12 +834,8 @@ else
+@@ -934,12 +934,8 @@
  $(SCH_GEN)/SocketOptionRegistry.java: $(GENSOR_EXE)
  	$(prep-target)
  	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(SOR_COPYRIGHT_YEARS)" > $@
@@ -24,16 +24,7 @@ index 7906531..afa5d46 100644
  #
  # Generated sun.nio.cs SingleByte classes
  #
-@@ -863,7 +859,7 @@ GENUC_COPYRIGHT_YEARS = $(shell $(CAT) $(GENUC_SRC) | \
- 
- $(GENUC_EXE) : $(GENUC_SRC)
- 	$(prep-target)
--	$(CC) $(CPPFLAGS) -o $@ $(GENUC_SRC)
-+	$(CC_FOR_BUILD) $(CPPFLAGS) -o $@ $(GENUC_SRC)
- 
- ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
- $(SFS_GEN)/UnixConstants.java: $(NIO_PLATFORM_CLASSES_ROOT_DIR)/sun/nio/fs/UnixConstants-$(PLATFORM)-$(ARCH).java
-@@ -873,12 +869,8 @@ else
+@@ -973,12 +969,8 @@
  $(SFS_GEN)/UnixConstants.java: $(GENUC_EXE)
  	$(prep-target)
  	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENUC_COPYRIGHT_YEARS)" > $@
@@ -46,16 +37,7 @@ index 7906531..afa5d46 100644
  
  GENSC_SRC = $(PLATFORM_SRC)/native/sun/nio/fs/genSolarisConstants.c
  
-@@ -889,7 +881,7 @@ GENSC_COPYRIGHT_YEARS = $(shell $(CAT) $(GENSC_SRC) | \
- 
- $(GENSC_EXE) : $(GENSC_SRC)
- 	$(prep-target)
--	$(CC) $(CPPFLAGS) -o $@ $(GENSC_SRC)
-+	$(CC_FOR_BUILD) $(CPPFLAGS) -o $@ $(GENSC_SRC)
- 
- ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
- $(SFS_GEN)/SolarisConstants.java: $(NIO_PLATFORM_CLASSES_ROOT_DIR)/sun/nio/fs/SolarisConstants-$(PLATFORM)-$(ARCH).java
-@@ -899,11 +891,7 @@ else
+@@ -999,11 +991,7 @@
  $(SFS_GEN)/SolarisConstants.java: $(GENSC_EXE)
  	$(prep-target)
  	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENSC_COPYRIGHT_YEARS)" > $@
@@ -67,9 +49,11 @@ index 7906531..afa5d46 100644
 -endif
  
  .PHONY: sources 
---- openjdk/jdk/make/sun/Makefile.khem	2012-08-10 19:32:40.695550897 -0700
-+++ openjdk/jdk/make/sun/Makefile	2012-08-10 19:33:39.195550853 -0700
-@@ -55,7 +55,7 @@ ifneq ($(PLATFORM), windows)
+Index: openjdk/jdk/make/sun/Makefile
+===================================================================
+--- openjdk/jdk/make/sun/Makefile	2013-07-25 09:10:09.000000000 -0700
++++ openjdk/jdk/make/sun/Makefile	2013-10-01 21:32:01.625839149 -0700
+@@ -55,7 +55,7 @@
      endif
    endif
    HEADLESS_SUBDIR = headless
@@ -77,11 +61,11 @@ index 7906531..afa5d46 100644
 +  XAWT_SUBDIR     =
  endif
  
- ifndef OPENJDK
-@@ -79,7 +79,7 @@ else
+ ifeq ($(PLATFORM), macosx)
+@@ -87,7 +87,7 @@
  endif
  SUBDIRS_desktop    = audio $(RENDER_SUBDIR) image \
-                      $(DISPLAY_LIBS) $(DGA_SUBDIR) \
+                      $(LWAWT_PRE_SUBDIR) $(DISPLAY_LIBS) $(DGA_SUBDIR) $(LWAWT_SUBDIR) \
 -                     jawt font jpeg cmm $(DISPLAY_TOOLS) beans
 +                     font jpeg cmm $(DISPLAY_TOOLS) beans
  SUBDIRS_management = management
