@@ -24,7 +24,7 @@ Index: icedtea-2.3.12/Makefile.am
 +	  --host=$(host_alias) \
 +	  --build=$(build_alias) \
 +	  --target=$(target_alias)  \
-+	  --with-libtool-sysroot ; \
++	  --with-libtool-sysroot=${ALT_FREETYPE_LIB_PATH} ; \
  	$(MAKE) ; \
  	$(MAKE) install
  	mkdir -p $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/server
@@ -32,7 +32,7 @@ Index: icedtea-2.3.12/Makefile.am
  	  --host=$(host_alias) \
  	  --build=$(build_alias) \
  	  --target=$(target_alias) \
-+	  --with-libtool-sysroot \
++	  --with-libtool-sysroot=${ALT_FREETYPE_LIB_PATH} \
  	  --prefix=$(abs_top_builddir)/cacao/install \
  	  --with-java-runtime-library=openjdk7 \
  	  --with-java-runtime-library-prefix=$(abs_top_builddir)/openjdk \
