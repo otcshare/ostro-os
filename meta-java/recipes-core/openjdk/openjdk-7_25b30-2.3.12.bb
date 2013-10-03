@@ -1,6 +1,6 @@
 require openjdk-7-release-25b30.inc
 
-PR = "${INC_PR}.0"
+PR = "${INC_PR}.1"
 
 SRC_URI[iced.md5sum] = "9b3afa162021e3fca6161ba8f9f7dc11"
 SRC_URI[iced.sha256sum] = "3c4e88e7c1b2b39dcd7ed65c3b9a1a8dbd2a48848ce42e1d8a22a6821cf890d1"
