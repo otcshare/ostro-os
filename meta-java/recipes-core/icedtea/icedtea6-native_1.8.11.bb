@@ -25,11 +25,11 @@ SRC_URI[ojdk.sha256sum] = "778ea7b323aaa24d3c6e8fe32b8bb0f49040d9e86271859077ada
 SRC_URI[iced.md5sum] = "e0edfb08a4eedf1b9f1cef26a9bd4ab4"
 SRC_URI[iced.sha256sum] = "6eb418ec0609080a71bda16896124d6e1ac23b2f54af52e05fc22c719e12ca29"
 
-JAXWS_URI = "http://icedtea.classpath.org/download/source/drops/jdk6-jaxws-2009_10_27.zip;name=jaxws"
+JAXWS_URI = "http://icedtea.wildebeest.org/download/source/drops/jdk6-jaxws-2009_10_27.zip;name=jaxws"
 SRC_URI[jaxws.md5sum] = "3ea5728706169498b722b898a1008acf"
 SRC_URI[jaxws.sha256sum] = "155ff3be83c980e197621a2fbf7ee34e8e0f536489351a5865cf0e52206245e2"
 
-JAF_URI = "http://icedtea.classpath.org/download/source/drops/jdk6-jaf-2009_10_27.zip;name=jaf"
+JAF_URI = "http://icedtea.wildebeest.org/download/source/drops/jdk6-jaf-2009_10_27.zip;name=jaf"
 SRC_URI[jaf.md5sum] = "7a50bb540a27cdd0001885630088b758"
 SRC_URI[jaf.sha256sum] = "fdc51476fc6bcc69ea1f099f33e84601a126bfa8b11c8fa11c25dc574345aa9f"
 

@@ -7,7 +7,7 @@ FILESPATH =. "${FILE_DIRNAME}/openjdk-7-03b147:"
 # Force arm mode for now
 ARM_INSTRUCTION_SET_armv4t = "ARM"
 
-ICEDTEA_URI = "http://icedtea.classpath.org/download/source/${ICEDTEA}.tar.gz;name=iced"
+ICEDTEA_URI = "http://icedtea.wildebeest.org/download/source/${ICEDTEA}.tar.gz;name=iced"
 
 ICEDTEA_PREFIX = "icedtea7-forest-2.1"
 ICEDTEA_HG_URL = "http://icedtea.classpath.org/hg/release/${ICEDTEA_PREFIX}"
@@ -56,13 +56,13 @@ SRC_URI[langtools.sha256sum] = "c77dd42d83f06d18fa8aa65c93d137608a2e02cf24b68fc1
 
 CACAO_VERSION = "a567bcb7f589"
 CACAO_FILE = "${CACAO_VERSION}.tar.gz"
-CACAO_URI = "http://icedtea.classpath.org/download/drops/cacao/${CACAO_FILE};name=cacao;unpack=false"
+CACAO_URI = "http://icedtea.wildebeest.org/download/drops/cacao/${CACAO_FILE};name=cacao;unpack=false"
 SRC_URI[cacao.md5sum] = "ec1def7f0d3d25e9e7da47c480f26a73"
 SRC_URI[cacao.sha256sum] = "d49f79debc131a5694cae6ab3ba2864e7f3249ee8d9dc09aae8afdd4dc6b09f9"
 
 JAMVM_VERSION = "4617da717ecb05654ea5bb9572338061106a414d"
 JAMVM_FILE = "jamvm-${JAMVM_VERSION}.tar.gz"
-JAMVM_URI = "http://icedtea.classpath.org/download/drops/jamvm/${JAMVM_FILE};name=jamvm;unpack=false"
+JAMVM_URI = "http://icedtea.wildebeest.org/download/drops/jamvm/${JAMVM_FILE};name=jamvm;unpack=false"
 SRC_URI[jamvm.md5sum] = "740c2587502831cac6797d1233a7e27b"
 SRC_URI[jamvm.sha256sum] = "47fce7bd556c1b1d29a93b8c45497e0d872b48b7f535066b303336f29d0f0d8d"
 
