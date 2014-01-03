@@ -10,6 +10,8 @@ revision: HEAD
 
 You should define at lease the following variables in a distro include file or local.conf
 
+PREFERRED_PROVIDER_virtual/java-initial = "cacao-initial"
+
 PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
 PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
 
