@@ -1,0 +1,22 @@
+Index: cacao-0.98/src/vm/exceptions.c
+===================================================================
+--- cacao-0.98.orig/src/vm/exceptions.c	2007-06-05 09:41:07.000000000 +0200
++++ cacao-0.98/src/vm/exceptions.c	2014-01-03 16:21:42.430783148 +0100
+@@ -89,17 +89,6 @@
+ 
+ bool exceptions_init(void)
+ {
+-	int pagesize;
+-
+-	/* mmap a memory page at address 0x0, so our hardware-exceptions
+-	   work. */
+-
+-	pagesize = getpagesize();
+-
+-	(void) memory_mmap_anon(NULL, pagesize, PROT_NONE, MAP_PRIVATE | MAP_FIXED);
+-
+-	/* check if we get into trouble with our hardware-exceptions */
+-
+ 	if (OFFSET(java_bytearray, data) <= EXCEPTION_HARDWARE_PATCHER)
+ 		vm_abort("signal_init: array-data offset is less or equal the maximum hardware-exception displacement: %d <= %d", OFFSET(java_bytearray, data), EXCEPTION_HARDWARE_PATCHER);
+ 
