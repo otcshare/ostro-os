@@ -34,4 +34,4 @@ Please note that libstdc++ static is needed on your host to compile icedtea6/7-n
 
 Send pull requests to openembedded-devel@lists.openembedded.org
 
-Main layer maintainers: Henning Heinold <heinold@inf.fu-berlin.de>
+Main layer maintainers: Henning Heinold <henning@itconsulting-heinold.de>
