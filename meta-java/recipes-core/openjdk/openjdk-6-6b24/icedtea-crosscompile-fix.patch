@@ -214,3 +214,57 @@ Index: icedtea6-1.8.5/build/openjdk/jdk/make/sun/xawt/Makefile
  	fi
  	@if [ "$(DOCOMPARE)$(suffix $@)" = "true.64" ]; then \
  	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
+diff --git openjdk/jdk/make/launchers/Makefile.launcher openjdk/jdk/make/launchers/Makefile.launcher
+index f59a9d6..6edc880 100644
+--- openjdk/jdk/make/launchers/Makefile.launcher
++++ openjdk/jdk/make/launchers/Makefile.launcher
+@@ -152,7 +152,7 @@ endif
+ ifeq ($(GUI_TOOL),true)
+   ifneq ($(PLATFORM), windows)
+     # Anything with a GUI needs X11 to be linked in.
+-    OTHER_LDLIBS += -L$(OPENWIN_LIB) -lX11
++    OTHER_LDLIBS += -lX11
+   endif
+ endif
+ 
+diff --git openjdk/jdk/make/sun/jawt/Makefile openjdk/jdk/make/sun/jawt/Makefile
+index 2021434..9035da7 100644
+--- openjdk/jdk/make/sun/jawt/Makefile
++++ openjdk/jdk/make/sun/jawt/Makefile
+@@ -98,8 +98,7 @@ else # PLATFORM
+ #
+ # Other extra flags needed for compiling.
+ #
+-CPPFLAGS += -I$(OPENWIN_HOME)/include \
+-	    -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
++CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
+             -I$(SHARE_SRC)/native/$(PKGDIR)/image \
+ 	    -I$(SHARE_SRC)/native/$(PKGDIR)/image/cvutils \
+ 	    -I$(SHARE_SRC)/native/$(PKGDIR)/alphacomposite \
+diff --git openjdk/jdk/make/sun/splashscreen/Makefile openjdk/jdk/make/sun/splashscreen/Makefile
+index 6693e2a..58d05f1 100644
+--- openjdk/jdk/make/sun/splashscreen/Makefile
++++ openjdk/jdk/make/sun/splashscreen/Makefile
+@@ -63,8 +63,7 @@ CFLAGS += -DSPLASHSCREEN -DPNG_NO_MMX_CODE
+ 
+ ifneq ($(PLATFORM), windows)
+   CFLAGS += -DWITH_X11
+-  CPPFLAGS += -I$(OPENWIN_HOME)/include -I$(OPENWIN_HOME)/include/X11/extensions
+-  OTHER_LDLIBS += -L$(OPENWIN_LIB) -lX11 -lXext $(LIBM) -lpng -ljpeg -lgif -lz -lpthread
++  OTHER_LDLIBS += -lX11 -lXext $(LIBM) -lpng -ljpeg -lgif -lz -lpthread
+ else # PLATFORM
+   CFLAGS += -DWITH_WIN32
+   OTHER_LDLIBS += kernel32.lib user32.lib gdi32.lib 
+diff --git openjdk/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
+index 440699b..ffa177d 100644
+--- openjdk/jdk/make/sun/xawt/Makefile
++++ openjdk/jdk/make/sun/xawt/Makefile
+@@ -46,8 +46,6 @@ include FILES_export_unix.gmk
+ AUTO_FILES_JAVA_DIRS = sun/awt/X11
+ AUTO_JAVA_PRUNE = WrapperGenerator.java
+ 
+-LDFLAGS += -L$(OPENWIN_LIB)
+-
+ # For Xrender extension.
+ ifeq ($(PLATFORM), solaris)
+ LDFLAGS += -L/usr/openwin/sfw/lib$(ISA_DIR) -R/usr/openwin/sfw/lib$(ISA_DIR)
