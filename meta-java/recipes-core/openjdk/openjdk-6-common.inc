@@ -377,6 +377,9 @@ FILES_${JDKPN}-jdk = " \
                        ${JDK_HOME}/bin \
                        ${JDK_HOME}/lib \
                        ${JDK_HOME}/include \
+                       ${JDK_HOME}/ASSEMBLY_EXCEPTION \
+                       ${JDK_HOME}/THIRD_PARTY_README \
+                       ${JDK_HOME}/LICENSE \
                       "
 RDEPENDS_${JDKPN}-jre = "${JDKPN}-java"
 RPROVIDES_${JDKPN}-jre = "java2-runtime"
