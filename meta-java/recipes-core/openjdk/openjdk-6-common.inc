@@ -2,7 +2,7 @@ require openjdk-common.inc
 
 ICEDTEA = "icedtea6-${ICEDTEA_VERSION}"
 
-INC_PR = "r21"
+INC_PR = "r22"
 
 SRC_URI = "\
   ${ICEDTEA_URI} \
@@ -297,6 +297,7 @@ FILES_${JDKPN}-dbg = "\
         ${JDK_HOME}/jre/lib/${JDK_ARCH}/jamvm/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/headless/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/xawt/.debug \
+	/usr/src \
        "
 
 FILES_${JDKPN}-demo = "${JDK_HOME}/demo ${JDK_HOME}/sample"
