@@ -29,6 +29,14 @@ Sometimes the following is needed:
 PREFERRED_PROVIDER_openjdk-6-jre = "openjdk-6-jre"
 PREFERRED_PROVIDER_openjdk-7-jre = "openjdk-7-jre
 
+For conf/bblayers.conf you have to add
+
+BBLAYERS ?= " \
+   ...
+  path_to_source/meta-openembedded/meta-oe \
+  path_to_source/sources/meta-java \
+  "
+
 Please note that libstdc++ static is needed on your host to compile icedtea6/7-native
 (install libstdc++-static on a Fedora).
 
