@@ -9,6 +9,7 @@ SRC_URI += " \
             file://miscompilation.patch \
             file://toolwrapper-exithook.patch \
             file://use_libdir.patch \
+            file://freetype2.patch \
            "
 
 SRC_URI[md5sum] = "0ae1571249172acd82488724a3b8acb4"
