@@ -79,6 +79,7 @@ ICEDTEAPATCHES = "\
 	file://icedtea-corba-parallel-make.patch;apply=no \
         file://icedtea-zero-hotspotfix.patch;apply=no \
 	file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
+        file://icedtea-unset-NIO_PLATFORM_CLASSES_ROOT_DIR.patch;apply=no \
 	"
 ICEDTEAPATCHES_append_powerpc = " \
 	file://icedtea-jdk-ppc64-jvm-cfg.patch;apply=no \
@@ -108,6 +109,7 @@ DISTRIBUTION_PATCHES = "\
 	patches/icedtea-corba-parallel-make.patch \
         patches/icedtea-zero-hotspotfix.patch \
 	patches/icedtea-jdk-nio-use-host-cc.patch \
+	patches/icedtea-unset-NIO_PLATFORM_CLASSES_ROOT_DIR.patch \
 	"
 
 DISTRIBUTION_PATCHES_append_libc-uclibc = "\

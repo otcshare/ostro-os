@@ -1,0 +1,13 @@
+diff --git openjdk/jdk/make/java/nio/Makefile openjdk/jdk/make/java/nio/Makefile
+index 898272e..c5ca547 100644
+--- openjdk/jdk/make/java/nio/Makefile
++++ openjdk/jdk/make/java/nio/Makefile
+@@ -48,6 +48,8 @@ include FILES_java.gmk
+ include FILES_c.gmk
+ include Exportedfiles.gmk
+ 
++NIO_PLATFORM_CLASSES_ROOT_DIR =
++
+ ifeq ($(PLATFORM), windows)
+ FILES_java += \
+ 	sun/nio/ch/Iocp.java \
