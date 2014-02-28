@@ -1,0 +1,456 @@
+diff --git openjdk/corba/make/common/Defs-linux.gmk openjdk/corba/make/common/Defs-linux.gmk
+index f308203..5ba15dc 100644
+--- openjdk/corba/make/common/Defs-linux.gmk
++++ openjdk/corba/make/common/Defs-linux.gmk
+@@ -82,9 +82,9 @@ CC_LOWER_OPT   = -O2
+ CC_NO_OPT      =
+ 
+ ifeq ($(PRODUCT), java)
+-    _OPT = $(CC_HIGHER_OPT)
++    _OPT = $(OE_CFLAGS)
+ else
+-    _OPT = $(CC_LOWER_OPT)
++    _OPT = $(OE_CFLAGS)
+     CPPFLAGS_DBG    += -DLOGGING 
+ endif
+ 
+@@ -94,7 +94,7 @@ endif
+ #    as the default.
+ CFLAGS_REQUIRED_alpha   += -mieee -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_amd64   += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+-CFLAGS_REQUIRED_arm     += -D_LITTLE_ENDIAN
++CFLAGS_REQUIRED_arm     += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_hppa    +=
+ CFLAGS_REQUIRED_i586    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_ia64    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+@@ -221,7 +221,7 @@ LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
+ #
+ # -L paths for finding and -ljava
+ #
+-LDFLAGS_OPT     = -Xlinker -O1
++LDFLAGS_OPT     = $(OE_LDFLAGS)
+ LDFLAGS_COMMON += -L$(LIBDIR)/$(LIBARCH)
+ LDFLAGS_COMMON += -Wl,-soname=$(LIB_PREFIX)$(LIBRARY).$(LIBRARY_SUFFIX)
+ 
+diff --git openjdk/hotspot/make/linux/makefiles/buildtree.make openjdk/hotspot/make/linux/makefiles/buildtree.make
+index 4ba1f0e..48cfb02 100644
+--- openjdk/hotspot/make/linux/makefiles/buildtree.make
++++ openjdk/hotspot/make/linux/makefiles/buildtree.make
+@@ -380,7 +380,7 @@ test_gamma:  $(BUILDTREE_MAKE) $(GAMMADIR)/make/test/Queens.java
+ 	echo "rm -f Queens.class"; \
+ 	echo "\$${JAVA_HOME}/bin/javac -d . $(GAMMADIR)/make/test/Queens.java"; \
+ 	echo '[ -f gamma_g ] && { gamma=gamma_g; }'; \
+-	echo './$${gamma:-gamma} $(TESTFLAGS) Queens < /dev/null'; \
++	echo 'echo Silently skipping the execution of the gamma program'; \
+ 	) > $@
+ 	$(QUIETLY) chmod +x $@
+ 
+diff --git openjdk/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+index 11de79a..c5751b2 100644
+--- openjdk/hotspot/make/linux/makefiles/gcc.make
++++ openjdk/hotspot/make/linux/makefiles/gcc.make
+@@ -140,7 +140,7 @@ CFLAGS_WARN/DEFAULT = $(WARNINGS_ARE_ERRORS) $(ACCEPTABLE_WARNINGS)
+ CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@)) 
+ 
+ # The flags to use for an Optimized g++ build
+-OPT_CFLAGS += -O3
++OPT_CFLAGS += $(OE_CFLAGS)
+ 
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ OPT_CFLAGS += -fno-strict-aliasing
+@@ -184,7 +184,7 @@ LFLAGS += -Wl,-relax
+ endif
+ 
+ # Enable linker optimization
+-LFLAGS += -Xlinker -O1
++LFLAGS += $(OE_LDFLAGS)
+ 
+ # If this is a --hash-style=gnu system, use --hash-style=both
+ #   The gnu .hash section won't work on some Linux systems like SuSE 10.
+diff --git openjdk/hotspot/make/linux/makefiles/gcc.make.orig openjdk/hotspot/make/linux/makefiles/gcc.make.orig
+index 3d6a6b7..11de79a 100644
+--- openjdk/hotspot/make/linux/makefiles/gcc.make.orig
++++ openjdk/hotspot/make/linux/makefiles/gcc.make.orig
+@@ -204,7 +204,7 @@ SONAMEFLAG = -Xlinker -soname=SONAME
+ SHARED_FLAG = -shared
+ 
+ # Keep symbols even they are not used
+-AOUT_FLAGS += -export-dynamic
++AOUT_FLAGS += -Xlinker -export-dynamic
+ 
+ #------------------------------------------------------------------------
+ # Debug flags
+diff --git openjdk/hotspot/make/linux/makefiles/jsig.make openjdk/hotspot/make/linux/makefiles/jsig.make
+index 18f65d9..f12a798 100644
+--- openjdk/hotspot/make/linux/makefiles/jsig.make
++++ openjdk/hotspot/make/linux/makefiles/jsig.make
+@@ -42,7 +42,7 @@ LIBJSIG_MAPFILE = $(MAKEFILES_DIR)/mapfile-vers-jsig
+ # cause problems with interposing. See CR: 6466665
+ # LFLAGS_JSIG += $(MAPFLAG:FILENAME=$(LIBJSIG_MAPFILE))
+ 
+-LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE)
++LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE) $(OE_LDFLAGS)
+ 
+ # DEBUG_BINARIES overrides everything, use full -g debug information
+ ifeq ($(DEBUG_BINARIES), true)
+diff --git openjdk/hotspot/make/linux/makefiles/launcher.make openjdk/hotspot/make/linux/makefiles/launcher.make
+index c5cf503..ae7af2e 100644
+--- openjdk/hotspot/make/linux/makefiles/launcher.make
++++ openjdk/hotspot/make/linux/makefiles/launcher.make
+@@ -50,7 +50,7 @@ ifeq ($(LINK_INTO),AOUT)
+   LIBS_LAUNCHER             += $(STATIC_STDCXX) $(LIBS)
+ else
+   LAUNCHER.o                 = launcher.o
+-  LFLAGS_LAUNCHER           += -L `pwd`
++  LFLAGS_LAUNCHER           += -L `pwd` $(OE_LAUNCHER_LDFLAGS) $(OE_LDFLAGS)
+   LIBS_LAUNCHER             += -l$(JVM) $(LIBS) -lstdc++
+   ifeq ($(SHARK_BUILD), true)
+     LFLAGS_LAUNCHER += $(LLVM_LDFLAGS)
+diff --git openjdk/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
+index cd8d9ef..b00ce46 100644
+--- openjdk/hotspot/make/linux/makefiles/vm.make
++++ openjdk/hotspot/make/linux/makefiles/vm.make
+@@ -242,6 +242,7 @@ ifeq ($(SHARK_BUILD), true)
+   LIBS_VM   += $(LLVM_LIBS)
+ endif
+ 
++LFLAGS_VM += $(OE_LDFLAGS)
+ LINK_VM = $(LINK_LIB.c)
+ 
+ # rule for building precompiled header
+diff --git openjdk/hotspot/make/linux/makefiles/vm.make.orig openjdk/hotspot/make/linux/makefiles/vm.make.orig
+index fa4116a..cd8d9ef 100644
+--- openjdk/hotspot/make/linux/makefiles/vm.make.orig
++++ openjdk/hotspot/make/linux/makefiles/vm.make.orig
+@@ -143,13 +143,15 @@ COMPILER2_PATHS := $(GAMMADIR)/src/share/vm/opto
+ COMPILER2_PATHS += $(GAMMADIR)/src/share/vm/libadt
+ COMPILER2_PATHS +=  $(GENERATED)/adfiles
+ 
++SHARK_PATHS := $(GAMMADIR)/src/share/vm/shark
++
+ # Include dirs per type.
+ Src_Dirs/CORE      := $(CORE_PATHS)
+ Src_Dirs/COMPILER1 := $(CORE_PATHS) $(COMPILER1_PATHS)
+ Src_Dirs/COMPILER2 := $(CORE_PATHS) $(COMPILER2_PATHS)
+ Src_Dirs/TIERED    := $(CORE_PATHS) $(COMPILER1_PATHS) $(COMPILER2_PATHS)
+ Src_Dirs/ZERO      := $(CORE_PATHS)
+-Src_Dirs/SHARK     := $(CORE_PATHS)
++Src_Dirs/SHARK     := $(CORE_PATHS) $(SHARK_PATHS)
+ Src_Dirs := $(Src_Dirs/$(TYPE))
+ 
+ COMPILER2_SPECIFIC_FILES := opto libadt bcEscapeAnalyzer.cpp chaitin\* c2_\* runtime_\*
+diff --git openjdk/jdk/make/common/Defs-linux.gmk openjdk/jdk/make/common/Defs-linux.gmk
+index 4e31797..03a84dd 100644
+--- openjdk/jdk/make/common/Defs-linux.gmk
++++ openjdk/jdk/make/common/Defs-linux.gmk
+@@ -89,9 +89,9 @@ HPIS = native
+ 
+ ifndef OPTIMIZATION_LEVEL
+   ifeq ($(PRODUCT), java)
+-    OPTIMIZATION_LEVEL = HIGHER
++    OPTIMIZATION_LEVEL = $(OE_CFLAGS)
+   else
+-    OPTIMIZATION_LEVEL = LOWER
++    OPTIMIZATION_LEVEL = $(OE_CFLAGS)
+   endif
+ endif
+ 
+@@ -108,7 +108,7 @@ CC_OPT          = $(CC_OPT/$(OPTIMIZATION_LEVEL))
+ #    as the default.
+ CFLAGS_REQUIRED_alpha   += -mieee -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_amd64   += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+-CFLAGS_REQUIRED_arm     += -D_LITTLE_ENDIAN
++CFLAGS_REQUIRED_arm     += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_hppa    +=
+ CFLAGS_REQUIRED_i586    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_ia64    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+@@ -249,7 +249,7 @@ LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
+ #
+ # -L paths for finding and -ljava
+ #
+-LDFLAGS_OPT     = -Xlinker -O1
++LDFLAGS_OPT     = $(OE_LDFLAGS)
+ LDFLAGS_COMMON += -L$(LIBDIR)/$(LIBARCH)
+ LDFLAGS_COMMON += -Wl,-soname=$(LIB_PREFIX)$(LIBRARY).$(LIBRARY_SUFFIX)
+ 
+diff --git openjdk/jdk/make/common/Defs-linux.gmk.orig openjdk/jdk/make/common/Defs-linux.gmk.orig
+index cbbf647..4e31797 100644
+--- openjdk/jdk/make/common/Defs-linux.gmk.orig
++++ openjdk/jdk/make/common/Defs-linux.gmk.orig
+@@ -86,18 +86,22 @@ HPIS = native
+ #
+ # Default optimization
+ #
+-CC_HIGHEST_OPT = -O3
+-CC_HIGHER_OPT  = -O3
+-CC_LOWER_OPT   = -O2
+-CC_NO_OPT      =
+ 
+-ifeq ($(PRODUCT), java)
+-    _OPT = $(CC_HIGHER_OPT)
+-else
+-    _OPT = $(CC_LOWER_OPT)
+-    CPPFLAGS_DBG    += -DLOGGING 
++ifndef OPTIMIZATION_LEVEL
++  ifeq ($(PRODUCT), java)
++    OPTIMIZATION_LEVEL = HIGHER
++  else
++    OPTIMIZATION_LEVEL = LOWER
++  endif
+ endif
+ 
++CC_OPT/NONE     = 
++CC_OPT/LOWER    = -O2
++CC_OPT/HIGHER   = -O3
++CC_OPT/HIGHEST  = -O3
++
++CC_OPT          = $(CC_OPT/$(OPTIMIZATION_LEVEL))
++
+ # For all platforms, do not omit the frame pointer register usage. 
+ #    We need this frame pointer to make it easy to walk the stacks.
+ #    This should be the default on X86, but ia64 and amd64 may not have this
+@@ -131,17 +135,13 @@ else
+   LDFLAGS_COMMON        += $(LDFLAGS_COMMON_$(ARCH))
+ endif
+ 
+-# Add in platform specific optimizations for all opt levels
+-CC_HIGHEST_OPT += $(_OPT_$(ARCH))
+-CC_HIGHER_OPT  += $(_OPT_$(ARCH))
+-CC_LOWER_OPT   += $(_OPT_$(ARCH))
+-
+-# If NO_OPTIMIZATIONS is defined in the environment, turn all optimzations off
+-ifdef NO_OPTIMIZATIONS
+-  CC_HIGHEST_OPT = $(CC_NO_OPT)
+-  CC_HIGHER_OPT  = $(CC_NO_OPT)
+-  CC_LOWER_OPT   = $(CC_NO_OPT)
++# If this is a --hash-style=gnu system, use --hash-style=both
++#   The gnu .hash section won't work on some Linux systems like SuSE 10.
++_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | $(GREP) -- '--hash-style=gnu')
++ifneq ($(_HAS_HASH_STYLE_GNU),)
++  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+ endif
++LDFLAGS_COMMON          += $(LDFLAGS_HASH_STYLE)
+ 
+ #
+ # Selection of warning messages
+@@ -188,19 +188,19 @@ ifeq ($(DEBUG_BINARIES), true)
+   CFLAGS_REQUIRED += $(DEBUG_FLAG)
+ endif
+ 
+-CFLAGS_OPT      = $(POPT)
++CFLAGS_OPT      = $(CC_OPT)
+ CFLAGS_DBG      = $(DEBUG_FLAG)
+ CFLAGS_COMMON += $(CFLAGS_REQUIRED)
+ 
+ CXXFLAGS_COMMON = $(GLOBAL_KPIC) -DCC_NOEX $(GCC_WARNINGS)
+-CXXFLAGS_OPT	= $(POPT)
++CXXFLAGS_OPT	= $(CC_OPT)
+ CXXFLAGS_DBG	= $(DEBUG_FLAG)
+ CXXFLAGS_COMMON += $(CFLAGS_REQUIRED)
+ 
+ # FASTDEBUG: Optimize the code in the -g versions, gives us a faster debug java
+ ifeq ($(FASTDEBUG), true)
+-  CFLAGS_DBG    += $(CC_LOWER_OPT)
+-  CXXFLAGS_DBG	+= $(CC_LOWER_OPT)
++  CFLAGS_DBG    += $(CC_OPT/LOWER)
++  CXXFLAGS_DBG	+= $(CC_OPT/LOWER)
+ endif
+ 
+ CPP_ARCH_FLAGS = -DARCH='"$(ARCH)"'
+@@ -221,6 +221,9 @@ endif
+ 
+ CPPFLAGS_OPT    = 
+ CPPFLAGS_DBG    = -DDEBUG
++ifneq ($(PRODUCT), java)
++  CPPFLAGS_DBG    += -DLOGGING 
++endif
+ 
+ ifdef LIBRARY
+   # Libraries need to locate other libraries at runtime, and you can tell
+@@ -255,9 +258,8 @@ LDFLAGS_COMMON += -Wl,-soname=$(LIB_PREFIX)$(LIBRARY).$(LIBRARY_SUFFIX)
+ # statically link libgcc but will print a warning with the flag. We don't 
+ # want the warning, so check gcc version first.
+ #
+-CC_VER_MAJOR := $(shell $(CC) -dumpversion | $(SED) 's/egcs-//' | $(CUT) -d'.' -f1)
+-ifeq ("$(CC_VER_MAJOR)", "3")
+-OTHER_LDFLAGS  += -static-libgcc
++ifeq ($(CC_MAJORVER),3)
++  OTHER_LDFLAGS  += -static-libgcc
+ endif
+ 
+ # Automatic precompiled header option to use (if COMPILE_APPROACH=batch)
+diff --git openjdk/jdk/make/sun/awt/Makefile openjdk/jdk/make/sun/awt/Makefile
+index e462fba..76b56be 100644
+--- openjdk/jdk/make/sun/awt/Makefile
++++ openjdk/jdk/make/sun/awt/Makefile
+@@ -511,10 +511,10 @@ ifneq ($(PLATFORM), windows)
+ #
+ 
+ ifeq ($(PLATFORM), linux)
+-CPPFLAGS += -I$(MOTIF_DIR)/include \
+-            -I$(OPENWIN_HOME)/include \
+-            -I$(OPENWIN_HOME)/include/X11/extensions \
+-            -I$(PLATFORM_SRC)/native/$(PKGDIR)/font 
++#CPPFLAGS += -I$(MOTIF_DIR)/include \
++#            -I$(OPENWIN_HOME)/include \
++#            -I$(OPENWIN_HOME)/include/X11/extensions \
++CPPFLAGS +=  -I$(PLATFORM_SRC)/native/$(PKGDIR)/font 
+ endif
+ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
+             -I$(SHARE_SRC)/native/$(PKGDIR)/../font \
+@@ -538,7 +538,7 @@ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
+ 	    $(EVENT_MODEL)
+ 
+ ifeq ($(PLATFORM), linux)
+-LDFLAGS += -L$(MOTIF_LIB) -L$(OPENWIN_LIB)
++#LDFLAGS += -L$(MOTIF_LIB) -L$(OPENWIN_LIB)
+ endif
+ 
+ LDFLAGS += -L$(LIBDIR)/$(LIBARCH)/$(TSOBJDIR) \
+diff --git openjdk/jdk/make/sun/awt/Makefile.orig openjdk/jdk/make/sun/awt/Makefile.orig
+index 61f36cd..e462fba 100644
+--- openjdk/jdk/make/sun/awt/Makefile.orig
++++ openjdk/jdk/make/sun/awt/Makefile.orig
+@@ -28,17 +28,13 @@ PACKAGE = sun.awt
+ LIBRARY = awt
+ PRODUCT = sun
+ 
+-#
+ # Tell Defs.gmk that VIS is needed
+-#
+ VIS_NEEDED=true
+ 
+-include $(BUILDDIR)/common/Defs.gmk
+-
+-#
+ # Use highest optimization level
+-#
+-_OPT = $(CC_HIGHEST_OPT)
++OPTMIZATION_LEVEL = HIGHEST
++
++include $(BUILDDIR)/common/Defs.gmk
+ 
+ OTHER_CFLAGS += -D__MEDIALIB_OLD_NAMES -D__USE_J2D_NAMES
+ 
+@@ -388,6 +384,10 @@ _FONTCONFIGS	= \
+ 	fontconfig.SuSE.properties                      \
+ 	fontconfig.Ubuntu.properties                    \
+ 	fontconfig.Fedora.properties			\
++	fontconfig.Fedora.9.properties			\
++	fontconfig.Fedora.10.properties			\
++	fontconfig.Fedora.11.properties			\
++	fontconfig.Fedora.12.properties			\
+ 	fontconfig.RedHat.6.properties		\
+ 	fontconfig.Gentoo.properties
+ else
+diff --git openjdk/jdk/make/sun/awt/mawt.gmk openjdk/jdk/make/sun/awt/mawt.gmk
+index 44de692..9ce661c 100644
+--- openjdk/jdk/make/sun/awt/mawt.gmk
++++ openjdk/jdk/make/sun/awt/mawt.gmk
+@@ -196,8 +196,8 @@ endif
+ CPPFLAGS += -I$(CUPS_HEADERS_PATH)
+ 
+ ifndef HEADLESS
+-CPPFLAGS += -I$(OPENWIN_HOME)/include 
+-LDFLAGS  += -L$(OPENWIN_LIB)
++#CPPFLAGS += -I$(OPENWIN_HOME)/include 
++#LDFLAGS  += -L$(OPENWIN_LIB)
+ 
+ endif # !HEADLESS
+ 
+@@ -225,8 +225,8 @@ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
+ 
+ ifeq ($(PLATFORM), linux)
+ # Checking for the X11/extensions headers at the additional location
+-  CPPFLAGS += -I/X11R6/include/X11/extensions \
+-              -I/usr/include/X11/extensions
++#  CPPFLAGS += -I/X11R6/include/X11/extensions \
++#              -I/usr/include/X11/extensions
+ endif
+ 
+ ifeq ($(PLATFORM), solaris)
+diff --git openjdk/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
+index 4b4c782..440699b 100644
+--- openjdk/jdk/make/sun/xawt/Makefile
++++ openjdk/jdk/make/sun/xawt/Makefile
+@@ -129,11 +129,12 @@ CPPFLAGS += -DXAWT -DXAWT_HACK \
+         -I$(PLATFORM_SRC)/native/sun/awt
+ 
+ ifeq ($(PLATFORM), linux)
++# Very unsuitable for cross-compilation.
+ # Allows for builds on Debian GNU Linux, X11 is in a different place 
+-  CPPFLAGS += -I/usr/X11R6/include/X11/extensions \
+-              -I/usr/include/X11/extensions \
+-              -I$(MOTIF_DIR)/include \
+-              -I$(OPENWIN_HOME)/include 
++#  CPPFLAGS += -I/usr/X11R6/include/X11/extensions \
++#              -I/usr/include/X11/extensions \
++#              -I$(MOTIF_DIR)/include \
++#              -I$(OPENWIN_HOME)/include 
+ endif
+ 
+ ifeq ($(PLATFORM), solaris)
+@@ -250,7 +251,7 @@ $(SIZES): $(SIZERS)
+ 	    $(CHMOD) +w $@;\
+ 	else	\
+ 	    $(ECHO) GENERATING $@; \
+-	    $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
++	    $(QEMU) $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
+ 	fi
+ 	@if [ "$(DOCOMPARE)$(suffix $@)" = "true.64" ]; then \
+ 	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
+diff --git openjdk/jdk/make/sun/splashscreen/Makefile openjdk/jdk/make/sun/splashscreen/Makefile
+index 6693e2a..494a646 100644
+--- openjdk/jdk/make/sun/splashscreen/Makefile
++++ openjdk/jdk/make/sun/splashscreen/Makefile
+@@ -63,8 +63,8 @@ CFLAGS += -DSPLASHSCREEN -DPNG_NO_MMX_CODE
+ 
+ ifneq ($(PLATFORM), windows)
+   CFLAGS += -DWITH_X11
+-  CPPFLAGS += -I$(OPENWIN_HOME)/include -I$(OPENWIN_HOME)/include/X11/extensions
+-  OTHER_LDLIBS += -L$(OPENWIN_LIB) -lX11 -lXext $(LIBM) -lpng -ljpeg -lgif -lz -lpthread
++  #CPPFLAGS += -I$(OPENWIN_HOME)/include -I$(OPENWIN_HOME)/include/X11/extensions
++  OTHER_LDLIBS += -lX11 -lXext $(LIBM) -lpng -ljpeg -lgif -lz -lpthread
+ else # PLATFORM
+   CFLAGS += -DWITH_WIN32
+   OTHER_LDLIBS += kernel32.lib user32.lib gdi32.lib 
+diff --git openjdk/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
+index 440699b..1fa311d 100644
+--- openjdk/jdk/make/sun/xawt/Makefile
++++ openjdk/jdk/make/sun/xawt/Makefile
+@@ -46,7 +46,7 @@ include FILES_export_unix.gmk
+ AUTO_FILES_JAVA_DIRS = sun/awt/X11
+ AUTO_JAVA_PRUNE = WrapperGenerator.java
+ 
+-LDFLAGS += -L$(OPENWIN_LIB)
++#LDFLAGS += -L$(OPENWIN_LIB)
+ 
+ # For Xrender extension.
+ ifeq ($(PLATFORM), solaris)
+diff --git openjdk/jdk/make/launchers/Makefile.launcher openjdk/jdk/make/launchers/Makefile.launcher
+index f59a9d6..6edc880 100644
+--- openjdk/jdk/make/launchers/Makefile.launcher
++++ openjdk/jdk/make/launchers/Makefile.launcher
+@@ -152,7 +152,7 @@ endif
+ ifeq ($(GUI_TOOL),true)
+   ifneq ($(PLATFORM), windows)
+     # Anything with a GUI needs X11 to be linked in.
+-    OTHER_LDLIBS += -L$(OPENWIN_LIB) -lX11
++    OTHER_LDLIBS += -lX11
+   endif
+ endif
+ 
+diff --git openjdk/jdk/make/sun/jawt/Makefile openjdk/jdk/make/sun/jawt/Makefile
+index 2021434..9035da7 100644
+--- openjdk/jdk/make/sun/jawt/Makefile
++++ openjdk/jdk/make/sun/jawt/Makefile
+@@ -98,8 +98,7 @@ else # PLATFORM
+ #
+ # Other extra flags needed for compiling.
+ #
+-CPPFLAGS += -I$(OPENWIN_HOME)/include \
+-	    -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
++CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
+             -I$(SHARE_SRC)/native/$(PKGDIR)/image \
+ 	    -I$(SHARE_SRC)/native/$(PKGDIR)/image/cvutils \
+ 	    -I$(SHARE_SRC)/native/$(PKGDIR)/alphacomposite \

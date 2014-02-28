@@ -22,6 +22,10 @@ SRC_URI[jaxp.md5sum] = "0ace787aa12177d201947e8ba0ba9bdd"
 SRC_URI[jaxp.sha256sum] = "490f696218c1fed9cb180680af883fe309b414fec232e9cec19645e12ad0b43c"
 
 
-ICEDTEAPATCHES += "file://icedtea-jdk-rmi-crosscompile.patch;apply=no"
+ICEDTEAPATCHES += "file://icedtea-jdk-rmi-crosscompile.patch;apply=no \
+                   file://icedtea-disable-sane-alsa.patch;apply=no \
+                  "
 
-DISTRIBUTION_PATCHES += "patches/icedtea-jdk-rmi-crosscompile.patch"
+DISTRIBUTION_PATCHES += "patches/icedtea-jdk-rmi-crosscompile.patch \
+                         patches/icedtea-disable-sane-alsa.patch \
+                        "

@@ -1,0 +1,34 @@
+diff --git openjdk/jdk/make/common/shared/Sanity.gmk openjdk/jdk/make/common/shared/Sanity.gmk
+index 55c0e88..220aa5c 100644
+--- openjdk/jdk/make/common/shared/Sanity.gmk
++++ openjdk/jdk/make/common/shared/Sanity.gmk
+@@ -102,11 +102,6 @@ ifeq ($(PLATFORM), linux)
+     if [ "$(OS_VARIANT_NAME)" = "Fedora" ] ; then \
+       $(CAT) /etc/fedora-release | $(HEAD) -1 | $(NAWK) '{ print $$3; }' ; \
+     fi)
+-  ALSA_INCLUDE=/usr/include/alsa/version.h
+-  ALSA_LIBRARY=/usr/lib/libasound.so
+-  _ALSA_VERSION := $(shell $(EGREP) SND_LIB_VERSION_STR $(ALSA_INCLUDE) | \
+-           $(SED) -e 's@.*\"\(.*\)\".*@\1@' )
+-  ALSA_VERSION := $(call GetVersion,$(_ALSA_VERSION))
+ endif
+ 
+ ifeq ($(PLATFORM), windows)
+@@ -210,7 +210,6 @@ endif
+ 	sane-compiler \
+ 	sane-link \
+ 	sane-cacerts \
+-	sane-alsa-headers \
+ 	sane-ant_version \
+ 	sane-zip_version \
+ 	sane-unzip_version \
+@@ -1351,9 +1346,6 @@ endif
+ # need /usr/include/alsa/version.h and /usr/lib/libasound.so
+ ######################################################
+ 
+-ifdef REQUIRED_ALSA_VERSION
+-  ALSA_CHECK := $(call CheckVersions,$(ALSA_VERSION),$(REQUIRED_ALSA_VERSION))
+-endif
+ sane-alsa-headers:
+ ifdef REQUIRED_ALSA_VERSION
+ 	@if [ "$(ALSA_CHECK)" != "missing" ] ; then \
