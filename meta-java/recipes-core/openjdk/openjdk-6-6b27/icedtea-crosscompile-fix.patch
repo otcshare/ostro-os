@@ -454,3 +454,16 @@ index 2021434..9035da7 100644
              -I$(SHARE_SRC)/native/$(PKGDIR)/image \
  	    -I$(SHARE_SRC)/native/$(PKGDIR)/image/cvutils \
  	    -I$(SHARE_SRC)/native/$(PKGDIR)/alphacomposite \
+diff --git openjdk/jdk/make/sun/xawt/Makefile openjdk/jdk/make/sun/xawt/Makefile
+index 1fa311d..f3d06ad 100644
+--- openjdk/jdk/make/sun/xawt/Makefile
++++ openjdk/jdk/make/sun/xawt/Makefile
+@@ -232,7 +232,7 @@ XLIBTYPES=$(PLATFORM_SRC)/classes/sun/awt/X11/generator/xlibtypes.txt
+ 
+ $(SIZERS): $(SIZERS_C) 
+ 	$(prep-target)
+-	$(CC) $(CFLAGS_$(subst .,,$(suffix $@))) $(CPPFLAGS) -o $@ $(SIZER)$(suffix $@).c
++	$(CC) $(CFLAGS_$(subst .,,$(suffix $@))) $(CPPFLAGS) -static -o $@ $(SIZER)$(suffix $@).c
+ 
+ $(WRAPPER_GENERATOR_CLASS): $(WRAPPER_GENERATOR_JAVA)
+ 	$(prep-target)
