@@ -15,8 +15,8 @@ SRC_URI = "http://www.complang.tuwien.ac.at/cacaojvm/download/cacao-${PV}/cacao-
 SRC_URI[md5sum] = "2c18478404afd1cffdd15ad1e9d85a57"
 SRC_URI[sha256sum] = "eecc8bd1b528a028f43d9d1d0c06b97855bbf1d40e03826d911ebbc0b6971e12"
 
-inherit java autotools update-alternatives
-# --with-vm-zip=${datadir}/cacao/vm.zip
+inherit java autotools update-alternatives pkgconfig
+
 EXTRA_OECONF_class-native = "\
     --enable-debug \
     --with-vm-zip=${datadir}/cacao/vm.zip \
@@ -35,14 +35,31 @@ EXTRA_OECONF_class-native = "\
 
 CACHED_CONFIGUREVARS_class-native += "ac_cv_prog_JAVAC=${STAGING_BINDIR_NATIVE}/ecj-initial"
 
+EXTRA_OECONF = "\
+    --with-vm-zip=${datadir}/cacao/vm.zip \
+    --disable-libjvm \
+    \
+    --with-build-java-runtime-library-classes=${STAGING_DATADIR}/classpath/glibj.zip \
+    --with-jni_h=${STAGING_INCDIR}/classpath \
+    --with-jni_md_h=${STAGING_INCDIR}/classpath \
+    \
+    --with-java-runtime-library-classes=${datadir}/classpath/glibj.zip \
+    --with-java-runtime-library-libdir=${libdir_jni}:${libdir} \
+    --disable-test-dependency-checks \
+"
+
 do_configure_prepend () {
     rm  src/mm/boehm-gc/ltmain.sh
     mkdir -p src/mm/boehm-gc/m4
 }
 
-#FILES_${PN} = "${bindir}/${PN} ${libdir}/cacao/lib*.so ${libdir}/lib*.so* ${datadir}/${PN}"
-#FILES_${PN}-doc = "${datadir}/man"
-#FILES_${PN}-dbg += "${bindir}/.debug ${libdir}/.debug/lib*.so*"
+do_install_append () {
+    rm ${D}/${bindir}/java
+}
+
+FILES_${PN} = "${bindir}/${PN} ${libdir}/cacao/lib*.so ${libdir}/lib*.so* ${datadir}/${PN}"
+FILES_${PN}-dbg += "${bindir}/.debug ${libdir}/.debug/lib*.so*"
+FILES_${PN}-doc += "${datadir}/gc"
 
 ALTERNATIVE_NAME = "java"
 ALTERNATIVE_LINK = "${bindir}/${ALTERNATIVE_NAME}"
