@@ -39,8 +39,8 @@ DEPENDS = " \
 # No package should directly depend on this (it should require
 # java2-runtime instead).
 PRIVATE_LIBS = "\
-	libunpack.so libverify.so libjava.so libzip.so libnpt.so \
-	libjava_crw_demo.so libhprof.so libnet.so libnio.so \
+	lib.so libunpack.so libverify.so libjava.so libzip.so libnpt.so \
+	libjava_crw_demo.so libhprof.so libjavanet.so libnio.so \
 	libmanagement.so libinstrument.so libjsound.so libjsoundalsa.so \
 	libj2pcsc.so libj2pkcs11.so libj2gss.so libmlib_image.so \
 	libawt.so libsplashscreen.so libfreetype.so.6 libfontmanager.so \
