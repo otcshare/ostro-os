@@ -54,8 +54,8 @@ INSANE_SKIP_${PN} = "dev-so"
 
 FILES_${PN} += "${libdir}/jamvm/lib*.so"
 
-ALTERNATIVE_NAME = "java"
-ALTERNATIVE_PATH = "${bindir}/jamvm"
+ALTERNATIVE_${PN} = "java"
+ALTERNATIVE_TARGET = "${bindir}/jamvm"
 ALTERNATIVE_PRIORITY = "4"
 # shared state for jamvm-native does not work
 # since the paths are hardcoded
