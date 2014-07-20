@@ -1,11 +1,11 @@
 This layer depends on:
 
 URI: git://git.openembedded.org/openembedded-core
-branch: master
+branch: dora
 revision: HEAD
 
 URI: git://git.openembedded.org/meta-openembedded
-branch: master
+branch: dora
 revision: HEAD
 
 You should define at lease the following variables in a distro include file or local.conf
@@ -39,6 +39,8 @@ BBLAYERS ?= " \
 
 Please note that libstdc++ static is needed on your host to compile icedtea6/7-native
 (install libstdc++-static on a Fedora).
+
+For debian-based distributions you need the libstdc++6-$compilerversion-dev package.
 
 Send pull requests to openembedded-devel@lists.openembedded.org
 
