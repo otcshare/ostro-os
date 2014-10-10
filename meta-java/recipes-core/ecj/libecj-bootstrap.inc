@@ -29,7 +29,7 @@ do_unpackpost() {
   rm -rf META-INF
 
   # Move source into separate subdir.
-  if [ -d org ]; then
+  if [ -d org  -a ! -d source/org ]; then
     mv org source/
   fi
   # Remove stuff unneeded for the bootstrap compiler.
