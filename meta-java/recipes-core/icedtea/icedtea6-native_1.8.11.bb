@@ -47,6 +47,7 @@ ICEDTEA_PATCHES = "\
         file://icedtea-unbreak-float.patch;apply=no \
         file://icedtea-jdk-avoid-cdef-collision.patch;apply=no \
 	file://icedtea-hotspot-dont-return-booleans.patch;apply=no \
+	file://icedtea-native-vsyscall.patch;apply=no \
 	"
 
 export DISTRIBUTION_PATCHES = "\
@@ -58,6 +59,7 @@ export DISTRIBUTION_PATCHES = "\
 	patches/icedtea-unbreak-float.patch \
         patches/icedtea-jdk-avoid-cdef-collision.patch \
 	patches/icedtea-hotspot-dont-return-booleans.patch \
+	patches/icedtea-native-vsyscall.patch \
 	"
 
 EXTRA_OECONF += " --with-jaxws-drop-zip=${DL_DIR}/jdk6-jaxws-2009_10_27.zip \

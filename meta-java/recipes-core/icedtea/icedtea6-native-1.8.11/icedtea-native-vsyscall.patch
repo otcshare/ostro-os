@@ -1,0 +1,43 @@
+Fixes the following compile time error when compiling icedtea6-native-1.8.11-r5.3 on a Fedora 20, x86_64:
+os_linux.cpp: In function 'int sched_getcpu_syscall()':
+os_linux.cpp:2431:60: error: expression cannot be used as a function
+   vgetcpu_t vgetcpu = (vgetcpu_t)VSYSCALL_ADDR(__NR_vgetcpu);
+
+Fix taken from:
+http://hg.openjdk.java.net/jdk6/jdk6/hotspot/rev/9447b2fb6fcf
+
+Signed-off-by: Max Krummenacher <max.oss.09@gmail.com>
+
+--- openjdk/hotspot/src/os/linux/vm/os_linux.cpp.orig	2014-10-15 14:57:39.681794315 +0200
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	2014-10-15 15:41:32.398109645 +0200
+@@ -54,10 +54,6 @@
+ # include <sys/shm.h>
+ # include <link.h>
+ 
+-#if __x86_64__
+-#include <asm/vsyscall.h>
+-#endif
+-
+ #define MAX_PATH    (2 * K)
+ 
+ // for timer info max values which include all bits
+@@ -2427,10 +2423,19 @@
+   int retval = -1;
+ 
+ #if __x86_64__
++// Unfortunately we have to bring all these macros here from vsyscall.h
++// to be able to compile on old linuxes.
++# define __NR_vgetcpu 2
++# define VSYSCALL_START (-10UL << 20)
++# define VSYSCALL_SIZE 1024
++# define VSYSCALL_ADDR(vsyscall_nr) (VSYSCALL_START+VSYSCALL_SIZE*(vsyscall_nr))
+   typedef long (*vgetcpu_t)(unsigned int *cpu, unsigned int *node, unsigned long *tcache);
+   vgetcpu_t vgetcpu = (vgetcpu_t)VSYSCALL_ADDR(__NR_vgetcpu);
+   retval = vgetcpu(&cpu, NULL, NULL);
+ #elif __i386__
++# ifndef SYS_getcpu
++# define SYS_getcpu 318
++# endif
+   retval = syscall(SYS_getcpu, &cpu, NULL, NULL);
+ #endif
+ 
