@@ -15,9 +15,9 @@ PACKAGES = "${PN}-grepjar ${PN} ${PN}-dbg ${PN}-doc"
 FILES_${PN}-grepjar = "${bindir}/grepjar"
 
 PROVIDES = "virtual/jar"
-ALTERNATIVE_NAME = "jar"
+ALTERNATIVE_${PN} = "jar"
 ALTERNATIVE_LINK = "${bindir}/jar"
-ALTERNATIVE_PATH = "${bindir}/fastjar"
+ALTERNATIVE_TARGET = "${bindir}/fastjar"
 
 # update-aternatives does not work for native class
 do_install_append_class-native () {
