@@ -61,9 +61,9 @@ FILES_${PN} = "${bindir}/${PN} ${libdir}/cacao/lib*.so ${libdir}/lib*.so* ${data
 FILES_${PN}-dbg += "${bindir}/.debug ${libdir}/.debug/lib*.so*"
 FILES_${PN}-doc += "${datadir}/gc"
 
-ALTERNATIVE_NAME = "java"
-ALTERNATIVE_LINK = "${bindir}/${ALTERNATIVE_NAME}"
-ALTERNATIVE_PATH = "${bindir}/cacao"
+ALTERNATIVE_${PN} = "java"
+ALTERNATIVE_LINK = "${bindir}/java"
+ALTERNATIVE_TARGET = "${bindir}/cacao"
 ALTERNATIVE_PRIORITY = "10"
 
 BBCLASSEXTEND = "native"
