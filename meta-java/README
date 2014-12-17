@@ -1,11 +1,11 @@
 This layer depends on:
 
 URI: git://git.openembedded.org/openembedded-core
-branch: dora
+branch: daisy
 revision: HEAD
 
 URI: git://git.openembedded.org/meta-openembedded
-branch: dora
+branch: daisy
 revision: HEAD
 
 You should define at lease the following variables in a distro include file or local.conf
