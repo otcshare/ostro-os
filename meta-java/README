@@ -1,3 +1,9 @@
+OpenEmbedded/Yocto Project layer for Java support
+=================================================
+
+This layer provides support for Java for use with OpenEmbedded and/or
+Yocto Project build systems.
+
 This layer depends on:
 
 URI: git://git.openembedded.org/openembedded-core
@@ -7,6 +13,44 @@ revision: HEAD
 URI: git://git.openembedded.org/meta-openembedded
 branch: daisy
 revision: HEAD
+
+Contributing
+------------
+
+To contribute to this layer you should submit the patches for review to the
+mailing list (openembedded-devel@lists.openembedded.org).
+
+Please refer to:
+https://wiki.yoctoproject.org/wiki/Contribution_Guidelines#General_Information
+
+for some useful guidelines to be followed when submitting patches.
+
+Mailing list:
+
+    http://lists.openembedded.org/mailman/listinfo/openembedded-devel
+
+Source code:
+
+    git://git.yoctoproject.org/meta-java
+    http://git.yoctoproject.org/git/meta-java
+
+When creating patches, please use something like:
+
+    git format-patch -s --subject-prefix='meta-java][PATCH' origin
+
+When sending patches, please use something like:
+
+    git send-email --to openembedded-devel@lists.openembedded.org <generated patch>
+
+Main layer maintainers:
+
+  Henning Heinold <henning@itconsulting-heinold.de>
+  Mario Domenech Goulart <mario@ossystems.com.br>
+  Maxin John <maxin.john@enea.com>
+  Otavio Salvador <otavio@ossystems.com.br>
+
+Usage instructions
+------------------
 
 You should define at lease the following variables in a distro include file or local.conf
 
@@ -41,7 +85,3 @@ Please note that libstdc++ static is needed on your host to compile icedtea6/7-n
 (install libstdc++-static on a Fedora).
 
 For debian-based distributions you need the libstdc++6-$compilerversion-dev package.
-
-Send pull requests to openembedded-devel@lists.openembedded.org
-
-Main layer maintainers: Henning Heinold <henning@itconsulting-heinold.de>
