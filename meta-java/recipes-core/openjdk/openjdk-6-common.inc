@@ -234,7 +234,7 @@ do_compile() {
 
 do_install() {
 	install -d ${D}${libdir_jvm}
-	cp -R ${WORKDIR}/build/${BUILD_DIR}/j2sdk-image ${D}${JDK_HOME}
+	cp -R ${B}/${BUILD_DIR}/j2sdk-image ${D}${JDK_HOME}
 
 	chmod u+rw -R ${D}${JDK_HOME}
 
