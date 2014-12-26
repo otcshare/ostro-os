@@ -8,7 +8,7 @@ DEPENDS = "virtual/javac-native virtual/java-native classpath-native \
 	   ant-native \
            libx11-native xproto-native libxt-native libxext-native \
 	   freetype-native zlib-native giflib-native jpeg-native \
-           zip-native linux-libc-headers-native \
+           zip-native \
 	  "
 
 inherit native java autotools
