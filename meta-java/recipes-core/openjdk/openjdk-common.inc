@@ -72,6 +72,6 @@ export WANT_LLVM_RELEASE = "2.8"
 export LLVM_CONFIGURE_ARCH="${@get_llvm_configure_arch(d)}"
 
 # Large stack is required at least on x86_64 host, otherwise random segfaults appear:
-QEMU = "${@qemu_target_binary(d)} ${QEMU_OPTIONS} -s 2097152"
+QEMU = "${@qemu_target_binary(d)} ${QEMU_OPTIONS} -s 2097152 -L ${STAGING_DIR_TARGET} -E LD_LIBRARY_PATH=${STAGING_BASELIBDIR}"
 
 EXTRA_OEMAKE += 'QEMU="${QEMU}"'
