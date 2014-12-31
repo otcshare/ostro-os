@@ -18,6 +18,7 @@ SRC_URI = "\
 	file://build-hacks-native.patch \
 	file://icedtea-sane-x86-arch-name.patch \
         file://icedtea-fix-jar-path.patch \
+        file://icedtea-openjdk-remove-currency-data-generation-expi.patch;patchdir=../openjdk-src-dir \
 	${ICEDTEA_PATCHES} \
 	"
 SRC_URI[ojdk.md5sum] = "94db01691ab38f98b7d42b2ebf4d5c0b"
