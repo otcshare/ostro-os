@@ -80,6 +80,7 @@ ICEDTEAPATCHES = "\
         file://icedtea-zero-hotspotfix.patch;apply=no \
 	file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
         file://icedtea-unset-NIO_PLATFORM_CLASSES_ROOT_DIR.patch;apply=no \
+        file://icedtea-openjdk-remove-currency-data-generation-expi.patch;apply=no \
 	"
 ICEDTEAPATCHES_append_powerpc = " \
 	file://icedtea-jdk-ppc64-jvm-cfg.patch;apply=no \
@@ -110,6 +111,7 @@ DISTRIBUTION_PATCHES = "\
         patches/icedtea-zero-hotspotfix.patch \
 	patches/icedtea-jdk-nio-use-host-cc.patch \
 	patches/icedtea-unset-NIO_PLATFORM_CLASSES_ROOT_DIR.patch \
+	patches/icedtea-openjdk-remove-currency-data-generation-expi.patch \
 	"
 
 DISTRIBUTION_PATCHES_append_libc-uclibc = "\
