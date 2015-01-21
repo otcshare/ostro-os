@@ -4,12 +4,20 @@ DEPENDS += "krb5"
 
 FILESPATH =. "${FILE_DIRNAME}/openjdk-6-6b32:"
 
+ICEDTEAPATCHES += "file://icedtea-openjdk-remove-currency-data-generation-expi.patch;apply=no"
+
 EXTRA_OECONF += "--disable-downloading \
                  --enable-system-zlib \
                  --enable-system-jpeg \
                  --enable-system-png \
                  --enable-system-gif \
                 "
+do_configure_append () {
+    patch -p0 <${WORKDIR}/icedtea-openjdk-remove-currency-data-generation-expi.patch
+    cd openjdk-ecj
+    patch -p1 <${WORKDIR}/icedtea-openjdk-remove-currency-data-generation-expi.patch
+    cd ..
+}
 
 OPENJDK_VERSION = "b32"
 OPENJDK_DATE = "15_jul_2014"
