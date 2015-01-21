@@ -11,6 +11,7 @@ EXTRA_OECONF += "--disable-downloading \
                  --enable-system-jpeg \
                  --enable-system-png \
                  --enable-system-gif \
+                 --disable-system-lcms \
                 "
 do_configure_append () {
     patch -p0 <${WORKDIR}/icedtea-openjdk-remove-currency-data-generation-expi.patch
