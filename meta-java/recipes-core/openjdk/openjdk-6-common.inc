@@ -167,6 +167,7 @@ EXTRA_OEMAKE += ' \
                 OE_CXXFLAGS="${TARGET_CXXFLAGS}" \
                 OE_LDFLAGS="${TARGET_LDFLAGS}" \
                 ZIPEXE="${STAGING_BINDIR_NATIVE}/zip" \
+                CROSS_COMPILE_ARCH="${JDK_ARCH}" \
                '
 
 OE_LAUNCHER_LDFLAGS = "-Wl,-rpath-link,${STAGING_LIBDIR}/llvm${WANT_LLVM_RELEASE} -Wl,-rpath,/usr/lib/llvm${WANT_LLVM_RELEASE}"
