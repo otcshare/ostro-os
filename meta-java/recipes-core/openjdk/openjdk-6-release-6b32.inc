@@ -1,6 +1,6 @@
 require openjdk-6-release-6b27.inc
 
-DEPENDS += "krb5"
+DEPENDS += "krb5 libxslt-native"
 
 FILESPATH =. "${FILE_DIRNAME}/openjdk-6-6b32:"
 
