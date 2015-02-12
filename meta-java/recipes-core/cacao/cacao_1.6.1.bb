@@ -49,6 +49,8 @@ EXTRA_OECONF = "\
 "
 
 do_configure_prepend () {
+    # upgrade m4 macros in source tree
+    libtoolize --force --copy --install
     rm  src/mm/boehm-gc/ltmain.sh
     mkdir -p src/mm/boehm-gc/m4
 }
