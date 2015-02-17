@@ -9,6 +9,8 @@ SRC_URI = "\
 	http://www.jdom.org/dist/binary/archive/jdom-${PV}.tar.gz \
 	"
 
+PNBLACKLIST[jdom] ?= "BROKEN: indirectly depends on broken 'xom'"
+
 inherit java-library
 
 do_compile() {

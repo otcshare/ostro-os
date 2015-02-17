@@ -10,6 +10,17 @@ SRC_URI = "\
 	file://04_remove_sun_import.patch \
 	"
 
+# DEBUG: Executing shell function do_compile
+# ----------
+# 1. ERROR in src/nu/xom/UnicodeUtil.java (at line 0)
+# 	/* Copyright 2005 Elliotte Rusty Harold
+# 	^
+# Internal compiler error: java.lang.StackOverflowError at org.eclipse.jdt.internal.compiler.ast.Expression.checkNPE(Expression.java:511)
+# ----------
+# Exception in thread "main" java.lang.StackOverflowError
+#    at org.eclipse.jdt.internal.compiler.ast.Expression.checkNPE(Expression.java:511)
+PNBLACKLIST[xom] ?= "BROKEN: do_compile fails with internal javac error"
+
 S = "${WORKDIR}/XOM"
 
 inherit java-library
