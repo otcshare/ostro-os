@@ -1,5 +1,6 @@
 DESCRIPTION = "Tree-based API for processing XML with Java"
-LICENSE = "LGPL"
+LICENSE = "LGPL-2.1"
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=456080cf80cd56d4d58118c1d10d824f"
 
 HOMEPAGE = "http://xom.nu"
 

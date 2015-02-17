@@ -1,5 +1,7 @@
 AUTHOR = "Apache Software Foundation"
 LICENSE = "Apache-2.0"
+#add the common md5sum and overwrite in bb file if changed
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=d273d63619c9aeaf15cdaf76422c4f87"
 
 INC_PR = "r0"
 

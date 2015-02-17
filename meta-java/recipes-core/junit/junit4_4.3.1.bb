@@ -1,5 +1,6 @@
 DESCRIPTION = "JUnit is a testing framework for Java"
-LICENSE = "CPL"
+LICENSE = "CPL-1.0"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/CPL-1.0;md5=5295cd12fc5acc87bf1cf754455a1c56"
 AUTHOR = "junit.org"
 HOMEPAGE = "http://www.junit.org"
 

@@ -1,5 +1,6 @@
 DESCRIPTION = "Java library for manipulating various file formats based upon Microsoft's OLE 2 Compound Document"
-LICENSE = "AL2.0"
+LICENSE = "Apache-2.0"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=3b83ef96387f14655fc854ddc3c6bd57"
 AUTHOR = "Apache Software Foundation"
 
 SRC_URI = "http://archive.apache.org/dist/jakarta/poi/release/src/${BPN}-src-${PV}-FINAL-20070503.tar.gz"
