@@ -5,25 +5,25 @@ LICENSE = "PD"
 LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=361934e706423915b4d9f413ad37fb65"
 
 SRC_URI = "http://www.antlr2.org/download/${BP}.tar.gz"
-SRC_URI_virtclass_native += "file://runantlr"
+SRC_URI_append_class-native = " file://runantlr"
 
 inherit java-library
 
-do_configure_virtclass_native() {
-        sed -i -e"s|@JAR_FILE@|${STAGING_DATADIR_JAVA_NATIVE}/antlr.jar|" ${WORKDIR}/runantlr
+do_configure_class-native() {
+    sed -i -e"s|@JAR_FILE@|${STAGING_DATADIR_JAVA_NATIVE}/antlr.jar|" ${WORKDIR}/runantlr
 }
 
 do_compile() {
-  mkdir -p build
+    mkdir -p build
 
-  javac -sourcepath . -d build `find antlr -name "*.java"`
+    javac -sourcepath . -d build `find antlr -name "*.java"`
 
-  fastjar cf ${JARFILENAME} -C build .
+    fastjar cf ${JARFILENAME} -C build .
 }
 
-do_install_virtclass_native() {
-        install ${D}${bindir}
-        install -m 0755 ${WORKDIR}/runantlr {D}${bindir}/
+do_install_class-native() {
+    install -d ${D}${bindir}
+    install -m 0755 ${WORKDIR}/runantlr ${D}${bindir}/
 }
 
 SRC_URI[md5sum] = "01cc9a2a454dd33dcd8c856ec89af090"
