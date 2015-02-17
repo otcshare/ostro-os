@@ -22,7 +22,7 @@ S = "${WORKDIR}/rxtx-2.2pre2"
 
 INSANE_SKIP_${PN} += "dev-so"
 
-inherit autotools java-library
+inherit autotools-brokensep java-library
 
 JARFILENAME = "RXTXcomm.jar"
 EXTRA_OEMAKE += "RXTX_PATH=${D}${libdir_jni} \
