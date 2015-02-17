@@ -1,4 +1,5 @@
 require jakarta-commons.inc
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=fd707e76aa29b6984fbe80629ec55f78"
 
 PR = "${INC_PR}.1"
 

@@ -1,6 +1,6 @@
 DESCRIPTION = "Streaming pull XML parser for java"
 LICENSE = "BSD-like"
-
+LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=d40c660a53e36a103a35c170d38d0ef6"
 HOMEPAGE = "http://www.extreme.indiana.edu/xgws/xsoap/xpp/"
 
 SRC_URI = "http://www.extreme.indiana.edu/xgws/xsoap/xpp/download/PullParser2/PullParser2.1.10.tgz"

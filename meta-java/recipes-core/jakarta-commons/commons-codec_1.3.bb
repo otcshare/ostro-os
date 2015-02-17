@@ -1,4 +1,5 @@
 require jakarta-commons.inc
+LIC_FILES_CHKSUM = "file://src/java/org/apache/commons/codec/BinaryDecoder.java;endline=15;md5=c08c3e117b4fc42b50c1f621fdcecc5f"
 
 PR = "${INC_PR}.1"
 
