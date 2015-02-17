@@ -11,6 +11,8 @@ SRC_URI = "\
 	file://debian.patch \
 	"
 
+PNBLACKLIST[dom4j] ?= "BROKEN: indirectly depends on broken 'xom'"
+
 inherit java-library
 
 do_compile() {

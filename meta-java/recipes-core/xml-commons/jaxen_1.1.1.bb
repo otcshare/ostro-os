@@ -10,6 +10,8 @@ SRC_URI = "\
 	http://www.jdom.org/dist/binary/archive/jdom-1.1.tar.gz;name=jdom \
 	"
 
+PNBLACKLIST[jaxen] ?= "BROKEN: depends on broken 'xom'"
+
 inherit java-library
 
 do_compile() {

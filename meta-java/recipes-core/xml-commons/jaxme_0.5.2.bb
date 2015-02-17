@@ -9,6 +9,20 @@ SRC_URI = "\
 	http://ftp.hosting-studio.de/pub/linux/apache/ant/source/apache-ant-1.7.1-src.tar.bz2;name=ant \
 	"
 
+# do_compile:
+# 2. ERROR in src/jaxme/org/apache/ws/jaxme/generator/XJCTask.java (at line 30)
+#         import org.apache.ws.jaxme.generator.sg.SGFactoryChain;
+#                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# The import org.apache.ws.jaxme.generator.sg.SGFactoryChain cannot be resolved
+# ----------
+# 3. ERROR in src/jaxme/org/apache/ws/jaxme/generator/XJCTask.java (at line 1055)
+#         if (!SGFactoryChain.class.isAssignableFrom(c)) {
+#              ^^^^^^^^^^^^^^
+# SGFactoryChain cannot be resolved to a type
+# ----------
+# ... and many more
+PNBLACKLIST[jaxme] ?= "BROKEN: do_compile fails"
+
 S = "${WORKDIR}/ws-${P}"
 
 inherit java-library
