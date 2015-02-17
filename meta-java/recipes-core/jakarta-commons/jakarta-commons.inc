@@ -21,42 +21,42 @@ CLEAN_PATH = ""
 
 # Some projects have a replaceable version number in their manifest template.
 do_unpackpost() {
-  if [ -d src/conf ]
-  then
-    find src/conf -exec \
-      sed -i -e "s|@version@|${PV}|" {} \;
-  fi
+    if [ -d src/conf ]
+    then
+        find src/conf -exec \
+        sed -i -e "s|@version@|${PV}|" {} \;
+    fi
 }
 
 addtask unpackpost after do_unpack before do_patch
 # Compile step is very similar for Jakarta commons packages
 do_compile() {
-  mkdir -p build
+    mkdir -p build
 
-  if [ "${CP}" ]
-  then
-     oe_makeclasspath cp -s ${CP}
-  else
-     cp=.
-  fi
+    if [ "${CP}" ]
+    then
+       oe_makeclasspath cp -s ${CP}
+    else
+       cp=.
+    fi
 
-  echo "javac -sourcepath ${COMPILE_SOURCEPATH} -cp $cp -d build \`find ${MAINSOURCES} ${COMPILE_FINDARGS}\`"
-  javac -sourcepath ${COMPILE_SOURCEPATH} -cp $cp -d build `find ${MAINSOURCES} ${COMPILE_FINDARGS}`
+    echo "javac -sourcepath ${COMPILE_SOURCEPATH} -cp $cp -d build \`find ${MAINSOURCES} ${COMPILE_FINDARGS}\`"
+    javac -sourcepath ${COMPILE_SOURCEPATH} -cp $cp -d build `find ${MAINSOURCES} ${COMPILE_FINDARGS}`
 
-  # Copy extraneous files
-  echo "(cd ${MAINSOURCES} && find . ${FINDARGS} -exec cp {} ../../build/{} \;)"
-  (cd ${MAINSOURCES} && find . ${FINDARGS} -exec cp {} ../../build/{} \;)
+    # Copy extraneous files
+    echo "(cd ${MAINSOURCES} && find . ${FINDARGS} -exec cp {} ../../build/{} \;)"
+    (cd ${MAINSOURCES} && find . ${FINDARGS} -exec cp {} ../../build/{} \;)
 
-	# Optionally remove stuff after compilation (needed for sourcepath hacks).
-	if [ ${CLEAN_PATH} ]; then
-		rm -rf ${CLEAN_PATH}
-	fi
+    # Optionally remove stuff after compilation (needed for sourcepath hacks).
+    if [ ${CLEAN_PATH} ]; then
+        rm -rf ${CLEAN_PATH}
+    fi
 
-  # Some projects have manifest, some have not. This works for both.
-  if [ -f src/conf/MANIFEST.MF ]
-  then
-    fastjar cfm ${JARFILENAME} src/conf/MANIFEST.MF -C build .
-  else
-    fastjar cf ${JARFILENAME} -C build .
-  fi
+    # Some projects have manifest, some have not. This works for both.
+    if [ -f src/conf/MANIFEST.MF ]
+    then
+        fastjar cfm ${JARFILENAME} src/conf/MANIFEST.MF -C build .
+    else
+        fastjar cf ${JARFILENAME} -C build .
+    fi
 }

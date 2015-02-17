@@ -14,25 +14,25 @@ inherit java-library
 DEPENDS = "fastjar-native servlet2.4"
 
 do_compile() {
-  # Build instructions according to build/buildJDK14.bat
-        mkdir -p classes
+    # Build instructions according to build/buildJDK14.bat
+    mkdir -p classes
 
-        oe_makeclasspath cp -s servlet-api-2.4
+    oe_makeclasspath cp -s servlet-api-2.4
 
-        javac -sourcepath src -cp $cp -d build `find src -name "*.java" -and -not -wholename "*test*"`
+    javac -sourcepath src -cp $cp -d build `find src -name "*.java" -and -not -wholename "*test*"`
 
-        mkdir -p classes/org/hsqldb/util
-        mkdir -p classes/org/hsqldb/util/sqltool
-        mkdir -p classes/org/hsqldb/resources
+    mkdir -p classes/org/hsqldb/util
+    mkdir -p classes/org/hsqldb/util/sqltool
+    mkdir -p classes/org/hsqldb/resources
 
-        cp src/org/hsqldb/util/*.gif classes/org/hsqldb/util/
-        cp src/org/hsqldb/util/*.png classes/org/hsqldb/util/
-        cp src/org/hsqldb/util/*.properties classes/org/hsqldb/util/
-        cp src/org/hsqldb/util/sqltool/*.text classes/org/hsqldb/util/sqltool/
+    cp src/org/hsqldb/util/*.gif classes/org/hsqldb/util/
+    cp src/org/hsqldb/util/*.png classes/org/hsqldb/util/
+    cp src/org/hsqldb/util/*.properties classes/org/hsqldb/util/
+    cp src/org/hsqldb/util/sqltool/*.text classes/org/hsqldb/util/sqltool/
 
-        cp src/org/hsqldb/resources/*.properties classes/org/hsqldb/resources
+    cp src/org/hsqldb/resources/*.properties classes/org/hsqldb/resources
 
-  fastjar -C classes -c -f ${JARFILENAME} .
+    fastjar -C classes -c -f ${JARFILENAME} .
 }
 
 SRC_URI[md5sum] = "17410483b5b5f267aa18b7e00b65e6e0"
