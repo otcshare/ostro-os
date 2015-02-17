@@ -7,8 +7,12 @@
 # starts with "lib" and/or ends with "-java". In case the "lib" prefix is part of
 # your package's normal name (e.g. liberator) the guessing is wrong and you have
 # to set JPN manually!
+#
+# package archs are set to all, if the recipe builds also packages which
+# can not be used for all archs, then set the PACKAGE_ARCH of that package
+# manually, see rxtx_xx.bb for an example.
 
-inherit java
+inherit java allarch
 
 # use java_stage for native packages
 JAVA_NATIVE_STAGE_INSTALL = "1"
@@ -34,8 +38,6 @@ JPN ?= "${@java_package_name(d)}"
 DEPENDS_prepend = "virtual/javac-native fastjar-native "
 
 PACKAGES += "${JPN}"
-
-PACKAGE_ARCH_${JPN} = "all"
 
 FILES_${JPN} = "${datadir_java}"
 
