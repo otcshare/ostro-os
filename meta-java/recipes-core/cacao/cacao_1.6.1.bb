@@ -59,6 +59,10 @@ do_install_append () {
     rm ${D}/${bindir}/java
 }
 
+do_install_append_class-native () {
+    ln -sf cacao ${D}/${bindir}/java
+}
+
 FILES_${PN} = "${bindir}/${PN} ${libdir}/cacao/lib*.so ${libdir}/lib*.so* ${datadir}/${PN}"
 FILES_${PN}-dbg += "${bindir}/.debug ${libdir}/.debug/lib*.so*"
 FILES_${PN}-doc += "${datadir}/gc"
