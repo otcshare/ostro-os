@@ -8,7 +8,7 @@ PROVIDES = "virtual/java-initial"
 
 inherit native autotools-brokensep
 
-DEPENDS = "zlib-native libtool-native fastjar-native classpath-initial jikes-initial"
+DEPENDS = "zlib-native libtool-native fastjar-native classpath-initial-native jikes-initial-native"
 
 SRC_URI = "\
         http://www.complang.tuwien.ac.at/cacaojvm/download/cacao-${PV}/cacao-${PV}.tar.bz2; \
