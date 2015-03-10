@@ -13,7 +13,12 @@ SRC_URI = "http://rxtx.qbang.org/pub/rxtx/rxtx-2.2pre2.zip \
            file://sys_io_h_check.patch \
            file://port_to_hurd.patch \
            file://multiple_property_dirs.patch \
-           file://uninstall_target.patch"
+           file://uninstall_target.patch \
+           file://fhs_lock_buffer_overflow_fix.patch \
+           file://MonitorThread-daemon.patch \
+           file://usb_38400.patch \
+           file://fix_snprintf.patch \
+           file://format_security.patch"
 
 SRC_URI[md5sum] = "7eedb18e3f33a427e2b0e9be8ce3f94c"
 SRC_URI[sha256sum] = "3c30373e760f444def3650c76c5a00ae12fb1d860ec008750d084f4880495b03"
