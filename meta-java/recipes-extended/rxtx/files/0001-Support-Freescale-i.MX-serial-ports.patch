@@ -1,0 +1,27 @@
+From 9295c8c954c28f30d90f7521048be17790ddb878 Mon Sep 17 00:00:00 2001
+From: Mario Domenech Goulart <mario@ossystems.com.br>
+Date: Mon, 9 Mar 2015 16:18:12 -0300
+Subject: [PATCH] Support Freescale i.MX serial ports
+Organization: O.S. Systems Software LTDA.
+
+Signed-off-by: Mario Domenech Goulart <mario@ossystems.com.br>
+Upstream-Status: Pending
+---
+ src/gnu/io/RXTXCommDriver.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/gnu/io/RXTXCommDriver.java b/src/gnu/io/RXTXCommDriver.java
+index 16225dc..4cadd03 100644
+--- a/src/gnu/io/RXTXCommDriver.java
++++ b/src/gnu/io/RXTXCommDriver.java
+@@ -612,6 +612,7 @@ public class RXTXCommDriver implements CommDriver
+ 						"ttyH", // linux Chase serial card
+ 						"ttyI", // linux virtual modems
+ 						"ttyL", // linux SDL RISCom serial card
++						"ttymxc", // linux Freescale i.MX serial card
+ 						"ttyM", // linux PAM Software's multimodem boards
+ 							// linux ISI serial card
+ 						"ttyMX",// linux Moxa Smart IO cards
+-- 
+2.1.4
+
