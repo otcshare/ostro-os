@@ -3,7 +3,7 @@ HOMEPAGE = "http://jamvm.sourceforge.net/"
 LICENSE = "GPL"
 LIC_FILES_CHKSUM = "file://COPYING;md5=0636e73ff0215e8d672dc4c32c317bb3"
 
-DEPENDS = "zlib-native classpath-initial jikes-initial libffi-native"
+DEPENDS = "zlib-native classpath-initial-native jikes-initial-native libffi-native"
 
 PROVIDES = "virtual/java-initial"
 
