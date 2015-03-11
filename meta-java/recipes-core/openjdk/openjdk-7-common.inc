@@ -323,7 +323,8 @@ FILES_${JDKPN}-jdk = " \
                        ${JDK_HOME}/lib \
                        ${JDK_HOME}/include \
                       "
-RDEPENDS_${JDKPN}-jre = "${JDKPN}-java"
+RDEPENDS_${JDKPN}-jre = "${JDKPN}-java ${JDKPN}-common"
+RDEPENDS_${JDKPN}-java = "${JDKPN}-common"
 RPROVIDES_${JDKPN}-jre = "java2-runtime"
 
 RDEPENDS_${JDKPN}-jdk = "${JDKPN}-jre"
