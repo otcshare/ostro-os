@@ -26,7 +26,7 @@ SRC_URI[sha256sum] = "3c30373e760f444def3650c76c5a00ae12fb1d860ec008750d084f4880
 
 S = "${WORKDIR}/rxtx-2.2pre2"
 
-INSANE_SKIP_${PN} += "dev-so"
+INSANE_SKIP_${JPN} += "dev-so"
 
 inherit autotools-brokensep java-library
 PACKAGE_ARCH = "${TUNE_PKGARCH}"
@@ -51,5 +51,11 @@ do_install_prepend() {
     install -d ${D}${datadir_java}/ext
 }
 
-FILES_${PN} += "${libdir_jni}"
+PACKAGES_remove = "${PN}"
+
+FILES_${JPN} += "${libdir_jni}"
+RPROVIDES_${JPN} = "${PN}"
+RCONFLICTS_${JPN} = "${PN}"
+RREPLACES_${JPN} = "${PN}"
+
 FILES_${PN}-dbg += "${libdir_jni}/.debug"
