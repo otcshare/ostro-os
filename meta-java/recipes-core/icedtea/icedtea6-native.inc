@@ -28,7 +28,6 @@ EXTRA_OECONF = "\
 	--disable-docs \
 	--disable-pulse-java \
 	--disable-plugin \
-        --disable-npplugin \
 	--disable-xrender \
 	\
 	--with-ecj=${STAGING_BINDIR_NATIVE}/ecj-bootstrap \
