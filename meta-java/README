@@ -54,7 +54,7 @@ Usage instructions
 
 You should define at least the following variables in a distro include file or local.conf
 
-PREFERRED_PROVIDER_virtual/java-initial = "cacao-initial"
+PREFERRED_PROVIDER_virtual/java-initial-native = "cacao-initial-native"
 
 PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
 PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
