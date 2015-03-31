@@ -52,7 +52,7 @@ Main layer maintainers:
 Usage instructions
 ------------------
 
-You should define at lease the following variables in a distro include file or local.conf
+You should define at least the following variables in a distro include file or local.conf
 
 PREFERRED_PROVIDER_virtual/java-initial = "cacao-initial"
 
