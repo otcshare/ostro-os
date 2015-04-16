@@ -7,7 +7,6 @@ SECTION  = "libs"
 ICEDTEA_VERSION = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1].split("-")[1] or '1.0'}"
 
 S = "${WORKDIR}/${ICEDTEA}"
-B = "${S}/build"
 
 DEPENDS_append_libc-uclibc = " virtual/libiconv "
 
@@ -18,6 +17,8 @@ DEPENDS_append_libc-uclibc = " virtual/libiconv "
 DEPENDS_append = " qemu-native "
 
 inherit java autotools gettext qemu pkgconfig
+
+B = "${S}/build"
 
 # OpenJDK uses slightly different names for certain arches. We need to know
 #	this to create some files which are expected by the build.
