@@ -98,11 +98,14 @@ oe_makeclasspath() {
       case "$1" in
           -s)
               # take jar files from native staging if this is a -native recipe
-              if [ ${PACKAGE_ARCH} = ${BUILD_ARCH} ]; then
+              case "$PN" in
+              *-native|*-nativesdk)
                   dir=${STAGING_DATADIR_JAVA_NATIVE}
-              else
+                  ;;
+              *)
                   dir=${STAGING_DATADIR_JAVA}
-              fi
+                  ;;
+              esac
               ;;
           -*)
               bbfatal "oe_makeclasspath: unknown option: $1"
