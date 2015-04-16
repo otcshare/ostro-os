@@ -85,6 +85,7 @@ EXTRA_OECONF = "\
         --with-jaxws-src-zip=${DL_DIR}/${JAXWS_FILE} \
         --with-jdk-src-zip=${DL_DIR}/${JDK_FILE} \
         --with-langtools-src-zip=${DL_DIR}/${LANGTOOLS_FILE} \
+        ac_cv_path_UNZIP_BIN="${STAGING_BINDIR_NATIVE}/unzip" \
   "
 
 JDK_DIR = "icedtea7-native"
@@ -163,6 +164,7 @@ EXTRA_OEMAKE = ' \
                 ZIPEXE="${STAGING_BINDIR_NATIVE}/zip" \
 		${OEMAKE_BUILD_HEADLESS_ONLY} \
 		DISABLE_HOTSPOT_OS_VERSION_CHECK=ok \
+                UNZIP_BIN="${STAGING_BINDIR_NATIVE}/unzip" \
                '
 
 do_compile() {

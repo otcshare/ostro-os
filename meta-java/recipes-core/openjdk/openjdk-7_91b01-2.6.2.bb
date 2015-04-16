@@ -47,6 +47,7 @@ SRC_URI[hotspot.sha256sum] = "39bc54bf343e1dce404b8c95285c0457a8d0a7c7aedfb55055
 OEPATCHES = "\
     file://build-hacks.patch \
     file://fix_hotspot_crosscompile.patch \
+    file://icedtea-makefile-unzip.patch \
 "
 
 ICEDTEAPATCHES = "\
@@ -55,6 +56,7 @@ ICEDTEAPATCHES = "\
     file://icedtea-jdk-rmi-crosscompile.patch;apply=no \
     file://icedtea-crosscompile-fix.patch;apply=no \
     file://icedtea-xawt-crosscompile-fix.patch;apply=no \
+    file://icedtea-jdk-unzip.patch;apply=no \
 "
 
 DISTRIBUTION_PATCHES = "\
@@ -63,6 +65,7 @@ DISTRIBUTION_PATCHES = "\
     patches/icedtea-jdk-rmi-crosscompile.patch \
     patches/icedtea-crosscompile-fix.patch \
     patches/icedtea-xawt-crosscompile-fix.patch \
+    patches/icedtea-jdk-unzip.patch \
 "
 
 export DISTRIBUTION_PATCHES

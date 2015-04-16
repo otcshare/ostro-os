@@ -71,6 +71,7 @@ ICEDTEA_PATCHES = " \
         file://build-hacks-native.patch \
         file://icedtea-sane-x86-arch-name.patch \
 	file://fix-checksums.patch \
+	file://icedtea-makefile-unzip.patch \
         "
 
 OPENJDK_PATCHES = " \
@@ -87,6 +88,7 @@ OPENJDK_PATCHES = " \
 	file://icedtea-hotspot-fix-undefined-behaviour.patch;apply=no \
 	file://icedtea-x11_extension_cleanup.patch;apply=no \
 	file://icedtea-CVE-2014-1876-unpack.patch;apply=no \
+	file://icedtea-jdk-unzip.patch;apply=no \
         "
 
 OPENJDK_HEADLESS_PATCHES = " \
@@ -108,5 +110,6 @@ export DISTRIBUTION_PATCHES = " \
 	patches/icedtea-hotspot-fix-undefined-behaviour.patch \
 	patches/icedtea-x11_extension_cleanup.patch \
 	patches/icedtea-CVE-2014-1876-unpack.patch \
+	patches/icedtea-jdk-unzip.patch \
 	${CLEAN_X11_DISTRIBUTION_PATCH} \
         "

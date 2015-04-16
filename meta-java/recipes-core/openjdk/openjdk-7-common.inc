@@ -109,6 +109,7 @@ EXTRA_OECONF = " \
     \
     --with-pkgversion=${PV} \
     --with-cc-for-build=${BUILD_CC} \
+    ac_cv_path_UNZIP_BIN="${STAGING_BINDIR_NATIVE}/unzip" \
 "
 
 # PCSC default value was changed to true and SCTP was added during the 2.6.0
@@ -149,6 +150,7 @@ EXTRA_OEMAKE += ' \
     CROSS_COMPILE_ARCH="${JDK_ARCH}" \
     REQUIRED_ALSA_VERSION="" \
     DISABLE_HOTSPOT_OS_VERSION_CHECK=ok \
+    UNZIP_BIN="${STAGING_BINDIR_NATIVE}/unzip" \
 '
 
 # Provides the target architecture to the configure script.

@@ -1,0 +1,130 @@
+Use UNZIP_BIN instead of UNZIP.
+
+Fails with an error message /usr/bin/unzip not found.
+Additionally, icedtea7 enables you to specify an unzip to use by setting
+the variable UNZIP, this results in an error because unzip uses UNZIP
+to specify options, hence you'll end up with unzip trying to unzip unzip.
+
+Upstream-Status: Inappropriate
+
+Signed-off-by: Amy Fong <amy.fong@windriver.com>
+Signed-off-by: Jackie Huang <jackie.huang@windriver.com>
+---
+ openjdk/corba/make/common/shared/Defs-utils.gmk       |    6 +++---
+ openjdk/jdk/make/common/Demo.gmk                      |    2 +-
+ openjdk/jdk/make/common/Release.gmk                   |    2 +-
+ openjdk/jdk/make/common/internal/ImportComponents.gmk |    4 ++--
+ openjdk/jdk/make/common/shared/Defs-utils.gmk         |    6 +++---
+ openjdk/jdk/make/common/shared/Sanity.gmk             |    2 +-
+ openjdk/jdk/make/java/redist/Makefile                 |    4 ++--
+ 7 files changed, 13 insertions(+), 13 deletions(-)
+
+--- openjdk/corba/make/common/shared/Defs-utils.gmk
++++ openjdk/corba/make/common/shared/Defs-utils.gmk
+@@ -129,7 +129,7 @@
+ TRUE           = $(UTILS_COMMAND_PATH)true
+ UNAME          = $(UTILS_COMMAND_PATH)uname
+ UNIQ           = $(UTILS_USR_BIN_PATH)uniq
+-UNZIP          = $(UTILS_USR_BIN_PATH)unzip
++# UNZIP      = $(UTILS_USR_BIN_PATH)unzip
+ UNZIPSFX       = $(UTILS_DEVTOOL_PATH)unzipsfx
+ WC             = $(UTILS_USR_BIN_PATH)wc
+ WHICH          = $(UTILS_USR_BIN_PATH)which
+@@ -146,10 +146,10 @@
+     # Intrinsic unix command, with backslash-escaped character interpretation
+     ECHO = $(UNIXCOMMAND_PATH)echo -e
+     ZIPEXE = $(UNIXCOMMAND_PATH)zip
+-    UNZIP  = $(UNIXCOMMAND_PATH)unzip
++    # UNZIP  = $(UNIXCOMMAND_PATH)unzip
+   else
+     ZIPEXE = $(UTILS_DEVTOOL_PATH)zip
+-    UNZIP  = $(UTILS_DEVTOOL_PATH)unzip
++    # UNZIP  = $(UTILS_DEVTOOL_PATH)unzip
+   endif
+   # Re-define some utilities
+   LEX            =# override GNU Make intrinsic: no lex on windows
+--- openjdk/jdk/make/common/Demo.gmk
++++ openjdk/jdk/make/common/Demo.gmk
+@@ -348,7 +348,7 @@
+ 	  $(java-vm-cleanup) )
+ 	@( $(CD) $(DEMO_DESTDIR) && $(java-vm-cleanup) )
+ 	@$(ECHO) "Expanding source into demos area at $(DEMO_DESTDIR)"
+-	( $(CD) $(DEMO_DESTDIR) && $(UNZIP) -o src.zip && $(RM) src.zip )
++	( $(CD) $(DEMO_DESTDIR) && $(UNZIP_BIN) -o src.zip && $(RM) src.zip )
+ endif
+ 
+ build: sources bundles
+--- openjdk/jdk/make/common/Release.gmk
++++ openjdk/jdk/make/common/Release.gmk
+@@ -909,7 +909,7 @@
+ initial-image-jdk-db: $(DB_ZIP_LIST)
+ 	$(MKDIR) -p $(JDK_IMAGE_DIR)/db
+ 	for d in $(DB_ZIP_LIST); do \
+-          ($(CD) $(JDK_IMAGE_DIR)/db && $(UNZIP) -o $$d); \
++          ($(CD) $(JDK_IMAGE_DIR)/db && $(UNZIP_BIN) -o $$d); \
+ 	done
+ 	$(CP) $(ABS_DB_PATH)/README-JDK.html $(JDK_IMAGE_DIR)/db
+ 	$(RM) -rf $(DEMODIR)/db
+--- openjdk/jdk/make/common/internal/ImportComponents.gmk
++++ openjdk/jdk/make/common/internal/ImportComponents.gmk
+@@ -97,8 +97,8 @@
+ define Unzipper
+ ( \
+   $(MKDIR) -p $1; \
+-  $(ECHO) "( $(CD) $1 && $(UNZIP) -o $2 )"; \
+-  ( $(CD) $1 && $(UNZIP) -o $2 ) \
++  $(ECHO) "( $(CD) $1 && $(UNZIP_BIN) -o $2 )"; \
++  ( $(CD) $1 && $(UNZIP_BIN) -o $2 ) \
+ )
+ endef
+ 
+--- openjdk/jdk/make/common/shared/Defs-utils.gmk
++++ openjdk/jdk/make/common/shared/Defs-utils.gmk
+@@ -145,7 +145,7 @@
+ TRUE           = $(UTILS_COMMAND_PATH)true
+ UNAME          = $(UTILS_COMMAND_PATH)uname
+ UNIQ           = $(UTILS_USR_BIN_PATH)uniq
+-UNZIP          = $(UTILS_USR_BIN_PATH)unzip
++# UNZIP      = $(UTILS_USR_BIN_PATH)unzip
+ UNZIPSFX       = $(UTILS_DEVTOOL_PATH)unzipsfx
+ XARGS          = $(UTILS_USR_BIN_PATH)xargs
+ WC             = $(UTILS_USR_BIN_PATH)wc
+@@ -163,12 +163,12 @@
+     # Intrinsic unix command, with backslash-escaped character interpretation
+     ECHO = $(UNIXCOMMAND_PATH)echo -e
+     ZIPEXE = $(UNIXCOMMAND_PATH)zip
+-    UNZIP  = $(UNIXCOMMAND_PATH)unzip
++    # UNZIP  = $(UNIXCOMMAND_PATH)unzip
+     # Some CYGWIN nawk versions require BINMODE=w for proper '\r' interpretation
+     NAWK   = $(UNIXCOMMAND_PATH)awk -v BINMODE=w
+   else
+     ZIPEXE = $(UTILS_DEVTOOL_PATH)zip
+-    UNZIP  = $(UTILS_DEVTOOL_PATH)unzip
++    # UNZIP  = $(UTILS_DEVTOOL_PATH)unzip
+     NAWK   = $(UNIXCOMMAND_PATH)awk
+   endif
+   # Re-define some utilities
+--- openjdk/jdk/make/common/shared/Sanity.gmk
++++ openjdk/jdk/make/common/shared/Sanity.gmk
+@@ -151,7 +151,7 @@
+ # Get the version numbers of what we are using
+ _MAKE_VER  :=$(shell $(MAKE) --version 2>&1 | $(HEAD) -n 1)
+ _ZIP_VER   :=$(shell $(ZIPEXE) -help 2>&1 | $(HEAD) -n 4 | $(EGREP) '^Zip')
+-_UNZIP_VER :=$(shell $(UNZIP)  -help 2>&1 | $(HEAD) -n 4 | $(EGREP) '^UnZip')
++_UNZIP_VER :=$(shell $(UNZIP_BIN)  -help 2>&1 | $(HEAD) -n 4 | $(EGREP) '^UnZip')
+ _BOOT_VER  :=$(shell $(BOOTDIR)/bin/java -version 2>&1 | $(HEAD) -n 1)
+ MAKE_VER   :=$(call GetVersion,"$(_MAKE_VER)")
+ ZIP_VER    :=$(call GetVersion,"$(_ZIP_VER)")
+--- openjdk/jdk/make/java/redist/Makefile
++++ openjdk/jdk/make/java/redist/Makefile
+@@ -482,8 +482,8 @@
+ define SecUnzipper
+ if [ -f $2 ] ; then \
+   $(MKDIR) -p $1; \
+-  $(ECHO) "( $(CD) $1 && $(UNZIP) -o $2 )"; \
+-  ( $(CD) $1 && $(UNZIP) -o $2 ); \
++  $(ECHO) "( $(CD) $1 && $(UNZIP_BIN) -o $2 )"; \
++  ( $(CD) $1 && $(UNZIP_BIN) -o $2 ); \
+ fi
+ endef
+ 
