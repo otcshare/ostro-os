@@ -74,11 +74,13 @@ pkg_prerm_${JDKPN}-vm-zero () {
 
 inherit update-alternatives
 
-ALTERNATIVE_${JDKPN}-jre = "java"
-ALTERNATIVE_TARGET_${JDKPN}-jre = "${JDK_HOME}/jre/bin/java"
-
+ALTERNATIVE_${JDKPN}-jre = "java keytool"
 ALTERNATIVE_${JDKPN}-jdk = "javac"
-ALTERNATIVE_TARGET_${JDKPN}-jdk = "${JDK_HOME}/bin/javac"
+
+ALTERNATIVE_TARGET[java] = "${JDK_HOME}/jre/bin/java"
+ALTERNATIVE_TARGET[javac] = "${JDK_HOME}/bin/javac"
+ALTERNATIVE_TARGET[keytool] = "${JDK_HOME}/jre/bin/keytool"
 
 ALTERNATIVE_LINK_NAME[java] = "${bindir}/java"
 ALTERNATIVE_LINK_NAME[javac] = "${bindir}/javac"
+ALTERNATIVE_LINK_NAME[keytool] = "${bindir}/keytool"
