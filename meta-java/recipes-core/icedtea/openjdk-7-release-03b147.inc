@@ -86,6 +86,7 @@ OPENJDK_PATCHES = " \
 	file://icedtea-disable-sun.applet-for-tools-in-headless.patch;apply=no \
 	file://icedtea-hotspot-fix-undefined-behaviour.patch;apply=no \
 	file://icedtea-x11_extension_cleanup.patch;apply=no \
+	file://icedtea-CVE-2014-1876-unpack.patch;apply=no \
         "
 
 OPENJDK_HEADLESS_PATCHES = " \
@@ -106,5 +107,6 @@ export DISTRIBUTION_PATCHES = " \
 	patches/icedtea-change-to-gdb-debug-format.patch \
 	patches/icedtea-hotspot-fix-undefined-behaviour.patch \
 	patches/icedtea-x11_extension_cleanup.patch \
+	patches/icedtea-CVE-2014-1876-unpack.patch \
 	${CLEAN_X11_DISTRIBUTION_PATCH} \
         "
