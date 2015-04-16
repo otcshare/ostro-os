@@ -15,11 +15,6 @@ RPROVIDES_${PN}_virtclass-native = ""
 
 BBCLASSEXTEND = "native"
 
-SRC_URI = "${SOURCEFORGE_MIRROR}/jamvm/jamvm-${PV}.tar.gz \
-            file://jamvm-jni_h-noinst.patch \
-            file://libffi.patch \
-          "
-
 
 inherit java autotools update-alternatives pkgconfig
 
