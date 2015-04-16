@@ -302,6 +302,7 @@ FILES_${JDKPN}-jdk = " \
     ${JDK_HOME}/bin \
     ${JDK_HOME}/lib \
     ${JDK_HOME}/include \
+    ${JDK_HOME}${libdir}/jvm \
 "
 RDEPENDS_${JDKPN}-jre = "${JDKPN}-java ${JDKPN}-common"
 RDEPENDS_${JDKPN}-java = "${JDKPN}-common"
