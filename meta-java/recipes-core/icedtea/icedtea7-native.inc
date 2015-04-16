@@ -17,7 +17,7 @@ PACKAGECONFIG[x11] = ",--disable-headful,libx11-native xproto-native libxt-nativ
 OEMAKE_BUILD_HEADLESS_ONLY = "${@base_contains('PACKAGECONFIG', 'x11', '', 'BUILD_HEADLESS_ONLY=1', d)}"
 CFLAGS_append = "${@base_contains('PACKAGECONFIG', 'x11', '', ' -DHEADLESS=true', d)}"
 
-inherit native java autotools
+inherit native java autotools pkgconfig
 
 JAVA_HOME[unexport] = "1"
 
