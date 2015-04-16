@@ -85,6 +85,7 @@ OPENJDK_PATCHES = " \
 	file://icedtea-disable-x11-in-headless.patch;apply=no \
 	file://icedtea-disable-sun.applet-for-tools-in-headless.patch;apply=no \
 	file://icedtea-hotspot-fix-undefined-behaviour.patch;apply=no \
+	file://icedtea-x11_extension_cleanup.patch;apply=no \
         "
 
 OPENJDK_HEADLESS_PATCHES = " \
@@ -104,5 +105,6 @@ export DISTRIBUTION_PATCHES = " \
 	patches/icedtea-openjdk-remove-currency-data-generation-expi.patch \
 	patches/icedtea-change-to-gdb-debug-format.patch \
 	patches/icedtea-hotspot-fix-undefined-behaviour.patch \
+	patches/icedtea-x11_extension_cleanup.patch \
 	${CLEAN_X11_DISTRIBUTION_PATCH} \
         "

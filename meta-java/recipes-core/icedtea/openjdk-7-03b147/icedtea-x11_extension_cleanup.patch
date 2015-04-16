@@ -1,0 +1,42 @@
+icedtea7-native compile failure undefined reference to `main'
+
+On hosts without /usr/include/X11/extensions, icedtea7-native compile
+results in a build failure while trying to create an object file:
+
++/data/home/.../git/csu/../sysdeps/x86_64/start.S:118: undefined reference to `main'
+[2015-03-31 15:22:53.115930161+00:00] | collect2: error: ld returned 1 exit status
+
+The compile line shows: (-c gets eaten)
+... -I -c -o
+
+The makefile tries to do the following which results in a faulty build
+line if /usr/include/X11/extensions doesn't exist:
+
+   CPPFLAGS += -I$(firstword $(wildcard $(OPENWIN_HOME)/include/X11/extensions) \
+                         $(wildcard /usr/include/X11/extensions))
+
+This looks like a missed line from the following patch which removes the need for X11/extensions:
+  icedtea-ecj-disable-compilation.patch
+
+Upstream-Status: Pending
+
+Signed-off-by: Amy Fong <amy.fong@windriver.com>
+---
+ openjdk/jdk/make/sun/awt/mawt.gmk |    6 ------
+ 1 file changed, 6 deletions(-)
+
+--- openjdk/jdk/make/sun/awt/mawt.gmk
++++ openjdk/jdk/make/sun/awt/mawt.gmk
+@@ -258,12 +258,6 @@
+         -I$(PLATFORM_SRC)/native/$(PKGDIR) \
+         $(EVENT_MODEL)
+ 
+-ifeq ($(PLATFORM), linux)
+-  # Checking for the X11/extensions headers at the additional location
+-  CPPFLAGS += -I$(firstword $(wildcard $(OPENWIN_HOME)/include/X11/extensions) \
+-                        $(wildcard /usr/include/X11/extensions))
+-endif
+-
+ ifeq ($(PLATFORM), solaris)
+   CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions
+ endif
