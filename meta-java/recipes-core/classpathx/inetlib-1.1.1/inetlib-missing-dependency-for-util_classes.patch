@@ -1,0 +1,31 @@
+From 9779e734630e65ac7f9b27531c521e6555e2b12b Mon Sep 17 00:00:00 2001
+From: Paul Barrette <paul.barrette@windriver.com>
+Date: Wed, 14 May 2014 10:55:31 -0400
+Subject: [PATCH] inetlib: missing dependency for util_classes
+
+Fix a dependency for intermittent build failures, e.g.:
+1. ERROR in source/gnu/inet/util/SaslCallbackHandler.java (at line 43)
+        import javax.security.auth.callback.Callback;
+               ^^^^^^^^^^^^^^
+
+Signed-off-by: Paul Barrette <paul.barrette@windriver.com>
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 5694974..ca93170 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -205,7 +205,7 @@ comsat_classes = $(patsubst $(src)/%.java, $(dst)/%.class, $(comsat_sources))
+ 
+ # Jar
+ 
+-$(inetlib_jar): $(dst) $(META_INF_FILES) $(smtp_classes) $(imap_classes) $(pop3_classes) $(nntp_classes) $(ftp_classes) $(gopher_classes) $(finger_classes) $(http_classes) $(ldap_classes) $(comsat_classes)
++$(inetlib_jar): $(dst) $(META_INF_FILES) $(util_classes) $(smtp_classes) $(imap_classes) $(pop3_classes) $(nntp_classes) $(ftp_classes) $(gopher_classes) $(finger_classes) $(http_classes) $(ldap_classes) $(comsat_classes)
+ 	$(JAR) cf $(inetlib_jar) -C $(dst) META-INF -C $(dst) gnu
+ 
+ $(dst):
+-- 
+1.8.3.2
+
