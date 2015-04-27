@@ -1,0 +1,29 @@
+--- openjdk/hotspot/make/linux/makefiles/gcc.make	2015-04-02 08:02:31.301728214 +0200
++++ openjdk/hotspot/make/linux/makefiles/gcc.make.new	2015-04-02 08:19:55.502171268 +0200
+@@ -233,7 +233,7 @@
+ DEBUG_CFLAGS/ppc   = -g
+ DEBUG_CFLAGS += $(DEBUG_CFLAGS/$(BUILDARCH))
+ ifeq ($(DEBUG_CFLAGS/$(BUILDARCH)),)
+-DEBUG_CFLAGS += -gstabs
++DEBUG_CFLAGS += -g
+ endif
+ 
+ ifneq ($(OBJCOPY),)
+@@ -244,7 +244,7 @@
+   FASTDEBUG_CFLAGS/zero  = -g
+   FASTDEBUG_CFLAGS += $(DEBUG_CFLAGS/$(BUILDARCH))
+   ifeq ($(FASTDEBUG_CFLAGS/$(BUILDARCH)),)
+-    FASTDEBUG_CFLAGS += -gstabs
++    FASTDEBUG_CFLAGS += -g
+   endif
+ 
+   OPT_CFLAGS/ia64  = -g
+@@ -254,7 +254,7 @@
+   OPT_CFLAGS/zero  = -g
+   OPT_CFLAGS += $(OPT_CFLAGS/$(BUILDARCH))
+   ifeq ($(OPT_CFLAGS/$(BUILDARCH)),)
+-    OPT_CFLAGS += -gstabs
++    OPT_CFLAGS += -g
+   endif
+ endif
+ 
