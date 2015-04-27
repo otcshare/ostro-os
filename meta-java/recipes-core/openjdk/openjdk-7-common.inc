@@ -26,7 +26,7 @@ PN = "${JDKPN}-jre"
 PROVIDES += "${JDKPN}"
 
 DEPENDS = " \
-           icedtea6-native zip-native ant-native \
+           icedtea7-native zip-native ant-native \
            zlib \
 	   jpeg libpng giflib \
            gtk+ glib-2.0 \
@@ -101,7 +101,7 @@ EXTRA_OECONF = " \
 	\
         --enable-zero \
 	\
-	--with-jdk-home=${STAGING_LIBDIR_JVM_NATIVE}/icedtea6-native \
+	--with-jdk-home=${STAGING_LIBDIR_JVM_NATIVE}/icedtea7-native \
 	--with-rhino=${STAGING_DATADIR_JAVA}/rhino.jar \
 	\
         --with-openjdk-src-zip=${WORKDIR}/${OPENJDK_FILE} \
