@@ -1,0 +1,74 @@
+Index: openjdk/jdk/make/java/nio/Makefile
+===================================================================
+--- openjdk/jdk/make/java/nio/Makefile	2013-10-01 21:20:11.000000000 -0700
++++ openjdk/jdk/make/java/nio/Makefile	2013-10-01 21:30:40.901837422 -0700
+@@ -918,7 +918,7 @@
+ ifeq ($(PLATFORM), macosx)
+   NIO_CC=$(HOST_CC)
+ else
+-  NIO_CC=$(CC)
++  NIO_CC=$(CC_FOR_BUILD)
+ endif
+ 
+ $(GENSOR_EXE) : $(TEMPDIR)/$(GENSOR_SRC)
+@@ -934,12 +934,8 @@
+ $(SCH_GEN)/SocketOptionRegistry.java: $(GENSOR_EXE)
+ 	$(prep-target)
+ 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(SOR_COPYRIGHT_YEARS)" > $@
+-ifdef CROSS_COMPILE_ARCH
+-	$(QEMU) $(GENSOR_EXE) >> $@
+-else
+ 	$(GENSOR_EXE) >> $@
+ endif
+-endif
+ #
+ # Generated sun.nio.cs SingleByte classes
+ #
+@@ -973,12 +969,8 @@
+ $(SFS_GEN)/UnixConstants.java: $(GENUC_EXE)
+ 	$(prep-target)
+ 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENUC_COPYRIGHT_YEARS)" > $@
+-ifdef CROSS_COMPILE_ARCH
+-	$(QEMU) $(GENUC_EXE) >> $@
+-else
+ 	$(GENUC_EXE) >> $@
+ endif
+-endif
+ 
+ GENSC_SRC = $(PLATFORM_SRC)/native/sun/nio/fs/genSolarisConstants.c
+ 
+@@ -999,11 +991,7 @@
+ $(SFS_GEN)/SolarisConstants.java: $(GENSC_EXE)
+ 	$(prep-target)
+ 	NAWK="$(NAWK)" SH="$(SH)" $(SH) -e addNotices.sh "$(GENSC_COPYRIGHT_YEARS)" > $@
+-ifdef CROSS_COMPILE_ARCH
+-	$(QEMU) $(GENSC_EXE) >> $@
+-else
+ 	$(GENSC_EXE) >> $@
+ endif
+-endif
+ 
+ .PHONY: sources 
+Index: openjdk/jdk/make/sun/Makefile
+===================================================================
+--- openjdk/jdk/make/sun/Makefile	2013-07-25 09:10:09.000000000 -0700
++++ openjdk/jdk/make/sun/Makefile	2013-10-01 21:32:01.625839149 -0700
+@@ -55,7 +55,7 @@
+     endif
+   endif
+   HEADLESS_SUBDIR = headless
+-  XAWT_SUBDIR     = xawt gtk
++  XAWT_SUBDIR     = 
+ endif
+ 
+ ifeq ($(PLATFORM), macosx)
+@@ -87,7 +87,7 @@
+ endif
+ SUBDIRS_desktop    = audio $(RENDER_SUBDIR) image \
+                      $(LWAWT_PRE_SUBDIR) $(DISPLAY_LIBS) $(DGA_SUBDIR) $(LWAWT_SUBDIR) \
+-                     jawt font jpeg cmm $(DISPLAY_TOOLS) beans
++                     font jpeg cmm $(DISPLAY_TOOLS) beans
+ SUBDIRS_management = management
+ SUBDIRS_misc       = $(ORG_SUBDIR) rmi $(JDBC_SUBDIR) tracing
+ SUBDIRS_tools      = native2ascii serialver tools jconsole
+ 

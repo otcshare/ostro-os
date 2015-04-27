@@ -226,6 +226,7 @@ PACKAGES = " \
 FILES_${JDKPN}-dbg = "\
 	${JDK_HOME}/bin/.debug \
 	${JDK_HOME}/lib/.debug \
+	${JDK_HOME}/lib/${JDK_ARCH}/jli/.debug \
 	${JDK_HOME}/jre/bin/.debug \
 	${JDK_HOME}/jre/lib/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/.debug \
