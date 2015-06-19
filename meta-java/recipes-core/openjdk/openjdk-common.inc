@@ -4,7 +4,7 @@ LICENSE  = "GPL-2.0-with-classpath-exception"
 PRIORITY = "optional"
 SECTION  = "libs"
 
-ICEDTEA_VERSION = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1].split("-")[1] or '1.0'}"
+ICEDTEA_VERSION = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1].split("-")[1] or '1.0'}"
 
 S = "${WORKDIR}/${ICEDTEA}"
 B = "${S}/build"
