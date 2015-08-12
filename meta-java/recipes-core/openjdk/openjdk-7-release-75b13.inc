@@ -4,6 +4,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
 
 FILESPATH =. "${FILE_DIRNAME}/openjdk-7-75b13:"
 
+EXTRA_OECONF += " --disable-pulse-java "
+
 # Name of the directory containing the compiled output
 BUILD_DIR = "openjdk.build"
 BUILD_DIR_ECJ = "openjdk.build-ecj"
