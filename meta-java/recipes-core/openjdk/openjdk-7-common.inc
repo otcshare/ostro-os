@@ -93,7 +93,6 @@ EXTRA_OECONF = " \
 	--disable-hotspot-tests \
 	--disable-langtools-tests \
 	--disable-jdk-tests \
-	--disable-pulse-java \
 	--disable-docs \
 	--disable-nss \
 	--disable-system-lcms \
