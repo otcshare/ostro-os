@@ -1,0 +1,229 @@
+diff --git openjdk/corba/make/common/shared/Platform.gmk openjdk/corba/make/common/shared/Platform.gmk
+index fb575fa..e0426ad 100644
+--- openjdk/corba/make/common/shared/Platform.gmk
++++ openjdk/corba/make/common/shared/Platform.gmk
+@@ -152,9 +152,13 @@
+   OS_NAME = linux
+   OS_VERSION := $(shell uname -r)
+   # Arch and OS name/version
+-  mach := $(shell uname -m)
+-  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
+-    mach := $(shell (dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/arm64/aarch64/;s/powerpc$$/ppc/;s/hppa/parisc/;s/ppc64el/ppc64le/')
++  ifdef CROSS_COMPILE_ARCH
++    mach := $(CROSS_COMPILE_ARCH)
++  else
++    mach := $(shell uname -m)
++    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
++      mach := $(shell (dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/arm64/aarch64/;s/powerpc$$/ppc/;s/hppa/parisc/;s/ppc64el/ppc64le/')
++    endif
+   endif
+   archExpr = case "$(mach)" in \
+                 i[3-9]86) \
+diff --git openjdk/hotspot/make/linux/makefiles/build_vm_def.sh openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
+index ea81ff6..68b0d71 100644
+--- openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
++++ openjdk/hotspot/make/linux/makefiles/build_vm_def.sh
+@@ -1,10 +1,12 @@
+ #!/bin/sh
+ 
+ # If we're cross compiling use that path for nm
+-if [ "$CROSS_COMPILE_ARCH" != "" ]; then 
+-NM=$ALT_COMPILER_PATH/nm
+-else
+-NM=nm
++if [ "$NM" == "" ]; then
++  if [ "$CROSS_COMPILE_ARCH" != "" ]; then 
++    NM=$ALT_COMPILER_PATH/nm
++  else
++    NM=nm
++  fi
+ fi
+ 
+ $NM --defined-only $* \
+diff --git openjdk/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+index 6fe5191..765fc6d 100644
+--- openjdk/hotspot/make/linux/makefiles/gcc.make
++++ openjdk/hotspot/make/linux/makefiles/gcc.make
+@@ -164,7 +164,7 @@ CFLAGS_WARN/DEFAULT = $(WARNINGS_ARE_ERRORS) $(ACCEPTABLE_WARNINGS)
+ CFLAGS_WARN/BYFILE = $(CFLAGS_WARN/$@)$(CFLAGS_WARN/DEFAULT$(CFLAGS_WARN/$@)) 
+ 
+ # The flags to use for an Optimized g++ build
+-OPT_CFLAGS += -O3
++OPT_CFLAGS += $(OE_CFLAGS)
+ 
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ OPT_CFLAGS += -fno-strict-aliasing
+@@ -208,15 +208,7 @@ LFLAGS += -Wl,-relax
+ endif
+ 
+ # Enable linker optimization
+-LFLAGS += -Xlinker -O1
+-
+-# If this is a --hash-style=gnu system, use --hash-style=both
+-#   The gnu .hash section won't work on some Linux systems like SuSE 10.
+-_HAS_HASH_STYLE_GNU:=$(shell $(CC) -dumpspecs | grep -- '--hash-style=gnu')
+-ifneq ($(_HAS_HASH_STYLE_GNU),)
+-  LDFLAGS_HASH_STYLE = -Wl,--hash-style=both
+-endif
+-LFLAGS += $(LDFLAGS_HASH_STYLE)
++LFLAGS += $(OE_LDFLAGS)
+ 
+ # Use $(MAPFLAG:FILENAME=real_file_name) to specify a map file.
+ MAPFLAG = -Xlinker --version-script=FILENAME
+diff --git openjdk/hotspot/make/linux/makefiles/launcher.make openjdk/hotspot/make/linux/makefiles/launcher.make
+index 0c102ea..f4dfbf6 100644
+--- openjdk/hotspot/make/linux/makefiles/launcher.make
++++ openjdk/hotspot/make/linux/makefiles/launcher.make
+@@ -50,8 +50,8 @@ ifeq ($(LINK_INTO),AOUT)
+   LIBS_LAUNCHER             += $(STATIC_STDCXX) $(LIBS)
+ else
+   LAUNCHER.o                 = launcher.o
+-  LFLAGS_LAUNCHER           += -L `pwd`
+-  LIBS_LAUNCHER             += -l$(JVM) $(LIBS)
++  LFLAGS_LAUNCHER           += -L `pwd` $(OE_LAUNCHER_LDFLAGS) $(OE_LDFLAGS)
++  LIBS_LAUNCHER             += -l$(JVM) $(LIBS) -lstdc++
+ endif
+ 
+ LINK_LAUNCHER = $(LINK.CC)
+diff --git openjdk/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
+index b0ffd9a..4e8c47c 100644
+--- openjdk/hotspot/make/linux/makefiles/vm.make
++++ openjdk/hotspot/make/linux/makefiles/vm.make
+@@ -300,6 +300,7 @@
+   LFLAGS_VM += $(LLVM_LDFLAGS)
+ endif
+ 
++LFLAGS_VM += $(OE_LDFLAGS)
+ LINK_VM = $(LINK_LIB.CC)
+ 
+ # rule for building precompiled header
+diff --git openjdk/jdk/make/common/Defs-linux.gmk openjdk/jdk/make/common/Defs-linux.gmk
+index 69e1177..dc7f8e6 100644
+--- openjdk/jdk/make/common/Defs-linux.gmk
++++ openjdk/jdk/make/common/Defs-linux.gmk
+@@ -162,28 +162,6 @@
+   endif
+ endif
+ 
+-#
+-# Default optimization
+-#
+-
+-ifndef OPTIMIZATION_LEVEL
+-  ifeq ($(PRODUCT), java)
+-    OPTIMIZATION_LEVEL = HIGHER
+-  else
+-    OPTIMIZATION_LEVEL = LOWER
+-  endif
+-endif
+-ifndef FASTDEBUG_OPTIMIZATION_LEVEL
+-  FASTDEBUG_OPTIMIZATION_LEVEL = LOWER
+-endif
+-
+-CC_OPT/NONE     = 
+-CC_OPT/LOWER    = -O2
+-CC_OPT/HIGHER   = -O3
+-CC_OPT/HIGHEST  = -O3
+-
+-CC_OPT          = $(CC_OPT/$(OPTIMIZATION_LEVEL))
+-
+ # For all platforms, do not omit the frame pointer register usage. 
+ #    We need this frame pointer to make it easy to walk the stacks.
+ #    This should be the default on X86, but ia64 and amd64 may not have this
+@@ -191,7 +169,7 @@
+ CFLAGS_REQUIRED_aarch64 += -fno-omit-frame-pointer -fsigned-char -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_alpha   += -mieee -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_amd64   += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+-CFLAGS_REQUIRED_arm     += -fsigned-char -D_LITTLE_ENDIAN
++CFLAGS_REQUIRED_arm     += -fsigned-char -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_hppa    +=
+ CFLAGS_REQUIRED_i586    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+ CFLAGS_REQUIRED_ia64    += -fno-omit-frame-pointer -D_LITTLE_ENDIAN
+@@ -359,7 +337,7 @@ LDFLAGS_COMMON  += $(LDFLAGS_DEFS_OPTION)
+ #
+ # -L paths for finding and -ljava
+ #
+-LDFLAGS_OPT     = -Xlinker -O1
++LDFLAGS_OPT     = $(OE_LDFLAGS)
+ LDFLAGS_COMMON += -L$(LIBDIR)/$(LIBARCH)
+ LDFLAGS_COMMON += -Wl,-soname=$(LIB_PREFIX)$(LIBRARY).$(LIBRARY_SUFFIX)
+ 
+diff --git openjdk/jdk/make/common/shared/Platform.gmk openjdk/jdk/make/common/shared/Platform.gmk
+index c23e96e..484afca 100644
+--- openjdk/jdk/make/common/shared/Platform.gmk
++++ openjdk/jdk/make/common/shared/Platform.gmk
+@@ -169,9 +169,9 @@
+     mach := $(CROSS_COMPILE_ARCH)
+   else
+     mach := $(shell uname -m)
+-  endif
+-  ifneq (,$(wildcard /usr/bin/dpkg-architecture))
+-    mach := $(shell (dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/arm64/aarch64/;s/powerpc$$/ppc/;s/hppa/parisc/;s/ppc64el/ppc64le/')
++    ifneq (,$(wildcard /usr/bin/dpkg-architecture))
++      mach := $(shell (dpkg-architecture -qDEB_HOST_ARCH_CPU 2>/dev/null || echo $(mach)) | sed 's/arm64/aarch64/;s/powerpc$$/ppc/;s/hppa/parisc/;s/ppc64el/ppc64le/')
++    endif
+   endif
+   archExpr = case "$(mach)" in \
+                 i[3-9]86) \
+diff --git openjdk/jdk/make/sun/awt/mawt.gmk openjdk/jdk/make/sun/awt/mawt.gmk
+index b6e0d99..edc530e 100644
+--- openjdk/jdk/make/sun/awt/mawt.gmk
++++ openjdk/jdk/make/sun/awt/mawt.gmk
+@@ -151,22 +151,6 @@ else
+ #endif
+ 
+ LIBXTST = -lXtst
+-ifeq ($(PLATFORM), linux)
+-   ifeq ($(ARCH_DATA_MODEL), 64)
+-   # XXX what about the rest of them?
+-        LIBXT = -lXt
+-    else
+-    # Allows for builds on Debian GNU Linux, X11 is in a different place 
+-       LIBXT = $(firstword $(wildcard $(OPENWIN_LIB)/libXt.a) \
+-                        $(wildcard /usr/lib/libXt.a))
+-       LIBSM = $(firstword $(wildcard $(OPENWIN_LIB)/libSM.a) \
+-                        $(wildcard /usr/lib/libSM.a))
+-       LIBICE = $(firstword $(wildcard $(OPENWIN_LIB)/libICE.a) \
+-                         $(wildcard /usr/lib/libICE.a))
+-       LIBXTST = $(firstword $(wildcard $(OPENWIN_LIB)/libXtst.a) \
+-                         $(wildcard /usr/lib/libXtst.a))
+-   endif
+-endif
+ 
+ # Use -lXmu for EditRes support
+ LIBXMU_DBG	= -lXmu
+@@ -181,7 +165,7 @@ ifneq (,$(findstring $(PLATFORM), linux macosx))
+ OTHER_CFLAGS += -DMLIB_NO_LIBSUNMATH
+ # XXX what is this define below? Isn't it motif-related?
+ OTHER_CFLAGS += -DXMSTRINGDEFINES=1
+-OTHER_LDLIBS =  $(LIBXMU) $(LIBXTST) -lXext $(LIBXT) $(LIBSM) $(LIBICE) -lX11 -lXi
++OTHER_LDLIBS =  $(LIBXMU) $(LIBXTST) -lXext -lXt -lSM -lICE -lXi -lX11
+ endif
+ 
+ endif
+@@ -230,12 +214,6 @@ else
+   CPPFLAGS += -I$(PLATFORM_SRC)/native/common/deps/fontconfig2
+ endif
+ 
+-ifndef HEADLESS
+-CPPFLAGS += -I$(OPENWIN_HOME)/include 
+-LDFLAGS  += -L$(OPENWIN_LIB)
+-
+-endif # !HEADLESS
+-
+ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
+             -I$(SHARE_SRC)/native/$(PKGDIR)/../font \
+             -I$(PLATFORM_SRC)/native/$(PKGDIR)/../font \
+@@ -248,12 +248,6 @@
+ endif # !HEADLESS
+ endif # PLATFORM
+ 
+-ifeq ($(PLATFORM), linux)
+-  # Checking for the X11/extensions headers at the additional location
+-  CPPFLAGS += -I$(firstword $(wildcard $(OPENWIN_HOME)/include/X11/extensions) \
+-                        $(wildcard /usr/include/X11/extensions))
+-endif
+-
+ ifeq ($(PLATFORM), macosx)
+   CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions \
+               -I$(OPENWIN_HOME)/include
