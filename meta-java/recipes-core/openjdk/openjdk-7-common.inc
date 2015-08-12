@@ -1,7 +1,7 @@
 require openjdk-common.inc
 ICEDTEA = "icedtea-${ICEDTEA_VERSION}"
 
-INC_PR = "r5"
+INC_PR = "r6"
 
 SRC_URI = " \
   ${ICEDTEA_URI} \
