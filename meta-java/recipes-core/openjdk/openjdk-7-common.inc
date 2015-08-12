@@ -283,18 +283,18 @@ FILES_${JDKPN}-common = "${JDK_HOME}/jre/ASSEMBLY_EXCEPTION \
                           ${JDK_HOME}/jre/lib \
                          "
 
-FILES_openjdk-7-jre_append = " \
+FILES_${PN}_append = " \
 	${JDK_HOME}/jre/bin/keytool \
-        ${JDK_HOME}/jre/bin/orbd \
+	${JDK_HOME}/jre/bin/orbd \
 	${JDK_HOME}/jre/bin/pack200 \
-        ${JDK_HOME}/jre/bin/rmid \
+	${JDK_HOME}/jre/bin/rmid \
 	${JDK_HOME}/jre/bin/rmiregistry \
-        ${JDK_HOME}/jre/bin/servertool \
+	${JDK_HOME}/jre/bin/servertool \
 	${JDK_HOME}/jre/bin/tnameserv \
-        ${JDK_HOME}/jre/bin/unpack200 \
+	${JDK_HOME}/jre/bin/unpack200 \
 	${JDK_HOME}/jre/bin/policytool \
-        ${JDK_HOME}/jre/bin/javaws \
-       "
+	${JDK_HOME}/jre/bin/javaws \
+	"
 
 RDEPENDS_${JDKPN}-common = "librhino-java"
 
