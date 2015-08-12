@@ -1,0 +1,29 @@
+--- openjdk/jdk/make/java/nio/Makefile
++++ openjdk/jdk/make/java/nio/Makefile
+@@ -966,7 +966,7 @@
+ 
+ $(GENSOR_EXE) : $(TEMPDIR)/$(GENSOR_SRC)
+ 	$(prep-target)
+-	($(CD) $(TEMPDIR); $(NIO_CC) $(CPPFLAGS) $(LDDFLAGS) \
++	($(CD) $(TEMPDIR); $(NIO_CC) $(CPPFLAGS) -static $(LDDFLAGS) \
+ 	   -o genSocketOptionRegistry$(EXE_SUFFIX) $(GENSOR_SRC))
+ 
+ ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
+@@ -1006,7 +1006,7 @@
+ 
+ $(GENUC_EXE) : $(GENUC_SRC)
+ 	$(prep-target)
+-	$(NIO_CC) $(CPPFLAGS) -o $@ $(GENUC_SRC)
++	$(NIO_CC) $(CPPFLAGS) -static -o $@ $(GENUC_SRC)
+ 
+ ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
+ $(SFS_GEN)/UnixConstants.java: $(NIO_PLATFORM_CLASSES_ROOT_DIR)/sun/nio/fs/UnixConstants-$(PLATFORM)-$(ARCH).java
+@@ -1032,7 +1032,7 @@
+ 
+ $(GENSC_EXE) : $(GENSC_SRC)
+ 	$(prep-target)
+-	$(NIO_CC) $(CPPFLAGS) -o $@ $(GENSC_SRC)
++	$(NIO_CC) $(CPPFLAGS) -static -o $@ $(GENSC_SRC)
+ 
+ ifdef NIO_PLATFORM_CLASSES_ROOT_DIR
+ $(SFS_GEN)/SolarisConstants.java: $(NIO_PLATFORM_CLASSES_ROOT_DIR)/sun/nio/fs/SolarisConstants-$(PLATFORM)-$(ARCH).java

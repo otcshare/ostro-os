@@ -1,0 +1,82 @@
+--- openjdk/jdk/make/sun/xawt/Makefile
++++ openjdk/jdk/make/sun/xawt/Makefile
+@@ -201,20 +201,6 @@
+   CPPFLAGS += -I$(PLATFORM_SRC)/native/common/deps/glib2
+ endif
+ 
+-ifeq ($(PLATFORM), linux)
+-  ifndef CROSS_COMPILE_ARCH
+-    # Allows for builds on Debian GNU Linux, X11 is in a different place 
+-    # This should really be handled at a higher-level so we don't have to
+-    # work-around this when cross-compiling
+-    CPPFLAGS += -I/usr/X11R6/include/X11/extensions \
+-                -I/usr/include/X11/extensions \
+-                -I$(OPENWIN_HOME)/include 
+-  else
+-    CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions \
+-                -I$(OPENWIN_HOME)/include 
+-  endif
+-endif
+-
+ ifeq ($(NATIVE_SUPPORT_DEBUG), true)
+   OTHER_CFLAGS += -DNATIVE_SUPPORT_DEBUG
+ endif
+@@ -299,16 +285,10 @@
+ SIZERS = $(SIZER).32
+ SIZERS_C = $(SIZER_32_C)
+ SIZES = $(WRAPPER_GENERATOR_DIR)/sizes.32
+-ifdef CROSS_COMPILE_ARCH
+-CFLAGS_32 = -m32
+-endif
+ else # !32
+ SIZERS = $(SIZER).64
+ SIZERS_C = $(SIZER_64_C)
+ SIZES = $(WRAPPER_GENERATOR_DIR)/sizes.64
+-ifdef CROSS_COMPILE_ARCH
+-CFLAGS_64 = -m64
+-endif
+ endif # 32
+ endif # !macosx
+ endif # solaris
+@@ -344,15 +324,11 @@
+ WRAPPER_GENERATOR_CLASS=$(WRAPPER_GENERATOR_TEMPDIR)/WrapperGenerator.class 
+ XLIBTYPES=$(PLATFORM_SRC)/classes/sun/awt/X11/generator/xlibtypes.txt
+ 
+-ifndef CROSS_COMPILE_ARCH
+ SIZERS_CC = $(CC)
+-else
+-SIZERS_CC = $(HOST_CC)
+-endif
+ 
+ $(SIZERS): $(SIZERS_C) 
+ 	$(prep-target)
+-	$(SIZERS_CC) $(CFLAGS_$(subst .,,$(suffix $@))) $(CPPFLAGS) -o $@ $(SIZER)$(suffix $@).c
++	$(SIZERS_CC) $(CFLAGS_$(subst .,,$(suffix $@))) $(CPPFLAGS) -static -fuse-ld=bfd -o $@ $(SIZER)$(suffix $@).c
+ 
+ $(WRAPPER_GENERATOR_CLASS): $(WRAPPER_GENERATOR_JAVA)
+ 	$(prep-target)
+@@ -365,6 +341,16 @@
+ 	    $(SIZER_DIR) $(XLIBTYPES) "sizer" $(subst .,,$(suffix $(basename $@)))
+ 
+ $(SIZES): $(SIZERS)
++ifdef CROSS_COMPILE_ARCH
++	@if [ "$(DOHACK)$@" = "true$(PREDEFINED_SIZES)" ]; then \
++		$(ECHO) COPYING $(PREDEFINED_SIZES_TMPL) into $@; \
++		$(CP) $(PREDEFINED_SIZES_TMPL) $@; \
++		$(CHMOD) +w $@; \
++	else    \
++		$(ECHO) GENERATING $@; \
++		$(QEMU) $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
++	fi
++else 
+ 	@if [ "$(DOHACK)$@" = "true$(PREDEFINED_SIZES)" ]; then \
+ 	    $(ECHO) COPYING $(PREDEFINED_SIZES_TMPL) into $@; \
+ 	    $(CP) $(PREDEFINED_SIZES_TMPL) $@; \
+@@ -373,6 +359,7 @@
+ 	    $(ECHO) GENERATING $@; \
+ 	    $(WRAPPER_GENERATOR_DIR)/sizer$(suffix $@) > $@; \
+ 	fi
++endif
+ 	@if [ "$(DOCOMPARE)$(suffix $@)" = "true.64" ]; then \
+ 	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
+ 	    $(DIFF) $@ $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \

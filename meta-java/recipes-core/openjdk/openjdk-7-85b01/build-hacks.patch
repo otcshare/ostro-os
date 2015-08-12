@@ -1,0 +1,56 @@
+--- icedtea-2.6.1/Makefile.am.orig	2015-07-24 08:52:12.442036786 +0200
++++ icedtea-2.6.1/Makefile.am	2015-07-24 08:58:25.046029702 +0200
+@@ -605,6 +605,12 @@
+ 	FT2_LIBS="$(FREETYPE2_LIBS)" \
+ 	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
+ 	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
++	OE_CFLAGS="$(OE_CFLAGS)" \
++	OE_CPPFLAGS="$(OE_CPPFLAGS)" \
++	OE_CXXFLAGS="$(OE_CXXFLAGS)" \
++	OE_LDFLAGS="$(OE_LDFLAGS)" \
++	OE_LAUNCHER_LDFLAGS="$(OE_LAUNCHER_LDFLAGS)" \
++	DISTRIBUTION_ID="$(DIST_ID)" \
+ 	QUIETLY="" \
+ 	ANT_RESPECT_JAVA_HOME="TRUE" \
+ 	DISTRIBUTION_ID="$(DIST_ID)" \
+@@ -2077,8 +2083,8 @@
+ 	rm -f stamps/add-tzdata-support.stamp
+ 
+ stamps/check-crypto.stamp: stamps/cryptocheck.stamp stamps/icedtea.stamp
+-	if [ -e $(BUILD_SDK_DIR)/bin/java ] ; then \
+-	  $(BUILD_SDK_DIR)/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
++	if [ -e $(BOOT_DIR)/bin/java ] ; then \
++	  $(BOOT_DIR)/bin/java -cp $(CRYPTO_CHECK_BUILD_DIR) TestCryptoLevel ; \
+ 	fi
+ 	mkdir -p stamps
+ 	touch $@
+@@ -2483,7 +2489,11 @@
+ if BUILD_JAMVM
+ 	cd jamvm/jamvm && \
+ 	./autogen.sh --with-java-runtime-library=openjdk7 \
+-	  --prefix=$(abs_top_builddir)/jamvm/install ; \
++	  --prefix=$(abs_top_builddir)/jamvm/install \
++	  --host=$(host_alias) \
++	  --build=$(build_alias) \
++	  --target=$(target_alias)  \
++	  --with-libtool-sysroot=${ALT_FREETYPE_LIB_PATH} ; \
+ 	$(MAKE) ; \
+ 	$(MAKE) install
+ 	mkdir -p $(abs_top_builddir)/jamvm/install/hotspot/jre/lib/$(INSTALL_ARCH_DIR)/server
+@@ -2548,6 +2558,7 @@
+ 	  --host=$(host_alias) \
+ 	  --build=$(build_alias) \
+ 	  --target=$(target_alias) \
++	  --with-libtool-sysroot=${ALT_FREETYPE_LIB_PATH} \
+ 	  --prefix=$(abs_top_builddir)/cacao/install \
+ 	  --with-java-runtime-library=openjdk7 \
+ 	  --with-java-runtime-library-prefix=$(abs_top_builddir)/openjdk \
+@@ -2616,7 +2627,7 @@
+ # configure script arguments, quoted in single quotes
+ CONFIGURE_ARGS = @CONFIGURE_ARGS@
+ ADD_ZERO_CONFIGURE_ARGS = \
+-	--with-jdk-home=$(BUILD_SDK_DIR) \
++	--with-jdk-home=$(BOOT_DIR) \
+ 	--disable-bootstrap --enable-zero
+ if ADD_SHARK_BUILD
+ ADD_ZERO_CONFIGURE_ARGS += \
