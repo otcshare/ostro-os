@@ -121,6 +121,13 @@ EXTRA_OECONF = " \
 	--with-cc-for-build=${BUILD_CC} \
        "
 
+# PCSC default value was changed to true and SCTP was added during the 2.6.0
+# release so we disable them both explicitely here
+EXTRA_OECONF += " \
+	--disable-system-pcsc \
+	--disable-system-sctp \
+	"
+
 do_configure_prepend() {
   echo "Configure with parallel-jobs: ${JDK_JOBS}"
 
