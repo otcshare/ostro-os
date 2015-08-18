@@ -7,7 +7,9 @@ LICENSE = "Classpath"
 
 PBN = "classpath"
 
-inherit autotools java gettext
+inherit autotools java gettext distro_features_check
+
+REQUIRED_DISTRO_FEATURES = "x11"
 
 DEPENDS = "virtual/javac-native fastjar-native zip-native gmp antlr-native gtk+ gconf libxtst file"
 

@@ -15,7 +15,9 @@ SRC_URI = "http://www.complang.tuwien.ac.at/cacaojvm/download/cacao-${PV}/cacao-
 SRC_URI[md5sum] = "2c18478404afd1cffdd15ad1e9d85a57"
 SRC_URI[sha256sum] = "eecc8bd1b528a028f43d9d1d0c06b97855bbf1d40e03826d911ebbc0b6971e12"
 
-inherit java autotools-brokensep update-alternatives pkgconfig
+inherit java autotools-brokensep update-alternatives pkgconfig distro_features_check
+
+REQUIRED_DISTRO_FEATURES = "x11"
 
 EXTRA_OECONF_class-native = "\
     --enable-debug \

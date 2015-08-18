@@ -17,7 +17,9 @@ DEPENDS_append_libc-uclibc = " virtual/libiconv "
 # because structure sizes and/or alignment may differ.
 DEPENDS_append = " qemu-native "
 
-inherit java autotools gettext qemu pkgconfig
+inherit java autotools gettext qemu pkgconfig distro_features_check
+
+REQUIRED_DISTRO_FEATURES = "x11"
 
 # OpenJDK uses slightly different names for certain arches. We need to know
 #	this to create some files which are expected by the build.
