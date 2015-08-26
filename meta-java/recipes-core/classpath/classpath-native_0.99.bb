@@ -1,7 +1,7 @@
 require classpath-native.inc
 
 LIC_FILES_CHKSUM = "file://COPYING;md5=af0004801732bc4b20d90f351cf80510"
-DEPENDS += "virtual/javac-native"
+DEPENDS += "ecj-initial-native"
 
 PR = "${INC_PR}.0"
 
