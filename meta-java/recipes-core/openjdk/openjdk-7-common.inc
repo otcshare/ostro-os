@@ -32,6 +32,7 @@ DEPENDS = " \
     rhino krb5 \
     libxt libxinerama libxrender libxtst libxi \
     freetype alsa-lib libffi \
+    attr \
 "
 
 # No package should directly depend on this (it should require
