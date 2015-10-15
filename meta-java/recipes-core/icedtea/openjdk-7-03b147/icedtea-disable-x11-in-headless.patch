@@ -1,0 +1,15 @@
+--- openjdk/jdk/make/sun/awt/FILES_c_unix.gmk.orig	2015-08-19 11:53:47.209867982 +0200
++++ openjdk/jdk/make/sun/awt/FILES_c_unix.gmk	2015-08-19 11:57:48.677868529 +0200
+@@ -207,12 +207,6 @@
+ 	awt_MToolkit.c \
+ 	fontpath.c \
+ 	VDrawingArea.c \
+-	X11Color.c \
+-	X11Renderer.c \
+-	X11PMBlitLoops.c \
+-	X11SurfaceData.c \
+-	X11FontScaler_md.c \
+-	X11TextRenderer_md.c \
+         OGLBlitLoops.c \
+         OGLBufImgOps.c \
+         OGLContext.c \

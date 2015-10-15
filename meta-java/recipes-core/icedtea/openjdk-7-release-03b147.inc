@@ -82,7 +82,16 @@ OPENJDK_PATCHES = " \
 	file://icedtea-flags.patch;apply=no \
 	file://icedtea-openjdk-remove-currency-data-generation-expi.patch;apply=no \
 	file://icedtea-change-to-gdb-debug-format.patch;apply=no \
+	file://icedtea-disable-x11-in-headless.patch;apply=no \
+	file://icedtea-disable-sun.applet-for-tools-in-headless.patch;apply=no \
         "
+
+OPENJDK_HEADLESS_PATCHES = " \
+	patches/icedtea-disable-x11-in-headless.patch \
+	patches/icedtea-disable-sun.applet-for-tools-in-headless.patch \
+	"
+
+CLEAN_X11_DISTRIBUTION_PATCH = "${@base_contains('PACKAGECONFIG', 'x11', '', '${OPENJDK_HEADLESS_PATCHES}', d)}"
 
 export DISTRIBUTION_PATCHES = " \
         patches/icedtea-ecj-disable-compilation.patch \
@@ -93,4 +102,5 @@ export DISTRIBUTION_PATCHES = " \
 	patches/icedtea-flags.patch \
 	patches/icedtea-openjdk-remove-currency-data-generation-expi.patch \
 	patches/icedtea-change-to-gdb-debug-format.patch \
+	${CLEAN_X11_DISTRIBUTION_PATCH} \
         "
