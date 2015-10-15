@@ -248,7 +248,7 @@ FILES_${JDKPN}-dbg = "\
        "
 
 FILES_${JDKPN}-demo = "${JDK_HOME}/demo ${JDK_HOME}/sample"
-RDEPENDS_${JDKPN}-demo = "java2-runtime"
+RDEPENDS_${JDKPN}-demo = "${JDKPN}-jre"
 FILES_${JDKPN}-demo-dbg = "\
 	${JDK_HOME}/demo/jvmti/gctest/lib/.debug \
 	${JDK_HOME}/demo/jvmti/heapTracker/lib/.debug \
