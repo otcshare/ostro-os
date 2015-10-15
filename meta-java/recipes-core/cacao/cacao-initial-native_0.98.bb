@@ -35,7 +35,7 @@ export JAR="fastjar"
 
 do_configure_append() {
   # Fix the executable name in the wrapper script.
-  sed -i -e "s|exec cacao|exec cacao-initial|" src/scripts/java.in
+  sed -i -e "s|exec cacao \\$|exec cacao-initial \\$|" src/scripts/java.in
 }
 
 SRC_URI[md5sum] = "8b8907c8b925761c9410bcadb9705346"
