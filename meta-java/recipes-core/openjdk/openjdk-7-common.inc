@@ -12,8 +12,6 @@ SRC_URI = " \
   ${JAXWS_URI} \
   ${JDK_URI} \
   ${LANGTOOLS_URI} \
-  ${CACAO_URI} \
-  ${JAMVM_URI} \
   ${OEPATCHES} \
   ${ICEDTEAPATCHES} \
   file://jvm.cfg \
@@ -60,11 +58,6 @@ export CACAO_CONFIGURE_ARGS = " \
 
 JAVA_HOME[unexport] = "1"
 
-# disable shark until it is fully working again
-# WITH_ADDITIONAL_VMS ?= "--with-additional-vms=shark,cacao,jamvm"
-
-WITH_ADDITIONAL_VMS ?= "--with-additional-vms=cacao,jamvm"
-
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
 # e.g. "-j 4".
@@ -110,9 +103,6 @@ EXTRA_OECONF = " \
 	--with-jaxws-src-zip=${WORKDIR}/${JAXWS_FILE} \
 	--with-jdk-src-zip=${WORKDIR}/${JDK_FILE} \
 	--with-langtools-src-zip=${WORKDIR}/${LANGTOOLS_FILE} \
-        ${WITH_ADDITIONAL_VMS} \
-	--with-cacao-src-zip=${WORKDIR}/${CACAO_FILE} \
-	--with-jamvm-src-zip=${WORKDIR}/${JAMVM_FILE} \
 	\
 	--with-parallel-jobs=${JDK_JOBS} \
 	\
@@ -223,10 +213,7 @@ PACKAGES = " \
             ${JDKPN}-doc \
             ${JDKPN}-jdk \
             ${JDKPN}-java \
-            ${JDKPN}-vm-shark \
             ${JDKPN}-vm-zero \
-            ${JDKPN}-vm-cacao \
-	    ${JDKPN}-vm-jamvm \
             ${JDKPN}-common \
            "
 
@@ -240,9 +227,6 @@ FILES_${JDKPN}-dbg = "\
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/jli/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/native_threads/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/server/.debug \
-        ${JDK_HOME}/jre/lib/${JDK_ARCH}/shark/.debug \
-        ${JDK_HOME}/jre/lib/${JDK_ARCH}/cacao/.debug \
-        ${JDK_HOME}/jre/lib/${JDK_ARCH}/jamvm/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/headless/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/xawt/.debug \
 	${JDK_HOME}/jre/lib/${JDK_ARCH}/client/.debug \
@@ -267,12 +251,6 @@ FILES_${JDKPN}-source = "${JDK_HOME}/src.zip"
 FILES_${JDKPN}-java = "${JDK_HOME}/jre/bin/java"
 
 FILES_${JDKPN}-vm-zero = "${JDK_HOME}/jre/lib/${JDK_ARCH}/server/"
-
-FILES_${JDKPN}-vm-shark = "${JDK_HOME}/jre/lib/${JDK_ARCH}/shark/"
-
-FILES_${JDKPN}-vm-cacao = "${JDK_HOME}/jre/lib/${JDK_ARCH}/cacao/"
-
-FILES_${JDKPN}-vm-jamvm = "${JDK_HOME}/jre/lib/${JDK_ARCH}/jamvm/"
 
 FILES_${JDKPN}-common = "${JDK_HOME}/jre/ASSEMBLY_EXCEPTION \
                           ${JDK_HOME}/jre/THIRD_PARTY_README \
@@ -299,10 +277,7 @@ FILES_${PN}_append = " \
 
 RDEPENDS_${JDKPN}-common = "librhino-java"
 
-RPROVIDES_${JDKPN}-vm-shark = "java2-vm"
 RPROVIDES_${JDKPN}-vm-zero = "java2-vm"
-RPROVIDES_${JDKPN}-vm-cacao = "java2-vm"
-RPROVIDES_${JDKPN}-vm-jamvm = "java2-vm"
 
 # Even though a vm is a hard dependency it is set as RRECOMMENDS so a single vm can get uninstalled:
 # root@beaglebone:~/java# opkg remove openjdk-7-vm-shark
@@ -315,15 +290,9 @@ RRECOMMENDS_${JDKPN}-java = "java2-vm"
 
 # For some reason shark and cacao do not automatically depends on -common.
 # So we add that manually.
-RDEPENDS_${JDKPN}-vm-shark = "${JDKPN}-common"
-RDEPENDS_${JDKPN}-vm-cacao = "${JDKPN}-common"
-RDEPENDS_${JDKPN}-vm-jamvm = "${JDKPN}-common"
 
 # There is a symlink to a .so but this one is valid.
-INSANE_SKIP_${JDKPN}-vm-shark = "dev-so"
 INSANE_SKIP_${JDKPN}-vm-zero = "dev-so"
-INSANE_SKIP_${JDKPN}-vm-cacao = "dev-so"
-INSANE_SKIP_${JDKPN}-vm-jamvm = "dev-so"
 INSANE_SKIP_${JDKPN}-common = "dev-so"
 
 FILES_${JDKPN}-jdk = " \
