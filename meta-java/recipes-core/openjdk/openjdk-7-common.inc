@@ -157,6 +157,7 @@ EXTRA_OEMAKE += ' \
                 ZIPEXE="${STAGING_BINDIR_NATIVE}/zip" \
 		CROSS_COMPILE_ARCH="${JDK_ARCH}" \
 		REQUIRED_ALSA_VERSION="" \
+		DISABLE_HOTSPOT_OS_VERSION_CHECK=ok \
                '
 
 # Provides the target architecture to the configure script.
