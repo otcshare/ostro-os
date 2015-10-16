@@ -162,6 +162,7 @@ EXTRA_OEMAKE = ' \
                 OE_LDFLAGS="${LDFLAGS}" \
                 ZIPEXE="${STAGING_BINDIR_NATIVE}/zip" \
 		${OEMAKE_BUILD_HEADLESS_ONLY} \
+		DISABLE_HOTSPOT_OS_VERSION_CHECK=ok \
                '
 
 do_compile() {
