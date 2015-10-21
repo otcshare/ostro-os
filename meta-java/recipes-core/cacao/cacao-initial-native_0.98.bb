@@ -14,6 +14,7 @@ SRC_URI = "\
         http://www.complang.tuwien.ac.at/cacaojvm/download/cacao-${PV}/cacao-${PV}.tar.bz2; \
         file://cacao-0.98-initial.patch \
         file://disable_hw_exceptions.patch \
+        file://cacao-0.9.8-initial-fix-gc-undefined-behaviour.patch \
         "
 
 # libjvm disabled - it would conflict with cacao-native installations
