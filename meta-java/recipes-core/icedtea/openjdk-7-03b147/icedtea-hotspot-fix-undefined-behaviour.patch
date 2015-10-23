@@ -1,0 +1,49 @@
+Upstream-Status: Backport
+
+Hotspot compiler has a bug where signed integers could overflow. This is 
+undefined behaviour, and causes massive memory leak when compiled with GCC 5.0+, 
+causing the build to fail.
+
+This is fixed by backporting patch from 
+https://bugs.openjdk.java.net/browse/JDK-8078666 where it was fixed by 
+Severin Gehwolf.
+
+Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
+
+--- openjdk/hotspot/src/share/vm/opto/type.cpp
++++ openjdk/hotspot/src/share/vm/opto/type.cpp
+@@ -1077,11 +1077,11 @@ static int normalize_int_widen( jint lo, jint hi, int w ) {
+   // Certain normalizations keep us sane when comparing types.
+   // The 'SMALLINT' covers constants and also CC and its relatives.
+   if (lo <= hi) {
+-    if ((juint)(hi - lo) <= SMALLINT)  w = Type::WidenMin;
+-    if ((juint)(hi - lo) >= max_juint) w = Type::WidenMax; // TypeInt::INT
++    if (((juint)hi - lo) <= SMALLINT)  w = Type::WidenMin;
++    if (((juint)hi - lo) >= max_juint) w = Type::WidenMax; // TypeInt::INT
+   } else {
+-    if ((juint)(lo - hi) <= SMALLINT)  w = Type::WidenMin;
+-    if ((juint)(lo - hi) >= max_juint) w = Type::WidenMin; // dual TypeInt::INT
++    if (((juint)lo - hi) <= SMALLINT)  w = Type::WidenMin;
++    if (((juint)lo - hi) >= max_juint) w = Type::WidenMin; // dual TypeInt::INT  
+   }
+   return w;
+ }
+@@ -1332,11 +1332,11 @@ static int normalize_long_widen( jlong lo, jlong hi, int w ) {
+   // Certain normalizations keep us sane when comparing types.
+   // The 'SMALLINT' covers constants.
+   if (lo <= hi) {
+-    if ((julong)(hi - lo) <= SMALLINT)   w = Type::WidenMin;
+-    if ((julong)(hi - lo) >= max_julong) w = Type::WidenMax; // TypeLong::LONG
++    if (((julong)hi - lo) <= SMALLINT)   w = Type::WidenMin;
++    if (((julong)hi - lo) >= max_julong) w = Type::WidenMax; // TypeLong::LONG  
+   } else {
+-    if ((julong)(lo - hi) <= SMALLINT)   w = Type::WidenMin;
+-    if ((julong)(lo - hi) >= max_julong) w = Type::WidenMin; // dual TypeLong::LONG
++    if (((julong)lo - hi) <= SMALLINT)   w = Type::WidenMin;
++    if (((julong)lo - hi) >= max_julong) w = Type::WidenMin; // dual TypeLong::LONG
+   }
+   return w;
+ }
+-- 
+2.1.4
+
