@@ -1,5 +1,9 @@
 require openjdk-7-release-91b01.inc
 
+inherit distro_features_check
+
+REQUIRED_DISTRO_FEATURES = "x11"
+
 PR = "${INC_PR}.1"
 
 SRC_URI[iced.md5sum] = "a16b3e800030db9d9b35f80dfd11883a"

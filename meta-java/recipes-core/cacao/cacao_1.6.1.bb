@@ -18,6 +18,7 @@ SRC_URI[sha256sum] = "eecc8bd1b528a028f43d9d1d0c06b97855bbf1d40e03826d911ebbc0b6
 inherit java autotools-brokensep update-alternatives pkgconfig distro_features_check
 
 REQUIRED_DISTRO_FEATURES = "x11"
+REQUIRED_DISTRO_FEATURES_class-native := ""
 
 EXTRA_OECONF_class-native = "\
     --enable-debug \
