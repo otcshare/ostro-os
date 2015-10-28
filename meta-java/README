@@ -60,7 +60,7 @@ PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
 PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
 
 #For openjdk7:
-PREFERRED_VERSION_openjdk-7-jre = "85b01-2.6.1"
+PREFERRED_VERSION_openjdk-7-jre = "91b01-2.6.2"
 PREFERRED_VERSION_icedtea7-native = "2.1.3"
 
 #Sometimes the following is needed:
