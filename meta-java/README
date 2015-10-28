@@ -36,7 +36,7 @@ Source code:
 
 When creating patches, please use something like:
 
-    git format-patch -s --subject-prefix='meta-java][PATCH' origin
+    git format-patch -M -s --subject-prefix='meta-java][PATCH' origin
 
 When sending patches, please use something like:
 
