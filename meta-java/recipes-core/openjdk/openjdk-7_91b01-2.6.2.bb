@@ -45,26 +45,26 @@ SRC_URI[hotspot.sha256sum] = "39bc54bf343e1dce404b8c95285c0457a8d0a7c7aedfb55055
 ###############################################################################
 # PATCHES - split up to allow overriding them separately
 OEPATCHES = "\
-	file://build-hacks.patch \
-	file://fix_hotspot_crosscompile.patch \
-	"
+    file://build-hacks.patch \
+    file://fix_hotspot_crosscompile.patch \
+"
 
 ICEDTEAPATCHES = "\
-	file://icedtea-zero-hotspotfix.patch;apply=no \
-	file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
-	file://icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch;apply=no \
-	file://icedtea-jdk-rmi-crosscompile.patch;apply=no \
-	file://icedtea-crosscompile-fix.patch;apply=no \
-	file://icedtea-xawt-crosscompile-fix.patch;apply=no \
-	"
+    file://icedtea-zero-hotspotfix.patch;apply=no \
+    file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
+    file://icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch;apply=no \
+    file://icedtea-jdk-rmi-crosscompile.patch;apply=no \
+    file://icedtea-crosscompile-fix.patch;apply=no \
+    file://icedtea-xawt-crosscompile-fix.patch;apply=no \
+"
 
 DISTRIBUTION_PATCHES = "\
-	patches/icedtea-zero-hotspotfix.patch \
-	patches/icedtea-jdk-nio-use-host-cc.patch \
-	patches/icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch \
-	patches/icedtea-jdk-rmi-crosscompile.patch \
-	patches/icedtea-crosscompile-fix.patch \
-	patches/icedtea-xawt-crosscompile-fix.patch \
-	"
+    patches/icedtea-zero-hotspotfix.patch \
+    patches/icedtea-jdk-nio-use-host-cc.patch \
+    patches/icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch \
+    patches/icedtea-jdk-rmi-crosscompile.patch \
+    patches/icedtea-crosscompile-fix.patch \
+    patches/icedtea-xawt-crosscompile-fix.patch \
+"
 
 export DISTRIBUTION_PATCHES
