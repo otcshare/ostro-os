@@ -1,4 +1,8 @@
-require openjdk-7-release-91b01.inc
+require openjdk-7-common.inc
+
+LIC_FILES_CHKSUM = "file://COPYING;md5=59530bdf33659b29e73d4adb9f9f6552"
+
+FILESPATH =. "${FILE_DIRNAME}/patches-openjdk-7:"
 
 inherit distro_features_check
 
@@ -37,3 +41,30 @@ SRC_URI[openjdk.sha256sum] = "c1e6924bddff0ddec318364c60f4e0843c1186a0aa9911ce6c
 HOTSPOT_CHANGESET = "3f1b4a1fe4a2"
 SRC_URI[hotspot.md5sum] = "106b2ec0a8798fbe07f3d838568bd0d8"
 SRC_URI[hotspot.sha256sum] = "39bc54bf343e1dce404b8c95285c0457a8d0a7c7aedfb55055aff9795dd36a85"
+
+###############################################################################
+# PATCHES - split up to allow overriding them separately
+OEPATCHES = "\
+	file://build-hacks.patch \
+	file://fix_hotspot_crosscompile.patch \
+	"
+
+ICEDTEAPATCHES = "\
+	file://icedtea-zero-hotspotfix.patch;apply=no \
+	file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
+	file://icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch;apply=no \
+	file://icedtea-jdk-rmi-crosscompile.patch;apply=no \
+	file://icedtea-crosscompile-fix.patch;apply=no \
+	file://icedtea-xawt-crosscompile-fix.patch;apply=no \
+	"
+
+DISTRIBUTION_PATCHES = "\
+	patches/icedtea-zero-hotspotfix.patch \
+	patches/icedtea-jdk-nio-use-host-cc.patch \
+	patches/icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch \
+	patches/icedtea-jdk-rmi-crosscompile.patch \
+	patches/icedtea-crosscompile-fix.patch \
+	patches/icedtea-xawt-crosscompile-fix.patch \
+	"
+
+export DISTRIBUTION_PATCHES
