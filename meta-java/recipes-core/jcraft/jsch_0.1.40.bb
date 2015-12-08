@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=55e3b6a0987ccd0c34530f3df2d206ae"
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/jsch/jsch-${PV}.zip"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 DEPENDS = "jzlib"
 DEPENDS_virtclass-native = "jzlib-native"

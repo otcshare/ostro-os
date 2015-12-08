@@ -21,7 +21,7 @@ SRC_URI = "\
 
 S = "${WORKDIR}/${BPN}_2_7_1"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 JPN = "libxalan2-java"
 

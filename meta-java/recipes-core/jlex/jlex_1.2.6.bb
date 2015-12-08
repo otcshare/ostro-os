@@ -8,7 +8,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=4d92cd373abda3937c2bc47fbc49d
 RDEPENDS_${PN} = "java2-runtime"
 RDEPENDS_${PN}_virtclass-native = ""
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 SRC_URI = "http://www.cs.princeton.edu/~appel/modern/java/JLex/Archive/${PV}/Main.java \
            file://jlex \

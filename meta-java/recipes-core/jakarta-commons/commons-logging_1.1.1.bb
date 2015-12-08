@@ -1,5 +1,7 @@
 require jakarta-commons.inc
 
+inherit java-bootstrap-components
+
 PR = "${INC_PR}.1"
 
 DESCRIPTION = "Java Internet protocol suite library"

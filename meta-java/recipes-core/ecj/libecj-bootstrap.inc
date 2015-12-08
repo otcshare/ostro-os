@@ -5,7 +5,7 @@ HOMEPAGE = "http://www.eclipse.org/"
 LICENSE = "EPL-1.0"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/EPL-1.0;md5=57f8d5e2b3e98ac6e088986c12bf94e6"
 
-DEPENDS = "fastjar-native jikes-initial-native virtual/java-initial-native"
+DEPENDS = "fastjar-native jikes-initial-native cacao-initial-native"
 
 INC_PR = "r5"
 

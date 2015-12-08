@@ -6,7 +6,7 @@ PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/avalon/logkit/source/${BP}-src.tar.gz"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 S = "${WORKDIR}/${BP}-dev"
 
