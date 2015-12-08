@@ -1,0 +1,11 @@
+--- hotspot/make/linux/makefiles/dtrace.make.orig	2015-09-01 08:00:59.737868760 +0200
++++ hotspot/make/linux/makefiles/dtrace.make	2015-09-01 08:01:24.049859677 +0200
+@@ -40,7 +40,7 @@
+ ifneq ($(ALT_SDT_H),)
+   SDT_H_FILE = $(ALT_SDT_H)
+ else
+-  SDT_H_FILE = /usr/include/sys/sdt.h
++  SDT_H_FILE = $(SYS_ROOT)/usr/include/sys/sdt.h
+ endif
+ DTRACE_ENABLED = $(shell test -f $(SDT_H_FILE) && echo $(SDT_H_FILE))
+ REASON = "$(SDT_H_FILE) not found"

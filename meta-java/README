@@ -52,15 +52,10 @@ Main layer maintainers:
 Usage instructions
 ------------------
 
-You should define at least the following variables in a distro include file or local.conf
+Since there is a clear bootstrap of the individual java-recipes, there is
+nothing to configure in conf/local.conf nor your individual distro/$name.conf.
 
-PREFERRED_PROVIDER_virtual/java-initial-native = "cacao-initial-native"
-
-PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
-PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
-
-#Sometimes the following is needed:
-PREFERRED_PROVIDER_openjdk-7-jre = "openjdk-7-jre"
+Simply rely on openjdk-7-jre, openjdk-7, openjdk-8 or openjre-8.
 
 For conf/bblayers.conf you have to add
 
@@ -70,7 +65,7 @@ BBLAYERS ?= " \
   path_to_source/sources/meta-java \
   "
 
-Please note that libstdc++ static is needed on your host to compile icedtea6/7-native
+Please note that libstdc++ static is needed on your host to compile icedtea7-native
 (install libstdc++-static on a Fedora).
 
 For debian-based distributions you need the libstdc++6-$compilerversion-dev package.
