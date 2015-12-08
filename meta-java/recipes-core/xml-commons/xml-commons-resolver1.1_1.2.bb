@@ -6,12 +6,12 @@ LIC_FILES_CHKSUM = "file://LICENSE.resolver.txt;md5=d229da563da18fe5d58cd95a6467
 
 SRC_URI = "http://archive.apache.org/dist/xml/commons/xml-commons-resolver-${PV}.tar.gz"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 S = "${WORKDIR}/xml-commons-resolver-${PV}"
 
-DEPENDS = "fastjar-native jaxp1.3"
-DEPENDS_virtclass-native = "fastjar-native jaxp1.3-native"
+DEPENDS = "jaxp1.3"
+DEPENDS_virtclass-native = "jaxp1.3-native"
 
 do_unpackpost() {
   find src -exec \

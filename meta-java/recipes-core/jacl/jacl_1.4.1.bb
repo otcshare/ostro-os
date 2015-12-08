@@ -10,7 +10,7 @@ HOMEPAGE = "http://sourceforge.net/projects/tcljava"
 
 SRC_URI = "http://downloads.sourceforge.net/tcljava/jacl${PV}.tar.gz"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 S = "${WORKDIR}/jacl${PV}"
 

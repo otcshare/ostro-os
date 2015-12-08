@@ -8,7 +8,7 @@ SRC_URI = "http://ftp.gnu.org/gnu/classpathx/mail-${PV}.tar.gz \
            file://datadir_java.patch \
           "
 
-inherit java-library autotools
+inherit java-library java-bootstrap-components autotools
 
 S = "${WORKDIR}/mail-${PV}"
 

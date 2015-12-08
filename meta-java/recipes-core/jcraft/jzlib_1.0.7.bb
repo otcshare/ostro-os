@@ -6,7 +6,7 @@ HOMEPAGE = "http://www.jcraft.com/jzlib"
 
 SRC_URI = "http://www.jcraft.com/jzlib/jzlib-${PV}.tar.gz"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 do_compile() {
   mkdir -p build

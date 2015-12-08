@@ -9,7 +9,7 @@ SRC_URI = " \
 	   http://archive.apache.org/dist/avalon/logkit/source/logkit-1.2.2-src.tar.gz;name=logkit \
 	  "
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 do_compile() {
   mkdir -p build

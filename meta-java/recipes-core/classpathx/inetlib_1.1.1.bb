@@ -9,7 +9,7 @@ SRC_URI = "http://ftp.gnu.org/gnu/classpath/${BP}.tar.gz \
            file://datadir_java.patch \
           "
 
-inherit java-library autotools
+inherit java-library java-bootstrap-components autotools
 
 JPN = "libgnuinet-java"
 

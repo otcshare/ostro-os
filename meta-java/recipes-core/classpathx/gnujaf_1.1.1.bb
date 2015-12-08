@@ -10,7 +10,7 @@ SRC_URI = "http://ftp.gnu.org/gnu/classpathx/activation-${PV}.tar.gz \
            file://MimeType-symbols-fix.patch \
           "
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 S = "${WORKDIR}/activation-${PV}"
 
