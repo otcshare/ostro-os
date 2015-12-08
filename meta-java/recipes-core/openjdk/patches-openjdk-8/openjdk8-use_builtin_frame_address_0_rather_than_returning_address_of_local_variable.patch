@@ -1,0 +1,23 @@
+# HG changeset patch
+# User sgehwolf
+# Date 1434121785 -3600
+# Node ID 6217fd2c767b467641bf7b41a9c37273e8fa0cbd
+# Parent  ff0929a59ced0e144201aa05819ae2e47d6f2c61
+8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms.
+Summary: Use __builtin_frame_address(0) rather than returning address of local variable.
+Reviewed-by: dholmes
+
+diff -r ff0929a59ced -r 6217fd2c767b src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+--- hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp.orig	Thu Jun 11 20:19:26 2015 -0700
++++ hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp	Fri Jun 12 16:09:45 2015 +0100
+@@ -59,8 +59,8 @@
+ extern sigjmp_buf* get_jmp_buf_for_continuation();
+
+ address os::current_stack_pointer() {
+-  address dummy = (address) &dummy;
+-  return dummy;
++  // return the address of the current function
++  return (address)__builtin_frame_address(0);
+ }
+
+ frame os::get_sender_for_C_frame(frame* fr) {

@@ -1,0 +1,94 @@
+--- jdk/make/lib/Awt2dLibraries.gmk.orig	2015-09-03 15:05:21.429981848 +0200
++++ jdk/make/lib/Awt2dLibraries.gmk	2015-09-03 15:05:44.705981936 +0200
+@@ -235,6 +235,10 @@
+   LIBAWT_DIRS += $(JDK_TOPDIR)/src/aix/porting
+ endif
+
++ifdef BUILD_HEADLESS_ONLY
++LIBAWT_CFLAGS += -DHEADLESS=true
++endif
++
+ LIBAWT_CFLAGS += -D__MEDIALIB_OLD_NAMES -D__USE_J2D_NAMES \
+     $(X_CFLAGS) \
+     $(foreach dir, $(LIBAWT_DIRS), -I$(dir))
+@@ -1126,17 +1130,28 @@
+           -F/System/Library/Frameworks/ApplicationServices.framework/Frameworks
+     endif
+
+-    LIBAWT_HEADLESS_FILES := \
+-        awt_Font.c \
+-        HeadlessToolkit.c \
+-        fontpath.c \
+-        VDrawingArea.c \
++    ifndef X11_NOT_NEEDED
++    LIBAWT_HEADLESS_X11_FILES := \
+         X11Color.c \
+         X11Renderer.c \
+         X11PMBlitLoops.c \
+         X11SurfaceData.c \
+         X11FontScaler_md.c \
+         X11TextRenderer_md.c \
++        GLXGraphicsConfig.c \
++        GLXSurfaceData.c
++    endif
++
++    ifndef CUPS_NOT_NEEDED
++    LIBAWT_HEADLESS_CUPS_FILES := \
++        CUPSfuncs.c
++    endif
++
++    LIBAWT_HEADLESS_FILES := \
++        awt_Font.c \
++        HeadlessToolkit.c \
++        fontpath.c \
++        VDrawingArea.c \
+         OGLBlitLoops.c \
+         OGLBufImgOps.c \
+         OGLContext.c \
+@@ -1149,10 +1164,9 @@
+         OGLSurfaceData.c \
+         OGLTextRenderer.c \
+         OGLVertexCache.c \
+-        GLXGraphicsConfig.c \
+-        GLXSurfaceData.c \
+         AccelGlyphCache.c \
+-        CUPSfuncs.c
++	$(LIBAWT_HEADLESS_X11_FILES) \
++	$(LIBAWT_HEADLESS_CUPS_FILES)
+
+     LIBAWT_HEADLESS_REORDER :=
+     ifeq ($(OPENJDK_TARGET_OS), solaris)
+--- jdk/make/CompileNativeLibraries.gmk.orig	2015-08-24 13:35:55.320678845 +0200
++++ jdk/make/CompileNativeLibraries.gmk	2015-08-24 13:36:22.776678949 +0200
+@@ -85,7 +85,9 @@
+
+ include lib/Awt2dLibraries.gmk
+
++ifndef BUILD_SOUNDLESS_ONLY
+ include lib/SoundLibraries.gmk
++endif
+
+ # Include the corresponding custom file, if present.
+ -include $(CUSTOM_MAKE_DIR)/CompileNativeLibraries.gmk
+--- jdk/src/solaris/native/sun/awt/jawt.c.orig	2015-08-24 14:12:29.376687104 +0200
++++ jdk/src/solaris/native/sun/awt/jawt.c	2015-08-24 14:16:20.420687974 +0200
+@@ -33,7 +33,7 @@
+  */
+ JNIEXPORT jboolean JNICALL JAWT_GetAWT(JNIEnv* env, JAWT* awt)
+ {
+-#if defined(JAVASE_EMBEDDED) && defined(HEADLESS)
++#if defined(JAVASE_EMBEDDED) || defined(HEADLESS)
+     /* there are no AWT libs available at all */
+     return JNI_FALSE;
+ #else
+--- jdk/src/solaris/native/sun/awt/utility/rect.h.orig	2015-09-03 14:45:40.717977403 +0200
++++ jdk/src/solaris/native/sun/awt/utility/rect.h	2015-09-03 14:46:46.337977650 +0200
+@@ -28,7 +28,7 @@
+ #ifndef _AWT_RECT_H
+ #define _AWT_RECT_H
+
+-#ifndef MACOSX
++#if !(defined(MACOSX) || defined(HEADLESS))
+ #include <X11/Xlib.h>
+ typedef XRectangle RECT_T;
+ #else

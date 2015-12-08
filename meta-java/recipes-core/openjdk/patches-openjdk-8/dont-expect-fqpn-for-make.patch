@@ -1,0 +1,18 @@
+--- common/autoconf/basics.m4.orig	2015-08-17 19:05:13.122672019 +0200
++++ common/autoconf/basics.m4	2015-08-17 19:13:01.482673782 +0200
+@@ -549,10 +549,12 @@
+   # We need to find a recent version of GNU make. Especially on Solaris, this can be tricky.
+   if test "x$MAKE" != x; then
+     # User has supplied a make, test it.
+-    if test ! -f "$MAKE"; then
+-      AC_MSG_ERROR([The specified make (by MAKE=$MAKE) is not found.])
++    if test -a `dirname "$MAKE"` = "." -a ! -f "$MAKE"; then
++      AC_PATH_PROGS(CHECK_MAKE, $MAKE)
++    else
++      CHECK_MAKE="${MAKE}"
+     fi
+-    BASIC_CHECK_MAKE_VERSION("$MAKE", [user supplied MAKE=$MAKE])
++    BASIC_CHECK_MAKE_VERSION("$CHECK_MAKE", [user supplied MAKE=$MAKE])
+     if test "x$FOUND_MAKE" = x; then
+       AC_MSG_ERROR([The specified make (by MAKE=$MAKE) is not GNU make 3.81 or newer.])
+     fi
