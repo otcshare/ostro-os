@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=361934e706423915b4d9f413ad37fb65"
 SRC_URI = "http://www.antlr2.org/download/${BP}.tar.gz"
 SRC_URI_append_class-native = " file://runantlr"
 
-inherit java-library
+inherit java-library java-bootstrap-components
 
 do_configure_class-native() {
     sed -i -e"s|@JAR_FILE@|${STAGING_DATADIR_JAVA_NATIVE}/antlr.jar|" ${WORKDIR}/runantlr
