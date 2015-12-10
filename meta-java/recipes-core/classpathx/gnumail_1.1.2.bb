@@ -6,6 +6,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=14bc6ee8b2e2b409be599212867d126e"
 
 SRC_URI = "http://ftp.gnu.org/gnu/classpathx/mail-${PV}.tar.gz \
            file://datadir_java.patch \
+           file://fix_makefile_race_condition.patch \
           "
 
 inherit java-library java-bootstrap-components autotools
