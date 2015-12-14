@@ -7,7 +7,7 @@ SECTION  = "interpreters"
 DEPENDS_class-native = "zlib-native libtool-native ecj-initial-native fastjar-native classpath-native bdwgc-native"
 #PROVIDES_class-native = "virtual/java-native"
 
-DEPENDS_class-target = " virtual/javac-native "
+DEPENDS_append_class-target = " virtual/javac-native "
 
 DEPENDS = "zlib libtool classpath bdwgc"
 RPROVIDES_${PN} = "java2-runtime"
