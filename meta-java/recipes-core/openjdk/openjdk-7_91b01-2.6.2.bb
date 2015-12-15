@@ -52,7 +52,6 @@ OEPATCHES = "\
 ICEDTEAPATCHES = "\
     file://icedtea-zero-hotspotfix.patch;apply=no \
     file://icedtea-jdk-nio-use-host-cc.patch;apply=no \
-    file://icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch;apply=no \
     file://icedtea-jdk-rmi-crosscompile.patch;apply=no \
     file://icedtea-crosscompile-fix.patch;apply=no \
     file://icedtea-xawt-crosscompile-fix.patch;apply=no \
@@ -61,7 +60,6 @@ ICEDTEAPATCHES = "\
 DISTRIBUTION_PATCHES = "\
     patches/icedtea-zero-hotspotfix.patch \
     patches/icedtea-jdk-nio-use-host-cc.patch \
-    patches/icedtea-jdk-build-nio-gensor-genuc-gensc-static.patch \
     patches/icedtea-jdk-rmi-crosscompile.patch \
     patches/icedtea-crosscompile-fix.patch \
     patches/icedtea-xawt-crosscompile-fix.patch \
