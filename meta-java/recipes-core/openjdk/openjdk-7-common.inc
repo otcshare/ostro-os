@@ -294,6 +294,10 @@ RRECOMMENDS_${JDKPN}-java = "java2-vm"
 INSANE_SKIP_${JDKPN}-vm-zero = "dev-so"
 INSANE_SKIP_${JDKPN}-common = "dev-so"
 
+# libfreetype.so.6 is copied from STAGING_LIBDIR
+# which is already stripped.
+INSANE_SKIP_${JDKPN}-jre = "already-stripped"
+
 FILES_${JDKPN}-jdk = " \
     ${JDK_HOME}/bin \
     ${JDK_HOME}/lib \
