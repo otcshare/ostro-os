@@ -14,6 +14,8 @@ PR = "r1"
 
 DEPENDS = "libecj-bootstrap-native virtual/java-native"
 
+PROVIDES = "virtual/javac-native"
+
 SRC_URI = "file://ecj.in"
 
 S = "${WORKDIR}"
