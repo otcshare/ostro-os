@@ -20,6 +20,7 @@ do_install() {
     rm -rf ${D}${JDK_HOME}
         mkdir -p ${D}${JDK_HOME}
     cp -rp ${B}/images/j2sdk-image/* ${D}${JDK_HOME}
+    chown -R root:root ${D}${JDK_HOME}
     install -m644 ${WORKDIR}/jvm.cfg  ${D}${JDK_HOME}/jre/lib/${JDK_ARCH}/
     find ${D}${JDK_HOME} -name "*.debuginfo" -print0 | xargs -0 rm
 }
