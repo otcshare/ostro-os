@@ -69,3 +69,6 @@ EXTRA_OEMAKE_append = '\
     QUIETLY= \
     images \
 '
+
+# There is a symlink to a .so but this one is valid.
+INSANE_SKIP_${PN} = "dev-so"
