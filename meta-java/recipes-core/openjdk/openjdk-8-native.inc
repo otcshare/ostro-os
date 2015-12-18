@@ -68,15 +68,12 @@ do_compile_append() {
 }
 
 do_install() {
-    rm -rf ${STAGING_LIBDIR_NATIVE}/jvm/${JDK_DIR}
-    mkdir -p ${STAGING_LIBDIR_NATIVE}/jvm/${JDK_DIR}
-    cp -rp ${B}/images/j2sdk-image/* ${STAGING_LIBDIR_NATIVE}/jvm/${JDK_DIR}
+    mkdir -p ${D}${libdir_jvm}/${JDK_DIR}
+    cp -rp ${B}/images/j2sdk-image/* ${D}${libdir_jvm}/${JDK_DIR}
 
-# clean up the mess from bootstrap
-    for tool in jar java javac keytool pack200 unpack200
+    mkdir -p ${D}${bindir}
+    for tool in keytool pack200 unpack200
     do
-        rm -f ${STAGING_BINDIR_NATIVE}/$tool
-
-        ln -sf "../lib/jvm/${JDK_DIR}/bin/$tool" ${STAGING_BINDIR_NATIVE}/$tool
+        ln -sf "../lib/jvm/${JDK_DIR}/bin/$tool" ${D}${bindir}/$tool
     done
 }

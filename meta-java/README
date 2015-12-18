@@ -52,8 +52,16 @@ Main layer maintainers:
 Usage instructions
 ------------------
 
-Since there is a clear bootstrap of the individual java-recipes, there is
-nothing to configure in conf/local.conf nor your individual distro/$name.conf.
+You should define at least the following variables in a distro include file or local.conf
+
+# Possible provider: cacao-initial-native and jamvm-initial-native
+PREFERRED_PROVIDER_virtual/java-initial-native = "cacao-initial-native"
+
+# Possible provider: cacao-native and jamvm-native
+PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
+
+# Optional since there is only one provider for now
+PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
 
 Simply rely on openjdk-7-jre, openjdk-7, openjdk-8 or openjre-8.
 
