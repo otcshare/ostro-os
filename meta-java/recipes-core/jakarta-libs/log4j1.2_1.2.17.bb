@@ -7,7 +7,7 @@ PR = "r2"
 
 SRC_URI = "http://archive.apache.org/dist/logging/log4j/${PV}/log4j-${PV}.tar.gz"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 DEPENDS = "gnumail gnujaf"
 DEPENDS_virtclass-native = "gnumail-native gnujaf-native"

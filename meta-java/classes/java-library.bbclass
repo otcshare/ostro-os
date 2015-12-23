@@ -35,8 +35,7 @@ def java_package_name(d):
 
 JPN ?= "${@java_package_name(d)}"
 
-DEPENDS_prepend = " fastjar-native "
-DEPENDS_prepend_class-target = " virtual/javac-native "
+DEPENDS_prepend = "virtual/javac-native fastjar-native "
 
 PACKAGES += "${JPN}"
 

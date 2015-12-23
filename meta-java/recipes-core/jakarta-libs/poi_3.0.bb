@@ -9,7 +9,7 @@ S = "${WORKDIR}/${BPN}-3.0-rc4"
 
 inherit java-library
 
-DEPENDS = "commons-collections3 commons-logging commons-lang commons-beanutils log4j1.2 xalan-j"
+DEPENDS = "fastjar-native commons-collections3 commons-logging commons-lang commons-beanutils log4j1.2 xalan-j"
 
 do_compile() {
   mkdir -p build

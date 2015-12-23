@@ -12,7 +12,7 @@ LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=4d92cd373abda3937c2bc47fbc49d
                    "
 PR = "r1"
 
-DEPENDS = "libecj-bootstrap-native cacao-native"
+DEPENDS = "libecj-bootstrap-native virtual/java-native"
 
 SRC_URI = "file://ecj.in"
 

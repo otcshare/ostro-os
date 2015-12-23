@@ -9,6 +9,8 @@ S = "${WORKDIR}/apache-tomcat-${PV}-src/servletapi/jsr154"
 
 inherit java-library
 
+DEPENDS = "fastjar-native"
+
 # Value of implementation.revision in build.xml
 IMPL_REVISION = "1"
 

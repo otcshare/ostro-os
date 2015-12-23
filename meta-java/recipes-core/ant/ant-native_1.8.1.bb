@@ -11,7 +11,7 @@ SRC_URI = "http://archive.apache.org/dist/ant/source/apache-ant-${PV}-src.tar.gz
 
 S = "${WORKDIR}/apache-ant-${PV}"
 
-inherit java-library java-native java-bootstrap-components
+inherit java-library java-native
 
 DEPENDS = " \
 	jsch-native bsf-native xalan-j-native xerces-j-native \

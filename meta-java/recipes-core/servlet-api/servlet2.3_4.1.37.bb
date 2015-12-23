@@ -6,9 +6,11 @@ PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/tomcat/tomcat-4/v${PV}/src/apache-tomcat-${PV}-src.tar.gz"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 S = "${WORKDIR}/apache-tomcat-${PV}-src/servletapi"
+
+DEPENDS = "fastjar-native"
 
 # Value of implementation.revision in build.xml
 IMPL_REVISION = "1"

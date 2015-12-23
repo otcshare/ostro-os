@@ -9,7 +9,7 @@ SRC_URI = "http://ftp.gnu.org/gnu/classpathx/mail-${PV}.tar.gz \
            file://fix_makefile_race_condition.patch \
           "
 
-inherit java-library java-bootstrap-components autotools
+inherit java-library autotools
 
 S = "${WORKDIR}/mail-${PV}"
 

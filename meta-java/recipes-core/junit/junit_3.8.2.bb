@@ -11,7 +11,7 @@ S = "${WORKDIR}/junit${PV}"
 
 DEPENDS += "unzip-native"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 do_unpackpost() {
 	mkdir -p src

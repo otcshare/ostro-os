@@ -11,7 +11,9 @@ LIC_FILES_CHKSUM = " \
 
 SRC_URI = "http://archive.apache.org/dist/xml/commons/source/xml-commons-external-${PV}-src.tar.gz;subdir=${BPN}-${PV}"
 
-inherit java-library java-bootstrap-components
+inherit java-library
+
+DEPENDS = "fastjar-native"
 
 JARFILENAME = "jaxp-1.3.jar"
 ALTJARFILENAMES = "xml-apis.jar"

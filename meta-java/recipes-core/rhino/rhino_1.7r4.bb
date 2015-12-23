@@ -4,7 +4,7 @@ LIC_FILES_CHKSUM = "file://LICENSE.txt;md5=8e2372bdbf22c99279ae4599a13cc458"
 
 BBCLASSEXTEND = "native"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 SRC_URI = "\
 	https://github.com/downloads/mozilla/rhino/rhino1_7R4.zip \
