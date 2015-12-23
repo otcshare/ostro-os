@@ -8,7 +8,9 @@ SRC_URI = "http://downloads.sourceforge.net/junit/junit-${PV}-src.jar"
 
 S = "${WORKDIR}"
 
-inherit java-library java-bootstrap-components
+inherit java-library
+
+DEPENDS = "fastjar-native"
 
 do_compile() {
   mkdir -p build

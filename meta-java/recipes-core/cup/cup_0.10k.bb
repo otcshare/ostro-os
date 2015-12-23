@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${WORKDIR}/LICENSE;md5=2c9db91c00f38e52cfc8e67bafaa7c
 RDEPENDS_${PN} = "java2-runtime"
 RDEPENDS_${PN}_virtclass-native = ""
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 SRC_URI = "http://www.cs.princeton.edu/~appel/modern/java/CUP/java_${BPN}_v10k.tar.gz \
 	   file://cup \

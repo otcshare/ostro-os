@@ -9,6 +9,8 @@ S = "${WORKDIR}/PullParser${PV}"
 
 inherit java-library
 
+DEPENDS = "fastjar-native virtual/javac-native"
+
 do_compile() {
     if [ -d build-oe ]; then
         rm -rf build-oe

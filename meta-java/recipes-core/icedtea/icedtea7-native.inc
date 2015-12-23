@@ -3,7 +3,7 @@ HOMEPAGE = "http://icedtea.classpath.org"
 LICENSE  = "GPL-2.0-with-classpath-exception"
 INC_PR = "r1"
 
-DEPENDS = "fastjar-native cacao-native classpath-native \
+DEPENDS = "virtual/javac-native virtual/java-native classpath-native \
            rhino-native ant-native libxslt-native attr-native \
            giflib-native jpeg-native libpng-native \
            glib-2.0-native freetype-native zlib-native \

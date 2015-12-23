@@ -6,7 +6,7 @@ PR = "r1"
 
 SRC_URI = "http://archive.apache.org/dist/jakarta/oro/source/jakarta-${BP}.tar.gz"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 S = "${WORKDIR}/jakarta-${BP}"
 

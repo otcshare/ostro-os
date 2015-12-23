@@ -8,7 +8,7 @@ HOMEPAGE = "http://clarkware.com/software/JDepend.html"
 
 SRC_URI = "http://www.clarkware.com/software/jdepend-${PV}.zip"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 do_compile() {
   mkdir -p build

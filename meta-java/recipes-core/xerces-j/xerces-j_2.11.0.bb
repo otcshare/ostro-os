@@ -16,12 +16,12 @@ SRC_URI = "http://archive.apache.org/dist/xerces/j/Xerces-J-src.${PV}.tar.gz"
 
 S = "${WORKDIR}/xerces-2_11_0"
 
-inherit java-library java-bootstrap-components
+inherit java-library
 
 JPN = "libxerces2-java"
 
-DEPENDS = "jaxp1.3 xml-commons-resolver1.1"
-DEPENDS_virtclass-native = "jaxp1.3-native xml-commons-resolver1.1-native"
+DEPENDS = "fastjar-native jaxp1.3 xml-commons-resolver1.1"
+DEPENDS_virtclass-native = "fastjar-native jaxp1.3-native xml-commons-resolver1.1-native"
 
 RDEPENDS_${PN} = "libjaxp1.3-java libxml-commons-resolver1.1-java"
 RDEPENDS_${PN}_virtclass-native = ""

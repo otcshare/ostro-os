@@ -7,9 +7,9 @@ LICENSE = "Classpath"
 
 PBN = "classpath"
 
-inherit autotools java gettext java-bootstrap-components
+inherit autotools java gettext
 
-DEPENDS = " fastjar-native zip-native gmp antlr-native gtk+ gconf libxtst file"
+DEPENDS = "virtual/javac-native fastjar-native zip-native gmp antlr-native gtk+ gconf libxtst file"
 
 RPROVIDES_${PN} = ""
 

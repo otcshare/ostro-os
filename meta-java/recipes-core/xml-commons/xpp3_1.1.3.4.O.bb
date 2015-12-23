@@ -8,6 +8,8 @@ SRC_URI = "http://www.extreme.indiana.edu/dist/java-repository/xpp3/distribution
 
 inherit java-library
 
+DEPENDS = "fastjar-native virtual/javac-native"
+
 PACKAGES = "libxpp3-xpath-java ${JPN}"
 
 do_compile() {
