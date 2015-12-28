@@ -324,30 +324,29 @@ ARM_INSTRUCTION_SET_armv4t = "ARM"
 
 ICEDTEA_URI = "http://icedtea.wildebeest.org/download/source/${ICEDTEA}.tar.gz;name=iced"
 
-ICEDTEA_PREFIX = "icedtea7-forest-2.6"
-ICEDTEA_HG_URL = "http://icedtea.classpath.org/hg/release/${ICEDTEA_PREFIX}"
+ICEDTEA_MAJOR = "icedtea7"
+ICEDTEA_DROP_URL = "http://icedtea.classpath.org/download/drops/${ICEDTEA_MAJOR}/${ICEDTEA_VERSION}"
 
-OPENJDK_FILE = "${OPENJDK_CHANGESET}.tar.bz2"
-OPENJDK_URI = "${ICEDTEA_HG_URL}/archive/${OPENJDK_FILE};name=openjdk;unpack=false"
+OPENJDK_FILE = "openjdk.tar.bz2"
+OPENJDK_URI = "${ICEDTEA_DROP_URL}/${OPENJDK_FILE};name=openjdk;unpack=false"
 
-HOTSPOT_FILE = "${HOTSPOT_CHANGESET}.tar.bz2"
-#HOTSPOT_URI = "${ICEDTEA_HG_URL}/hotspot/archive/${HOTSPOT_FILE};name=hotspot;unpack=false"
-HOTSPOT_URI = "http://icedtea.classpath.org/hg/icedtea7-forest/hotspot/archive/${HOTSPOT_FILE};name=hotspot;unpack=false"
+HOTSPOT_FILE = "hotspot.tar.bz2"
+HOTSPOT_URI = "${ICEDTEA_DROP_URL}/${HOTSPOT_FILE};name=hotspot;unpack=false"
 
-CORBA_FILE = "${CORBA_CHANGESET}.tar.bz2"
-CORBA_URI = "${ICEDTEA_HG_URL}/corba/archive/${CORBA_FILE};name=corba;unpack=false"
+CORBA_FILE = "corba.tar.bz2"
+CORBA_URI = "${ICEDTEA_DROP_URL}/${CORBA_FILE};name=corba;unpack=false"
 
-JAXP_FILE = "${JAXP_CHANGESET}.tar.bz2"
-JAXP_URI = "${ICEDTEA_HG_URL}/jaxp/archive/${JAXP_FILE};name=jaxp;unpack=false"
+JAXP_FILE = "jaxp.tar.bz2"
+JAXP_URI = "${ICEDTEA_DROP_URL}/${JAXP_FILE};name=jaxp;unpack=false"
 
-JAXWS_FILE = "${JAXWS_CHANGESET}.tar.bz2"
-JAXWS_URI = "${ICEDTEA_HG_URL}/jaxws/archive/${JAXWS_FILE};name=jaxws;unpack=false"
+JAXWS_FILE = "jaxws.tar.bz2"
+JAXWS_URI = "${ICEDTEA_DROP_URL}/${JAXWS_FILE};name=jaxws;unpack=false"
 
-JDK_FILE = "${JDK_CHANGESET}.tar.bz2"
-JDK_URI = "${ICEDTEA_HG_URL}/jdk/archive/${JDK_FILE};name=jdk;unpack=false"
+JDK_FILE = "jdk.tar.bz2"
+JDK_URI = "${ICEDTEA_DROP_URL}/${JDK_FILE};name=jdk;unpack=false"
 
-LANGTOOLS_FILE = "${LANGTOOLS_CHANGESET}.tar.bz2"
-LANGTOOLS_URI = "${ICEDTEA_HG_URL}/langtools/archive/${LANGTOOLS_FILE};name=langtools;unpack=false"
+LANGTOOLS_FILE = "langtools.tar.bz2"
+LANGTOOLS_URI = "${ICEDTEA_DROP_URL}/${LANGTOOLS_FILE};name=langtools;unpack=false"
 
 require openjdk-postinst.inc
 
