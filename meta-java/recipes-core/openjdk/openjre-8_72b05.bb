@@ -57,5 +57,3 @@ ALTERNATIVE_${PN} = "java"
 ALTERNATIVE_LINK_NAME[java] = "${bindir}/java"
 ALTERNATIVE_TARGET[java] = "${JRE_HOME}/bin/java"
 ALTERNATIVE_PRIORITY[java] = "100"
-
-# PR = "${INC_PR}.1"
