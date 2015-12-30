@@ -96,13 +96,9 @@ inherit update-alternatives
 
 ALTERNATIVE_PRIORITY = "100"
 
-ALTERNATIVE_${PN} = "java"
+ALTERNATIVE_${PN} = "java javac"
 ALTERNATIVE_LINK_NAME[java] = "${bindir}/java"
 ALTERNATIVE_TARGET[java] = "${JDK_HOME}/bin/java"
 
-ALTERNATIVE_${PN}-jdk = "javac"
 ALTERNATIVE_LINK_NAME[javac] = "${bindir}/javac"
 ALTERNATIVE_TARGET[javac] = "${JDK_HOME}/bin/javac"
-
-
-# PR = "${INC_PR}.1"
