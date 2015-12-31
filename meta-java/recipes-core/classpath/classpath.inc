@@ -28,24 +28,21 @@ SRC_URI = "${GNU_MIRROR}/classpath/classpath-${PV}.tar.gz"
 S = "${WORKDIR}/${PBN}-${PV}"
 
 export JAVA = "java"
+export JAVAC = "javac"
 
 EXTRA_OECONF = "\
   --with-glibj \
-  --with-ecj=javac \
-  --with-fastjar=fastjar \
+  --with-jar=${STAGING_BINDIR_NATIVE}/fastjar \
   --includedir=${includedir}/classpath \
-  --with-vm=java \
   --disable-Werror \
   --with-antlr-jar=${STAGING_DATADIR_JAVA_NATIVE}/antlr.jar \
   --with-gmp=${STAGING_LIBDIR}/.. \
   --disable-alsa \
   --disable-dssi \
-  --disable-qt4-peer \
   --disable-plugin \
   --enable-gconf-peer \
   --enable-gtk-peer \
   --enable-local-sockets \
-  --with-vm=java \
   "
 
 
