@@ -80,14 +80,7 @@ do_install_append_class-target() {
     export HOME=${D}/usr/include/node-gyp
     sed -i 's/\.node-gyp//' lib/node-gyp.js
 
-    # configure http proxy if neccessary
-    if [ -n "${http_proxy}" ]; then
-        ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose --proxy=${http_proxy} install
-    elif [ -n "${HTTP_PROXY}" ]; then
-        ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose --proxy=${HTTP_PROXY} install
-    else
-        ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose install
-    fi
+    ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose install --tarball=${DL_DIR}/node-v${PV}.tar.gz
 }
 
 pkg_postinst_${PN} () {
