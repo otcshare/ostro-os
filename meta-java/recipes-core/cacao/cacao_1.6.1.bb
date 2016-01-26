@@ -25,10 +25,6 @@ EXTRA_OECONF_class-native = "\
     --with-vm-zip=${datadir}/cacao/vm.zip \
     --disable-libjvm \
     \
-    --with-classpath-libdir=${libdir_jni}:${libdir} \
-    --with-classpath-includedir=${includedir}/classpath \
-    --with-classpath-classes=${datadir}/classpath/glibj.zip \
-    \
     --with-java-runtime-library-classes=${datadir}/classpath/glibj.zip \
     --with-java-runtime-library-libdir=${libdir_jni}:${libdir} \
     --with-jni_md_h=${includedir}/classpath \
