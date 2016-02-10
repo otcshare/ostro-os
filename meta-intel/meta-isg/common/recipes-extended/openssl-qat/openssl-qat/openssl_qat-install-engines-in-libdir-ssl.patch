@@ -1,0 +1,72 @@
+From 9ca66b344a9e9cb3345281496793a74ef01c548f Mon Sep 17 00:00:00 2001
+From: Anuj Mittal <anujx.mittal@intel.com>
+Date: Sat, 20 Jun 2015 00:28:55 +0800
+Subject: [PATCH] openssl_qat: install engines in ${libdir}/ssl
+
+Upstream-Status: Inappropriate [configuration]
+
+(Taken from meta/recipes-connectivity/openssl/openssl
+ rev: 5dd1d7566964c90d33c0c44f569d9336fb0724ce)
+
+Signed-off-by: Anuj Mittal <anujx.mittal@intel.com>
+---
+ engines/Makefile        |   10 +++++-----
+ engines/ccgost/Makefile |    8 ++++----
+ 2 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/engines/Makefile b/engines/Makefile
+index 5240c07..721f1e0 100644
+--- a/engines/Makefile
++++ b/engines/Makefile
+@@ -108,7 +108,7 @@ install:
+ 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+ 	@if [ -n "$(SHARED_LIBS)" ]; then \
+ 		set -e; \
+-		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
++		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines; \
+ 		for l in $(LIBNAMES); do \
+ 			( echo installing $$l; \
+ 			  pfx=lib; \
+@@ -120,13 +120,13 @@ install:
+ 				*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
+ 				*)		sfx=".bad";;	\
+ 				esac; \
+-				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
++				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$$pfx$$l$$sfx.new; \
+ 			  else \
+ 				sfx=".so"; \
+-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
++				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$$pfx$$l$$sfx.new; \
+ 			  fi; \
+-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new; \
+-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$$pfx$$l$$sfx ); \
++			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$$pfx$$l$$sfx.new; \
++			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$$pfx$$l$$sfx ); \
+ 		done; \
+ 	fi
+ 	@target=install; $(RECURSIVE_MAKE)
+diff --git a/engines/ccgost/Makefile b/engines/ccgost/Makefile
+index d661c10..e137b37 100644
+--- a/engines/ccgost/Makefile
++++ b/engines/ccgost/Makefile
+@@ -53,13 +53,13 @@ install:
+ 			*DSO_WIN32*) sfx="eay32.dll"; pfx=;; \
+ 			*) sfx=".bad";; \
+ 			esac; \
+-			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
++			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+ 		else \
+ 			sfx=".so"; \
+-			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
++			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+ 		fi; \
+-		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+-		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
++		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$${pfx}$(LIBNAME)$$sfx.new; \
++		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/ssl/engines/$${pfx}$(LIBNAME)$$sfx; \
+ 	fi
+ 
+ links:
+-- 
+1.7.9.5
+
