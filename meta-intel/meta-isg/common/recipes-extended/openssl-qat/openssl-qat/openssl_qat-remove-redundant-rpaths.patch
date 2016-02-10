@@ -1,0 +1,31 @@
+From ed93d22846a1859ba3ab4584a1358b9325bf2e93 Mon Sep 17 00:00:00 2001
+From: Anuj Mittal <anujx.mittal@intel.com>
+Date: Tue, 23 Jun 2015 13:59:52 +0800
+Subject: [PATCH] openssl_qat: remove redundant rpaths
+
+Upstream-Status: Inappropriate [Configuration]
+
+This is not required and introduces bad rpath errors when
+building with bitbake.
+
+Signed-off-by: Anuj Mittal <anujx.mittal@intel.com>
+---
+ engines/qat_engine/Makefile |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/engines/qat_engine/Makefile b/engines/qat_engine/Makefile
+index 02cfd15..e96e66a 100644
+--- a/engines/qat_engine/Makefile
++++ b/engines/qat_engine/Makefile
+@@ -99,7 +99,7 @@ endif
+ SRC=$(QATLIBSRC)
+ QATLIBTARGET=$(TOP)/libcrypto.a
+ ifdef ICP_BUILD_OUTPUT
+-QATSHAREDLIBDEPS=-Wl,-rpath,$(ICP_BUILD_OUTPUT) -L$(ICP_BUILD_OUTPUT) -l$(DRIVER)_s
++QATSHAREDLIBDEPS=-L$(ICP_BUILD_OUTPUT) -l$(DRIVER)_s
+ else
+ QATSHAREDLIBDEPS=-l$(DRIVER)_s
+ endif
+-- 
+1.7.9.5
+
