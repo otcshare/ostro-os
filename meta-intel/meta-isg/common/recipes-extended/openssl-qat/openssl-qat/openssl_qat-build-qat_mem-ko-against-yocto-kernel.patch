@@ -1,0 +1,62 @@
+From 3927de1c19b48a031b27b2635928cd6f9650d02e Mon Sep 17 00:00:00 2001
+From: Anuj Mittal <anujx.mittal@intel.com>
+Date: Wed, 8 Jul 2015 17:49:09 +0800
+Subject: [PATCH] openssl-qat: build qat_mem ko against yocto kernel
+
+Upstream-Status: Inappropriate [Configuration]
+
+Signed-off-by: Anuj Mittal <anujx.mittal@intel.com>
+---
+ engines/qat_engine/qat_mem/Makefile |   23 +++++++----------------
+ 1 file changed, 7 insertions(+), 16 deletions(-)
+
+diff --git a/engines/qat_engine/qat_mem/Makefile b/engines/qat_engine/qat_mem/Makefile
+index 3d9a19f..4369503 100644
+--- a/engines/qat_engine/qat_mem/Makefile
++++ b/engines/qat_engine/qat_mem/Makefile
+@@ -9,23 +9,10 @@
+ MODULENAME 	:= qat_mem
+ ### should not need to change stuff below ######################
+ 
+-
+-KDIR		:= /lib/modules/$(shell uname -r)/build
+-#KDIR		:= /exports/linux-2.6.12.2/
++KDIR            := $(KERNEL_SOURCE_ROOT)
+ PWD		:= $(shell pwd)
+ 
+-ifeq ($(shell uname -r|grep -c grsec-WR), 1)
+-AUTO_CONF=/lib/modules/$(shell uname -r)/build/include/generated/autoconf.h
+-else
+-AUTO_CONF=/usr/src/kernels/$(shell uname -r)/include/linux/autoconf.h
+-endif
+-
+-ifdef KERNEL_SOURCE_ROOT
+-AUTO_CONF=$(KERNEL_SOURCE_ROOT)/include/linux/autoconf.h
+-KDIR=$(KERNEL_SOURCE_ROOT)
+-endif
+-
+-CC		:= gcc -Wall -imacros $(AUTO_CONF)
++CC              := ${CC} -Wall -imacros $(KERNEL_BUILDDIR)/include/generated/autoconf.h
+ 
+ ifeq ($(KERNELRELEASE),)
+ all:	$(MODULENAME)_test
+@@ -38,6 +25,11 @@ endif
+ $(MODULENAME)_test: $(MODULENAME)_test.c
+ 	$(CC) -g -o $(MODULENAME)_test $(MODULENAME)_test.c
+ 
++install: modules_install
++	cp $(MODULENAME)_test $(DESTDIR)
++
++modules_install:
++	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
+ 
+ load:
+ 	insmod ./$(MODULENAME).ko
+@@ -50,4 +42,3 @@ test: all
+ 
+ clean:
+ 	rm -f *.o *.ko Modules.symvers *.mod.c .*.cmd $(MODULENAME)_test
+-
+-- 
+1.7.9.5
+
