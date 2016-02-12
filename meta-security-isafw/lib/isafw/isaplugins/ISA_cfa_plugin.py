@@ -54,26 +54,25 @@ class ISA_CFChecker():
         self.problems_report_name = ISA_config.reportdir + "/cfa_problems_report_" + ISA_config.machine + "_" + ISA_config.timestamp
         self.full_reports = ISA_config.full_reports
         # check that checksec is installed
-        rc = subprocess.call(["which", "checksec.sh"])
+        DEVNULL = open(os.devnull, 'wb')
+        rc = subprocess.call(["which", "checksec.sh"], stdout=DEVNULL)
         if rc == 0:
             # check that execstack is installed
-            rc = subprocess.call(["which", "execstack"])
+            rc = subprocess.call(["which", "execstack"], stdout=DEVNULL)
             if rc == 0:
                 # check that execstack is installed
-                rc = subprocess.call(["which", "readelf"])
+                rc = subprocess.call(["which", "readelf"], stdout=DEVNULL)
                 if rc == 0:
                     self.initialized = True
-                    print("Plugin ISA_CFChecker initialized!")
                     with open(self.logfile, 'w') as flog:
                         flog.write("\nPlugin ISA_CFChecker initialized!\n")
+                        DEVNULL.close()
                     return
-        print("checksec, execstack or readelf tools are missing!")
-        print("Please install checksec from http://www.trapkit.de/tools/checksec.html")
-        print("Please install execstack from prelink package")
         with open(self.logfile, 'w') as flog:
             flog.write("checksec, execstack or readelf tools are missing!\n")
             flog.write("Please install checksec from http://www.trapkit.de/tools/checksec.html\n")
             flog.write("Please install execstack from prelink package\n")
+        DEVNULL.close()
 
     def process_filesystem(self, ISA_filesystem):
         if (self.initialized == True):
@@ -91,13 +90,10 @@ class ISA_CFChecker():
                 self.write_report(ISA_filesystem)
                 self.write_report_xml(ISA_filesystem)
             else:
-                print("Mandatory arguments such as image name and path to the filesystem are not provided!")
-                print("Not performing the call.")
                 with open(self.logfile, 'a') as flog:
                     flog.write("Mandatory arguments such as image name and path to the filesystem are not provided!\n")
                     flog.write("Not performing the call.\n")
         else:
-            print("Plugin hasn't initialized! Not performing the call.")
             with open(self.logfile, 'a') as flog:
                 flog.write("Plugin hasn't initialized! Not performing the call.\n")
 

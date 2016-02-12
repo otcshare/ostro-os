@@ -43,15 +43,14 @@ class ISA_CVEChecker:
         self.logfile = ISA_config.logdir + "/isafw_cvelog"
         self.report_name = ISA_config.reportdir + "/cve_report_" + ISA_config.machine + "_" + ISA_config.timestamp  
         # check that cve-check-tool is installed
-        rc = subprocess.call(["which", "cve-check-tool"])
+        DEVNULL = open(os.devnull, 'wb')
+        rc = subprocess.call(["which", "cve-check-tool"], stdout=DEVNULL)
+        DEVNULL.close()
         if rc == 0:
             self.initialized = True
-            print("Plugin ISA_CVEChecker initialized!")
             with open(self.logfile, 'a') as flog:
                 flog.write("\nPlugin ISA_CVEChecker initialized!\n")
         else:
-            print("cve-check-tool is missing!")
-            print("Please install it from https://github.com/ikeydoherty/cve-check-tool.")
             with open(self.logfile, 'a') as flog:
                 flog.write("cve-check-tool is missing!\n")
                 flog.write("Please install it from https://github.com/ikeydoherty/cve-check-tool.\n")
@@ -75,25 +74,22 @@ class ISA_CVEChecker:
                 with open(self.logfile, 'a') as flog:
                     flog.write("\npkg info: " + pkgline_faux)
             else:
-                print("Mandatory arguments such as pkg name, version and list of patches are not provided!")
-                print("Not performing the call.")
                 self.initialized = False
                 with open(self.logfile, 'a') as flog:
                     flog.write("Mandatory arguments such as pkg name, version and list of patches are not provided!\n")
                     flog.write("Not performing the call.\n")
         else:
-            print("Plugin hasn't initialized! Not performing the call.")
             with open(self.logfile, 'a') as flog:
                 flog.write("Plugin hasn't initialized! Not performing the call.\n")
 
     def process_report(self):
+        if not os.path.isfile(self.reportdir + pkglist + "_" + self.timestamp + ".faux"): 
+            return
         if (self.initialized == True):
-            print("Creating report in HTML format.")
             with open(self.logfile, 'a') as flog:
                 flog.write("Creating report in HTML format.\n")
             self.process_report_type("html")
 
-            print("Creating report in CSV format.")
             with open(self.logfile, 'a') as flog:
                 flog.write("Creating report in CSV format.\n")
             self.process_report_type("csv")
@@ -101,7 +97,6 @@ class ISA_CVEChecker:
             pkglist_faux = pkglist + "_" + self.timestamp + ".faux"
             os.remove(self.reportdir + pkglist_faux)
 
-            print("Creating report in XML format.")
             with open(self.logfile, 'a') as flog:
                 flog.write("Creating report in XML format.\n")
             self.write_report_xml()
@@ -140,7 +135,6 @@ class ISA_CVEChecker:
             popen.wait()
             output = popen.stdout.read()
         except:
-            print("Error in executing cve-check-tool: ", sys.exc_info())
             output = "Error in executing cve-check-tool"
             with open(self.logfile, 'a') as flog:
                 flog.write("Error in executing cve-check-tool: " + sys.exc_info())
