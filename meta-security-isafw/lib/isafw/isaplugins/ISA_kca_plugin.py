@@ -157,7 +157,6 @@ class ISA_KernelChecker():
         self.problems_report_name = ISA_config.reportdir + "/kca_problems_report_" + ISA_config.machine + "_" + ISA_config.timestamp
         self.full_reports = ISA_config.full_reports
         self.initialized = True
-        print("Plugin ISA_KernelChecker initialized!")
         with open(self.logfile, 'w') as flog:
             flog.write("\nPlugin ISA_KernelChecker initialized!\n")
 
@@ -191,13 +190,12 @@ class ISA_KernelChecker():
                 self.write_problems_report(ISA_kernel)
 
             else:
-                print("Mandatory arguments such as image name and path to config are not provided!")
-                print("Not performing the call.")
                 with open(self.logfile, 'a') as flog:
                     flog.write("Mandatory arguments such as image name and path to config are not provided!\n")
                     flog.write("Not performing the call.\n")
         else:
-            print("Plugin hasn't initialized! Not performing the call.")    
+            with open(self.logdir + log, 'a') as flog:
+                flog.write("Plugin hasn't initialized! Not performing the call!\n")
 
     def write_full_report(self, ISA_kernel):
         if self.full_reports :      

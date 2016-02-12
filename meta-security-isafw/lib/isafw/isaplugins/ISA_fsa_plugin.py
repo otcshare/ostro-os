@@ -44,7 +44,6 @@ class ISA_FSChecker():
         self.setgid_files = []
         self.ww_files = []
         self.no_sticky_bit_ww_dirs = []
-        print("Plugin ISA_FSChecker initialized!")
         with open(self.logfile, 'w') as flog:
             flog.write("\nPlugin ISA_FSChecker initialized!\n")
 
@@ -80,13 +79,10 @@ class ISA_FSChecker():
                 self.write_problems_report(ISA_filesystem)
                 self.write_problems_report_xml(ISA_filesystem)
             else:
-                print("Mandatory arguments such as image name and path to the filesystem are not provided!")
-                print("Not performing the call.")
                 with open(self.logfile, 'a') as flog:
                     flog.write("Mandatory arguments such as image name and path to the filesystem are not provided!\n")
                     flog.write("Not performing the call.\n")
         else:
-            print("Plugin hasn't initialized! Not performing the call.")
             with open(self.logfile, 'a') as flog:
                 flog.write("Plugin hasn't initialized! Not performing the call.\n")
 
