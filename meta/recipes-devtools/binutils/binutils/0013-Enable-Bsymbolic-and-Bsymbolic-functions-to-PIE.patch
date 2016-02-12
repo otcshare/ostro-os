@@ -1,0 +1,230 @@
+Author: H.J. Lu <hjl.tools@gmail.com>
+Subject: [PATCH] Enable -Bsymbolic and -Bsymbolic-functions to PIE
+
+Before binutils 2.26, -Bsymbolic and -Bsymbolic-functions were also
+applied to PIE so that "ld -pie -Bsymbolic -E" can be used to export
+symbols in PIE with local binding.  This patch re-enables -Bsymbolic
+and -Bsymbolic-functions for PIE.
+
+Backport from master
+
+	PR ld/19615
+	* ld.texinfo: Document -Bsymbolic and -Bsymbolic-functions for
+	PIE.
+	* lexsup.c (parse_args): Enable -Bsymbolic and
+	-Bsymbolic-functions for PIE.
+	* testsuite/ld-i386/i386.exp: Run pr19615.
+	* testsuite/ld-i386/pr19615.d: New file.
+	* testsuite/ld-i386/pr19615.s: Likewise.
+	* testsuite/ld-x86-64/pr19615.d: Likewise.
+	* testsuite/ld-x86-64/pr19615.s: Likewise.
+
+Adapted to apply on openembedded-core.
+
+Signed-off-by: Jussi Laako <jussi.laako@linux.intel.com>
+---
+ ld/ChangeLog                      | 16 ++++++++++++++++
+ ld/ld.texinfo                     | 12 +++++++++---
+ ld/lexsup.c                       | 11 +++++------
+ ld/testsuite/ld-i386/i386.exp     |  1 +
+ ld/testsuite/ld-i386/pr19615.d    | 13 +++++++++++++
+ ld/testsuite/ld-i386/pr19615.s    | 13 +++++++++++++
+ ld/testsuite/ld-x86-64/pr19615.d  | 13 +++++++++++++
+ ld/testsuite/ld-x86-64/pr19615.s  | 13 +++++++++++++
+ ld/testsuite/ld-x86-64/x86-64.exp |  1 +
+ 9 files changed, 84 insertions(+), 9 deletions(-)
+ create mode 100644 ld/testsuite/ld-i386/pr19615.d
+ create mode 100644 ld/testsuite/ld-i386/pr19615.s
+ create mode 100644 ld/testsuite/ld-x86-64/pr19615.d
+ create mode 100644 ld/testsuite/ld-x86-64/pr19615.s
+
+diff --git a/ld/ChangeLog b/ld/ChangeLog
+index 8479e51..60a341f 100644
+--- a/ld/ChangeLog
++++ b/ld/ChangeLog
+@@ -1,3 +1,19 @@
++2016-02-11  H.J. Lu  <hongjiu.lu@intel.com>
++
++	Backport from master
++	2016-02-11  H.J. Lu  <hongjiu.lu@intel.com>
++
++	PR ld/19615
++	* ld.texinfo: Document -Bsymbolic and -Bsymbolic-functions for
++	PIE.
++	* lexsup.c (parse_args): Enable -Bsymbolic and
++	-Bsymbolic-functions for PIE.
++	* testsuite/ld-i386/i386.exp: Run pr19615.
++	* testsuite/ld-i386/pr19615.d: New file.
++	* testsuite/ld-i386/pr19615.s: Likewise.
++	* testsuite/ld-x86-64/pr19615.d: Likewise.
++	* testsuite/ld-x86-64/pr19615.s: Likewise.
++
+ 2016-01-29  H.J. Lu  <hongjiu.lu@intel.com>
+ 
+ 	Backport from master
+diff --git a/ld/ld.texinfo b/ld/ld.texinfo
+index fb1438e..d06112b 100644
+--- a/ld/ld.texinfo
++++ b/ld/ld.texinfo
+@@ -1325,15 +1325,21 @@ libraries.
+ When creating a shared library, bind references to global symbols to the
+ definition within the shared library, if any.  Normally, it is possible
+ for a program linked against a shared library to override the definition
+-within the shared library.  This option is only meaningful on ELF
+-platforms which support shared libraries.
++within the shared library.  This option can also be used with the
++@option{--export-dynamic} option, when creating a position independent
++executable, to bind references to global symbols to the definition within
++the executable.  This option is only meaningful on ELF platforms which
++support shared libraries and position independent executables.
+ 
+ @kindex -Bsymbolic-functions
+ @item -Bsymbolic-functions
+ When creating a shared library, bind references to global function
+ symbols to the definition within the shared library, if any.
++This option can also be used with the @option{--export-dynamic} option,
++when creating a position independent executable, to bind references
++to global function symbols to the definition within the executable.
+ This option is only meaningful on ELF platforms which support shared
+-libraries.
++libraries and position independent executables.
+ 
+ @kindex --dynamic-list=@var{dynamic-list-file}
+ @item --dynamic-list=@var{dynamic-list-file}
+diff --git a/ld/lexsup.c b/ld/lexsup.c
+index 173b17f..a2064f1 100644
+--- a/ld/lexsup.c
++++ b/ld/lexsup.c
+@@ -1602,15 +1602,14 @@ parse_args (unsigned argc, char **argv)
+   /* We may have -Bsymbolic, -Bsymbolic-functions, --dynamic-list-data,
+      --dynamic-list-cpp-new, --dynamic-list-cpp-typeinfo and
+      --dynamic-list FILE.  -Bsymbolic and -Bsymbolic-functions are
+-     for shared libraries.  -Bsymbolic overrides all others and vice
+-     versa.  */
++     for PIC outputs.  -Bsymbolic overrides all others and vice versa.  */
+   switch (command_line.symbolic)
+     {
+     case symbolic_unset:
+       break;
+     case symbolic:
+-      /* -Bsymbolic is for shared library only.  */
+-      if (bfd_link_dll (&link_info))
++      /* -Bsymbolic is for PIC output only.  */
++      if (bfd_link_pic (&link_info))
+ 	{
+ 	  link_info.symbolic = TRUE;
+ 	  /* Should we free the unused memory?  */
+@@ -1619,8 +1618,8 @@ parse_args (unsigned argc, char **argv)
+ 	}
+       break;
+     case symbolic_functions:
+-      /* -Bsymbolic-functions is for shared library only.  */
+-      if (bfd_link_dll (&link_info))
++      /* -Bsymbolic-functions is for PIC output only.  */
++      if (bfd_link_pic (&link_info))
+ 	command_line.dynamic_list = dynamic_list_data;
+       break;
+     }
+diff --git a/ld/testsuite/ld-i386/i386.exp b/ld/testsuite/ld-i386/i386.exp
+index fb1d3ea..4ad66f4 100644
+--- a/ld/testsuite/ld-i386/i386.exp
++++ b/ld/testsuite/ld-i386/i386.exp
+@@ -319,6 +319,7 @@ run_dump_test "load5a"
+ run_dump_test "load5b"
+ run_dump_test "load6"
+ run_dump_test "pr19175"
++run_dump_test "pr19615"
+ 
+ if { !([istarget "i?86-*-linux*"]
+        || [istarget "i?86-*-gnu*"]
+diff --git a/ld/testsuite/ld-i386/pr19615.d b/ld/testsuite/ld-i386/pr19615.d
+new file mode 100644
+index 0000000..86aebd1
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr19615.d
+@@ -0,0 +1,13 @@
++#as: --32
++#ld: -pie -Bsymbolic -E -melf_i386
++#readelf: -r --wide --dyn-syms
++
++Relocation section '.rel.dyn' at offset 0x[0-9a-f]+ contains 1 entries:
++ Offset     Info    Type                Sym. Value  Symbol's Name
++[0-9a-f]+ +[0-9a-f]+ +R_386_RELATIVE +
++
++Symbol table '.dynsym' contains [0-9]+ entries:
++   Num:    Value  Size Type    Bind   Vis      Ndx Name
++#...
++[ 	]*[a-f0-9]+: [a-f0-9]+     0 FUNC    GLOBAL DEFAULT    [a-f0-9]+ xyzzy
++#...
+diff --git a/ld/testsuite/ld-i386/pr19615.s b/ld/testsuite/ld-i386/pr19615.s
+new file mode 100644
+index 0000000..1d85926
+--- /dev/null
++++ b/ld/testsuite/ld-i386/pr19615.s
+@@ -0,0 +1,13 @@
++	.text
++	.globl _start
++	.type _start, @function
++_start:
++	ret
++
++	.globl xyzzy	/* This symbol should be exported */
++	.type xyzzy, @function
++xyzzy:
++	ret
++
++	.section ".xyzzy_ptr","aw",%progbits
++	.dc.a xyzzy
+diff --git a/ld/testsuite/ld-x86-64/pr19615.d b/ld/testsuite/ld-x86-64/pr19615.d
+new file mode 100644
+index 0000000..f09bcf3
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr19615.d
+@@ -0,0 +1,13 @@
++#as: --64
++#ld: -pie -Bsymbolic -E -melf_x86_64
++#readelf: -r --wide --dyn-syms
++
++Relocation section '.rela.dyn' at offset 0x[0-9a-f]+ contains 1 entries:
++    Offset             Info             Type               Symbol's Value  Symbol's Name \+ Addend
++[0-9a-f]+ +[0-9a-f]+ +R_X86_64_RELATIVE +[0-9]+
++
++Symbol table '.dynsym' contains [0-9]+ entries:
++   Num:    Value          Size Type    Bind   Vis      Ndx Name
++#...
++[ 	]*[a-f0-9]+: [a-f0-9]+     0 FUNC    GLOBAL DEFAULT    [a-f0-9]+ xyzzy
++#...
+diff --git a/ld/testsuite/ld-x86-64/pr19615.s b/ld/testsuite/ld-x86-64/pr19615.s
+new file mode 100644
+index 0000000..1d85926
+--- /dev/null
++++ b/ld/testsuite/ld-x86-64/pr19615.s
+@@ -0,0 +1,13 @@
++	.text
++	.globl _start
++	.type _start, @function
++_start:
++	ret
++
++	.globl xyzzy	/* This symbol should be exported */
++	.type xyzzy, @function
++xyzzy:
++	ret
++
++	.section ".xyzzy_ptr","aw",%progbits
++	.dc.a xyzzy
+diff --git a/ld/testsuite/ld-x86-64/x86-64.exp b/ld/testsuite/ld-x86-64/x86-64.exp
+index 45b7f09..3b46040 100644
+--- a/ld/testsuite/ld-x86-64/x86-64.exp
++++ b/ld/testsuite/ld-x86-64/x86-64.exp
+@@ -353,6 +353,7 @@ run_dump_test "pr19013-x32"
+ run_dump_test "pr19013-nacl"
+ run_dump_test "pr19162"
+ run_dump_test "pr19175"
++run_dump_test "pr19615"
+ 
+ # Add $PLT_CFLAGS if PLT is expected.
+ global PLT_CFLAGS
+-- 
+2.7.0
+
