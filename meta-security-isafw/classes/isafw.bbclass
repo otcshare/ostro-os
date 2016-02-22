@@ -190,7 +190,6 @@ def isafw_init(isafw, d):
     import re, errno
 
     isafw_config = isafw.ISA_config()
-
     isafw_config.proxy = d.getVar('HTTP_PROXY', True)
     if not isafw_config.proxy :
         isafw_config.proxy = d.getVar('http_proxy', True)

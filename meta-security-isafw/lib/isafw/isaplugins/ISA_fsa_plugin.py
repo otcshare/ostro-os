@@ -41,6 +41,7 @@ class ISA_FSChecker():
         self.reportdir = ISA_config.reportdir
         self.logdir = ISA_config.logdir
         self.timestamp = ISA_config.timestamp
+        self.full_reports = ISA_config.full_reports
         self.initialized = True
         self.setuid_files = []
         self.setgid_files = []
@@ -59,23 +60,26 @@ class ISA_FSChecker():
                 self.files = self.find_fsobjects(ISA_filesystem.path_to_fs)
                 with open(self.logdir + log, 'a') as flog:
                     flog.write("\nFilelist is: " + str(self.files))
-                with open(self.reportdir + full_report + ISA_filesystem.img_name + "_" + self.timestamp, 'w') as ffull_report:
-                    ffull_report.write("Report for image: " + ISA_filesystem.img_name + '\n')
-                    ffull_report.write("With rootfs location at " + ISA_filesystem.path_to_fs + "\n\n")
-                    for f in self.files:
-                        st = os.lstat(f)
-                        i = f.replace(ISA_filesystem.path_to_fs, "")
-                        ffull_report.write("File: " + i + ' mode: ' + str(oct(st.st_mode)) + 
-                                           " uid: " + str(st.st_uid) + " gid: " + str(st.st_gid) + '\n')
-                        if ((st.st_mode&S_ISUID) == S_ISUID):
-                            self.setuid_files.append(i)
-                        if ((st.st_mode&S_ISGID) == S_ISGID):
-                            self.setgid_files.append(i)
-                        if ((st.st_mode&S_IWOTH) == S_IWOTH):
-                            if (((st.st_mode&S_IFDIR) == S_IFDIR) and ((st.st_mode&S_ISVTX) != S_ISVTX)):
-                                self.no_sticky_bit_ww_dirs.append(i)
-                            if (((st.st_mode&S_IFREG) == S_IFREG) and ((st.st_mode&S_IFLNK) != S_IFLNK)):        
-                                self.ww_files.append(i)
+                if self.full_reports :
+                    with open(self.reportdir + full_report + ISA_filesystem.img_name + "_" + self.timestamp, 'w') as ffull_report:
+                        ffull_report.write("Report for image: " + ISA_filesystem.img_name + '\n')
+                        ffull_report.write("With rootfs location at " + ISA_filesystem.path_to_fs + "\n\n")
+                for f in self.files:
+                    st = os.lstat(f)
+                    i = f.replace(ISA_filesystem.path_to_fs, "")
+                    if self.full_reports :
+                        with open(self.reportdir + full_report + ISA_filesystem.img_name + "_" + self.timestamp, 'a') as ffull_report:
+                            ffull_report.write("File: " + i + ' mode: ' + str(oct(st.st_mode)) + 
+                                       " uid: " + str(st.st_uid) + " gid: " + str(st.st_gid) + '\n')
+                    if ((st.st_mode&S_ISUID) == S_ISUID):
+                        self.setuid_files.append(i)
+                    if ((st.st_mode&S_ISGID) == S_ISGID):
+                        self.setgid_files.append(i)
+                    if ((st.st_mode&S_IWOTH) == S_IWOTH):
+                        if (((st.st_mode&S_IFDIR) == S_IFDIR) and ((st.st_mode&S_ISVTX) != S_ISVTX)):
+                            self.no_sticky_bit_ww_dirs.append(i)
+                        if (((st.st_mode&S_IFREG) == S_IFREG) and ((st.st_mode&S_IFLNK) != S_IFLNK)):        
+                            self.ww_files.append(i)
                 self.write_problems_report(ISA_filesystem)
                 self.write_problems_report_xml(ISA_filesystem)
             else:
