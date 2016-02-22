@@ -158,6 +158,7 @@ class ISA_KernelChecker():
         self.reportdir = ISA_config.reportdir
         self.logdir = ISA_config.logdir
         self.timestamp = ISA_config.timestamp
+        self.full_reports = ISA_config.full_reports
         self.initialized = True
         print("Plugin ISA_KernelChecker initialized!")
         with open(self.logdir + log, 'w') as flog:
@@ -188,22 +189,8 @@ class ISA_KernelChecker():
                     flog.write("\n\nhardening_kco values: " + str(self.hardening_kco))
                     flog.write("\n\nkeys_kco values: " + str(self.keys_kco))              
                     flog.write("\n\nsecurity_kco values: " + str(self.security_kco))              
-                    flog.write("\n\nintegrity_kco values: " + str(self.integrity_kco))                    
-                with open(self.reportdir + fullreport + ISA_kernel.img_name + "_" + self.timestamp, 'w') as freport:
-                    freport.write("Report for image: " + ISA_kernel.img_name + '\n')
-                    freport.write("With the kernel conf at: " + ISA_kernel.path_to_config + '\n\n')
-                    freport.write("Hardening options:\n")
-                    for key in sorted(self.hardening_kco):
-                        freport.write(key + ' : ' + str(self.hardening_kco[key]) + '\n')
-                    freport.write("\nKey-related options:\n")
-                    for key in sorted(self.keys_kco):
-                        freport.write(key + ' : ' + str(self.keys_kco[key]) + '\n')
-                    freport.write("\nSecurity options:\n")
-                    for key in sorted(self.security_kco):
-                        freport.write(key + ' : ' + str(self.security_kco[key]) + '\n')
-                    freport.write("\nIntegrity options:\n")
-                    for key in sorted(self.integrity_kco):
-                        freport.write(key + ' : ' + str(self.integrity_kco[key]) + '\n')
+                    flog.write("\n\nintegrity_kco values: " + str(self.integrity_kco))
+                self.write_full_report(ISA_kernel)
                 self.write_problems_report(ISA_kernel)
 
             else:
@@ -214,6 +201,24 @@ class ISA_KernelChecker():
                     flog.write("Not performing the call.\n")
         else:
             print("Plugin hasn't initialized! Not performing the call.")    
+
+    def write_full_report(self, ISA_kernel):
+        if self.full_reports :      
+            with open(self.reportdir + fullreport + ISA_kernel.img_name + "_" + self.timestamp, 'w') as freport:
+                freport.write("Report for image: " + ISA_kernel.img_name + '\n')
+                freport.write("With the kernel conf at: " + ISA_kernel.path_to_config + '\n\n')
+                freport.write("Hardening options:\n")
+                for key in sorted(self.hardening_kco):
+                    freport.write(key + ' : ' + str(self.hardening_kco[key]) + '\n')
+                freport.write("\nKey-related options:\n")
+                for key in sorted(self.keys_kco):
+                    freport.write(key + ' : ' + str(self.keys_kco[key]) + '\n')
+                freport.write("\nSecurity options:\n")
+                for key in sorted(self.security_kco):
+                    freport.write(key + ' : ' + str(self.security_kco[key]) + '\n')
+                freport.write("\nIntegrity options:\n")
+                for key in sorted(self.integrity_kco):
+                    freport.write(key + ' : ' + str(self.integrity_kco[key]) + '\n')
 
     def write_problems_report(self, ISA_kernel):
         with open(self.reportdir + problemsreport + ISA_kernel.img_name + "_" + self.timestamp, 'w') as freport:

@@ -55,6 +55,7 @@ class ISA_CFChecker():
         self.reportdir = ISA_config.reportdir
         self.logdir = ISA_config.logdir
         self.timestamp = ISA_config.timestamp
+        self.full_reports = ISA_config.full_reports
         # check that checksec is installed
         rc = subprocess.call(["which", "checksec.sh"])
         if rc == 0:
@@ -82,9 +83,10 @@ class ISA_CFChecker():
             if (ISA_filesystem.img_name and ISA_filesystem.path_to_fs):
                 with open(self.logdir + log, 'a') as flog:
                     flog.write("\n\nFilesystem path is: " + ISA_filesystem.path_to_fs)
-                with open(self.reportdir + full_report + ISA_filesystem.img_name + "_" + self.timestamp, 'w') as ffull_report:
-                    ffull_report.write("Security-relevant flags for executables for image: " + ISA_filesystem.img_name + '\n')
-                    ffull_report.write("With rootfs location at " +  ISA_filesystem.path_to_fs + "\n\n")
+                if self.full_reports :
+                    with open(self.reportdir + full_report + ISA_filesystem.img_name + "_" + self.timestamp, 'w') as ffull_report:
+                        ffull_report.write("Security-relevant flags for executables for image: " + ISA_filesystem.img_name + '\n')
+                        ffull_report.write("With rootfs location at " +  ISA_filesystem.path_to_fs + "\n\n")
                 self.files = self.find_files(ISA_filesystem.path_to_fs)
                 with open(self.logdir + log, 'a') as flog:
                     flog.write("\n\nFile list is: " + str(self.files))
@@ -317,16 +319,17 @@ class ISA_CFChecker():
                         execstack = self.get_execstack(real_file)
                         nodrop_groups = self.get_nodrop_groups(real_file)
                         no_mpx = self.get_mpx(real_file)
-                        with open(self.reportdir + full_report + img_name + "_" + self.timestamp, 'a') as ffull_report:
-                            real_file = real_file.replace(path_to_fs, "")
-                            ffull_report.write(real_file + ": ")
-                            for s in sec_field:
-                                line = ' '.join(str(x) for x in s)
-                                ffull_report.write(line + ' ')
-                            ffull_report.write('\nexecstack: ' + execstack +' ')
-                            ffull_report.write('\nnodrop_groups: ' + nodrop_groups +' ')
-                            ffull_report.write('\nno mpx: ' + no_mpx +' ')
-                            ffull_report.write('\n')                            
+                        if self.full_reports :
+                            with open(self.reportdir + full_report + img_name + "_" + self.timestamp, 'a') as ffull_report:
+                                real_file = real_file.replace(path_to_fs, "")
+                                ffull_report.write(real_file + ": ")
+                                for s in sec_field:
+                                    line = ' '.join(str(x) for x in s)
+                                    ffull_report.write(line + ' ')
+                                ffull_report.write('\nexecstack: ' + execstack +' ')
+                                ffull_report.write('\nnodrop_groups: ' + nodrop_groups +' ')
+                                ffull_report.write('\nno mpx: ' + no_mpx +' ')
+                                ffull_report.write('\n')                            
                 else:
                     continue
 
