@@ -10,6 +10,7 @@ SRC_URI = " \
   file://0002-Fix-build-failure-on-Yocto.patch \
   file://0003-Right-usage-of-AC_ARG_ENABLE-on-bzip2.patch \
   file://0004-Tolerate-quotes-in-os-release-files.patch \
+  file://0005-Disable-boot-file-heuristics.patch \
   file://efi_combo_updater.c \
   "
 SRC_URI[md5sum] = "58671adf559dd18620f11caf4ccf83dd"

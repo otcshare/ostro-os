@@ -1,0 +1,32 @@
+From 69b382558db9330b4c442b05003c47afca0c33ad Mon Sep 17 00:00:00 2001
+From: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+Date: Tue, 23 Feb 2016 17:07:30 +0200
+Subject: [PATCH swupd-client 5/5] Disable boot file heuristics
+
+Ostro uses a mechanism different from what's used in ClearLinux
+to detect changes in kernel, bootloader, initramfs.
+
+Upstream-Status: Inappropriate [Ostro uses different mechanism for boot file updates]
+
+Signed-off-by: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+---
+ src/heuristics.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/src/heuristics.c b/src/heuristics.c
+index 12fb59c..1e164b2 100644
+--- a/src/heuristics.c
++++ b/src/heuristics.c
+@@ -107,7 +107,9 @@ static void boot_file_heuristics(struct file *file)
+ void apply_heuristics(struct file *file)
+ {
+ 	runtime_state_heuristics(file);
++#if 0
+ 	boot_file_heuristics(file);
++#endif
+ 	config_file_heuristics(file);
+ }
+ 
+-- 
+2.5.0
+
