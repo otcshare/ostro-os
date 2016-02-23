@@ -195,6 +195,7 @@ def isafw_init(isafw, d):
         isafw_config.proxy = d.getVar('http_proxy', True)
     bb.debug(1, 'isafw: proxy is %s' % isafw_config.proxy)
 
+    isafw_config.machine = d.getVar('MACHINE', True)
     isafw_config.timestamp = d.getVar('DATETIME', True)
     isafw_config.reportdir = d.getVar('ISAFW_REPORTDIR', True) + "_" + isafw_config.timestamp
     if not os.path.exists(os.path.dirname(isafw_config.reportdir + "/test")):
