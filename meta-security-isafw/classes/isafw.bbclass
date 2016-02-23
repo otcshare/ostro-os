@@ -227,7 +227,8 @@ def manifest2pkglist(d):
         with open(manifest_file, 'r') as finput:
             for line in finput:
                 items = line.split()
-                foutput.write(items[0] + " " + items[2] + "\n")
+                if items and (len(items) >= 3):
+                    foutput.write(items[0] + " " + items[2] + "\n")
 
     return pkglist
 
