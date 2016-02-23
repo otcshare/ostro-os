@@ -29,9 +29,6 @@
 from lxml import etree
 
 KCAnalyzer = None
-fullreport = "/kca_full_report_"
-problemsreport = "/kca_problems_report_"
-log = "/isafw_kcalog"
 
 class ISA_KernelChecker():    
     initialized = False
@@ -155,19 +152,19 @@ class ISA_KernelChecker():
 
     def __init__(self, ISA_config):
         self.proxy = ISA_config.proxy
-        self.reportdir = ISA_config.reportdir
-        self.logdir = ISA_config.logdir
-        self.timestamp = ISA_config.timestamp
+        self.logfile = ISA_config.logdir + "/isafw_kcalog"
+        self.full_report_name = ISA_config.reportdir + "/kca_full_report_" + ISA_config.machine + "_" + ISA_config.timestamp
+        self.problems_report_name = ISA_config.reportdir + "/kca_problems_report_" + ISA_config.machine + "_" + ISA_config.timestamp
         self.full_reports = ISA_config.full_reports
         self.initialized = True
         print("Plugin ISA_KernelChecker initialized!")
-        with open(self.logdir + log, 'w') as flog:
+        with open(self.logfile, 'w') as flog:
             flog.write("\nPlugin ISA_KernelChecker initialized!\n")
 
     def process_kernel(self, ISA_kernel):
         if (self.initialized == True):
             if (ISA_kernel.img_name and ISA_kernel.path_to_config):
-                with open(self.logdir + log, 'a') as flog:
+                with open(self.logfile, 'a') as flog:
                     flog.write("Analyzing kernel config file at: " + ISA_kernel.path_to_config +
                                " for the image: " + ISA_kernel.img_name + "\n")
                 with open(ISA_kernel.path_to_config, 'r') as fkernel_conf:
@@ -185,7 +182,7 @@ class ISA_KernelChecker():
                         for key in self.integrity_kco:
                             if key +'=' in line:
                                 self.integrity_kco[key] = line.split('=')[1]
-                with open(self.logdir + log, 'a') as flog:
+                with open(self.logfile, 'a') as flog:
                     flog.write("\n\nhardening_kco values: " + str(self.hardening_kco))
                     flog.write("\n\nkeys_kco values: " + str(self.keys_kco))              
                     flog.write("\n\nsecurity_kco values: " + str(self.security_kco))              
@@ -196,7 +193,7 @@ class ISA_KernelChecker():
             else:
                 print("Mandatory arguments such as image name and path to config are not provided!")
                 print("Not performing the call.")
-                with open(self.logdir + log, 'a') as flog:
+                with open(self.logfile, 'a') as flog:
                     flog.write("Mandatory arguments such as image name and path to config are not provided!\n")
                     flog.write("Not performing the call.\n")
         else:
@@ -204,7 +201,7 @@ class ISA_KernelChecker():
 
     def write_full_report(self, ISA_kernel):
         if self.full_reports :      
-            with open(self.reportdir + fullreport + ISA_kernel.img_name + "_" + self.timestamp, 'w') as freport:
+            with open(self.full_report_name + "_" + ISA_kernel.img_name, 'w') as freport:
                 freport.write("Report for image: " + ISA_kernel.img_name + '\n')
                 freport.write("With the kernel conf at: " + ISA_kernel.path_to_config + '\n\n')
                 freport.write("Hardening options:\n")
@@ -221,7 +218,7 @@ class ISA_KernelChecker():
                     freport.write(key + ' : ' + str(self.integrity_kco[key]) + '\n')
 
     def write_problems_report(self, ISA_kernel):
-        with open(self.reportdir + problemsreport + ISA_kernel.img_name + "_" + self.timestamp, 'w') as freport:
+        with open(self.problems_report_name + "_" + ISA_kernel.img_name, 'w') as freport:
             freport.write("Report for image: " + ISA_kernel.img_name + '\n')
             freport.write("With the kernel conf at: " + ISA_kernel.path_to_config + '\n\n')
             freport.write("Hardening options that need improvement:\n")
@@ -350,7 +347,7 @@ class ISA_KernelChecker():
                     msg4 = 'current=' + key + ' is ' + str(self.integrity_kco[key]) + ', recommended=' + key + ' is ' + str(self.integrity_kco_ref[key])
                     failrs4 = etree.SubElement(tcase4, 'failure', message = msg4, type='violation')
         tree = etree.ElementTree(root)
-        output = self.reportdir + problemsreport + ISA_kernel.img_name + "_" + self.timestamp + '.xml' 
+        output = self.problems_report_name + "_" + ISA_kernel.img_name + '.xml' 
         tree.write(output, encoding = 'UTF-8', pretty_print = True, xml_declaration = True)
 
 #======== supported callbacks from ISA =============#
