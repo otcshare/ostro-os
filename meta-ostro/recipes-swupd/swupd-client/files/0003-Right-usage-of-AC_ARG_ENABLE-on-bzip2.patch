@@ -1,7 +1,7 @@
-From d80ae9954c5e5b720766274249dbf5309b7c70a9 Mon Sep 17 00:00:00 2001
+From ac1478df483a15d8098e53add04fa6e990699be1 Mon Sep 17 00:00:00 2001
 From: Amarnath Valluri <amarnath.valluri@intel.com>
 Date: Wed, 13 Jan 2016 15:46:19 +0200
-Subject: [PATCH] Right usage of AC_ARG_ENABLE on bzip2
+Subject: [PATCH swupd-client 3/5] Right usage of AC_ARG_ENABLE on bzip2
 
 Upstream-Status: Pending[Not submitted]
 
@@ -34,5 +34,5 @@ index f94a17d..b11ef0a 100644
  
  AC_ARG_WITH([systemdsystemunitdir], AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
 -- 
-2.1.4
+2.5.0
 

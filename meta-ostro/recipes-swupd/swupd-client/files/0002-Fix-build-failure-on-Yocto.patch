@@ -1,12 +1,12 @@
-From ccce73a2d703e6789ded87ca5aa9f3b7c506892a Mon Sep 17 00:00:00 2001
+From 3c1a3571acaae24c1be6eeed66d2687001c14f2b Mon Sep 17 00:00:00 2001
 From: Amarnath Valluri <amarnath.valluri@intel.com>
 Date: Thu, 7 Jan 2016 16:19:34 +0200
-Subject: [PATCH] Fix build failure on Yocto
+Subject: [PATCH swupd-client 2/5] Fix build failure on Yocto
 
 On install phase certificate files are being installed twice as included in
 _DATA twice. We can use EXTRA_DIST than dist_.
 
-Upstream-Status: Inappropriate
+Upstream-Status: Submitted [https://github.com/clearlinux/swupd-client/pull/9]
 
 Signed-off-by: Amarnath Valluri <amarnath.valluri@intel.com>
 ---
@@ -32,5 +32,5 @@ index 1e65d3d..4d15c55 100644
  DISTCHECK_CONFIGURE_FLAGS = \
          --with-systemdsystemunitdir=$$dc_install_base/$(systemdunitdir)
 -- 
-2.1.4
+2.5.0
 

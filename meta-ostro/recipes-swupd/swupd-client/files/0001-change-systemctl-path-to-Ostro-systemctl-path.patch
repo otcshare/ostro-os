@@ -1,7 +1,8 @@
-From 259d86e64146c3156eccfcce0351a9cdc4714766 Mon Sep 17 00:00:00 2001
+From 580d8a01d64a2950a929be860c0d77bb9150b865 Mon Sep 17 00:00:00 2001
 From: Jaska Uimonen <jaska.uimonen@intel.com>
 Date: Thu, 14 Jan 2016 10:17:43 +0200
-Subject: [PATCH] change systemctl path to Ostro systemctl path
+Subject: [PATCH swupd-client 1/5] change systemctl path to Ostro systemctl
+ path
 
 Upstream-Status: Inappropriate
 
