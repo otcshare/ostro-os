@@ -24,6 +24,7 @@ from oeqa.utils.decorators import tag
 from apprt_nodejs_runtime_log_parser import print_test_results
 from apprt_nodejs_runtime_log_parser import parse_test_cases
 from apprt_nodejs_runtime_log_parser import write_test_results
+from nodejs_remove_blacklist_tests import remove_blacklist
 
 
 def get_nodejs_repo(
@@ -196,6 +197,9 @@ def choose_test_files_and_tar(local_nodejs_path, node_version):
         os.unlink('%s.tar.gz' % node_test_dir)
 
     # The 3 directories are certain to be used
+    sys.stdout.write('Removing blacklist tests')
+    sys.stdout.flush()
+    remove_blacklist(apprt_files_dir, node_version)
     copy_dirs = ['tools', 'test', 'deps/v8/tools']
     for single_dir in copy_dirs:
         shutil.copytree(os.path.join(local_nodejs_path, single_dir),
