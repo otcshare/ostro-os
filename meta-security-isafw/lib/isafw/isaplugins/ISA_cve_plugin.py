@@ -42,18 +42,24 @@ class ISA_CVEChecker:
         self.timestamp = ISA_config.timestamp
         self.logfile = ISA_config.logdir + "/isafw_cvelog"
         self.report_name = ISA_config.reportdir + "/cve_report_" + ISA_config.machine + "_" + ISA_config.timestamp  
+        output = ""
         # check that cve-check-tool is installed
-        DEVNULL = open(os.devnull, 'wb')
-        rc = subprocess.call(["which", "cve-check-tool"], stdout=DEVNULL)
-        DEVNULL.close()
-        if rc == 0:
-            self.initialized = True
+        try:
+            popen = subprocess.Popen("which cve-check-tool", shell=True, stdout=subprocess.PIPE)
+            popen.wait()
+            output = popen.stdout.read()
+        except:
             with open(self.logfile, 'a') as flog:
-                flog.write("\nPlugin ISA_CVEChecker initialized!\n")
+                flog.write("error executing which cve-check-tool\n")
         else:
-            with open(self.logfile, 'a') as flog:
-                flog.write("cve-check-tool is missing!\n")
-                flog.write("Please install it from https://github.com/ikeydoherty/cve-check-tool.\n")
+            if output:
+                self.initialized = True
+                with open(self.logfile, 'a') as flog:
+                    flog.write("\nPlugin ISA_CVEChecker initialized!\n")
+            else:
+                with open(self.logfile, 'a') as flog:
+                    flog.write("cve-check-tool is missing!\n")
+                    flog.write("Please install it from https://github.com/ikeydoherty/cve-check-tool.\n")
 
     def process_package(self, ISA_pkg):
         if (self.initialized == True):

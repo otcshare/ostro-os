@@ -194,7 +194,7 @@ class ISA_KernelChecker():
                     flog.write("Mandatory arguments such as image name and path to config are not provided!\n")
                     flog.write("Not performing the call.\n")
         else:
-            with open(self.logdir + log, 'a') as flog:
+            with open(self.logfile, 'a') as flog:
                 flog.write("Plugin hasn't initialized! Not performing the call!\n")
 
     def write_full_report(self, ISA_kernel):
@@ -268,7 +268,7 @@ class ISA_KernelChecker():
                         freport.write(key + ' : ' + str(self.security_kco[key]) + '\n')
                         freport.write("Recommended value:\n")
                         freport.write(key + ' : ' + str(self.security_kco_ref[key]) + '\n')
-                        freport.write("\nIntegrity options that need improvement:\n")
+            freport.write("\nIntegrity options that need improvement:\n")
             for key in sorted(self.integrity_kco):
                 if (self.integrity_kco[key] != self.integrity_kco_ref[key]) :
                     valid = False

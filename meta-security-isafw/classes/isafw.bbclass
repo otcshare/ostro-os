@@ -104,10 +104,14 @@ python process_reports_handler() {
 
     from isafw import isafw
 
-    imageSecurityAnalyser = isafw_init(isafw, d)
+    savedenv = os.environ.copy()
+    os.environ["PATH"] = d.getVar("PATH", True)
 
+    imageSecurityAnalyser = isafw_init(isafw, d)
     bb.debug(1, 'isafw: process reports')
     imageSecurityAnalyser.process_report()
+
+    os.environ["PATH"] = savedenv["PATH"]
 }
 
 
