@@ -12,7 +12,7 @@ Project tools, as explained in the `Yocto Project Quick Start Guide`_.
 Initial Steps
 =============
 
-1. Check out the ``ostro-os`` repository from git.  This will retrieve the Ostro OS source code
+1. Check out the ``ostro-os`` repository from the ``ostroproject`` GitHub area.  This will retrieve the Ostro OS source code
    and necessary Yocto Project tools and configuration files. The Ostro OS code is a combination of
    several different components in a single repository.  (See the README in the cloned copy you just made 
    for up-to-date details on what’s included.)
@@ -65,9 +65,9 @@ For currently :ref:`platforms`, the appropriate ``MACHINE`` selections are:
     ============  ====================================
     Platform      Yocto Project MACHINE selection
     ============  ====================================
-    GigaByte      intel-core2-32, intel-corei7-64
+    GigaByte      intel-corei7-64
     Galileo       intel-quark
-    MinnowBoard   intel-core2-32, intel-corei7-64
+    MinnowBoard   intel-corei7-64
     Edison        edison
     ============  ====================================
 
@@ -113,7 +113,7 @@ features enabled, explicit changes in ``local.conf`` are needed to
 enable them.
 
 Developers building their own images for personal use can follow these
-instructions to replicate the published Ostro images. All necessary
+instructions to replicate the published Ostro OS images. All necessary
 private keys are provided in the ``ostro-os`` repository.
 
 To do this, before building,  edit the :file:`conf/local.conf` configuration file, 

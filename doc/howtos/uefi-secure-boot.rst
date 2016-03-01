@@ -14,9 +14,9 @@ Prerequisites
 These system prerequisites should be available in Debian and Ubuntu Linux systems as
 well as Fedora.
 
- - NSS certutil: in Debian-based systems this is found in the libnss3-tools package
-   and in Fedora in nss-tools package
- - pesign package
+- NSS certutil: in Debian-based systems this is found in the libnss3-tools package
+  and in Fedora in nss-tools package
+- pesign package
 
 
 Creating Signing Keys
