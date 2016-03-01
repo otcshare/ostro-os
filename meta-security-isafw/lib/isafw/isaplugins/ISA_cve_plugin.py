@@ -136,18 +136,19 @@ class ISA_CVEChecker:
             rtype = "csv"
         pkglist_faux = pkglist + "_" + self.timestamp + ".faux"
         args += "-a -t faux '" + self.reportdir + pkglist_faux  + "'"
+        with open(self.logfile, 'a') as flog:
+            flog.write("Args: " + args)
         try:
-            popen = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE)
-            popen.wait()
-            output = popen.stdout.read()
+            popen = subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            stdout_value = popen.communicate()[0]
         except:
-            output = "Error in executing cve-check-tool"
+            stdout_value = "Error in executing cve-check-tool"
             with open(self.logfile, 'a') as flog:
                 flog.write("Error in executing cve-check-tool: " + sys.exc_info())
         else:
             report = self.report_name + "." + rtype
             with open(report, 'w') as freport:
-                freport.write(output)
+                freport.write(stdout_value)
 
     def process_patch_list(self, patch_files):
         patch_info = ""
