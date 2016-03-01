@@ -41,7 +41,7 @@ API        Application Programming Interface
 IMA        Integrity Measurement Architecture
 IP         Internet Protocol
 CPU        Central Processing Unit
-NFC        Near-field Communication
+NFC        Near Field Communication
 USB        Universal Serial Bus
 WAN        Wide Area Network
 (W)LAN     (Wireless) Local Area Network
@@ -548,7 +548,8 @@ App-3
  permissions to the files controlling kernel access to local sensors,
  such as ``/sys/class/gpio``.
 
- For remote sensors, use Soletta to access the sensors. OIC defines a
+ For remote sensors, use Soletta to access the sensors. Open Connectivity Foundation (OCF)
+ defines a
  security model which Soletta implements. The application can use
  Soletta features for secure provisioning of sensors. For more complex
  authentication needs, applications need to carry the burden by having

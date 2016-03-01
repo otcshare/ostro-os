@@ -46,16 +46,12 @@ SYSTEMTAP_aarch64 = ""
 
 LTTNGUST = "lttng-ust"
 LTTNGUST_libc-uclibc = ""
-LTTNGUST_aarch64 = ""
 
 LTTNGTOOLS = "lttng-tools"
-LTTNGTOOLS_aarch64 = ""
 
 LTTNGMODULES = "lttng-modules"
-LTTNGMODULES_aarch64 = ""
 
 BABELTRACE = "babeltrace"
-BABELTRACE_aarch64 = ""
 
 # valgrind does not work on mips
 
@@ -66,9 +62,6 @@ VALGRIND_mips64 = ""
 VALGRIND_mips64n32 = ""
 VALGRIND_arm = ""
 VALGRIND_aarch64 = ""
-
-#    exmap-console
-#    exmap-server
 
 RDEPENDS_${PN} = "\
     ${PROFILETOOLS} \

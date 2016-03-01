@@ -165,10 +165,10 @@ autotools and a similar server application in NodeJS.
 Porting your application to the Ostro Application Framework requires only
 a few simple steps:
 
-   1. Write the `Yocto Project recipe`_ for your application
-   2. Inherit from ostro-app class in your recipe
-   3. Define OSTRO_USER_NAME and OSTRO_APP_NAME in your recipe
-   4. Write a manifest for your application and include it to your recipe
+1. Write the `Yocto Project recipe`_ for your application
+2. Inherit from ostro-app class in your recipe
+3. Define OSTRO_USER_NAME and OSTRO_APP_NAME in your recipe
+4. Write a manifest for your application and include it to your recipe
 
 .. _Yocto Project recipe: http://www.yoctoproject.org/docs/current/dev-manual/dev-manual.html#new-recipe-writing-a-new-recipe
 .. _Yocto Project class: http://www.yoctoproject.org/docs/current/ref-manual/ref-manual.html#ref-classes

@@ -10,13 +10,17 @@ COMPATIBLE_MACHINE_armv4 = "(!.*armv4).*"
 COMPATIBLE_MACHINE_armv5 = "(!.*armv5).*"
 COMPATIBLE_MACHINE_mips64 = "(!.*mips64).*"
 
-SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.gz \
+SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.gz;name=node \
+           http://nodejs.org/download/release/v${PV}/node-v${PV}-headers.tar.gz;name=node-headers;unpack=false \
            file://0002-generate-pkg-config-file-for-node-and-install.patch \
 "
 SRC_URI_append_quark = "file://0001-nodejs-add-compile-flag-options-for-quark.patch"
 SRC_URI_append_intel-quark = "file://0001-nodejs-add-compile-flag-options-for-quark.patch"
-SRC_URI[md5sum] = "86e4d0d8b626f6e60ca7bef02f2543d2"
-SRC_URI[sha256sum] = "4ee244ffede7328d9fa24c3024787e71225b7abaac49fe2b30e68b27460c10ec"
+
+SRC_URI[node.md5sum] = "86e4d0d8b626f6e60ca7bef02f2543d2"
+SRC_URI[node.sha256sum] = "4ee244ffede7328d9fa24c3024787e71225b7abaac49fe2b30e68b27460c10ec"
+SRC_URI[node-headers.md5sum] = "d615efcc60fe631ebe4e2bcbaff88fd1"
+SRC_URI[node-headers.sha256sum] = "b1375e5296d0df6919fb1c3485d7174ac43a55a9507432d0e182c43c1cb5e3a0"
 
 S = "${WORKDIR}/node-v${PV}"
 
@@ -80,14 +84,7 @@ do_install_append_class-target() {
     export HOME=${D}/usr/include/node-gyp
     sed -i 's/\.node-gyp//' lib/node-gyp.js
 
-    # configure http proxy if neccessary
-    if [ -n "${http_proxy}" ]; then
-        ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose --proxy=${http_proxy} install
-    elif [ -n "${HTTP_PROXY}" ]; then
-        ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose --proxy=${HTTP_PROXY} install
-    else
-        ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose install
-    fi
+    ${STAGING_BINDIR_NATIVE}/node bin/node-gyp.js --verbose install --tarball=${DL_DIR}/node-v${PV}-headers.tar.gz
 }
 
 pkg_postinst_${PN} () {

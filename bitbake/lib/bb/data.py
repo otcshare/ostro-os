@@ -298,7 +298,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     def write_func(func, o, call = False):
-        body = d.getVar(func, True)
+        body = d.getVar(func, False)
         if not body.startswith("def"):
             body = _functionfmt.format(function=func, body=body)
 
@@ -308,7 +308,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
 
     write_func(func, o, True)
     pp = bb.codeparser.PythonParser(func, logger)
-    pp.parse_python(d.getVar(func, True))
+    pp.parse_python(d.getVar(func, False))
     newdeps = pp.execs
     newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
     seen = set()
@@ -320,7 +320,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
             if d.getVarFlag(dep, "func", False) and d.getVarFlag(dep, "python", False):
                write_func(dep, o)
                pp = bb.codeparser.PythonParser(dep, logger)
-               pp.parse_python(d.getVar(dep, True))
+               pp.parse_python(d.getVar(dep, False))
                newdeps |= pp.execs
                newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
         newdeps -= seen
@@ -362,27 +362,27 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
            value = varflags.get("vardepvalue")
         elif varflags.get("func"):
             if varflags.get("python"):
-                parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.PythonParser(key, logger)
-                if parsedvar.value and "\t" in parsedvar.value:
+                if value and "\t" in value:
                     logger.warn("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
-                parser.parse_python(parsedvar.value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
+                parser.parse_python(value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
                 deps = deps | parser.references
+                deps = deps | (keys & parser.execs)
                 value = handle_contains(value, parser.contains, d)
             else:
                 parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.ShellParser(key, logger)
                 parser.parse_shell(parsedvar.value)
                 deps = deps | shelldeps
+                deps = deps | parsedvar.references
+                deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
+                value = handle_contains(value, parsedvar.contains, d)
             if vardeps is None:
                 parser.log.flush()
             if "prefuncs" in varflags:
                 deps = deps | set(varflags["prefuncs"].split())
             if "postfuncs" in varflags:
                 deps = deps | set(varflags["postfuncs"].split())
-            deps = deps | parsedvar.references
-            deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
-            value = handle_contains(value, parsedvar.contains, d)
         else:
             parser = d.expandWithRefs(value, key)
             deps |= parser.references

@@ -25,24 +25,20 @@ Folder structure
 top-level doc directory
     index.rst "main page"
 
-howtos_
+howtos
     Articles explaining how to do certain tasks covering
     development on (or for) Ostro OS as well as using and contributing to it.
 
-architecture_
+architecture
     Technical Architecture information about the Ostro OS and its components
 
-quick_start_
+quick_start
     Getting Started Guide and associated subtopics for setting up Ostro OS development
 
 sphinx_build
     Sphinx configuration and build files for the Ostro Project's website.  When processed, 
     HTML output is contained within this folder in the _build/html folder.
 
-
-.. _howtos: howtos
-.. _architecture: architecture
-.. _quick_start: quick_start
 
 
 Headings
@@ -184,7 +180,7 @@ Use of non-approved nouns (or no noun at all) must be avoided, for example:
 
 ======================================  ========================================
 It's incorrect to say:                  Instead say:
---------------------------------------  ----------------------------------------
+======================================  ========================================
 "an Ostro device"                       "a device running Ostro OS"
 "Ostro enables fast IoT development"    "Ostro OS enables fast IoT development"
 ======================================  ========================================

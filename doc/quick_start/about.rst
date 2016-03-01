@@ -22,8 +22,8 @@ Key features of Ostro OS include:
 * Linux* OS tailored for Internet of Things applications
 * Intel |reg| Quark |trade| and Intel |reg| Atom |trade| processor support
 * Application Framework support for Node.js, Python and C/C++ applications
-* RESTful APIs for System Status and OIC resource discovery
-* JavaScript APIs based on the `OIC specifications <https://github.com/ostroproject/iotivity-node/blob/master/spec/iot-js-spec.md>`_
+* RESTful APIs for System Status and `Open Connectivity Foundation <http://openconnectivity.org/>`_ (OCF) resource discovery
+* JavaScript APIs based on the `OCF specifications <https://github.com/otcshare/iotivity-node/blob/master/spec/iot-js-spec.md>`_
 * Security features: Trusted Boot, Applications Memory Isolation and 
   Impersonation Prevention, Integrity Verification
 * Rich set of communication and IoT interconnectivity for Bluetooth*/BLE, WiFi,

@@ -110,10 +110,7 @@ class RpmIndexer(Indexer):
 
         rpm_createrepo = bb.utils.which(os.getenv('PATH'), "createrepo")
         if self.d.getVar('PACKAGE_FEED_SIGN', True) == '1':
-            signer = get_signer(self.d,
-                                self.d.getVar('PACKAGE_FEED_GPG_BACKEND', True),
-                                self.d.getVar('PACKAGE_FEED_GPG_NAME', True),
-                                self.d.getVar('PACKAGE_FEED_GPG_PASSPHRASE_FILE', True))
+            signer = get_signer(self.d, self.d.getVar('PACKAGE_FEED_GPG_BACKEND', True))
         else:
             signer = None
         index_cmds = []
@@ -144,17 +141,9 @@ class RpmIndexer(Indexer):
         # Sign repomd
         if signer:
             for repomd in repomd_files:
-                signer.detach_sign(repomd)
-        # Copy pubkey(s) to repo
-        distro_version = self.d.getVar('DISTRO_VERSION', True) or "oe.0"
-        if self.d.getVar('RPM_SIGN_PACKAGES', True) == '1':
-            shutil.copy2(self.d.getVar('RPM_GPG_PUBKEY', True),
-                         os.path.join(self.deploy_dir,
-                                      'RPM-GPG-KEY-%s' % distro_version))
-        if self.d.getVar('PACKAGE_FEED_SIGN', True) == '1':
-            shutil.copy2(self.d.getVar('PACKAGE_FEED_GPG_PUBKEY', True),
-                         os.path.join(self.deploy_dir,
-                                      'REPODATA-GPG-KEY-%s' % distro_version))
+                signer.detach_sign(repomd,
+                                   self.d.getVar('PACKAGE_FEED_GPG_NAME', True),
+                                   self.d.getVar('PACKAGE_FEED_GPG_PASSPHRASE_FILE', True))
 
 
 class OpkgIndexer(Indexer):

@@ -49,7 +49,8 @@ Within each of the hardware-specific release folders you’ll find an :file:`ima
 and in that folder, you'll find a :file:`.dsk` file that can be directly written to a hard disk 
 or booted on a USB thumb drive (written there with :command:`dd`). This
 :file:`.dsk` file contains a raw full-disk image with boot partition and rootfs
-with sizes fixed at compile time.
+with sizes fixed at compile time.  For a faster download, you'll also find compressed versions of 
+the ``.dsk`` file (with a ``.dsk.xz`` extension).
 
 Note that the bit-support of the UEFI firmware on your hardware platform (such as a MinnowBoard
 MAX) and for the Ostro OS distro must match; i.e., you need a 64-bit Ostro OS
@@ -96,7 +97,7 @@ The `Yocto Project Quick Start Guide`_ offers detailed instructions and explanat
 environment and processes. 
 
 Briefly, you start by setting up the environment for building the Ostro OS by cloning the 
-ostroproject GitHub repo, editing configuration files, and then starting the build.  Refer to 
+``ostroproject/ostro-os`` GitHub repo, editing configuration files, and then starting the build.  Refer to 
 the :ref:`Building Images` tech note for more information.  
 
 If you made no changes, you should end up with a binary :file:`.dsk` file 

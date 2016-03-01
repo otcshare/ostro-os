@@ -79,6 +79,8 @@ class ISA_config:
     reportdir = ""                # location of produced reports
     logdir = ""                   # location of produced logs
     timestamp = ""                # timestamp of the build provided by build system
+    full_reports = False          # produce full reports for plugins, False by default
+    machine = ""                  # name of machine build is produced for
 
 
 class ISA:

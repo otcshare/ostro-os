@@ -66,6 +66,6 @@ Disadvantages
   specifications that are not indispensable for booting.
 - The implementation of multi-boot selection will require either the creation
   of an additional EFI binary or the implementation of an EFI shell script.
-  This sort of expertise might not be very common among Ostro developers.
+  This sort of expertise might not be very common among Ostro OS developers.
 - Changing the contents of the command line requires rebuilding the EFI combo,
   unless there is a mechanism in place to support an alternative (to be developed).

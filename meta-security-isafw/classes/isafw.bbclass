@@ -97,28 +97,29 @@ addtask do_analysesource after do_unpack before do_build
 # This task intended to be called after default task to process reports
 
 PR_ORIG_TASK := "${BB_DEFAULT_TASK}"
-BB_DEFAULT_TASK = "process_reports"
+addhandler process_reports_handler
+process_reports_handler[eventmask] = "bb.event.BuildCompleted"
 
-do_process_reports[nostamp] = "1"
+python process_reports_handler() {
 
-python do_process_reports() {
+    from isafw import isafw
 
-    from isafw import *
+    savedenv = os.environ.copy()
+    os.environ["PATH"] = d.getVar("PATH", True)
 
     imageSecurityAnalyser = isafw_init(isafw, d)
-
     bb.debug(1, 'isafw: process reports')
     imageSecurityAnalyser.process_report()
+
+    os.environ["PATH"] = savedenv["PATH"]
 }
 
-addtask do_process_reports after do_${PR_ORIG_TASK}
 
 # These tasks are intended to be called directly by the user (e.g. bitbake -c)
 
 addtask do_analyse_sources after do_analysesource
 do_analyse_sources[doc] = "Produce ISAFW reports based on given package without building it"
 do_analyse_sources[nostamp] = "1"
-do_analyse_sources[postfuncs] = "do_process_reports"
 do_analyse_sources() {
 	:
 }
@@ -128,7 +129,6 @@ do_analyse_sources_all[doc] = "Produce ISAFW reports for all packages in given t
 do_analyse_sources_all[recrdeptask] = "do_analyse_sources_all do_analysesource"
 do_analyse_sources_all[recideptask] = "do_${PR_ORIG_TASK}"
 do_analyse_sources_all[nostamp] = "1"
-do_analyse_sources_all[postfuncs] = "do_process_reports"
 do_analyse_sources_all() {
 	:
 }
@@ -190,12 +190,12 @@ def isafw_init(isafw, d):
     import re, errno
 
     isafw_config = isafw.ISA_config()
-
     isafw_config.proxy = d.getVar('HTTP_PROXY', True)
     if not isafw_config.proxy :
         isafw_config.proxy = d.getVar('http_proxy', True)
     bb.debug(1, 'isafw: proxy is %s' % isafw_config.proxy)
 
+    isafw_config.machine = d.getVar('MACHINE', True)
     isafw_config.timestamp = d.getVar('DATETIME', True)
     isafw_config.reportdir = d.getVar('ISAFW_REPORTDIR', True) + "_" + isafw_config.timestamp
     if not os.path.exists(os.path.dirname(isafw_config.reportdir + "/test")):
@@ -228,7 +228,8 @@ def manifest2pkglist(d):
         with open(manifest_file, 'r') as finput:
             for line in finput:
                 items = line.split()
-                foutput.write(items[0] + " " + items[2] + "\n")
+                if items and (len(items) >= 3):
+                    foutput.write(items[0] + " " + items[2] + "\n")
 
     return pkglist
 
