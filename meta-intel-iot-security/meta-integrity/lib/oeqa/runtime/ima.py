@@ -9,6 +9,7 @@ from time import sleep
 from oeqa.oetest import oeRuntimeTest, skipModule
 from oeqa.utils.decorators import *
 
+@tag(TestType = 'FVT', FeatureID = 'IOTOS-617,IOTOS-619')
 class IMACheck(oeRuntimeTest):
     def test_ima_before_systemd(self):
         ''' Test if IMA policy is loaded before systemd starts'''
@@ -64,6 +65,6 @@ class IMACheck(oeRuntimeTest):
 
     def test_ima_overwrite(self):
         ''' Test if IMA prevents overwriting signed files '''
-        signed_file = "/usr/bin/rpm"
+        signed_file = "/bin/sh"
         status, output = self.target.run(" echo 'foo' >> %s" %signed_file)
         self.assertNotEqual(status, 0, "Signed file could be written")
