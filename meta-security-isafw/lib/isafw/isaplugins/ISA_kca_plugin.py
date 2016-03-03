@@ -26,7 +26,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from lxml import etree
+try:
+    from lxml import etree
+except ImportError:
+    try:
+        import xml.etree.cElementTree as etree
+    except ImportError:
+        import xml.etree.ElementTree as etree
+
 
 KCAnalyzer = None
 
@@ -346,7 +353,11 @@ class ISA_KernelChecker():
                     failrs4 = etree.SubElement(tcase4, 'failure', message = msg4, type='violation')
         tree = etree.ElementTree(root)
         output = self.problems_report_name + "_" + ISA_kernel.img_name + '.xml' 
-        tree.write(output, encoding = 'UTF-8', pretty_print = True, xml_declaration = True)
+        try:
+            tree.write(output, encoding='UTF-8', pretty_print=True, xml_declaration=True)
+        except TypeError:
+            tree.write(output, encoding='UTF-8', xml_declaration=True)
+
 
 #======== supported callbacks from ISA =============#
 

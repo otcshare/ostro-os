@@ -27,7 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 from stat import *
-from lxml import etree
+try:
+    from lxml import etree
+except ImportError:
+    try:
+        import xml.etree.cElementTree as etree
+    except ImportError:
+        import xml.etree.ElementTree as etree
+
 
 FSAnalyzer = None
 
@@ -124,7 +131,10 @@ class ISA_FSChecker():
                 failrs4 = etree.SubElement(tcase4, 'failure', message = item, type = 'violation')            
         tree = etree.ElementTree(root)
         output = self.problems_report_name + "_" + ISA_filesystem.img_name + '.xml' 
-        tree.write(output, encoding = 'UTF-8', pretty_print = True, xml_declaration = True)
+        try:
+            tree.write(output, encoding='UTF-8', pretty_print=True, xml_declaration=True)
+        except TypeError:
+            tree.write(output, encoding='UTF-8', xml_declaration=True)
 
     def find_fsobjects(self, init_path):
         list_of_files = []

@@ -108,7 +108,13 @@ class ISA_CVEChecker:
             self.write_report_xml()
 
     def write_report_xml(self):
-        from lxml import etree
+        try:
+            from lxml import etree
+        except ImportError:
+            try:
+                import xml.etree.cElementTree as etree
+            except ImportError:
+                import xml.etree.ElementTree as etree
         numTests = 0
         root = etree.Element('testsuite', name='CVE_Plugin', tests='1')
         with open(self.report_name + ".csv", 'r') as f:
@@ -123,7 +129,11 @@ class ISA_CVEChecker:
         root.set('tests', str(numTests))
         tree = etree.ElementTree(root)
         output = self.report_name + '.xml' 
-        tree.write(output, encoding= 'UTF-8', pretty_print=True, xml_declaration=True)
+        try:
+            tree.write(output, encoding='UTF-8', pretty_print=True, xml_declaration=True)
+        except TypeError:
+            tree.write(output, encoding='UTF-8', xml_declaration=True)
+
 
     def process_report_type(self, rtype):
         # now faux file is ready and we can process it
