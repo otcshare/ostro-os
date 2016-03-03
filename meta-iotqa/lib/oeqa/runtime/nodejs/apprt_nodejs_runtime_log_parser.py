@@ -27,7 +27,7 @@ def is_a_blank_line(line):
     return blank
 
 
-def parse_test_cases(all_test_output):
+def parse_test_cases(all_test_output, target_node_version):
     '''
     Parse the full node.js API test cases. 
     More information, please refer to the result log
@@ -63,6 +63,13 @@ def parse_test_cases(all_test_output):
                 duration = 2
                 success = True
                 error = ''
+                test_path = ''.join(['/tmp/node_%s_test/test/' % target_node_version])
+                test_index = all_test_output[start].index(test_path)
+                test_last_index = all_test_output[start].index('.js')
+                test_case_name = all_test_output[start][
+                    test_index +
+                    len(test_path):
+                    test_last_index].strip().replace('/', '-')
             elif all_test_output[start + 2].startswith('==='):
                 err_start = start + 2
                 i = 0
@@ -76,6 +83,12 @@ def parse_test_cases(all_test_output):
                 error = ''
                 for i in xrange(err_duration):
                     error += all_test_output[err_start + i]
+                second_output = all_test_output[start + 2].splitlines()
+                for index, line in enumerate(second_output):
+                    if line.startswith('Path: '):
+                        path_index = line.index('Path: ')
+                        test_case_name_ori = line[path_index + len('Path: '):]
+                        test_case_name = test_case_name_ori.strip().replace('/', '-')
 
             release_index = all_test_output[start].index(': release')
             test_case_name = all_test_output[start][
@@ -139,7 +152,7 @@ def print_error_test_results(all_tests):
         f.writelines(error_tests)
 
 
-def write_test_results(output, start_time, log_file):
+def write_test_results(output, start_time, log_file, target_node_version):
     """
     @fn write_test_results
     @param output
@@ -148,7 +161,7 @@ def write_test_results(output, start_time, log_file):
     @return
     """
     output_seq = output
-    all_tests = parse_test_cases(output_seq)
+    all_tests = parse_test_cases(output_seq, target_node_version)
 
     for i in xrange(len(all_tests) - 1):
         (minutes, seconds) = all_tests[
