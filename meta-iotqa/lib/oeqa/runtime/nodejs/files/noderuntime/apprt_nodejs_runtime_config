@@ -4,7 +4,7 @@ node_archive_url=https://github.com/nodejs/node/archive
 
 [target]
 node_path=/usr/bin/node
-node_version=v0.12.7
+node_version=v4.2.4
 
 [test]
 specified_modules=

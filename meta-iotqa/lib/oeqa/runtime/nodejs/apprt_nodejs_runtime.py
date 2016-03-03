@@ -429,17 +429,19 @@ class NodejsRuntimeTest(oeRuntimeTest):
 
         test_modules = self.config.get('test', 'specified_modules')
         (status, output) = self.target.run(
-            'cd /tmp/node_%s_test/; python tools/test.py %s' %
+            'cd /tmp/node_%s_test/; python tools/test.py %s -v' %
             (self.target_node_version, test_modules))
 
         output = output.strip().split('\r')
-        print_test_results(parse_test_cases(output))
+        print_test_results(parse_test_cases(output, self.target_node_version))
         write_test_results(
             output,
             start,
             self.config.get(
                 'results',
-                'formatted_result_file'))
+                'formatted_result_file'),
+                self.target_node_version
+            )
 
 #        statistics = output[-1]
 #        sys.stdout.write(statistics + '\n')
