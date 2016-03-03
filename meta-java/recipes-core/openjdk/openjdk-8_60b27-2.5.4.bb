@@ -585,16 +585,18 @@ OEPATCHES = "\
         file://faulty-nx-emulation.patch;apply=no \
         "
 
-ICEDTEAPATCHES = "\       
+ICEDTEAPATCHES = "\
         file://icedtea-fix-galileo-build.patch;apply=no \
         file://icedtea-fix-zero-mode-undefined-behaviour.patch;apply=no \
         file://icedtea-fix-sdt-search-path.patch;apply=no \
+        file://icedtea-fix-adlc-flags.patch;apply=no \
         "
 
 DISTRIBUTION_PATCHES = "\
         patches/icedtea-fix-galileo-build.patch \
         patches/icedtea-fix-zero-mode-undefined-behaviour.patch \
         patches/icedtea-fix-sdt-search-path.patch \
+        patches/icedtea-fix-adlc-flags.patch \
 	"
 
 export DISTRIBUTION_PATCHES
