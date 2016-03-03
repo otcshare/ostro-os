@@ -22,6 +22,7 @@ ISAFW_PLUGINS_BLACKLIST ?= ""
 
 do_analysesource[depends] += "cve-check-tool-native:do_populate_sysroot"
 do_analysesource[depends] += "rpm-native:do_populate_sysroot"
+do_analysesource[depends] += "python-xml:do_populate_sysroot"
 do_analysesource[nostamp] = "1"
 do_analysesource[cleandirs] = "${ISAFW_WORKDIR}"
 
@@ -184,6 +185,7 @@ python analyse_image() {
 
 do_rootfs[depends] += "checksec-native:do_populate_sysroot"
 do_rootfs[depends] += "prelink-native:do_populate_sysroot"
+do_rootfs[depends] += "python-xml:do_populate_sysroot"
 analyse_image[fakeroot] = "1"
 
 def isafw_init(isafw, d):
