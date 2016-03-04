@@ -107,7 +107,7 @@ Flashing an `Intel Galileo Gen 2`_ requires use of a microSD card (booting off U
 
 Here are the basic steps for booting the Ostro OS:
 
-#. Flash the microSD card with the Ostro OS image as described in the `Using dd to Create Bootable Media` section above
+#. Flash the microSD card with the Ostro OS image as described in the `Using dd to Create Bootable Media`_ section above
 #. Insert the microSD card in the Galileo Gen 2 board
 #. Connect the serial FTDI cable from the `Intel Galileo Gen 2`_ to a USB port on your host computer and use a terminal emulator (settings: 115200 8N1)
 #. Power the board on (using a 5V, 3A power supply)
