@@ -6,12 +6,20 @@ PACKAGECONFIG_append = " iptc networkd"
 # Patch systemd-nspawn to
 #   - delay binary/OS-tree check after mounts
 #   - support starting DHCP client in non-system containers
-SYSTEMD_228_PATCHES = " \
+SYSTEMD_APPFW_PATCHES_228 = " \
     file://228/0001-nspawn-don-t-check-binary-OS-tree-before-all-mounts-.patch \
     file://228/0002-nspawn-added-support-for-starting-DHCP-client-in-non.patch \
 "
 
-SRC_URI += "${SYSTEMD_228_PATCHES}"
+# 0001-nspawn-don-t-check-binary-OS-tree-before-all-mounts-.patch might no longer
+# be needed (code that it moved around is gone), but 0002-nspawn-added-support-for-starting-DHCP-client-in-non.patch
+# might be needed.
+#
+# TODO: port it to 229...
+SYSTEMD_APPFW_PATCHES_229 = " \
+"
+
+SRC_URI += " ${@d.getVar('SYSTEMD_APPFW_PATCHES_' + d.getVar('PV', False)[0:3], True) or ''}"
 
 # systemd-nspawn needs getent (from glibc).
 RDEPENDS_${PN} += "glibc-getent"
