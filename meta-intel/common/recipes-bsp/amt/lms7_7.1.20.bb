@@ -31,7 +31,7 @@ python do_unpack() {
     d.setVar('S', '${WORKDIR}/outputdir')
     bb.build.exec_func('base_do_unpack', d)
     # temorarily change SRC_URI for unpack
-    src_uri = d.getVar('SRC_URI')
+    src_uri = d.getVar('SRC_URI', True)
     d.setVar('SRC_URI', '${LOCALSRC}')
     d.setVar('S', s)
     bb.build.exec_func('base_do_unpack', d)

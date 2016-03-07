@@ -228,7 +228,38 @@ class URITest(unittest.TestCase):
             'params': {},
             'query': {},
             'relative': False
+        },
+        "http://somesite.net;someparam=1": {
+            'uri': 'http://somesite.net;someparam=1',
+            'scheme': 'http',
+            'hostname': 'somesite.net',
+            'port': None,
+            'hostport': 'somesite.net',
+            'path': '',
+            'userinfo': '',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {"someparam" : "1"},
+            'query': {},
+            'relative': False
+        },
+        "file://somelocation;someparam=1": {
+            'uri': 'file:somelocation;someparam=1',
+            'scheme': 'file',
+            'hostname': '',
+            'port': None,
+            'hostport': '',
+            'path': 'somelocation',
+            'userinfo': '',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {"someparam" : "1"},
+            'query': {},
+            'relative': True
         }
+
     }
 
     def test_uri(self):
@@ -451,9 +482,7 @@ class FetcherLocalTest(FetcherTest):
 
     def test_local_wildcard(self):
         tree = self.fetchUnpack(['file://a', 'file://dir/*'])
-        # FIXME: this is broken - it should return ['a', 'dir/c', 'dir/d', 'dir/subdir/e']
-        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=6128
-        self.assertEqual(tree, ['a', 'b', 'dir/c', 'dir/d', 'dir/subdir/e'])
+        self.assertEqual(tree, ['a',  'dir/c', 'dir/d', 'dir/subdir/e'])
 
     def test_local_dir(self):
         tree = self.fetchUnpack(['file://a', 'file://dir'])
@@ -461,17 +490,15 @@ class FetcherLocalTest(FetcherTest):
 
     def test_local_subdir(self):
         tree = self.fetchUnpack(['file://dir/subdir'])
-        # FIXME: this is broken - it should return ['dir/subdir/e']
-        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=6129
-        self.assertEqual(tree, ['subdir/e'])
+        self.assertEqual(tree, ['dir/subdir/e'])
 
     def test_local_subdir_file(self):
         tree = self.fetchUnpack(['file://dir/subdir/e'])
         self.assertEqual(tree, ['dir/subdir/e'])
 
     def test_local_subdirparam(self):
-        tree = self.fetchUnpack(['file://a;subdir=bar'])
-        self.assertEqual(tree, ['bar/a'])
+        tree = self.fetchUnpack(['file://a;subdir=bar', 'file://dir;subdir=foo/moo'])
+        self.assertEqual(tree, ['bar/a', 'foo/moo/dir/c', 'foo/moo/dir/d', 'foo/moo/dir/subdir/e'])
 
     def test_local_deepsubdirparam(self):
         tree = self.fetchUnpack(['file://dir/subdir/e;subdir=bar'])
@@ -627,11 +654,18 @@ class URLHandle(unittest.TestCase):
        "http://www.google.com/index.html" : ('http', 'www.google.com', '/index.html', '', '', {}),
        "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}),
        "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}),
-       "git://git.openembedded.org/bitbake;branch=@foo" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'})
+       "git://git.openembedded.org/bitbake;branch=@foo" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'}),
+       "file://somelocation;someparam=1": ('file', '', 'somelocation', '', '', {'someparam': '1'}),
     }
+    # we require a pathname to encodeurl but users can still pass such urls to 
+    # decodeurl and we need to handle them
+    decodedata = datatable.copy()
+    decodedata.update({
+       "http://somesite.net;someparam=1": ('http', 'somesite.net', '', '', '', {'someparam': '1'}),
+    })
 
     def test_decodeurl(self):
-        for k, v in self.datatable.items():
+        for k, v in self.decodedata.items():
             result = bb.fetch.decodeurl(k)
             self.assertEqual(result, v)
 

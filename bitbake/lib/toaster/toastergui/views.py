@@ -27,10 +27,10 @@ import operator,re
 
 from django.db.models import F, Q, Sum, Count, Max
 from django.db import IntegrityError, Error
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
+from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact, CustomImagePackage
 from orm.models import BitbakeVersion, CustomImageRecipe
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
@@ -480,7 +480,12 @@ def builddashboard( request, build_id ):
             if ( ndx < 0 ):
                 ndx = 0;
             f = i.file_name[ ndx + 1: ]
-            imageFiles.append({ 'id': i.id, 'path': f, 'size' : i.file_size })
+            imageFiles.append({
+                'id': i.id,
+                'path': f,
+                'size': i.file_size,
+                'suffix': i.suffix
+            })
         if t.is_image and (len(imageFiles) <= 0 or len(t.license_manifest_path) <= 0):
             targetHasNoImages = True
         elem[ 'imageFiles' ] = imageFiles
@@ -1845,7 +1850,6 @@ def managedcontextprocessor(request):
         "projects": projects,
         "non_cli_projects": projects.exclude(is_default=True),
         "DEBUG" : toastermain.settings.DEBUG,
-        "CUSTOM_IMAGE" : toastermain.settings.CUSTOM_IMAGE,
         "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
         "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
     }
@@ -2008,7 +2012,7 @@ if True:
             "completedbuilds": Build.objects.exclude(outcome = Build.IN_PROGRESS).filter(project_id = pid),
             "prj" : {"name": prj.name, },
             "buildrequests" : prj.build_set.filter(outcome=Build.IN_PROGRESS),
-            #"builds" : _project_recent_build_list(prj),
+            "builds" : Build.get_recent(prj),
             "layers" :  map(lambda x: {
                         "id": x.layercommit.pk,
                         "orderid": x.pk,
@@ -2186,8 +2190,11 @@ if True:
         layers_added = [];
 
         # Rudimentary check for any possible html tags
-        if "<" in request.POST:
-          return HttpResponse(jsonfilter({"error": "Invalid character <"}), content_type = "application/json")
+        for val in request.POST.values():
+            if "<" in val:
+                return HttpResponse(jsonfilter(
+                    {"error": "Invalid character <"}),
+                    content_type="application/json")
 
         prj = Project.objects.get(pk=request.POST['project_id'])
 
@@ -2362,33 +2369,103 @@ if True:
 
         # create custom recipe
         try:
-            recipe = CustomImageRecipe.objects.create(
-                         name=request.POST["name"],
-                         base_recipe=params["base"],
-                         project=params["project"])
+
+            # Only allowed chars in name are a-z, 0-9 and -
+            if re.search(r'[^a-z|0-9|-]', request.POST["name"]):
+                return {"error": "invalid-name"}
+
+            # Are there any recipes with the name already?
+            for existing_recipe in Recipe.objects.filter(
+                name=request.POST["name"]):
+                try:
+                    ci = CustomImageRecipe.objects.get(pk=existing_recipe.pk)
+                    if ci.project == params["project"]:
+                        return {"error": "already-exists" }
+                    else:
+                        # It is a CustomImageRecipe but not in our project
+                        # this is fine so
+                        continue
+                except:
+                    # It isn't a CustomImageRecipe so is a recipe from
+                    # another source.
+                    return {"error": "already-exists" }
+
+            # create layer 'Custom layer' and verion if needed
+            layer = Layer.objects.get_or_create(
+                name="toaster-custom-images",
+                summary="Layer for custom recipes",
+                vcs_url="file:///toaster_created_layer")[0]
+
+            # Check if we have a layer version already
+            # We don't use get_or_create here because the dirpath will change
+            # and is a required field
+            lver = Layer_Version.objects.filter(Q(project=params['project']) &
+                                                Q(layer=layer) &
+                                                Q(build=None)).last()
+            if lver == None:
+                lver, created = Layer_Version.objects.get_or_create(
+                    project=params['project'],
+                    layer=layer,
+                    dirpath="toaster_created_layer")
+
+            # Add a dependency on our layer to the base recipe's layer
+            LayerVersionDependency.objects.get_or_create(
+                layer_version=lver,
+                depends_on=params["base"].layer_version)
+
+            # Add it to our current project if needed
+            ProjectLayer.objects.get_or_create(project=params['project'],
+                                               layercommit=lver,
+                                               optional=False)
+
+            # Create the actual recipe
+            recipe, created = CustomImageRecipe.objects.get_or_create(
+                name=request.POST["name"],
+                base_recipe=params["base"],
+                project=params["project"],
+                layer_version=lver,
+                is_image=True)
+
+            # If we created the object then setup these fields. They may get
+            # overwritten later on and cause the get_or_create to create a
+            # duplicate if they've changed.
+            if created:
+                recipe.file_path = request.POST["name"]
+                recipe.license = "MIT"
+                recipe.version = "0.1"
+                recipe.save()
+
         except Error as err:
             return {"error": "Can't create custom recipe: %s" % err}
 
         # Find the package list from the last build of this recipe/target
-        build = Build.objects.filter(target__target=params['base'].name,
-                    project=params['project']).last()
-
-        if build:
+        target = Target.objects.filter(Q(build__outcome=Build.SUCCEEDED) &
+                                       Q(build__project=params['project']) &
+                                       (Q(target=params['base'].name) |
+                                        Q(target=recipe.name))).last()
+        if target:
             # Copy in every package
             # We don't want these packages to be linked to anything because
             # that underlying data may change e.g. delete a build
-            for package in build.package_set.all():
-                # Create the duplicate
-                package.pk = None
-                package.save()
-                # Disassociate the package from the build
-                package.build = None
-                package.save()
-                recipe.packages.add(package)
-        else:
-            logger.warn("No packages found for this base recipe")
+            for tpackage in target.target_installed_package_set.all():
+                try:
+                    built_package = tpackage.package
+                    # The package had no recipe information so is a ghost
+                    # package skip it
+                    if built_package.recipe == None:
+                        continue;
+
+                    config_package = CustomImagePackage.objects.get(
+                        name=built_package.name)
+
+                    recipe.includes_set.add(config_package)
+                except Exception as e:
+                    logger.warning("Error adding package %s %s" %
+                                   (tpackage.package.name, e))
+                    pass
 
         return {"error": "ok",
+                "packages" : recipe.get_all_packages().count(),
                 "url": reverse('customrecipe', args=(params['project'].pk,
                                                      recipe.id))}
 
@@ -2413,34 +2490,51 @@ if True:
             or
             {"error": <error message>}
         """
-        objects = CustomImageRecipe.objects.filter(id=recipe_id)
-        if not objects:
+        try:
+            custom_recipe = CustomImageRecipe.objects.get(id=recipe_id)
+        except CustomImageRecipe.DoesNotExist:
             return {"error": "Custom recipe with id=%s "
                              "not found" % recipe_id}
+
         if request.method == 'GET':
-            values = CustomImageRecipe.objects.filter(id=recipe_id).values()
-            if values:
-                return {"error": "ok", "info": values[0]}
-            else:
-                return {"error": "Custom recipe with id=%s "
-                                 "not found" % recipe_id}
-            return {"error": "ok", "info": objects.values()[0]}
+            info = {"id" : custom_recipe.id,
+                    "name" : custom_recipe.name,
+                    "base_recipe_id": custom_recipe.base_recipe.id,
+                    "project_id": custom_recipe.project.id,
+                   }
+
+            return {"error": "ok", "info": info}
+
         elif request.method == 'DELETE':
-            objects.delete()
+            custom_recipe.delete()
             return {"error": "ok"}
         else:
             return {"error": "Method %s is not supported" % request.method}
+
+    def customrecipe_download(request, pid, recipe_id):
+        recipe = get_object_or_404(CustomImageRecipe, pk=recipe_id)
+
+        file_data = recipe.generate_recipe_file_contents()
+
+        response = HttpResponse(file_data, content_type='text/plain')
+        response['Content-Disposition'] = \
+                'attachment; filename="%s_%s.bb"' % (recipe.name,
+                                                     recipe.version)
+
+        return response
+
 
     @xhr_response
     def xhr_customrecipe_packages(request, recipe_id, package_id):
         """
         ReST API to add/remove packages to/from custom recipe.
 
-        Entry point: /xhr_customrecipe/<recipe_id>/packages/
+        Entry point: /xhr_customrecipe/<recipe_id>/packages/<package_id>
 
         Methods:
             PUT - Add package to the recipe
             DELETE - Delete package from the recipe
+            GET - Get package information
 
         Returns:
             {"error": "ok"}
@@ -2453,26 +2547,130 @@ if True:
             return {"error": "Custom recipe with id=%s "
                              "not found" % recipe_id}
 
-        if request.method == 'GET' and not package_id:
-            return {"error": "ok",
-                    "packages": list(recipe.packages.values_list('id'))}
+        if package_id:
+            try:
+                package = CustomImagePackage.objects.get(id=package_id)
+            except Package.DoesNotExist:
+                return {"error": "Package with id=%s "
+                        "not found" % package_id}
 
-        try:
-            package = Package.objects.get(id=package_id)
-        except Package.DoesNotExist:
-            return {"error": "Package with id=%s "
-                             "not found" % package_id}
+        if request.method == 'GET':
+            # If no package_id then list the current packages
+            if not package_id:
+                total_size = 0
+                packages = recipe.get_all_packages().values("id",
+                                                            "name",
+                                                            "version",
+                                                            "size")
+                for package in packages:
+                    package['size_formatted'] = \
+                            filtered_filesizeformat(package['size'])
+                    total_size += package['size']
+
+                return {"error": "ok",
+                        "packages" : list(packages),
+                        "total" : len(packages),
+                        "total_size" : total_size,
+                        "total_size_formatted" :
+                        filtered_filesizeformat(total_size)
+                       }
+            else:
+                all_current_packages = recipe.get_all_packages()
+
+                # TODO currently we ignore packgegroups as we don't have a
+                # way to deal with them yet.
+
+                # Dependencies for package which aren't satisfied by the
+                # current packages in the custom image recipe
+                deps = package.package_dependencies_source.annotate(
+                    name=F('depends_on__name'),
+                    pk=F('depends_on__pk'),
+                    size=F('depends_on__size'),
+                ).values("name", "pk", "size").filter(
+                    ~Q(pk__in=all_current_packages) &
+                    Q(dep_type=Package_Dependency.TYPE_TRDEPENDS)
+                )
+
+                # Reverse dependencies which are needed by packages that are
+                # in the image
+                reverse_deps = package.package_dependencies_target.annotate(
+                    name=F('package__name'),
+                    pk=F('package__pk'),
+                    size=F('package__size'),
+                ).values("name", "pk", "size").exclude(
+                    ~Q(pk__in=all_current_packages)
+                )
+
+                total_size_deps = 0
+                total_size_reverse_deps = 0
+
+                for dep in deps:
+                    dep['size_formatted'] = \
+                            filtered_filesizeformat(dep['size'])
+                    total_size_deps += dep['size']
+
+                for dep in reverse_deps:
+                    dep['size_formatted'] = \
+                            filtered_filesizeformat(dep['size'])
+                    total_size_reverse_deps += dep['size']
+
+
+                return {"error": "ok",
+                        "id": package.pk,
+                        "name": package.name,
+                        "version": package.version,
+                        "unsatisfied_dependencies": list(deps),
+                        "unsatisfied_dependencies_size": total_size_deps,
+                        "unsatisfied_dependencies_size_formatted":
+                        filtered_filesizeformat(total_size_deps),
+                        "reverse_dependencies": list(reverse_deps),
+                        "reverse_dependencies_size": total_size_reverse_deps,
+                        "reverse_dependencies_size_formatted":
+                        filtered_filesizeformat(total_size_reverse_deps)}
+
+        included_packages = recipe.includes_set.values_list('pk', flat=True)
 
         if request.method == 'PUT':
-            recipe.packages.add(package)
-            return {"error": "ok"}
-        elif request.method == 'DELETE':
-            if package in recipe.packages.all():
-                recipe.packages.remove(package)
-                return {"error": "ok"}
+            # If we're adding back a package which used to be included in this
+            # image all we need to do is remove it from the excludes
+            if package.pk in included_packages:
+                try:
+                   recipe.excludes_set.remove(package)
+                   return {"error": "ok"}
+                except Package.DoesNotExist:
+                   return {"error":
+                           "Package %s not found in excludes but was in "
+                           "included list" % package.name}
+
             else:
-                return {"error": "Package '%s' is not in the recipe '%s'" % \
-                                 (package.name, recipe.name)}
+                recipe.appends_set.add(package)
+                # Add the dependencies we think will be added to the recipe
+                # as a result of appending this package.
+                # TODO this should recurse down the entire deps tree
+                for dep in package.package_dependencies_source.all_depends():
+                    try:
+                        cust_package = CustomImagePackage.objects.get(
+                                           name=dep.depends_on.name)
+
+                        recipe.includes_set.add(cust_package)
+                    except:
+                        logger.warning("Could not add package's suggested"
+                                       "dependencies to the list")
+
+            return {"error": "ok"}
+
+        elif request.method == 'DELETE':
+            try:
+                # If we're deleting a package which is included we need to
+                # Add it to the excludes list.
+                if package.pk in included_packages:
+                    recipe.excludes_set.add(package)
+                else:
+                    recipe.appends_set.remove(package)
+                return {"error": "ok"}
+            except CustomImageRecipe.DoesNotExist:
+                return {"error": "Tried to remove package that wasn't present"}
+
         else:
             return {"error": "Method %s is not supported" % request.method}
 
@@ -2518,15 +2716,6 @@ if True:
         vars_fstypes = Target_Image_File.SUFFIXES
 
         return(vars_managed,sorted(vars_fstypes),vars_blacklist)
-
-    def customrecipe(request, pid, recipe_id):
-        project = Project.objects.get(pk=pid)
-        context = {'project' : project,
-                   'projectlayers': [],
-                   'recipe' : CustomImageRecipe.objects.get(pk=recipe_id)
-                  }
-
-        return render(request, "customrecipe.html", context)
 
     @_template_renderer("projectconf.html")
     def projectconf(request, pid):

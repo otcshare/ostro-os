@@ -30,7 +30,7 @@ from orm.models import Project, Release, BitbakeVersion, Package, LogMessage
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 from orm.models import CustomImageRecipe, ProjectVariable
-from orm.models import Branch
+from orm.models import Branch, CustomImagePackage
 
 import toastermain
 import inspect
@@ -51,156 +51,17 @@ CLI_BUILDS_PROJECT_NAME = 'Command line builds'
 class ViewTests(TestCase):
     """Tests to verify view APIs."""
 
+    fixtures = ['toastergui-unittest-data']
+
     def setUp(self):
-        bbv = BitbakeVersion.objects.create(name="test bbv", giturl="/tmp/",
-                                            branch="master", dirpath="")
-        release = Release.objects.create(name="test release",
-                                         branch_name="master",
-                                         bitbake_version=bbv)
-        release2 = Release.objects.create(name="test release 2",
-                                          branch_name="master",
-                                          bitbake_version=bbv)
 
-        self.project = Project.objects.create_project(name=PROJECT_NAME,
-                                                      release=release)
-
-        self.project2 = Project.objects.create_project(name=PROJECT_NAME2,
-                                                       release=release2)
-
-        now = timezone.now()
-        later = now + timedelta(days=1)
-
-        build = Build.objects.create(project=self.project,
-                                     started_on=now,
-                                     completed_on=now)
-
-        # for testing BuildsTable
-        build1 = Build.objects.create(project=self.project,
-                                      started_on=now,
-                                      completed_on=now,
-                                      outcome=Build.SUCCEEDED,
-                                      machine="raspberrypi2")
-
-        Build.objects.create(project=self.project,
-                             started_on=later,
-                             completed_on=later,
-                             outcome=Build.FAILED,
-                             machine="qemux86")
-
-        Build.objects.create(project=self.project2,
-                             started_on=later,
-                             completed_on=later,
-                             outcome=Build.SUCCEEDED,
-                             machine="qemux86")
-
-        # to test sorting by errors and warnings in BuildsTable
-        LogMessage.objects.create(build=build1, level=LogMessage.WARNING)
-        LogMessage.objects.create(build=build1, level=LogMessage.ERROR)
-
-        layersrc = LayerSource.objects.create(sourcetype=LayerSource.TYPE_IMPORTED)
-        self.priority = ReleaseLayerSourcePriority.objects.create(release=release,
-                                                                  layer_source=layersrc)
-        layer = Layer.objects.create(name="base-layer", layer_source=layersrc,
-                                     vcs_url="/tmp/")
-
-        layer_two = Layer.objects.create(name="z-layer",
-                                         layer_source=layersrc,
-                                         vcs_url="git://two/")
-
-
-        branch = Branch.objects.create(name="master", layer_source=layersrc)
-
-        self.lver = Layer_Version.objects.create(layer=layer,
-                                                 project=self.project,
-                                                 layer_source=layersrc,
-                                                 commit="master",
-                                                 up_branch=branch)
-
-        lver_two = Layer_Version.objects.create(layer=layer_two,
-                                                layer_source=layersrc,
-                                                commit="master",
-                                                up_branch=branch)
-
-        Recipe.objects.create(layer_source=layersrc,
-                              name="z recipe",
-                              version="5.2",
-                              summary="z recipe",
-                              description="G recipe",
-                              license="Z GPL",
-                              section="h section",
-                              layer_version=lver_two)
-
-        self.recipe1 = Recipe.objects.create(layer_source=layersrc,
-                                             name="base-recipe",
-                                             version="1.2",
-                                             summary="one recipe",
-                                             description="recipe",
-                                             section="A section",
-                                             license="Apache",
-                                             layer_version=self.lver)
-
-        Machine.objects.create(layer_version=self.lver, name="wisk",
-                               description="wisking machine")
-        Machine.objects.create(layer_version=self.lver, name="zap",
-                               description="zap machine")
-        Machine.objects.create(layer_version=lver_two, name="xray",
-                               description="xray machine")
-
-
-
-        ProjectLayer.objects.create(project=self.project, layercommit=self.lver)
-
-
-        self.customr = CustomImageRecipe.objects.create(\
-                           name="custom recipe", project=self.project,
-                           base_recipe=self.recipe1)
-
-        CustomImageRecipe.objects.create(name="z custom recipe",
-                                         project=self.project,
-                                         base_recipe=self.recipe1)
-
-        self.package = Package.objects.create(name='pkg1',
-                                              size=999,
-                                              recipe=self.recipe1,
-                                              build=build)
-
-        Package.objects.create(name='zpkg1', recipe=self.recipe1, build=build)
-
-        # recipe with project for testing AvailableRecipe table
-        self.recipe2 = Recipe.objects.create(layer_source=layersrc,
-                                             name="fancy-recipe",
-                                             version="1.4",
-                                             summary="a fancy recipe",
-                                             description="fancy recipe",
-                                             license="MIT",
-                                             layer_version=self.lver,
-                                             section="Z section",
-                                             file_path='/home/foo')
-
-        Recipe.objects.create(layer_source=layersrc,
-                              is_image=True,
-                              name="Test image one",
-                              version="1.2",
-                              summary="one recipe",
-                              description="recipe",
-                              section="A",
-                              license="A",
-                              file_path="/one/",
-                              layer_version=self.lver)
-
-        Recipe.objects.create(layer_source=layersrc,
-                              is_image=True,
-                              name="Z Test image two",
-                              version="1.3",
-                              summary="two image recipe",
-                              description="recipe two",
-                              section="B",
-                              license="Z",
-                              file_path="/two/",
-                              layer_version=lver_two)
-
-
-
+        self.project = Project.objects.first()
+        self.recipe1 = Recipe.objects.get(pk=2)
+        self.recipe2 = Recipe.objects.last()
+        self.customr = CustomImageRecipe.objects.first()
+        self.cust_package = CustomImagePackage.objects.first()
+        self.package = Package.objects.first()
+        self.lver = Layer_Version.objects.first()
 
     def test_get_base_call_returns_html(self):
         """Basic test for all-projects view"""
@@ -222,7 +83,7 @@ class ViewTests(TestCase):
         self.assertEqual(data["error"], "ok")
         self.assertTrue("rows" in data)
 
-        self.assertTrue(PROJECT_NAME in [x["name"] for x in data["rows"]])
+        self.assertTrue(self.project.name in [x["name"] for x in data["rows"]])
         self.assertTrue("id" in data["rows"][0])
 
     def test_typeaheads(self):
@@ -284,15 +145,17 @@ class ViewTests(TestCase):
 
     def test_xhr_import_layer(self):
         """Test xhr_importlayer API"""
+        LayerSource.objects.create(sourcetype=LayerSource.TYPE_IMPORTED)
         #Test for importing an already existing layer
         args = {'vcs_url' : "git://git.example.com/test",
                 'name' : "base-layer",
                 'git_ref': "c12b9596afd236116b25ce26dbe0d793de9dc7ce",
-                'project_id': 1, 'dir_path' : "/path/in/repository"}
+                'project_id': self.project.id,
+                'dir_path' : "/path/in/repository"}
         response = self.client.post(reverse('xhr_importlayer'), args)
         data = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(data["error"], "ok")
+        self.assertEqual(data["error"], "ok")
 
         #Test to verify import of a layer successful
         args['name'] = "meta-oe"
@@ -358,13 +221,12 @@ class ViewTests(TestCase):
 
     def test_xhr_custom_details(self):
         """Test getting custom recipe details"""
-        name = "custom recipe"
         url = reverse('xhr_customrecipe_id', args=(self.customr.id,))
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         expected = {"error": "ok",
                     "info": {'id': self.customr.id,
-                             'name': name,
+                             'name': self.customr.name,
                              'base_recipe_id': self.recipe1.id,
                              'project_id': self.project.id,
                             }
@@ -376,7 +238,9 @@ class ViewTests(TestCase):
         name = "to be deleted"
         recipe = CustomImageRecipe.objects.create(\
                      name=name, project=self.project,
-                     base_recipe=self.recipe1)
+                     base_recipe=self.recipe1,
+                     file_path="/tmp/testing",
+                     layer_version=self.customr.layer_version)
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
@@ -389,20 +253,34 @@ class ViewTests(TestCase):
 
     def test_xhr_custom_packages(self):
         """Test adding and deleting package to a custom recipe"""
-        url = reverse('xhr_customrecipe_packages',
-                      args=(self.customr.id, self.package.id))
-        # add self.package1 to recipe
-        response = self.client.put(url)
+        # add self.package to recipe
+        response = self.client.put(reverse('xhr_customrecipe_packages',
+                                           args=(self.customr.id,
+                                                 self.cust_package.id)))
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"error": "ok"})
-        self.assertEqual(self.customr.packages.all()[0].id, self.package.id)
+        self.assertEqual(json.loads(response.content),
+                         {"error": "ok"})
+        self.assertEqual(self.customr.appends_set.first().name,
+                         self.cust_package.name)
         # delete it
-        response = self.client.delete(url)
+        to_delete = self.customr.appends_set.first().pk
+        del_url = reverse('xhr_customrecipe_packages',
+                          args=(self.customr.id, to_delete))
+
+        response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content), {"error": "ok"})
-        self.assertFalse(self.customr.packages.all())
-        # delete it again to test error condition
-        response = self.client.delete(url)
+        all_packages = self.customr.get_all_packages().values_list('pk',
+                                                                   flat=True)
+
+        self.assertFalse(to_delete in all_packages)
+        # delete invalid package to test error condition
+        del_url = reverse('xhr_customrecipe_packages',
+                          args=(self.customr.id,
+                                99999))
+
+        response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(json.loads(response.content)["error"], "ok")
 
@@ -418,6 +296,18 @@ class ViewTests(TestCase):
                 self.assertNotEqual(json.loads(response.content),
                                     {"error": "ok"})
 
+    def test_download_custom_recipe(self):
+        """Download the recipe file generated for the custom image"""
+
+        # Create a dummy recipe file for the custom image generation to read
+        open("/tmp/a_recipe.bb", 'wa').close()
+        response = self.client.get(reverse('customrecipedownload',
+                                           args=(self.project.id,
+                                                 self.customr.id)))
+
+        self.assertEqual(response.status_code, 200)
+
+
     def test_software_recipes_table(self):
         """Test structure returned for Software RecipesTable"""
         table = SoftwareRecipesTable()
@@ -430,7 +320,6 @@ class ViewTests(TestCase):
         row2 = next(x for x in rows if x['name'] == self.recipe2.name)
 
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
-        self.assertTrue(row2, 'should be 2 recipes')
 
         # check other columns have been populated correctly
         self.assertEqual(row1['name'], self.recipe1.name)
@@ -448,17 +337,27 @@ class ViewTests(TestCase):
 
     def test_toaster_tables(self):
         """Test all ToasterTables instances"""
+        current_recipes = self.project.get_available_recipes()
 
         def get_data(table, options={}):
             """Send a request and parse the json response"""
             options['format'] = "json"
             options['nocache'] = "true"
             request = RequestFactory().get('/', options)
+
+            # This is the image recipe needed for a package list for
+            # PackagesTable do this here to throw a non exist exception
+            image_recipe = Recipe.objects.get(pk=4)
+
             # Add any kwargs that are needed by any of the possible tables
-            response = table.get(request,
-                                 pid=self.project.id,
-                                 layerid=self.lver.pk,
-                                 recipeid=self.recipe1.pk)
+            args = {'pid': self.project.id,
+                    'layerid': self.lver.pk,
+                    'recipeid': self.recipe1.pk,
+                    'recipe_id': image_recipe.pk,
+                    'custrecipeid': self.customr.pk
+                   }
+
+            response = table.get(request, **args)
             return json.loads(response.content)
 
         # Get a list of classes in tables module
@@ -477,7 +376,7 @@ class ViewTests(TestCase):
             all_data = get_data(table)
 
             self.assertTrue(len(all_data['rows']) > 1,
-                            "Cannot test on the table %s with < 1 row" % name)
+                            "Cannot test on a %s table with < 1 row" % name)
 
             if table.default_orderby:
                 row_one = all_data['rows'][0][table.default_orderby.strip("-")]
@@ -485,10 +384,14 @@ class ViewTests(TestCase):
 
                 if '-' in table.default_orderby:
                     self.assertTrue(row_one >= row_two,
-                                    "Default ordering not working on %s" % name)
+                                    "Default ordering not working on %s"
+                                    " '%s' should be >= '%s'" %
+                                    (name, row_one, row_two))
                 else:
                     self.assertTrue(row_one <= row_two,
-                                    "Default ordering not working on %s" % name)
+                                    "Default ordering not working on %s"
+                                    " '%s' should be <= '%s'" %
+                                    (name, row_one, row_two))
 
             # Test the column ordering and filtering functionality
             for column in table.columns:
@@ -503,7 +406,9 @@ class ViewTests(TestCase):
 
                     self.assertTrue(row_one <= row_two,
                                     "Ascending sort applied but row 0 is less "
-                                    "than row 1")
+                                    "than row 1 %s %s " %
+                                    (column['field_name'], name))
+
 
                     descending = get_data(table_cls(),
                                           {"orderby" :
@@ -514,7 +419,8 @@ class ViewTests(TestCase):
 
                     self.assertTrue(row_one >= row_two,
                                     "Descending sort applied but row 0 is "
-                                    "greater than row 1")
+                                    "greater than row 1 %s %s" %
+                                    (column['field_name'], name))
 
                     # If the two start rows are the same we haven't actually
                     # changed the order
@@ -1045,7 +951,7 @@ class AllBuildsPageTests(TestCase):
 
     def test_run_again(self):
         """
-        "Run again" button should not be shown for command-line builds,
+        "Rebuild" button should not be shown for command-line builds,
         but should be shown for other builds
         """
         build1 = Build.objects.create(**self.project1_build_success)

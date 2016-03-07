@@ -6,6 +6,8 @@ SRC_URI = "http://dl.matroska.org/downloads/libebml/libebml-${PV}.tar.bz2"
 SRC_URI[md5sum] = "efec729bf5a51e649e1d9d1f61c0ae7a"
 SRC_URI[sha256sum] = "83b074d6b62715aa0080406ea84d33df2e44b5d874096640233a4db49b8096de"
 
+EXTRA_OEMAKE = "-e MAKEFLAGS="
+
 do_compile() {
     cd ${S}/make/linux
     oe_runmake CROSS="${TARGET_PREFIX}"
@@ -17,7 +19,7 @@ do_install() {
     install -d ${D}${libdir}
     install -m 0644 libebml.a ${D}${libdir}
     install -m 0755 libebml.so.* ${D}${libdir}
-    cp -a libebml.so ${D}${libdir}
+    cp -R --no-dereference --preserve=mode,links -v libebml.so ${D}${libdir}
 
     install -d ${D}${includedir}/ebml
     for i in ../../ebml/*.h; do

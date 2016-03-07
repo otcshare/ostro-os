@@ -8,19 +8,15 @@ PATH_prepend = "${STAGING_BINDIR_TOOLCHAIN}.${STAGINGCC}:"
 
 TOOLCHAIN_OPTIONS = " --sysroot=${STAGING_DIR_TCBOOTSTRAP}"
 
-# glibc can't be built without optimization, if someone tries to compile an
-# entire image as -O0, break with fatal.
 python () {
-    if bb.utils.contains("SELECTED_OPTIMIZATION", "-O", "x", "", d) == "x":
-        bb.note("glibc can't be built with -O, -O -Wno-error will be used instead.")
-        d.appendVar("SELECTED_OPTIMIZATION", " -Wno-error")
-    elif bb.utils.contains("SELECTED_OPTIMIZATION", "-O0", "x", "", d) == "x":
-        bb.fatal("glibc can't be built with -O0, using -O1 -Wno-error or -O1 instead.")
-    elif bb.utils.contains("SELECTED_OPTIMIZATION", "-Os", "x", "", d) == "x":
-        bb.note("glibc can't be built with -Os, -Os -Wno-error will be used instead.")
-        d.appendVar("SELECTED_OPTIMIZATION", " -Wno-error")
-    elif bb.utils.contains("SELECTED_OPTIMIZATION", "-O1", "x", "", d) == "x":
-        bb.note("glibc can't be built with -O1, -O1 -Wno-error will be used instead.")
+    opt_effective = "-O"
+    for opt in d.getVar('SELECTED_OPTIMIZATION', True).split():
+        if opt in ("-O0", "-O", "-O1", "-O2", "-O3", "-Os"):
+            opt_effective = opt
+    if opt_effective == "-O0":
+        bb.fatal("%s can't be built with %s, try -O1 instead" % (d.getVar('PN', True), opt_effective))
+    if opt_effective in ("-O", "-O1", "-Os"):
+        bb.note("%s doesn't build cleanly with %s, adding -Wno-error to SELECTED_OPTIMIZATION" % (d.getVar('PN', True), opt_effective))
         d.appendVar("SELECTED_OPTIMIZATION", " -Wno-error")
 }
 
@@ -44,12 +40,6 @@ DEPENDS = "virtual/${TARGET_PREFIX}gcc-initial libgcc-initial linux-libc-headers
 PROVIDES = "virtual/libc virtual/${TARGET_PREFIX}libc-for-gcc"
 PROVIDES += "virtual/libintl virtual/libiconv"
 inherit autotools texinfo distro_features_check systemd
-require glibc-options.inc
-
-# The main purpose of setting this variable is to prevent users from accidently
-# overriding DISTRO_FEATRUES, causing obscure build failures because of lack
-# of libc functions.
-REQUIRED_DISTRO_FEATURES = "${DISTRO_FEATURES_LIBC}"
 
 LEAD_SONAME = "libc.so"
 
@@ -58,6 +48,7 @@ CACHED_CONFIGUREVARS += " \
   libc_cv_slibdir=${base_libdir} \
   libc_cv_rootsbindir=${base_sbindir} \
   libc_cv_localedir=${localedir} \
+  libc_cv_ssp_strong=no \
   libc_cv_ssp=no \
 "
 
@@ -82,18 +73,8 @@ PARALLEL_MAKE = ""
 # ensure make uses /bin/bash
 EXTRA_OEMAKE += "SHELL=/bin/bash"
 
-OE_FEATURES = "${@features_to_glibc_settings(d)}"
 do_configure_prepend() {
 	sed -e "s#@BASH@#/bin/sh#" -i ${S}/elf/ldd.bash.in
-	echo '${OE_FEATURES}' > ${B}/option-groups.config
-}
-
-do_configure_append() {
-	yes '' | oe_runmake config
-
-	# Remove quotation marks from OPTION_EGLIBC_NSSWITCH_FIXED_*. This will
-	# avoid install error.
-	sed -i 's/^OPTION_EGLIBC_NSSWITCH_FIXED_\(.*\)="\(.*\)"$/OPTION_EGLIBC_NSSWITCH_FIXED_\1=\2/' option-groups.config
 }
 
 GLIBC_ADDONS ?= "nptl,libidn"

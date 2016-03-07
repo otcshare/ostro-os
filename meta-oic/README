@@ -1,6 +1,6 @@
 meta-oic
 ========
-This layer contains recipes for the IoTivity Project (v1.0)
+This layer contains recipes for the IoTivity Project (v1.0.1)
 , sample applications and related components for any Yocto target.
 
 Contents
@@ -17,8 +17,8 @@ Recipes in meta-oic
 - recipes-core: Iotivity framework, SDK, and samples.
 - recipes-kernel: linux-yocto kernel configuration for enabling
                   bluetooth and 6LoWPAN features in the OS image.
-                  This is currently setup to configure the
-                  linux-yocto_3.19 kernel.
+                  This is experimental work and is currently setup to
+                  configure the linux-yocto_3.19 kernel.
 - recipes-apps: Iotivity simple client example. The recipe
                 is meant to serve as a guide for Iotivity 
                 application developers who want to quickly

@@ -359,11 +359,19 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     return_value = 1
                 elif event.levelno == format.WARNING:
                     warnings = warnings + 1
-                # For "normal" logging conditions, don't show note logs from tasks
-                # but do show them if the user has changed the default log level to
-                # include verbose/debug messages
-                if event.taskpid != 0 and event.levelno <= format.NOTE and (event.levelno < llevel or (event.levelno == format.NOTE and llevel != format.VERBOSE)):
-                    continue
+
+                if event.taskpid != 0:
+                    # For "normal" logging conditions, don't show note logs from tasks
+                    # but do show them if the user has changed the default log level to
+                    # include verbose/debug messages
+                    if event.levelno <= format.NOTE and (event.levelno < llevel or (event.levelno == format.NOTE and llevel != format.VERBOSE)):
+                        continue
+
+                    # Prefix task messages with recipe/task
+                    if event.taskpid in helper.running_tasks:
+                        taskinfo = helper.running_tasks[event.taskpid]
+                        event.msg = taskinfo['title'] + ': ' + event.msg
+
                 logger.handle(event)
                 continue
 
@@ -490,6 +498,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
+                return_value = 1
                 taskfailures.append(event.taskstring)
                 logger.error("Task %s (%s) failed with exit code '%s'",
                              event.taskid, event.taskstring, event.exitcode)

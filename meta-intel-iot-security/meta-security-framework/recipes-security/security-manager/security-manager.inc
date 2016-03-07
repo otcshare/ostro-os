@@ -53,7 +53,7 @@ python do_patch_append () {
     import os
     import shutil
     import glob
-    files = d.getVar('SECURITY_MANAGER_POLICY').split()
+    files = d.getVar('SECURITY_MANAGER_POLICY', True).split()
     if files:
         s = d.getVar('S', True)
         workdir = d.getVar('WORKDIR', True)

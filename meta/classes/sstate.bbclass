@@ -31,7 +31,7 @@ SSTATE_DUPWHITELIST += "${DEPLOY_DIR_SRC}"
 SSTATE_SCAN_FILES ?= "*.la *-config *_config"
 SSTATE_SCAN_CMD ?= 'find ${SSTATE_BUILDDIR} \( -name "${@"\" -o -name \"".join(d.getVar("SSTATE_SCAN_FILES", True).split())}" \) -type f'
 
-BB_HASHFILENAME = "${SSTATE_EXTRAPATH} ${SSTATE_PKGSPEC} ${SSTATE_SWSPEC}"
+BB_HASHFILENAME = "False ${SSTATE_PKGSPEC} ${SSTATE_SWSPEC}"
 
 SSTATE_ARCHS = " \
     ${BUILD_ARCH} \
@@ -79,6 +79,7 @@ python () {
 
     if bb.data.inherits_class('native', d) or bb.data.inherits_class('crosssdk', d) or bb.data.inherits_class('cross', d):
         d.setVar('SSTATE_EXTRAPATH', "${NATIVELSBSTRING}/")
+        d.setVar('BB_HASHFILENAME', "True ${SSTATE_PKGSPEC} ${SSTATE_SWSPEC}")
         d.setVar('SSTATE_EXTRAPATHWILDCARD', "*/")
 
     # These classes encode staging paths into their scripts data so can only be
@@ -124,6 +125,7 @@ def sstate_state_fromvars(d, task = None):
     if task == "populate_lic":
         d.setVar("SSTATE_PKGSPEC", "${SSTATE_SWSPEC}")
         d.setVar("SSTATE_EXTRAPATH", "")
+        d.setVar('SSTATE_EXTRAPATHWILDCARD', "")
 
     ss = sstate_init(task, d)
     for i in range(len(inputs)):
@@ -268,23 +270,10 @@ def sstate_install(ss, d):
 sstate_install[vardepsexclude] += "SSTATE_DUPWHITELIST STATE_MANMACH SSTATE_MANFILEPREFIX"
 sstate_install[vardeps] += "${SSTATEPOSTINSTFUNCS}"
 
-def sstate_build_gpg_command(d, *args, **kwargs):
-    # Returns a list for subprocess.call() unless passed flatten=True when this
-    # returns a flattened string.
-    l = [d.getVar("GPG_BIN", True) or "gpg"]
-    if d.getVar("GPG_PATH", True):
-        l += ["--homedir", d.getVar("GPG_PATH", True)]
-    l += args
-
-    if kwargs.get("flatten", False):
-        import pipes
-        return " ".join(map(pipes.quote, l))
-    else:
-        return l
-
 def sstate_installpkg(ss, d):
     import oe.path
     import subprocess
+    from oe.gpg_sign import get_signer
 
     def prepdir(dir):
         # remove dir if it exists, ensure any parent directories do exist
@@ -310,7 +299,8 @@ def sstate_installpkg(ss, d):
     d.setVar('SSTATE_PKG', sstatepkg)
 
     if bb.utils.to_boolean(d.getVar("SSTATE_VERIFY_SIG", True), False):
-        if subprocess.call(sstate_build_gpg_command(d, "--verify", sstatepkg + ".sig", sstatepkg)) != 0:
+        signer = get_signer(d, 'local')
+        if not signer.verify(sstatepkg + '.sig'):
             bb.warn("Cannot verify signature on sstate package %s" % sstatepkg)
 
     for f in (d.getVar('SSTATEPREINSTFUNCS', True) or '').split() + ['sstate_unpack_package'] + (d.getVar('SSTATEPOSTUNPACKFUNCS', True) or '').split():
@@ -585,7 +575,8 @@ def sstate_package(ss, d):
     d.setVar('SSTATE_BUILDDIR', sstatebuild)
     d.setVar('SSTATE_PKG', sstatepkg)
 
-    for f in (d.getVar('SSTATECREATEFUNCS', True) or '').split() + ['sstate_create_package'] + \
+    for f in (d.getVar('SSTATECREATEFUNCS', True) or '').split() + \
+             ['sstate_create_package', 'sstate_sign_package'] + \
              (d.getVar('SSTATEPOSTCREATEFUNCS', True) or '').split():
         # All hooks should run in SSTATE_BUILDDIR.
         bb.build.exec_func(f, d, (sstatebuild,))
@@ -689,13 +680,20 @@ sstate_create_package () {
 	chmod 0664 $TFILE
 	mv -f $TFILE ${SSTATE_PKG}
 
-	if [ -n "${SSTATE_SIG_KEY}" ]; then
-		rm -f ${SSTATE_PKG}.sig
-		echo ${SSTATE_SIG_PASSPHRASE} | ${@sstate_build_gpg_command(d, "--batch", "--passphrase-fd", "0", "--detach-sign", "--local-user", "${SSTATE_SIG_KEY}", "--output", "${SSTATE_PKG}.sig", "${SSTATE_PKG}", flatten=True)}
-	fi
-
 	cd ${WORKDIR}
 	rm -rf ${SSTATE_BUILDDIR}
+}
+
+python sstate_sign_package () {
+    from oe.gpg_sign import get_signer
+
+    if d.getVar('SSTATE_SIG_KEY', True):
+        signer = get_signer(d, 'local')
+        sstate_pkg = d.getVar('SSTATE_PKG', True)
+        if os.path.exists(sstate_pkg + '.sig'):
+            os.unlink(sstate_pkg + '.sig')
+        signer.detach_sign(sstate_pkg, d.getVar('SSTATE_SIG_KEY', False), None,
+                           d.getVar('SSTATE_SIG_PASSPHRASE', True), armor=False)
 }
 
 #
@@ -724,7 +722,10 @@ def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=False):
         # Magic data from BB_HASHFILENAME
         splithashfn = sq_hashfn[task].split(" ")
         spec = splithashfn[1]
-        extrapath = splithashfn[0]
+        if splithashfn[0] == "True":
+            extrapath = d.getVar("NATIVELSBSTRING", True) + "/"
+        else:
+            extrapath = ""
 
         tname = sq_task[task][3:]
 
@@ -846,7 +847,7 @@ def setscene_depvalid(task, taskdependees, notneeded, d):
         return x.endswith("-native") or "-cross-" in x or "-crosssdk" in x
 
     def isPostInstDep(x):
-        if x in ["qemu-native", "gdk-pixbuf-native", "qemuwrapper-cross", "depmodwrapper-cross", "systemd-systemctl-native", "gtk-icon-utils-native"]:
+        if x in ["qemu-native", "gdk-pixbuf-native", "qemuwrapper-cross", "depmodwrapper-cross", "systemd-systemctl-native", "gtk-icon-utils-native", "ca-certificates-native"]:
             return True
         return False
 

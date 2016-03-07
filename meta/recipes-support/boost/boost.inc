@@ -2,7 +2,8 @@ SUMMARY = "Free peer-reviewed portable C++ source libraries"
 SECTION = "libs"
 DEPENDS = "bjam-native zlib bzip2"
 
-ARM_INSTRUCTION_SET = "arm"
+ARM_INSTRUCTION_SET_armv4 = "arm"
+ARM_INSTRUCTION_SET_armv5 = "arm"
 
 BOOST_LIBS = "\
 	atomic \
@@ -114,7 +115,7 @@ BJAM_TOOLS   = "--ignore-site-config \
 		'--layout=system' \
 		"
 
-# use PARALLEL_MAKE to speed up the build, but limit it by -j 64, greater paralelism causes bjam to segfault or to ignore -j
+# use PARALLEL_MAKE to speed up the build, but limit it by -j 64, greater parallelism causes bjam to segfault or to ignore -j
 # https://svn.boost.org/trac/boost/ticket/7634
 def get_boost_parallel_make(d):
     pm = d.getVar('PARALLEL_MAKE', True)
@@ -139,10 +140,10 @@ def get_boost_parallel_make(d):
     return ""
 
 BOOST_PARALLEL_MAKE = "${@get_boost_parallel_make(d)}"
-BJAM_OPTS    = '${BOOST_PARALLEL_MAKE} \
+BJAM_OPTS    = '${BOOST_PARALLEL_MAKE} -d+2 -q \
 		${BJAM_TOOLS} \
 		-sBOOST_BUILD_USER_CONFIG=${S}/tools/build/example/user-config.jam \
-		--builddir=${S}/${TARGET_SYS} \
+		--build-dir=${S}/${TARGET_SYS} \
 		--disable-icu \
 		${BJAM_EXTRA}'
 

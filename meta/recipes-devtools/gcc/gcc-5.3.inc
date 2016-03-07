@@ -80,7 +80,10 @@ SRC_URI = "\
            file://0048-ssp_nonshared.patch \
            file://0049-Disable-the-weak-reference-logic-in-gthr.h-for-os-ge.patch \
            file://0050-powerpc-pass-secure-plt-to-the-linker.patch \
-          "
+           file://0051-Ignore-fdebug-prefix-map-in-producer-string-by-Danie.patch \
+           file://0052-nios2-use-ret-with-r31.patch \
+           file://0053-expr.c-PR-target-65358-Avoid-clobbering-partial-argu.patch \
+"
 
 BACKPORTS = ""
 
@@ -100,6 +103,7 @@ LTO = "--enable-lto"
 EXTRA_OECONF_BASE = "\
     ${LTO} \
     --enable-libssp \
+    --enable-libitm \
     --disable-bootstrap \
     --disable-libmudflap \
     --with-system-zlib \
@@ -115,13 +119,14 @@ EXTRA_OECONF_BASE = "\
 EXTRA_OECONF_INITIAL = "\
     --disable-libmudflap \
     --disable-libgomp \
-    --disable-libssp \
+    --disable-libitm \
     --disable-libquadmath \
     --with-system-zlib \
     --disable-lto \
     --disable-plugin \
     --enable-decimal-float=no \
     --without-isl \
+    gcc_cv_libc_provides_ssp=yes \
 "
 
 EXTRA_OECONF_append_libc-uclibc = " --disable-decimal-float "

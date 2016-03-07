@@ -10,9 +10,16 @@ EXTRA_OECONF_PATHS = "\
 
 EXTRA_OECONF_append_linuxstdbase = " --enable-clocale=gnu"
 
-RUNTIMETARGET = "libssp libstdc++-v3 libgomp libatomic \
+RUNTIMELIBITM = "libitm"
+RUNTIMELIBITM_mips = ""
+RUNTIMELIBITM_mipsel = ""
+RUNTIMELIBITM_mips64 = ""
+RUNTIMELIBITM_mips64el = ""
+
+RUNTIMETARGET = "libssp libstdc++-v3 libgomp libatomic ${RUNTIMELIBITM} \
     ${@bb.utils.contains_any('FORTRAN', [',fortran',',f77'], 'libquadmath', '', d)} \
 "
+
 #  ?
 # libiberty
 # libmudflap
@@ -29,7 +36,8 @@ do_configure () {
 		mkdir -p ${B}/$target/$d/
 		cd ${B}/$target/$d/
 		chmod a+x ${S}/$d/configure
-		${S}/$d/configure ${CONFIGUREOPTS} ${EXTRA_OECONF}
+		relpath=${@os.path.relpath("${S}/$d", "${B}/$target/$d")}
+		$relpath/configure ${CONFIGUREOPTS} ${EXTRA_OECONF}
 	done
 }
 
@@ -48,6 +56,7 @@ do_install () {
 		oe_runmake 'DESTDIR=${D}' MULTIBUILDTOP=${B}/$target/$d/ install
 	done
 	rm -rf ${D}${infodir}/libgomp.info ${D}${infodir}/dir
+	rm -rf ${D}${infodir}/libitm.info ${D}${infodir}/dir
 	rm -rf ${D}${infodir}/libquadmath.info ${D}${infodir}/dir
 	if [ -d ${D}${libdir}/gcc/${TARGET_SYS}/${BINV}/finclude ]; then
 		rmdir --ignore-fail-on-non-empty -p ${D}${libdir}/gcc/${TARGET_SYS}/${BINV}/finclude
@@ -93,6 +102,9 @@ PACKAGES = "\
     libatomic \
     libatomic-dev \
     libatomic-staticdev \
+    libitm \
+    libitm-dev \
+    libitm-staticdev \
 "
 
 # Most libraries are licensed with the exception, but
@@ -120,6 +132,9 @@ LICENSE_libquadmath-staticdev = "GPL-3.0-with-GCC-exception"
 LICENSE_libatomic = "GPL-3.0-with-GCC-exception"
 LICENSE_libatomic-dev = "GPL-3.0-with-GCC-exception"
 LICENSE_libatomic-staticdev = "GPL-3.0-with-GCC-exception"
+LICENSE_libitm = "GPL-3.0-with-GCC-exception"
+LICENSE_libitm-dev = "GPL-3.0-with-GCC-exception"
+LICENSE_libitm-staticdev = "GPL-3.0-with-GCC-exception"
 
 LICENSE_libgomp = "GPLv3"
 LICENSE_libgomp-dev = "GPLv3"
@@ -194,6 +209,14 @@ FILES_libatomic-dev = "\
     ${libdir}/libatomic.la \
 "
 FILES_libatomic-staticdev = "${libdir}/libatomic.a"
+
+FILES_libitm = "${libdir}/libitm.so.*"
+FILES_libitm-dev = "\
+    ${libdir}/libitm.so \
+    ${libdir}/libitm.la \
+    ${libdir}/libitm.spec \
+"
+FILES_libitm-staticdev = "${libdir}/libitm.a"
 
 do_package_write_ipk[depends] += "virtual/${MLPREFIX}libc:do_packagedata"
 do_package_write_deb[depends] += "virtual/${MLPREFIX}libc:do_packagedata"

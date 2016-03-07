@@ -5,12 +5,18 @@ SECTION = "multimedia"
 
 DEPENDS = "gstreamer1.0 glib-2.0-native"
 
-inherit autotools pkgconfig upstream-version-is-even
+inherit autotools pkgconfig gettext upstream-version-is-even
 
 acpaths = "-I ${S}/common/m4 -I ${S}/m4"
 
 LIBV = "1.0"
 require gst-plugins-package.inc
+
+# Orc enables runtime JIT compilation of data processing routines from Orc
+# bytecode to SIMD instructions for various architectures (currently SSE, MMX,
+# MIPS, Altivec and NEON are supported).
+
+GSTREAMER_ORC ?= "orc"
 
 PACKAGECONFIG[debug] = "--enable-debug,--disable-debug"
 PACKAGECONFIG[orc] = "--enable-orc,--disable-orc,orc orc-native"

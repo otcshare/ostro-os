@@ -29,11 +29,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, re
 import signal
-import glob
 import logging
 import urllib
 import urlparse
-import operator
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
@@ -329,7 +327,7 @@ class URI(object):
     def path(self, path):
         self._path = path
 
-        if re.compile("^/").match(path):
+        if not path or re.compile("^/").match(path):
             self.relative = False
         else:
             self.relative = True
@@ -377,9 +375,12 @@ def decodeurl(url):
     if locidx != -1 and type.lower() != 'file':
         host = location[:locidx]
         path = location[locidx:]
-    else:
+    elif type.lower() == 'file':
         host = ""
         path = location
+    else:
+        host = location
+        path = ""
     if user:
         m = re.compile('(?P<user>[^:]+)(:?(?P<pswd>.*))').match(user)
         if m:
@@ -515,13 +516,13 @@ def fetcher_init(d):
         if hasattr(m, "init"):
             m.init(d)
 
-def fetcher_parse_save(d):
-    _checksum_cache.save_extras(d)
+def fetcher_parse_save():
+    _checksum_cache.save_extras()
 
-def fetcher_parse_done(d):
-    _checksum_cache.save_merge(d)
+def fetcher_parse_done():
+    _checksum_cache.save_merge()
 
-def fetcher_compare_revisions(d):
+def fetcher_compare_revisions():
     """
     Compare the revisions in the persistant cache with current values and
     return true/false on whether they've changed.
@@ -625,6 +626,9 @@ def verify_donestamp(ud, d, origud=None):
     Returns True, if the donestamp exists and is valid, False otherwise. When
     returning False, any existing done stamps are removed.
     """
+    if not ud.needdonestamp:
+        return True
+
     if not os.path.exists(ud.donestamp):
         return False
 
@@ -683,6 +687,9 @@ def update_stamp(ud, d):
         donestamp is file stamp indicating the whole fetching is done
         this function update the stamp after verifying the checksum
     """
+    if not ud.needdonestamp:
+        return
+
     if os.path.exists(ud.donestamp):
         # Touch the done stamp file to show active use of the download
         try:
@@ -934,8 +941,9 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         if origud.mirrortarball and os.path.basename(ud.localpath) == os.path.basename(origud.mirrortarball) \
                 and os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
             # Create donestamp in old format to avoid triggering a re-download
-            bb.utils.mkdirhier(os.path.dirname(ud.donestamp))
-            open(ud.donestamp, 'w').close()
+            if ud.donestamp:
+                bb.utils.mkdirhier(os.path.dirname(ud.donestamp))
+                open(ud.donestamp, 'w').close()
             dest = os.path.join(dldir, os.path.basename(ud.localpath))
             if not os.path.exists(dest):
                 os.symlink(ud.localpath, dest)
@@ -1108,48 +1116,7 @@ def get_file_checksums(filelist, pn):
     it proceeds
 
     """
-
-    def checksum_file(f):
-        try:
-            checksum = _checksum_cache.get_checksum(f)
-        except OSError as e:
-            bb.warn("Unable to get checksum for %s SRC_URI entry %s: %s" % (pn, os.path.basename(f), e))
-            return None
-        return checksum
-
-    def checksum_dir(pth):
-        # Handle directories recursively
-        dirchecksums = []
-        for root, dirs, files in os.walk(pth):
-            for name in files:
-                fullpth = os.path.join(root, name)
-                checksum = checksum_file(fullpth)
-                if checksum:
-                    dirchecksums.append((fullpth, checksum))
-        return dirchecksums
-
-    checksums = []
-    for pth in filelist.split():
-        exist = pth.split(":")[1]
-        if exist == "False":
-            continue
-        pth = pth.split(":")[0]
-        if '*' in pth:
-            # Handle globs
-            for f in glob.glob(pth):
-                if os.path.isdir(f):
-                    checksums.extend(checksum_dir(f))
-                else:
-                    checksum = checksum_file(f)
-                    checksums.append((f, checksum))
-        elif os.path.isdir(pth):
-            checksums.extend(checksum_dir(pth))
-        else:
-            checksum = checksum_file(pth)
-            checksums.append((pth, checksum))
-
-    checksums.sort(key=operator.itemgetter(1))
-    return checksums
+    return _checksum_cache.get_checksums(filelist, pn)
 
 
 class FetchData(object):
@@ -1159,6 +1126,7 @@ class FetchData(object):
     def __init__(self, url, d, localonly = False):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
+        self.needdonestamp = True
         self.localfile = ""
         self.localpath = None
         self.lockfile = None
@@ -1223,13 +1191,20 @@ class FetchData(object):
             self.localpath = self.method.localpath(self, d)
 
         dldir = d.getVar("DL_DIR", True)
+
+        if not self.needdonestamp:
+            return
+
         # Note: .done and .lock files should always be in DL_DIR whereas localpath may not be.
         if self.localpath and self.localpath.startswith(dldir):
             basepath = self.localpath
         elif self.localpath:
             basepath = dldir + os.sep + os.path.basename(self.localpath)
-        else:
+        elif self.basepath or self.basename:
             basepath = dldir + os.sep + (self.basepath or self.basename)
+        else:
+             bb.fatal("Can't determine lock path for url %s" % url)
+
         self.donestamp = basepath + '.done'
         self.lockfile = basepath + '.lock'
 
@@ -1343,6 +1318,11 @@ class FetchMethod(object):
         iterate = False
         file = urldata.localpath
 
+        # Localpath can't deal with 'dir/*' entries, so it converts them to '.',
+        # but it must be corrected back for local files copying
+        if urldata.basename == '*' and file.endswith('/.'):
+            file = '%s/%s' % (file.rstrip('/.'), urldata.path)
+
         try:
             unpack = bb.utils.to_boolean(urldata.parm.get('unpack'), True)
         except ValueError as exc:
@@ -1400,50 +1380,35 @@ class FetchMethod(object):
             elif file.endswith('.7z'):
                 cmd = '7za x -y %s 1>/dev/null' % file
 
+        # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
+        if 'subdir' in urldata.parm:
+            unpackdir = '%s/%s' % (rootdir, urldata.parm.get('subdir'))
+            bb.utils.mkdirhier(unpackdir)
+        else:
+            unpackdir = rootdir
+
         if not unpack or not cmd:
             # If file == dest, then avoid any copies, as we already put the file into dest!
-            dest = os.path.join(rootdir, os.path.basename(file))
-            if (file != dest) and not (os.path.exists(dest) and os.path.samefile(file, dest)):
-                if os.path.isdir(file):
-                    # If for example we're asked to copy file://foo/bar, we need to unpack the result into foo/bar
-                    basepath = getattr(urldata, "basepath", None)
-                    destdir = "."
-                    if basepath and basepath.endswith("/"):
-                        basepath = basepath.rstrip("/")
-                    elif basepath:
-                        basepath = os.path.dirname(basepath)
-                    if basepath and basepath.find("/") != -1:
-                        destdir = basepath[:basepath.rfind('/')]
-                        destdir = destdir.strip('/')
-                    if destdir != "." and not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
-                        os.makedirs("%s/%s" % (rootdir, destdir))
-                    cmd = 'cp -fpPR %s %s/%s/' % (file, rootdir, destdir)
-                    #cmd = 'tar -cf - -C "%d" -ps . | tar -xf - -C "%s/%s/"' % (file, rootdir, destdir)
-                else:
-                    # The "destdir" handling was specifically done for FILESPATH
-                    # items.  So, only do so for file:// entries.
-                    if urldata.type == "file" and urldata.path.find("/") != -1:
-                       destdir = urldata.path.rsplit("/", 1)[0]
-                       if urldata.parm.get('subdir') != None:
-                          destdir = urldata.parm.get('subdir') + "/" + destdir
-                    else:
-                       if urldata.parm.get('subdir') != None:
-                          destdir = urldata.parm.get('subdir')
-                       else:
-                          destdir = "."
-                    bb.utils.mkdirhier("%s/%s" % (rootdir, destdir))
-                    cmd = 'cp -f %s %s/%s/' % (file, rootdir, destdir)
+            dest = os.path.join(unpackdir, os.path.basename(file))
+            if file != dest and not (os.path.exists(dest) and os.path.samefile(file, dest)):
+                destdir = '.'
+                # For file:// entries all intermediate dirs in path must be created at destination
+                if urldata.type == "file":
+                    # Trailing '/' does a copying to wrong place
+                    urlpath = urldata.path.rstrip('/')
+                    # Want files places relative to cwd so no leading '/'
+                    urlpath = urlpath.lstrip('/')
+                    if urlpath.find("/") != -1:
+                        destdir = urlpath.rsplit("/", 1)[0] + '/'
+                        bb.utils.mkdirhier("%s/%s" % (unpackdir, destdir))
+                cmd = 'cp -fpPR %s %s' % (file, destdir)
 
         if not cmd:
             return
 
-        # Change to subdir before executing command
+        # Change to unpackdir before executing command
         save_cwd = os.getcwd();
-        os.chdir(rootdir)
-        if 'subdir' in urldata.parm:
-            newdir = ("%s/%s" % (rootdir, urldata.parm.get('subdir')))
-            bb.utils.mkdirhier(newdir)
-            os.chdir(newdir)
+        os.chdir(unpackdir)
 
         path = data.getVar('PATH', True)
         if path:
@@ -1570,7 +1535,8 @@ class Fetch(object):
             m = ud.method
             localpath = ""
 
-            lf = bb.utils.lockfile(ud.lockfile)
+            if ud.lockfile:
+                lf = bb.utils.lockfile(ud.lockfile)
 
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
@@ -1636,7 +1602,8 @@ class Fetch(object):
                 raise
 
             finally:
-                bb.utils.unlockfile(lf)
+                if ud.lockfile:
+                    bb.utils.unlockfile(lf)
 
     def checkstatus(self, urls=None):
         """
@@ -1764,6 +1731,7 @@ from . import hg
 from . import osc
 from . import repo
 from . import clearcase
+from . import npm
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -1780,3 +1748,4 @@ methods.append(hg.Hg())
 methods.append(osc.Osc())
 methods.append(repo.Repo())
 methods.append(clearcase.ClearCase())
+methods.append(npm.Npm())
