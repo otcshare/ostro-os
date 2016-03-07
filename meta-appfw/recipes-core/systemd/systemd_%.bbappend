@@ -11,12 +11,9 @@ SYSTEMD_APPFW_PATCHES_228 = " \
     file://228/0002-nspawn-added-support-for-starting-DHCP-client-in-non.patch \
 "
 
-# 0001-nspawn-don-t-check-binary-OS-tree-before-all-mounts-.patch might no longer
-# be needed (code that it moved around is gone), but 0002-nspawn-added-support-for-starting-DHCP-client-in-non.patch
-# might be needed.
-#
-# TODO: port it to 229...
 SYSTEMD_APPFW_PATCHES_229 = " \
+    file://229/0001-nspawn-don-t-check-binary-OS-tree-before-all-mounts-.patch \
+    file://229/0002-nspawn-added-support-for-starting-DHCP-client-in-non.patch \
 "
 
 SRC_URI += " ${@d.getVar('SYSTEMD_APPFW_PATCHES_' + d.getVar('PV', False)[0:3], True) or ''}"
