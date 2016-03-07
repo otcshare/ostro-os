@@ -97,7 +97,7 @@ ostro-image-minimal:
 
 Additional image variants can be defined in the ``local.conf``. For
 example, the following adds ``ostro-image-noima`` and
-``ostro-os-dev-noima`` as build targets where IMA is disabled and thus
+``ostro-image-dev-noima`` as build targets where IMA is disabled and thus
 no IMA keys are needed::
 
     OSTRO_EXTRA_IMAGE_VARIANTS = "imagevariant:noima imagevariant:dev,noima"
@@ -158,7 +158,7 @@ only that one), here is how you can proceed::
 
 Beware of the leading space, it is needed when using ``_append``.
 
-This example assumes that :command:`bitbake ostro-image` is used to build
+This example assumes that :command:`bitbake ostro-image-dev` is used to build
 an image. By making the append conditional on the name of the image,
 different images can be built with different content inside the same
 build configuration.
