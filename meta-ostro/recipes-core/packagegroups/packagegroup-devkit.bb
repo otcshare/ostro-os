@@ -9,4 +9,5 @@ RDEPENDS_${PN} = " \
     mraa \
     tempered \
     upm \
+    soletta-dev-app \
 "
