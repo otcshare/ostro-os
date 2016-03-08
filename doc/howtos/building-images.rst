@@ -146,7 +146,7 @@ Production Images
 -----------------
 
 When building production images, first follow the instructions
-provided in :file:`meta-integrity/doc/README.md` for creating your own
+provided in :file:`meta-intel-iot-security/meta-integrity/README.md` for creating your own
 keys. Then edit the :file:`conf/local.conf` configuration file and
 set ``IMA_EVM_KEY_DIR`` to the directory containing
 these keys or set the individual variables for each required
