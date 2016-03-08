@@ -14,8 +14,9 @@
 import os
 import re
 from oeqa.oetest import oeRuntimeTest
+from oeqa.utils.decorators import tag
 
-
+@tag(FeatureID="IOTOS-707", TestType="FVT")
 class SanityTestPython(oeRuntimeTest):
     """
     @class SanityTestPython
