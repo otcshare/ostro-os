@@ -43,6 +43,7 @@ def tinfoil_init(instance):
 class RecipeHandler(object):
     recipelibmap = {}
     recipeheadermap = {}
+    recipecmakefilemap = {}
 
     @staticmethod
     def load_libmap(d):
@@ -90,15 +91,18 @@ class RecipeHandler(object):
         RecipeHandler.recipelibmap['GLESv2'] = 'virtual/libgles2'
 
     @staticmethod
-    def load_headermap(d):
-        '''Build up lib headerfile->recipe mapping'''
+    def load_devel_filemap(d):
+        '''Build up development file->recipe mapping'''
         if RecipeHandler.recipeheadermap:
             return
+        pkgdata_dir = d.getVar('PKGDATA_DIR', True)
         includedir = d.getVar('includedir', True)
+        cmakedir = os.path.join(d.getVar('libdir', True), 'cmake')
         for pkg in glob.glob(os.path.join(pkgdata_dir, 'runtime', '*-dev')):
             with open(os.path.join(pkgdata_dir, 'runtime', pkg)) as f:
                 pn = None
                 headers = []
+                cmakefiles = []
                 for line in f:
                     if line.startswith('PN:'):
                         pn = line.split(':', 1)[-1].strip()
@@ -108,9 +112,14 @@ class RecipeHandler(object):
                         for fullpth in sorted(dictval):
                             if fullpth.startswith(includedir) and fullpth.endswith('.h'):
                                 headers.append(os.path.relpath(fullpth, includedir))
+                            elif fullpth.startswith(cmakedir) and fullpth.endswith('.cmake'):
+                                cmakefiles.append(os.path.relpath(fullpth, cmakedir))
                 if pn and headers:
                     for header in headers:
                         RecipeHandler.recipeheadermap[header] = pn
+                if pn and cmakefiles:
+                    for fn in cmakefiles:
+                        RecipeHandler.recipecmakefilemap[fn] = pn
 
     @staticmethod
     def checkfiles(path, speclist, recursive=False):
@@ -172,7 +181,7 @@ class RecipeHandler(object):
                 deps.append(recipe)
             elif recipe is None:
                 if header:
-                    RecipeHandler.load_headermap(d)
+                    RecipeHandler.load_devel_filemap(d)
                     recipe = RecipeHandler.recipeheadermap.get(header, None)
                     if recipe:
                         deps.append(recipe)
@@ -247,6 +256,35 @@ def determine_from_filename(srcfile):
         pv = None
     return (pn, pv)
 
+def determine_from_url(srcuri):
+    """Determine name and version from a URL"""
+    pn = None
+    pv = None
+    parseres = urlparse.urlparse(srcuri.lower().split(';', 1)[0])
+    if parseres.path:
+        if 'github.com' in parseres.netloc:
+            res = re.search(r'.*/(.*?)/archive/(.*)-final\.(tar|zip)', parseres.path)
+            if res:
+                pn = res.group(1).strip().replace('_', '-')
+                pv = res.group(2).strip().replace('_', '.')
+            else:
+                res = re.search(r'.*/(.*?)/archive/v?(.*)\.(tar|zip)', parseres.path)
+                if res:
+                    pn = res.group(1).strip().replace('_', '-')
+                    pv = res.group(2).strip().replace('_', '.')
+        elif 'bitbucket.org' in parseres.netloc:
+            res = re.search(r'.*/(.*?)/get/[a-zA-Z_-]*([0-9][0-9a-zA-Z_.]*)\.(tar|zip)', parseres.path)
+            if res:
+                pn = res.group(1).strip().replace('_', '-')
+                pv = res.group(2).strip().replace('_', '.')
+
+        if not pn and not pv:
+            srcfile = os.path.basename(parseres.path.rstrip('/'))
+            pn, pv = determine_from_filename(srcfile)
+
+    logger.debug('Determined from source URL: name = "%s", version = "%s"' % (pn, pv))
+    return (pn, pv)
+
 def supports_srcrev(uri):
     localdata = bb.data.createCopy(tinfoil.config_data)
     # This is a bit sad, but if you don't have this set there can be some
@@ -262,10 +300,12 @@ def supports_srcrev(uri):
 
 def reformat_git_uri(uri):
     '''Convert any http[s]://....git URI into git://...;protocol=http[s]'''
-    res = re.match('(https?)://([^;]+\.git)(;.*)?$', uri)
-    if res:
-        # Need to switch the URI around so that the git fetcher is used
-        return 'git://%s;protocol=%s%s' % (res.group(2), res.group(1), res.group(3) or '')
+    checkuri = uri.split(';', 1)[0]
+    if checkuri.endswith('.git') or '/git/' in checkuri:
+        res = re.match('(https?)://([^;]+(\.git)?)(;.*)?$', uri)
+        if res:
+            # Need to switch the URI around so that the git fetcher is used
+            return 'git://%s;protocol=%s%s' % (res.group(2), res.group(1), res.group(4) or '')
     return uri
 
 def create_recipe(args):
@@ -338,6 +378,7 @@ def create_recipe(args):
                     if len(splitline) > 1:
                         if splitline[0] == 'origin' and '://' in splitline[1]:
                             srcuri = reformat_git_uri(splitline[1])
+                            srcsubdir = 'git'
                             break
 
     if args.src_subdir:
@@ -430,15 +471,12 @@ def create_recipe(args):
         realpv = None
 
     if srcuri and not realpv or not pn:
-        parseres = urlparse.urlparse(srcuri)
-        if parseres.path:
-            srcfile = os.path.basename(parseres.path.rstrip('/'))
-            name_pn, name_pv = determine_from_filename(srcfile)
-            logger.debug('Determined from filename: name = "%s", version = "%s"' % (name_pn, name_pv))
-            if name_pn and not pn:
-                pn = name_pn
-            if name_pv and not realpv:
-                realpv = name_pv
+        name_pn, name_pv = determine_from_url(srcuri)
+        if name_pn and not pn:
+            pn = name_pn
+        if name_pv and not realpv:
+            realpv = name_pv
+
 
     if not srcuri:
         lines_before.append('# No information for SRC_URI yet (only an external source tree was specified)')

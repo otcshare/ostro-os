@@ -28,22 +28,24 @@ python () {
             raise_sanity_error("You need to define %s in the config" % var, d)
 
     # Set the expected location of the public key
-    d.setVar('RPM_GPG_PUBKEY', os.path.join(d.getVar('STAGING_ETCDIR_NATIVE', False),
-                                            'RPM-GPG-PUBKEY'))
+    d.setVar('RPM_GPG_PUBKEY', os.path.join(d.getVar('STAGING_DIR_TARGET', False),
+                                            d.getVar('sysconfdir', False),
+                                            'pki',
+                                            'rpm-gpg',
+                                            'RPM-GPG-KEY-${DISTRO_VERSION}'))
 }
 
 python sign_rpm () {
     import glob
     from oe.gpg_sign import get_signer
 
-    signer = get_signer(d,
-                        d.getVar('RPM_GPG_BACKEND', True),
-                        d.getVar('RPM_GPG_NAME', True),
-                        d.getVar('RPM_GPG_PASSPHRASE_FILE', True))
+    signer = get_signer(d, d.getVar('RPM_GPG_BACKEND', True))
     rpms = glob.glob(d.getVar('RPM_PKGWRITEDIR', True) + '/*')
 
-    signer.sign_rpms(rpms)
+    signer.sign_rpms(rpms,
+                     d.getVar('RPM_GPG_NAME', True),
+                     d.getVar('RPM_GPG_PASSPHRASE_FILE', True))
 }
 
-do_package_index[depends] += "signing-keys:do_export_public_keys"
-do_rootfs[depends] += "signing-keys:do_export_public_keys"
+do_package_index[depends] += "signing-keys:do_deploy"
+do_rootfs[depends] += "signing-keys:do_populate_sysroot"

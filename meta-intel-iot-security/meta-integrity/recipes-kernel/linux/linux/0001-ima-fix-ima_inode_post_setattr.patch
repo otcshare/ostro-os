@@ -1,0 +1,38 @@
+From e617354a2e6014baf8a29a62704f9cdfabf60e1f Mon Sep 17 00:00:00 2001
+From: Mimi Zohar <zohar@linux.vnet.ibm.com>
+Date: Mon, 29 Feb 2016 22:00:13 -0500
+Subject: [PATCH] ima: fix ima_inode_post_setattr
+
+Changing file metadata (eg. uid, guid) could result in having to
+re-appraise a file's integrity, but does not change the "new file"
+status nor the security.ima xattr.  The IMA_PERMIT_DIRECTIO and
+IMA_DIGSIG_REQUIRED flags are policy rule specific.  This patch
+only resets these flags, not the IMA_NEW_FILE or IMA_DIGSIG flags.
+
+With this patch, changing the file timestamp will not remove the
+file signature on new files.
+
+Upstream-Status: Submitted [https://sourceforge.net/p/linux-ima/mailman/message/34894743/]
+
+Reported-by: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+Signed-off-by: Mimi Zohar <zohar@linux.vnet.ibm.com>
+---
+ security/integrity/ima/ima_appraise.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/security/integrity/ima/ima_appraise.c b/security/integrity/ima/ima_appraise.c
+index 1873b55..4ed4997 100644
+--- a/security/integrity/ima/ima_appraise.c
++++ b/security/integrity/ima/ima_appraise.c
+@@ -327,7 +327,7 @@ void ima_inode_post_setattr(struct dentry *dentry)
+ 	if (iint) {
+ 		iint->flags &= ~(IMA_APPRAISE | IMA_APPRAISED |
+ 				 IMA_APPRAISE_SUBMASK | IMA_APPRAISED_SUBMASK |
+-				 IMA_ACTION_FLAGS);
++				 IMA_PERMIT_DIRECTIO | IMA_DIGSIG_REQUIRED);
+ 		if (must_appraise)
+ 			iint->flags |= IMA_APPRAISE;
+ 	}
+-- 
+2.1.4
+
