@@ -47,9 +47,9 @@ these keys or disable the features which depend on them.
 
 In addition, images are locked down by default: for example, none of
 the existing user accounts (including root) has a password set, so
-logging into the running system is impossible. Some way of interacting
-with the system after booting it has to be chosen before building
-images.
+logging into the running system is impossible. Before building an image,
+you must choose a way of interacting with the system after it has booted.
+
 
 Target MACHINE Architecture
 ----------------------------
@@ -62,14 +62,14 @@ For currently :ref:`platforms`, the appropriate ``MACHINE`` selections are:
 
 .. table:: Yocto MACHINE selection for Supported Hardware platforms
 
-    ============  ====================================
-    Platform      Yocto Project MACHINE selection
-    ============  ====================================
-    GigaByte      intel-corei7-64
-    Galileo       intel-quark
-    MinnowBoard   intel-corei7-64
-    Edison        edison
-    ============  ====================================
+    ==========================  ====================================
+    Platform                    Yocto Project MACHINE selection
+    ==========================  ====================================
+    GigaByte GB-BXBT-3825       intel-corei7-64
+    Intel Galileo Gen2          intel-quark
+    MinnowBoard MAX compatible  intel-corei7-64
+    Intel Edison                edison
+    ==========================  ====================================
 
 Virtual machine images (a :file:`.vdi` file) are created for each of these builds hardware platforms as part 
 of the build process (and included in the prebuilt image folders too).
@@ -121,6 +121,26 @@ find the line
 with ``# require conf/distro/include/ostro-os-development.inc`` and
 uncomment it.
 
+
+Accelerating Build Time Using Shared-State Files Cache
+------------------------------------------------------
+
+As explained in the `Yocto Project Shared State Cache documentation`_, by design
+the build system builds everything from scratch unless it can determine that
+parts do not need to be rebuilt. The Yocto Project shared state code supports
+incremental builds and attempts to accelerate build time through the use
+of prebuilt data cache objects configured with the ``SSTATE_MIRRORS`` setting.
+
+By default, this ``SSTATE_MIRRORS`` configuration is disabled in :file:`conf/local.conf`
+but can be easily enabled by uncommenting the ``SSTATE_MIRRORS`` line
+in your :file:`conf/local.conf` file, as shown here:::
+
+   # Example for Ostro OS setup, recommended to use it:
+   #SSTATE_MIRRORS ?= "file://.* http://download.ostroproject.org/sstate/ostro-os/PATH"
+
+ 
+
+.. _Yocto Project Shared State Cache documentation: http://www.yoctoproject.org/docs/2.0/mega-manual/mega-manual.html#shared-state-cache
 
 Production Images
 -----------------
