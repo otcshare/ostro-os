@@ -32,7 +32,7 @@ xattr_images_fix_transmute () {
     # has the label set for its parent directories if one of those was
     # marked as transmuting.
     #
-    # In addition, "-" is set explicitly on everything that would not
+    # In addition, "_" is set explicitly on everything that would not
     # have a label otherwise. This is a workaround for tools like swupd
     # which transfers files from a rootfs onto a target device where Smack
     # is active: on the target, each file gets assigned a label, typically
@@ -91,14 +91,13 @@ def visit(path, deflabel, deftransmute):
     curlabel = lgetxattr(path, 'security.SMACK64', '')
     transmute = lgetxattr(path, 'security.SMACK64TRANSMUTE', '') == 'TRUE'
 
-    # We don't want to set the floor label explicitly. It is the default label
-    # and thus adding it would create additional overhead, and mkfs.ext4 has
-    # problems when files have multiple xattrs (https://bugzilla.yoctoproject.org/show_bug.cgi?id=8992).
-    # That may also occur without the explicit '_' label, but setting it
-    # triggers that problem reliably.
     if not curlabel:
-        if deflabel != '_':
-            lsetxattr(path, 'security.SMACK64', deflabel)
+        # Since swupd doesn't remove the label from an updated file assigned by
+        # the target device's kernel upon unpacking the file from an update,
+        # we have to set the floor label explicitly even though it is the default label
+        # and thus adding it would create additional overhead. Otherwise this
+        # would result in hash mismatches reported by `swupd verify`.
+        lsetxattr(path, 'security.SMACK64', deflabel)
         if not transmute and deftransmute and isrealdir:
             lsetxattr(path, 'security.SMACK64TRANSMUTE', 'TRUE')
 

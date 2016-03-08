@@ -435,10 +435,10 @@ use them only in secure environments.
 
 
 The Ostro Project provides two different pre-compiled images,
-``ostro-os`` and ``ostro-os-dev``. Despite the name, currently *both*
+``ostro-image`` and ``ostro-image-dev``. Despite the name, currently *both*
 are compiled as development images. The only difference is that
-``ostro-os-dev`` already includes development (gcc) and debugging
-tools (strace, valgrind, etc.). There are no pre-compiled
+``ostro-image-dev`` already includes development (``gcc``) and debugging
+tools (``strace``, ``valgrind``, etc.). There are no pre-compiled
 production images.
 
 The following table summarizes the differences between the default
