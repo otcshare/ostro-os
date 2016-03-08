@@ -1,8 +1,8 @@
 DESCRIPTION = "This project provides iotivity node.js bindings."
 HOMEPAGE = "https://github.com/otcshare/iotivity-node"
-LICENSE = "MIT"
+LICENSE = "Apache-2.0"
 
-LIC_FILES_CHKSUM = "file://${WORKDIR}/git/MIT-LICENSE.txt;md5=6b58eb710e76f8b9795f41edf589db99"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10"
 
 DEPENDS = "nodejs-native glib-2.0 iotivity"
 RDEPENDS_${PN} += "bash iotivity-resource"
@@ -73,7 +73,6 @@ do_install () {
     install -m 0644 ${S}/AUTHORS.txt ${D}${libdir}/node_modules/iotivity-node/AUTHORS.txt
     install -m 0644 ${S}/index.js ${D}${libdir}/node_modules/iotivity-node/index.js
     install -m 0644 ${S}/lowlevel.js ${D}${libdir}/node_modules/iotivity-node/lowlevel.js
-    install -m 0644 ${S}/MIT-LICENSE.txt ${D}${libdir}/node_modules/iotivity-node/MIT-LICENSE.txt
     install -m 0644 ${S}/README.md ${D}${libdir}/node_modules/iotivity-node/README.md
 
     cp -r ${S}/lib/ ${D}${libdir}/node_modules/iotivity-node/
