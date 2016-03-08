@@ -27,7 +27,6 @@ hob-image-*.bb
 !/meta-openembedded
 !/meta-ostro
 !/meta-ostro-bsp
-!/meta-ostro-fixes
 !/meta-security-isafw
 !/meta-selftest
 !/meta-skeleton
