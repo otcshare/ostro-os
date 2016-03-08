@@ -33,6 +33,10 @@ spawn ssh root@$ip -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -
    {
     sleep 1; send "$password\n"; exp_continue
    }
+ "Input*Output"
+   {
+    send "exit\n"; exit 3
+   }
  "Connected wifi*"
    {
     send "exit\n"; exit 2
