@@ -14,7 +14,7 @@
 import time
 import os
 import string
-import wifi
+import wifi_7260
 import ConfigParser
 from oeqa.oetest import oeRuntimeTest
 from oeqa.utils.helper import shell_cmd_timeout
@@ -35,7 +35,7 @@ class CommWiFiConect(oeRuntimeTest):
         @param self
         @return
         '''
-        self.wifi = wifi.WiFiFunction(self.target)
+        self.wifi = wifi_7260.WiFiFunction(self.target)
 
     def tearDown(self):
         ''' disable after testing 
