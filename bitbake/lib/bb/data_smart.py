@@ -566,7 +566,7 @@ class DataSmart(MutableMapping):
                 if len(shortvar) == 0:
                     override = None
 
-    def getVar(self, var, expand=False, noweakdefault=False, parsing=False):
+    def getVar(self, var, expand, noweakdefault=False, parsing=False):
         return self.getVarFlag(var, "_content", expand, noweakdefault, parsing)
 
     def renameVar(self, key, newkey, **loginfo):
@@ -663,7 +663,7 @@ class DataSmart(MutableMapping):
                 self.dict["__exportlist"]["_content"] = set()
             self.dict["__exportlist"]["_content"].add(var)
 
-    def getVarFlag(self, var, flag, expand=False, noweakdefault=False, parsing=False):
+    def getVarFlag(self, var, flag, expand, noweakdefault=False, parsing=False):
         local_var = self._findVar(var)
         value = None
         if flag == "_content" and var in self.overridedata and not parsing:
@@ -962,7 +962,7 @@ class DataSmart(MutableMapping):
 
             if key == "__BBANONFUNCS":
                 for i in bb_list:
-                    value = d.getVar(i, True) or ""
+                    value = d.getVar(i, False) or ""
                     data.update({i:value})
 
         data_str = str([(k, data[k]) for k in sorted(data.keys())])

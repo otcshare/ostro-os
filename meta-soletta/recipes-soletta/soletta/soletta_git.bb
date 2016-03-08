@@ -7,10 +7,10 @@ SECTION = "examples"
 DEPENDS = "glib-2.0 libpcre pkgconfig python3-jsonschema-native icu curl"
 LICENSE = "BSD"
 LIC_FILES_CHKSUM = "file://COPYING;md5=53eeaddf328b23e2355816e257450eaa"
-PV = "1_beta14+git${SRCPV}"
+PV = "1_beta15+git${SRCPV}"
 
 SRC_URI = "gitsm://github.com/solettaproject/soletta.git;protocol=git"
-SRCREV = "92e554152ef71b28efec142b8ef498701ceea5d9"
+SRCREV = "2bbe44194e563c4f1d6049ce4d5094760d25b21e"
 
 S = "${WORKDIR}/git"
 

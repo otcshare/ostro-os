@@ -324,7 +324,19 @@ do_compile() {
         # cp -r images/j2re-compact3-image/bin ${B}/${BUILD_DIR}/j2re-image/
         # cp -r images/j2re-compact3-image/lib ${B}/${BUILD_DIR}/j2re-image/
 
+
+
+        # arm (beaglebone black) fix. JVM expects different name
+        if [ "x${JDK_ARCH}x" = "xarmx" ]; then
+          install -d -p ${D}/lib
+          ln -sf ld-linux-armhf.so.3 ${D}/lib/ld-linux.so.3
+        fi
+
 }
+
+# Part of arm fix: Add the symlink to the package
+FILES_${PN}_arm_append = " /lib/ld-linux.so.3"
+
 
 do_install() {
 
@@ -573,16 +585,18 @@ OEPATCHES = "\
         file://faulty-nx-emulation.patch;apply=no \
         "
 
-ICEDTEAPATCHES = "\       
+ICEDTEAPATCHES = "\
         file://icedtea-fix-galileo-build.patch;apply=no \
         file://icedtea-fix-zero-mode-undefined-behaviour.patch;apply=no \
         file://icedtea-fix-sdt-search-path.patch;apply=no \
+        file://icedtea-fix-adlc-flags.patch;apply=no \
         "
 
 DISTRIBUTION_PATCHES = "\
         patches/icedtea-fix-galileo-build.patch \
         patches/icedtea-fix-zero-mode-undefined-behaviour.patch \
         patches/icedtea-fix-sdt-search-path.patch \
+        patches/icedtea-fix-adlc-flags.patch \
 	"
 
 export DISTRIBUTION_PATCHES

@@ -7,8 +7,6 @@ PV = "1.25.0+git${SRCPV}"
 S = "${WORKDIR}/git"
 
 SRC_URI = "git://busybox.net/busybox.git \
-           file://get_header_tar.patch \
-           file://busybox-appletlib-dependency.patch \
            file://busybox-udhcpc-no_deconfig.patch \
            file://find-touchscreen.sh \
            file://busybox-cron \
@@ -44,5 +42,6 @@ SRC_URI = "git://busybox.net/busybox.git \
            file://getopts.cfg \
            file://resize.cfg \
 "
+SRC_URI_append_libc-musl = " file://musl.cfg "
 
 DEFAULT_PREFERENCE = "-1"

@@ -64,11 +64,12 @@ PACKAGECONFIG ??= "${@base_contains('DISTRO_FEATURES', 'pam', 'pam', '', d)} \
 
 RDEPENDS_${PN}-base += "${@bb.utils.contains('PACKAGECONFIG', 'lsb', 'lsb', '', d)}"
 
-PACKAGECONFIG[acl] = "--with-acl-support,---without-acl-support,acl"
-PACKAGECONFIG[aio] = "--with-aio-support,---without-aio-support,libaio"
+PACKAGECONFIG[acl] = "--with-acl-support,--without-acl-support,acl"
+PACKAGECONFIG[aio] = "--with-aio-support,--without-aio-support,libaio"
 PACKAGECONFIG[fam] = "--with-fam,--without-fam,gamin"
 PACKAGECONFIG[pam] = "--with-pam --with-pam_smbpass --with-pammodulesdir=${base_libdir}/security,--without-pam --without-pam_smbpass,libpam"
 PACKAGECONFIG[lsb] = ",,lsb"
+PACKAGECONFIG[sysv] = ",,sysvinit"
 PACKAGECONFIG[cups] = "--enable-cups,--disable-cups,cups"
 PACKAGECONFIG[ldap] = "--with-ldap,--without-ldap,openldap"
 PACKAGECONFIG[sasl] = ",,cyrus-sasl"
@@ -107,6 +108,7 @@ EXTRA_OECONF += "--enable-fhs \
                  --with-profiling-data \
                  --with-libiconv=${STAGING_DIR_HOST}${prefix} \
                 "
+DISABLE_STATIC = ""
 
 LDFLAGS += "-Wl,-z,relro,-z,now"
 
@@ -123,9 +125,7 @@ do_install_append() {
         for i in nmb smb winbind; do
             install -m 0644 packaging/systemd/$i.service ${D}${systemd_unitdir}/system
         done
-        sed -e 's,@BASE_BINDIR@,${base_bindir},g' \
-            -e 's,@SBINDIR@,${sbindir},g' \
-            -i ${D}${systemd_unitdir}/system/*.service
+        sed -i 's,\(ExecReload=\).*\(/kill\),\1${base_bindir}\2,' ${D}${systemd_unitdir}/system/*.service
 
 	install -d ${D}${sysconfdir}/tmpfiles.d
         install -m644 packaging/systemd/samba.conf.tmp ${D}${sysconfdir}/tmpfiles.d/samba.conf

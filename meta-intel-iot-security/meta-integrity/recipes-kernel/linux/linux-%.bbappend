@@ -4,8 +4,26 @@ IMA_FILESEXTRAPATHS_yes := "${THISDIR}/linux:"
 IMA_FILESEXTRAPATHS_no := ""
 FILESEXTRAPATHS_prepend := "${IMA_FILESEXTRAPATHS_${IMA_ENABLED_HERE}}"
 
-# Kernel config fragment enabling IMA/EVM
-IMA_EVM_CFG_yes = " file://ima.cfg"
+# This patch is necessary to unpack archives with security.ima xattr
+# such that security.ima is taken from the archive. If the policy
+# allows hashing, unpatched kernels (at least up to 4.3) will replace
+# a signed hash in security.ima with a locally computed hash.
+#
+# Note that only bsdtar/libarchive are known to work; GNU tar sets
+# the security.ima on an empty file and the tries re-opening it for
+# writing its content, which then fails due to the IMA hash mismatch.
+#
+# Patches are potentially kernel version specific. Only some tested kernel versions
+# are supported here. Currently they all work with the same patch file, though.
+IMA_EVM_SETATTR_PATCH_4.1.18 = "file://0001-ima-fix-ima_inode_post_setattr.patch"
+IMA_EVM_SETATTR_PATCH_4.1.15 = "file://0001-ima-fix-ima_inode_post_setattr.patch"
+IMA_EVM_SETATTR_PATCH_4.4.3 = "file://0001-ima-fix-ima_inode_post_setattr.patch"
+
+# Kernel config fragment enabling IMA/EVM and (where necessary and possible)
+# also patching the kernel.
+IMA_EVM_CFG_yes = " file://ima.cfg \
+                    ${@ d.getVar('IMA_EVM_SETATTR_PATCH_' + (d.getVar('LINUX_VERSION', True) or ''), True) or ''} \
+                  "
 IMA_EVM_CFG_no = ""
 SRC_URI_append = "${IMA_EVM_CFG_${IMA_ENABLED_HERE}}"
 

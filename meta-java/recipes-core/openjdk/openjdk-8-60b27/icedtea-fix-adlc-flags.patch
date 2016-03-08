@@ -1,0 +1,33 @@
+
+adlc is built using the native toolchain, not the crosscompiler. It however
+was incorrectly using flags meant for the crosscompiler.
+
+Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
+---
+ openjdk/hotspot/make/linux/makefiles/adlc.make | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git openjdk/hotspot/make/linux/makefiles/adlc.make openjdk/hotspot/make/linux/makefiles/adlc.make
+index 8a86691..2789c03 100644
+--- openjdk/hotspot/make/linux/makefiles/adlc.make
++++ openjdk/hotspot/make/linux/makefiles/adlc.make
+@@ -28,6 +28,16 @@
+ 
+ include $(GAMMADIR)/make/$(Platform_os_family)/makefiles/rules.make
+ 
++# Yocto specific fix - remove target machine flags and replace them with
++# build machine flags, as this part is built using the native toolchain
++CXXFLAGS:=$(filter-out $(TARGET_CXXFLAGS),$(CXXFLAGS))
++CFLAGS:=$(filter-out $(TARGET_CFLAGS),$(CFLAGS))
++
++CXXFLAGS += $(BUILD_CXXFLAGS)
++CFLAGS += $(BUILD_CFLAGS)
++
++
++
+ # #########################################################################
+ 
+ # OUTDIR must be the same as AD_Dir = $(GENERATED)/adfiles in top.make:
+-- 
+1.9.1
+
