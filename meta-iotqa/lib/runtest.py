@@ -19,13 +19,65 @@ sys.path.append(os.path.join(BASEDIR, "oeqa"))
 from optparse import OptionParser
 from oeqa.oetest import oeTest
 from oeqa.oetest import oeRuntimeTest
-from oeqa.oetest import runTests
-from oeqa.runexported import FakeTarget
-from oeqa.runexported import MyDataDict
-from oeqa.runexported import TestContext
+from oeqa.oetest import TestContext as OETestContext
 from oeqa.utils.sshcontrol import SSHControl
 from oeqa.utils.decorators import gettag
 
+class FakeTarget(object):
+    def __init__(self, d):
+        self.connection = None
+        self.ip = None
+        self.server_ip = None
+        self.datetime = time.strftime('%Y%m%d%H%M%S',time.gmtime())
+        self.testdir = d.getVar("TEST_LOG_DIR", True)
+        self.pn = d.getVar("PN", True)
+
+    def exportStart(self):
+        self.sshlog = os.path.join(self.testdir, "ssh_target_log.%s" % self.datetime)
+        sshloglink = os.path.join(self.testdir, "ssh_target_log")
+        if os.path.exists(sshloglink):
+            os.remove(sshloglink)
+        os.symlink(self.sshlog, sshloglink)
+        print("SSH log file: %s" %  self.sshlog)
+        self.connection = SSHControl(self.ip, logfile=self.sshlog)
+
+    def run(self, cmd, timeout=None):
+        return self.connection.run(cmd, timeout)
+
+    def copy_to(self, localpath, remotepath):
+        return self.connection.copy_to(localpath, remotepath)
+
+    def copy_from(self, remotepath, localpath):
+        return self.connection.copy_from(remotepath, localpath)
+
+
+class MyDataDict(dict):
+    def getVar(self, key, unused = None):
+        return self.get(key, "")
+
+class TestContext(object):
+    def __init__(self):
+        self.d = None
+        self.target = None
+
+class RuntestTestContext(OETestContext):
+    def __init__(self, tc):
+        d = tc.d
+        super(RuntestTestContext, self).__init__(d)
+        self.pkgmanifest = tc.pkgmanifest
+        self.target = tc.target
+        self.tagexp = tc.tagexp
+        self.imagefeatures = tc.imagefeatures
+        self.distrofeatures = tc.distrofeatures
+    def _get_test_suites(self):
+        return self.d.getVar("testslist", True)
+    def _get_tests_list(self, bbpath):
+        return self.testsuites
+    def _get_test_suites_required(self):
+        return self.testsuites
+    def loadTests(self):
+        super(RuntestTestContext, self).loadTests()
+        setattr(oeRuntimeTest, "pscmd", "ps -ef" if oeTest.hasPackage("procps") else "ps")
 try:
     import simplejson as json
 except ImportError:
@@ -136,6 +188,7 @@ def main():
     d["BUILD_ARCH"] = "x86_64" if not navarch else navarch
     if options.nativearch:
         d["BUILD_ARCH"] = options.nativearch
+    d["testslist"] = tc.testslist
     setattr(tc, "d", d)
 
     #inject build package manifest
@@ -155,7 +208,9 @@ def main():
 
     target.exportStart()
     setattr(tc, "tagexp", options.tag)
-    runTests(tc)
+    runner = RuntestTestContext(tc)
+    runner.loadTests()
+    runner.runTests()
 
     return 0
 

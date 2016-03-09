@@ -21,14 +21,13 @@
 
 from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
-from orm.models import CustomImageRecipe, Package, Build, LogMessage, Task
-from orm.models import ProjectTarget
-from django.db.models import Q, Max, Count, When, Case, Value, IntegerField
+from orm.models import CustomImageRecipe, Package, Target, Build, LogMessage, Task
+from orm.models import CustomImagePackage, ProjectTarget
+from django.db.models import Q, Max, Sum, Count, When, Case, Value, IntegerField
 from django.conf.urls import url
 from django.core.urlresolvers import reverse, resolve
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-import itertools
 
 from toastergui.tablefilter import TableFilter
 from toastergui.tablefilter import TableFilterActionToggle
@@ -184,8 +183,8 @@ class LayersTable(ToasterTable):
                         static_data_name="dependencies",
                         static_data_template=deps_template)
 
-        self.add_column(title="Add | Delete",
-                        help_text="Add or delete layers to / from your project",
+        self.add_column(title="Add | Remove",
+                        help_text="Add or remove layers to / from your project",
                         hideable=False,
                         filter_name="in_current_project",
                         static_data_name="add-del-layers",
@@ -483,8 +482,8 @@ class CustomImagesTable(ToasterTable):
     def get_context_data(self, **kwargs):
         context = super(CustomImagesTable, self).get_context_data(**kwargs)
         project = Project.objects.get(pk=kwargs['pid'])
+        # TODO put project into the ToasterTable base class
         context['project'] = project
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
         return context
 
     def setup_queryset(self, *args, **kwargs):
@@ -502,22 +501,37 @@ class CustomImagesTable(ToasterTable):
 
         self.add_column(title="Custom image",
                         hideable=False,
+                        orderable=True,
+                        field_name="name",
                         static_data_name="name",
                         static_data_template=name_link_template)
 
-        self.add_column(title="Recipe file",
-                        static_data_name='recipe_file',
-                        static_data_template='')
+        recipe_file_template = '''
+        <code>{{data.name}}_{{data.version}}.bb</code>
+        <a href="{% url 'customrecipedownload' extra.pid data.pk %}">
+        <i class="icon-download-alt" data-original-title="Download recipe
+        file"></i>
+        </a>'''
 
-        approx_packages_template = '<a href="#imagedetails">{{data.packages.all|length}}</a>'
+        self.add_column(title="Recipe file",
+                        static_data_name='recipe_file_download',
+                        static_data_template=recipe_file_template)
+
+        approx_packages_template = '''
+        <a href="{% url 'customrecipe' extra.pid data.id %}">
+          {{data.get_all_packages.count}}
+        </a>'''
+
         self.add_column(title="Approx packages",
                         static_data_name='approx_packages',
                         static_data_template=approx_packages_template)
 
 
-        build_btn_template = '''<button data-recipe-name="{{data.name}}"
+        build_btn_template = '''
+        <button data-recipe-name="{{data.name}}"
         class="btn btn-block build-recipe-btn" style="margin-top: 5px;" >
-        Build</button>'''
+        Build
+        </button>'''
 
         self.add_column(title="Build",
                         hideable=False,
@@ -535,17 +549,27 @@ class ImageRecipesTable(RecipesTable):
     def setup_queryset(self, *args, **kwargs):
         super(ImageRecipesTable, self).setup_queryset(*args, **kwargs)
 
-        self.queryset = self.queryset.filter(is_image=True)
+        custom_image_recipes = CustomImageRecipe.objects.filter(
+                project=kwargs['pid'])
+        self.queryset = self.queryset.filter(
+                Q(is_image=True) & ~Q(pk__in=custom_image_recipes))
         self.queryset = self.queryset.order_by(self.default_orderby)
 
 
     def setup_columns(self, *args, **kwargs):
+
+        name_link_template = '''
+        <a href="{% url 'recipedetails' extra.pid data.pk %}">{{data.name}}</a>
+        '''
+
         self.add_column(title="Image recipe",
                         help_text="When you build an image recipe, you get an "
                                   "image: a root file system you can"
                                   "deploy to a machine",
                         hideable=False,
                         orderable=True,
+                        static_data_name="name",
+                        static_data_template=name_link_template,
                         field_name="name")
 
         super(ImageRecipesTable, self).setup_columns(*args, **kwargs)
@@ -561,16 +585,26 @@ class NewCustomImagesTable(ImageRecipesTable):
 
     def setup_queryset(self, *args, **kwargs):
         super(ImageRecipesTable, self).setup_queryset(*args, **kwargs)
+        prj = Project.objects.get(pk = kwargs['pid'])
+        self.static_context_extra['current_layers'] = \
+                prj.get_project_layer_versions(pk=True)
 
         self.queryset = self.queryset.filter(is_image=True)
 
     def setup_columns(self, *args, **kwargs):
+
+        name_link_template = '''
+        <a href="{% url 'recipedetails' extra.pid data.pk %}">{{data.name}}</a>
+        '''
+
         self.add_column(title="Image recipe",
                         help_text="When you build an image recipe, you get an "
                                   "image: a root file system you can"
                                   "deploy to a machine",
                         hideable=False,
                         orderable=True,
+                        static_data_name="name",
+                        static_data_template=name_link_template,
                         field_name="name")
 
         super(ImageRecipesTable, self).setup_columns(*args, **kwargs)
@@ -593,6 +627,7 @@ class SoftwareRecipesTable(RecipesTable):
         super(SoftwareRecipesTable, self).setup_queryset(*args, **kwargs)
 
         self.queryset = self.queryset.filter(is_image=False)
+        self.queryset = self.queryset.order_by(self.default_orderby)
 
 
     def setup_columns(self, *args, **kwargs):
@@ -609,33 +644,60 @@ class SoftwareRecipesTable(RecipesTable):
 
         self.add_column(**RecipesTable.build_col)
 
-
-class SelectPackagesTable(ToasterTable):
-    """ Table to display the packages to add and remove from an image """
+class PackagesTable(ToasterTable):
+    """ Table to display the packages in a recipe from it's last successful
+    build"""
 
     def __init__(self, *args, **kwargs):
-        super(SelectPackagesTable, self).__init__(*args, **kwargs)
-        self.title = "Add | Remove packages"
+        super(PackagesTable, self).__init__(*args, **kwargs)
+        self.title = "Packages included"
+        self.packages = None
+        self.default_orderby = "name"
+
+    def create_package_list(self, recipe, project_id):
+        """Creates a list of packages for the specified recipe by looking for
+        the last SUCCEEDED build of ther recipe"""
+
+        target = Target.objects.filter(Q(target=recipe.name) &
+                                       Q(build__project_id=project_id) &
+                                       Q(build__outcome=Build.SUCCEEDED)
+                                      ).last()
+
+        if target:
+            pkgs = target.target_installed_package_set.values_list('package',
+                                                                   flat=True)
+            return Package.objects.filter(pk__in=pkgs)
+
+        # Target/recipe never successfully built so empty queryset
+        return Package.objects.none()
+
+    def get_context_data(self, **kwargs):
+        """Context for rendering the sidebar and other items on the recipe
+        details page """
+        context = super(PackagesTable, self).get_context_data(**kwargs)
+
+        recipe = Recipe.objects.get(pk=kwargs['recipe_id'])
+        project = Project.objects.get(pk=kwargs['pid'])
+
+        in_project = (recipe.layer_version.pk in
+                      project.get_project_layer_versions(pk=True))
+
+        packages = self.create_package_list(recipe, project.pk)
+
+        context.update({'project': project,
+                        'recipe' : recipe,
+                        'packages': packages,
+                        'approx_pkg_size' : packages.aggregate(Sum('size')),
+                        'in_project' : in_project,
+                       })
+
+        return context
 
     def setup_queryset(self, *args, **kwargs):
-        cust_recipe = CustomImageRecipe.objects.get(pk=kwargs['recipeid'])
-        prj = Project.objects.get(pk = kwargs['pid'])
+        recipe = Recipe.objects.get(pk=kwargs['recipe_id'])
 
-        current_packages = cust_recipe.packages.all()
-
-        # Get all the packages that are in the custom image
-        # Get all the packages built by builds in the current project
-        # but not those ones that are already in the custom image
-        self.queryset = Package.objects.filter(
-                            Q(pk__in=current_packages) |
-                            (Q(build__project=prj) &
-                            ~Q(name__in=current_packages.values_list('name'))))
-
+        self.queryset = self.create_package_list(recipe, kwargs['pid'])
         self.queryset = self.queryset.order_by('name')
-
-        self.static_context_extra['recipe_id'] = kwargs['recipeid']
-        self.static_context_extra['current_packages'] = \
-                cust_recipe.packages.values_list('pk', flat=True)
 
     def setup_columns(self, *args, **kwargs):
         self.add_column(title="Package",
@@ -644,21 +706,109 @@ class SelectPackagesTable(ToasterTable):
                         field_name="name")
 
         self.add_column(title="Package Version",
-                        field_name="version")
+                        field_name="version",
+                        hideable=False)
 
         self.add_column(title="Approx Size",
                         orderable=True,
                         static_data_name="size",
                         static_data_template="{% load projecttags %} \
                         {{data.size|filtered_filesizeformat}}")
-        self.add_column(title="summary",
-                        field_name="summary")
+
+        self.add_column(title="License",
+                        field_name="license",
+                        orderable=True)
+
+
+        self.add_column(title="Dependencies",
+                        static_data_name="dependencies",
+                        static_data_template='\
+                        {% include "snippets/pkg_dependencies_popover.html" %}')
+
+        self.add_column(title="Recipe",
+                        field_name="recipe__name",
+                        orderable=True,
+                        hidden=True)
+
+        self.add_column(title="Recipe version",
+                        field_name="recipe__version",
+                        hidden=True)
+
+
+class SelectPackagesTable(PackagesTable):
+    """ Table to display the packages to add and remove from an image """
+
+    def __init__(self, *args, **kwargs):
+        super(SelectPackagesTable, self).__init__(*args, **kwargs)
+        self.title = "Add | Remove packages"
+
+    def setup_queryset(self, *args, **kwargs):
+        self.cust_recipe =\
+            CustomImageRecipe.objects.get(pk=kwargs['custrecipeid'])
+        prj = Project.objects.get(pk = kwargs['pid'])
+
+        current_packages = self.cust_recipe.get_all_packages()
+
+        current_recipes = prj.get_available_recipes()
+
+        # only show packages where recipes->layers are in the project
+        self.queryset = CustomImagePackage.objects.filter(
+                ~Q(recipe=None) &
+                Q(recipe__in=current_recipes))
+
+        self.queryset = self.queryset.order_by('name')
+
+        self.static_context_extra['recipe_id'] = kwargs['custrecipeid']
+        self.static_context_extra['current_packages'] = \
+                current_packages.values_list('pk', flat=True)
+
+    def get_context_data(self, **kwargs):
+        # to reuse the Super class map the custrecipeid to the recipe_id
+        kwargs['recipe_id'] = kwargs['custrecipeid']
+        context = super(SelectPackagesTable, self).get_context_data(**kwargs)
+        custom_recipe = \
+            CustomImageRecipe.objects.get(pk=kwargs['custrecipeid'])
+
+        context['recipe'] = custom_recipe
+        context['approx_pkg_size'] = \
+                        custom_recipe.get_all_packages().aggregate(Sum('size'))
+        return context
+
+
+    def setup_columns(self, *args, **kwargs):
+        super(SelectPackagesTable, self).setup_columns(*args, **kwargs)
+
+        add_remove_template = '{% include "pkg_add_rm_btn.html" %}'
 
         self.add_column(title="Add | Remove",
+                        hideable=False,
                         help_text="Use the add and remove buttons to modify "
-                        "the package content of you custom image",
+                        "the package content of your custom image",
                         static_data_name="add_rm_pkg_btn",
-                        static_data_template='{% include "pkg_add_rm_btn.html" %}')
+                        static_data_template=add_remove_template,
+                        filter_name='in_current_image_filter')
+
+    def setup_filters(self, *args, **kwargs):
+        in_current_image_filter = TableFilter(
+            'in_current_image_filter',
+            'Filter by added packages'
+        )
+
+        in_image_action = TableFilterActionToggle(
+            'in_image',
+            'Packages in %s' % self.cust_recipe.name,
+            Q(pk__in=self.static_context_extra['current_packages'])
+        )
+
+        not_in_image_action = TableFilterActionToggle(
+            'not_in_image',
+            'Packages not added to %s' % self.cust_recipe.name,
+            ~Q(pk__in=self.static_context_extra['current_packages'])
+        )
+
+        in_current_image_filter.add_action(in_image_action)
+        in_current_image_filter.add_action(not_in_image_action)
+        self.add_filter(in_current_image_filter)
 
 class ProjectsTable(ToasterTable):
     """Table of projects in Toaster"""
@@ -913,17 +1063,9 @@ class BuildsTable(ToasterTable):
     def get_context_data(self, **kwargs):
         context = super(BuildsTable, self).get_context_data(**kwargs)
 
-        # for the latest builds section
-        builds = self.get_builds()
+        # should be set in subclasses
+        context['mru'] = []
 
-        finished_criteria = Q(outcome=Build.SUCCEEDED) | Q(outcome=Build.FAILED)
-
-        latest_builds = itertools.chain(
-            builds.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
-            builds.filter(finished_criteria).order_by("-completed_on")[:3]
-        )
-
-        context['mru'] = list(latest_builds)
         context['mrb_type'] = self.mrb_type
 
         return context
@@ -1334,6 +1476,12 @@ class AllBuildsTable(BuildsTable):
                         static_data_name='project',
                         static_data_template=project_template)
 
+    def get_context_data(self, **kwargs):
+        """ Get all builds for the recent builds area """
+        context = super(AllBuildsTable, self).get_context_data(**kwargs)
+        context['mru'] = Build.get_recent()
+        return context
+
 class ProjectBuildsTable(BuildsTable):
     """
     Builds page for a single project; a BuildsTable, with the queryset
@@ -1374,18 +1522,16 @@ class ProjectBuildsTable(BuildsTable):
 
     def get_context_data(self, **kwargs):
         """
+        Get recent builds for this project, and the project itself
+
         NOTE: self.project_id must be set before calling super(),
         as it's used in get_context_data()
         """
         self.project_id = kwargs['pid']
-
         context = super(ProjectBuildsTable, self).get_context_data(**kwargs)
-        context['project'] = Project.objects.get(pk=self.project_id)
-
-        return context
-
-    def get_builds(self):
-        """ override: only return builds for the relevant project """
 
         project = Project.objects.get(pk=self.project_id)
-        return Build.objects.filter(project=project)
+        context['mru'] = Build.get_recent(project)
+        context['project'] = project
+
+        return context

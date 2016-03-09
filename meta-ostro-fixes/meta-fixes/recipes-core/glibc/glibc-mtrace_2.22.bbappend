@@ -1,1 +1,0 @@
-glibc_2.22.bbappend

@@ -1,0 +1,40 @@
+From accc6c251cafdb3332db946d543952e2cf0698cd Mon Sep 17 00:00:00 2001
+From: Anuj Mittal <anujx.mittal@intel.com>
+Date: Sat, 20 Jun 2015 00:31:31 +0800
+Subject: [PATCH] openssl_qat: pass oe_ldflags to linker
+
+Upstream-Status: Inappropriate [open-embedded]
+
+(Taken from meta/recipes-connectivity/openssl/openssl/oe-ldflags.patch
+ rev: 5dd1d7566964c90d33c0c44f569d9336fb0724ce)
+
+Signed-off-by: Anuj Mittal <anujx.mittal@intel.com>
+---
+ Makefile.shared |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile.shared b/Makefile.shared
+index e753f44..fcdcb9e 100644
+--- a/Makefile.shared
++++ b/Makefile.shared
+@@ -92,7 +92,7 @@ CALC_VERSIONS=	\
+ LINK_APP=	\
+   ( $(SET_X);   \
+     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
+-    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS)}"; \
++    LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$(OE_LDFLAGS) $${LDFLAGS:-$(CFLAGS)}"; \
+     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
+     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+@@ -102,7 +102,7 @@ LINK_SO=	\
+   ( $(SET_X);   \
+     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
+     SHAREDCMD="$${SHAREDCMD:-$(CC)}"; \
+-    SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
++    SHAREDFLAGS="$(OE_LDFLAGS) $${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
+     LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t' -e d | uniq`; \
+     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+-- 
+1.7.9.5
+

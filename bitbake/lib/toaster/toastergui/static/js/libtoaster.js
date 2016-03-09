@@ -316,7 +316,7 @@ var libtoaster = (function (){
     } else if (layerDepsList.length === 0 && add === true) {
       alertMsg = $("<span>You have added <strong>1</strong> layer to your project: <a id=\"layer-affected-name\"></a></span></span>");
     } else if (add === false) {
-      alertMsg = $("<span>You have deleted <strong>1</strong> layer from your project: <a id=\"layer-affected-name\"></a></span>");
+      alertMsg = $("<span>You have removed <strong>1</strong> layer from your project: <a id=\"layer-affected-name\"></a></span>");
     }
 
     alertMsg.children("#layer-affected-name").text(layer.name);
@@ -330,6 +330,32 @@ var libtoaster = (function (){
 
     alertMsg.html(message);
     $("#change-notification, #change-notification *").fadeIn();
+  }
+
+  function _createCustomRecipe(name, baseRecipeId, doneCb){
+    var data = {
+      'name' : name,
+      'project' : libtoaster.ctx.projectId,
+      'base' : baseRecipeId,
+    };
+
+    $.ajax({
+        type: "POST",
+        url: libtoaster.ctx.xhrCustomRecipeUrl,
+        data: data,
+        headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
+        success: function (ret) {
+          if (doneCb){
+            doneCb(ret);
+          } else if (ret.error !== "ok") {
+            console.warn(ret.error);
+          }
+        },
+        error: function (ret) {
+          console.warn("Call failed");
+          console.warn(ret);
+        }
+    });
   }
 
 
@@ -347,6 +373,7 @@ var libtoaster = (function (){
     addRmLayer : _addRmLayer,
     makeLayerAddRmAlertMsg : _makeLayerAddRmAlertMsg,
     showChangeNotification : _showChangeNotification,
+    createCustomRecipe: _createCustomRecipe,
   };
 })();
 
@@ -443,8 +470,12 @@ $(document).ready(function() {
         $('.tooltip').hide();
     });
 
-    // enable help information tooltip
-    $(".get-help").tooltip({container:'body', html:true, delay:{show:300}});
+    /* Initialise bootstrap tooltips */
+    $(".get-help, [data-toggle=tooltip]").tooltip({
+      container : 'body',
+      html : true,
+      delay: { show : 300 }
+    });
 
     // show help bubble only on hover inside tables
     $(".hover-help").css("visibility","hidden");
