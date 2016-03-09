@@ -8,6 +8,9 @@
 # XSERVER subcomponents, used to build the XSERVER variable
 #
 
+PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
+PREFERRED_VERSION_linux-yocto ?= "4.4%"
+
 # for Xserver older than 1.13.0
 OLD_XSERVER_X86_EXT = "xserver-xorg-extension-dri \
            xserver-xorg-extension-dri2 \
@@ -26,4 +29,4 @@ MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = "${@bb.utils.contains('MACHINE_FEATURE
 
 # for the early boot time kernel microcode loading support,
 # merge the microcode data in the final initrd image.
-INITRD_prepend = "${@bb.utils.contains('MACHINE_FEATURES', 'intel-ucode', '${DEPLOY_DIR_IMAGE}/microcode.cpio ', '', d)}"
+INITRD_LIVE_prepend = "${@bb.utils.contains('MACHINE_FEATURES', 'intel-ucode', '${DEPLOY_DIR_IMAGE}/microcode.cpio ', '', d)}"

@@ -239,24 +239,42 @@ class LocalhostBEController(BuildEnvironmentController):
                 with open(config, "w") as conf:
                     conf.write('BBPATH .= ":${LAYERDIR}"\nBBFILES += "${LAYERDIR}/recipes/*.bb"\n')
 
+            # Update the Layer_Version dirpath that has our base_recipe in
+            # to be able to read the base recipe to then  generate the
+            # custom recipe.
+            br_layer_base_recipe = layers.get(
+                layer_version=customrecipe.base_recipe.layer_version)
+
+            br_layer_base_dirpath = \
+                    os.path.join(self.be.sourcedir,
+                                 self.getGitCloneDirectory(
+                                     br_layer_base_recipe.giturl,
+                                     br_layer_base_recipe.commit),
+                                 customrecipe.base_recipe.layer_version.dirpath
+                                )
+
+            customrecipe.base_recipe.layer_version.dirpath = \
+                         br_layer_base_dirpath
+
+            customrecipe.base_recipe.layer_version.save()
+
             # create recipe
-            recipe = os.path.join(layerpath, "recipes", "%s.bb" % target.target)
-            with open(recipe, "w") as recipef:
-                recipef.write("require %s\n" % customrecipe.base_recipe.recipe.file_path)
-                packages = [pkg.name for pkg in customrecipe.packages.all()]
-                if packages:
-                    recipef.write('IMAGE_INSTALL = "%s"\n' % ' '.join(packages))
+            recipe_path = \
+                    os.path.join(layerpath, "recipes", "%s.bb" % target.target)
+            with open(recipe_path, "w") as recipef:
+                recipef.write(customrecipe.generate_recipe_file_contents())
+
+            # Update the layer and recipe objects
+            customrecipe.layer_version.dirpath = layerpath
+            customrecipe.layer_version.save()
+
+            customrecipe.file_path = recipe_path
+            customrecipe.save()
 
             # create *Layer* objects needed for build machinery to work
-            layer = Layer.objects.get_or_create(name="Toaster Custom layer",
-                                                summary="Layer for custom recipes",
-                                                vcs_url="file://%s" % layerpath)[0]
-            breq = target.req
-            lver = Layer_Version.objects.get_or_create(project=breq.project, layer=layer,
-                                                       dirpath=layerpath, build=breq.build)[0]
-            ProjectLayer.objects.get_or_create(project=breq.project, layercommit=lver,
-                                               optional=False)
-            BRLayer.objects.get_or_create(req=breq, name=layer.name, dirpath=layerpath,
+            BRLayer.objects.get_or_create(req=target.req,
+                                          name=layer.name,
+                                          dirpath=layerpath,
                                           giturl="file://%s" % layerpath)
         if os.path.isdir(layerpath):
             layerlist.append(layerpath)
@@ -290,12 +308,17 @@ class LocalhostBEController(BuildEnvironmentController):
         # get the bb server running with the build req id and build env id
         bbctrl = self.getBBController()
 
-        # set variables
+        # set variables; TOASTER_BRBE is not set on the server, as this
+        # causes events from command-line builds to be attached to the last
+        # Toaster-triggered build; instead, TOASTER_BRBE is fired as an event so
+        # that toasterui can set it on the buildinfohelper;
+        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=9021
         for var in variables:
-            bbctrl.setVariable(var.name, var.value)
             if var.name == 'TOASTER_BRBE':
                 bbctrl.triggerEvent('bb.event.MetadataEvent("SetBRBE", "%s")' \
                                      % var.value)
+            else:
+                bbctrl.setVariable(var.name, var.value)
 
         # Add 'toaster' and 'buildhistory' to INHERIT variable
         inherit = {item.strip() for item in bbctrl.getVariable('INHERIT').split()}

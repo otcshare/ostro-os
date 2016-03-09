@@ -24,6 +24,7 @@ from oeqa.utils.decorators import tag
 from apprt_nodejs_runtime_log_parser import print_test_results
 from apprt_nodejs_runtime_log_parser import parse_test_cases
 from apprt_nodejs_runtime_log_parser import write_test_results
+from nodejs_remove_blacklist_tests import remove_blacklist
 
 
 def get_nodejs_repo(
@@ -196,6 +197,9 @@ def choose_test_files_and_tar(local_nodejs_path, node_version):
         os.unlink('%s.tar.gz' % node_test_dir)
 
     # The 3 directories are certain to be used
+    sys.stdout.write('Removing blacklist tests')
+    sys.stdout.flush()
+    remove_blacklist(apprt_files_dir, node_version)
     copy_dirs = ['tools', 'test', 'deps/v8/tools']
     for single_dir in copy_dirs:
         shutil.copytree(os.path.join(local_nodejs_path, single_dir),
@@ -425,17 +429,19 @@ class NodejsRuntimeTest(oeRuntimeTest):
 
         test_modules = self.config.get('test', 'specified_modules')
         (status, output) = self.target.run(
-            'cd /tmp/node_%s_test/; python tools/test.py %s' %
+            'cd /tmp/node_%s_test/; python tools/test.py %s -v' %
             (self.target_node_version, test_modules))
 
         output = output.strip().split('\r')
-        print_test_results(parse_test_cases(output))
+        print_test_results(parse_test_cases(output, self.target_node_version))
         write_test_results(
             output,
             start,
             self.config.get(
                 'results',
-                'formatted_result_file'))
+                'formatted_result_file'),
+                self.target_node_version
+            )
 
 #        statistics = output[-1]
 #        sys.stdout.write(statistics + '\n')

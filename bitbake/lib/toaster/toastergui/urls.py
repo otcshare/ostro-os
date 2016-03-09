@@ -109,12 +109,9 @@ urlpatterns = patterns('toastergui.views',
             tables.NewCustomImagesTable.as_view(template_name="newcustomimage.html"),
             name="newcustomimage"),
 
-
         url(r'^project/(?P<pid>\d+)/layers/$',
             tables.LayersTable.as_view(template_name="generic-toastertable-page.html"),
             name="projectlayers"),
-
-
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$',
             'layerdetails', name='layerdetails'),
@@ -132,15 +129,21 @@ urlpatterns = patterns('toastergui.views',
             name=tables.LayerMachinesTable.__name__.lower()),
 
 
-        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipeid>\d+)/selectpackages/$',
-            tables.SelectPackagesTable.as_view(template_name="generic-toastertable-page.html"), name="recipeselectpackages"),
+        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<custrecipeid>\d+)/selectpackages/$',
+            tables.SelectPackagesTable.as_view(), name="recipeselectpackages"),
 
 
-        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipe_id>\d+)$',
-            'customrecipe',
+        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<custrecipeid>\d+)$',
+            tables.SelectPackagesTable.as_view(template_name="customrecipe.html"),
             name="customrecipe"),
 
+        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipe_id>\d+)/download$',
+            'customrecipe_download',
+            name="customrecipedownload"),
 
+        url(r'^project/(?P<pid>\d+)/recipe/(?P<recipe_id>\d+)$',
+            tables.PackagesTable.as_view(template_name="recipedetails.html"),
+            name="recipedetails"),
 
         # typeahead api end points
         url(r'^xhr_typeahead/(?P<pid>\d+)/layers$',
@@ -168,6 +171,10 @@ urlpatterns = patterns('toastergui.views',
         # image customisation functionality
         url(r'^xhr_customrecipe/(?P<recipe_id>\d+)/packages/(?P<package_id>\d+|)$',
             'xhr_customrecipe_packages', name='xhr_customrecipe_packages'),
+
+        url(r'^xhr_customrecipe/(?P<recipe_id>\d+)/packages/$',
+            'xhr_customrecipe_packages', name='xhr_customrecipe_packages'),
+
         url(r'^xhr_customrecipe/(?P<recipe_id>\d+)$', 'xhr_customrecipe_id',
             name='xhr_customrecipe_id'),
         url(r'^xhr_customrecipe/', 'xhr_customrecipe',

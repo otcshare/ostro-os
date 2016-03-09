@@ -1,0 +1,113 @@
+From a5068bd456c60b5611494dff2db2093ad6693e6a Mon Sep 17 00:00:00 2001
+From: Anuj Mittal <anujx.mittal@intel.com>
+Date: Thu, 9 Jul 2015 23:58:34 +0800
+Subject: [PATCH] openssl_qat: add openssl async specific symbols
+
+Upstream-Status: Inappropriate [Configuration]
+
+Signed-off-by: Anuj Mittal <anujx.mittal@intel.com>
+---
+ engines/ccgost/openssl.ld     |    8 ++++++++
+ engines/openssl.ld            |    9 +++++++++
+ engines/qat_engine/openssl.ld |   19 +++++++++++++++++++
+ openssl.ld                    |   28 ++++++++++++++++++++++++++++
+ 4 files changed, 64 insertions(+)
+ create mode 100644 engines/qat_engine/openssl.ld
+
+diff --git a/engines/ccgost/openssl.ld b/engines/ccgost/openssl.ld
+index 010fd6f..edf9d87 100644
+--- a/engines/ccgost/openssl.ld
++++ b/engines/ccgost/openssl.ld
+@@ -8,3 +8,11 @@ OPENSSL_1.0.0 {
+                *;
+ };
+ 
++OPENSSL_1.0.1async {
++       global:
++               qaeCryptoMemV2P;
++               qaeCryptoAtFork;
++               qaeCryptoMemAlloc;
++               qaeCryptoMemRealloc;
++               qaeCryptoMemFree;
++} OPENSSL_1.0.0;
+diff --git a/engines/openssl.ld b/engines/openssl.ld
+index 010fd6f..3d56887 100644
+--- a/engines/openssl.ld
++++ b/engines/openssl.ld
+@@ -8,3 +8,12 @@ OPENSSL_1.0.0 {
+                *;
+ };
+ 
++OPENSSL_1.0.1async {
++       global:
++               qaeCryptoMemV2P;
++               qaeCryptoAtFork;
++               qaeCryptoMemAlloc;
++               qaeCryptoMemRealloc;
++               qaeCryptoMemFree;
++} OPENSSL_1.0.0;
++
+diff --git a/engines/qat_engine/openssl.ld b/engines/qat_engine/openssl.ld
+new file mode 100644
+index 0000000..bdd927d
+--- /dev/null
++++ b/engines/qat_engine/openssl.ld
+@@ -0,0 +1,19 @@
++OPENSSL_1.0.0 {
++        global:
++                bind_engine;
++                v_check;
++                OPENSSL_init;
++                OPENSSL_finish;
++        local:
++                *;
++};
++
++OPENSSL_1.0.1async {
++        global:
++                qaeCryptoMemV2P;
++                qaeCryptoAtFork;
++                qaeCryptoMemAlloc;
++                qaeCryptoMemRealloc;
++                qaeCryptoMemFree;
++} OPENSSL_1.0.0;
++
+diff --git a/openssl.ld b/openssl.ld
+index 0c0ed28..afa9349 100644
+--- a/openssl.ld
++++ b/openssl.ld
+@@ -4618,3 +4618,31 @@ OPENSSL_1.0.1d {
+                CRYPTO_memcmp;
+ } OPENSSL_1.0.1;
+ 
++OPENSSL_1.0.1async {
++       global:
++               ECDH_compute_key_asynch;
++               ECDH_generate_key_asynch;
++               ECDH_generate_key;
++               DH_compute_key_asynch;
++               DH_generate_key_asynch;
++               ECDSA_verify_asynch;
++               ECDSA_sign_asynch;
++               DSA_verify_asynch;
++               DSA_sign_asynch;
++               RSA_public_decrypt_asynch;
++               RSA_private_encrypt_asynch;
++               EVP_MD_CTX_ctrl_ex;
++               EVP_CIPHER_CTX_ctrl_ex;
++               qaeCryptoMemV2P;
++               qaeCryptoAtFork;
++               SSL_CTX_set_asynch_completion_callback;
++               RSA_private_decrypt_asynch;
++               RSA_public_encrypt_asynch;
++               qaeCryptoMemAlloc;
++               qaeCryptoMemRealloc;
++               qaeCryptoMemFree;
++               RSA_sign_asynch;
++               RSA_verify_asynch;
++               EVP_PKEY_derive_PRF;
++} OPENSSL_1.0.1;
++
+-- 
+1.7.9.5
+

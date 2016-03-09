@@ -78,6 +78,9 @@ def get_args_parser():
     group.add_argument('--list-modules', required=False, action="store_true", dest="list_modules", default=False, help='List all available test modules.')
     group.add_argument('--list-classes', required=False, action="store_true", dest="list_allclasses", default=False, help='List all available test classes.')
     parser.add_argument('--coverage', action="store_true", help="Run code coverage when testing")
+    parser.add_argument('--coverage-source', dest="coverage_source", nargs="+", help="Specifiy the directories to take coverage from")
+    parser.add_argument('--coverage-include', dest="coverage_include", nargs="+", help="Specify extra patterns to include into the coverage measurement")
+    parser.add_argument('--coverage-omit', dest="coverage_omit", nargs="+", help="Specify with extra patterns to exclude from the coverage measurement")
     group.add_argument('--run-tests-by', required=False, dest='run_tests_by', default=False, nargs='*',
                        help='run-tests-by <name|class|module|id|tag> <list of tests|classes|modules|ids|tags>')
     group.add_argument('--list-tests-by', required=False, dest='list_tests_by', default=False, nargs='*',
@@ -159,19 +162,33 @@ def remove_inc_files():
         except:
             pass
 
-def get_tests(exclusive_modules=[], include_hidden=False):
-    testslist = []
-    for x in exclusive_modules:
-        testslist.append('oeqa.selftest.' + x)
-    if not testslist:
-        for testpath in oeqa.selftest.__path__:
-            files = sorted([f for f in os.listdir(testpath) if f.endswith('.py') and not (f.startswith('_') and not include_hidden) and not f.startswith('__') and f != 'base.py'])
-            for f in files:
-                module = 'oeqa.selftest.' + f[:-3]
-                if module not in testslist:
-                    testslist.append(module)
 
-    return testslist
+def get_tests_modules(include_hidden=False):
+    modules_list = list()
+    for modules_path in oeqa.selftest.__path__:
+        for (p, d, f) in os.walk(modules_path):
+            files = sorted([f for f in os.listdir(p) if f.endswith('.py') and not (f.startswith('_') and not include_hidden) and not f.startswith('__') and f != 'base.py'])
+            for f in files:
+                submodules = p.split("selftest")[-1]
+                module = ""
+                if submodules:
+                    module = 'oeqa.selftest' + submodules.replace("/",".") + "." + f.split('.py')[0]
+                else:
+                    module = 'oeqa.selftest.' + f.split('.py')[0]
+                if module not in modules_list:
+                    modules_list.append(module)
+    return modules_list
+
+
+def get_tests(exclusive_modules=[], include_hidden=False):
+    test_modules = list()
+    for x in exclusive_modules:
+        test_modules.append('oeqa.selftest.' + x)
+    if not test_modules:
+        inc_hidden = include_hidden
+        test_modules = get_tests_modules(inc_hidden)
+
+    return test_modules
 
 
 class Tc:
@@ -218,23 +235,12 @@ def get_tests_from_module(tmod):
 
 
 def get_all_tests():
-    tmodules = set()
-    testlist = []
-    prefix = 'oeqa.selftest.'
-
     # Get all the test modules (except the hidden ones)
-    for tpath in oeqa.selftest.__path__:
-        files = sorted([f for f in os.listdir(tpath) if f.endswith('.py') and not
-                        f.startswith(('_', '__')) and f != 'base.py'])
-        for f in files:
-            tmodules.add(prefix + f.rstrip('.py'))
-
+    testlist = []
+    tests_modules = get_tests_modules()
     # Get all the tests from modules
-    tmodules = sorted(list(tmodules))
-
-    for tmod in tmodules:
+    for tmod in sorted(tests_modules):
         testlist += get_tests_from_module(tmod)
-
     return testlist
 
 
@@ -369,7 +375,7 @@ def list_tags():
 
     print 'Tags:\t%s' % ', '.join(str(x) for x in tags)
 
-def coverage_setup(run_tests, run_all_tests):
+def coverage_setup(run_tests, run_all_tests, coverage_source, coverage_include, coverage_omit):
     """ Set up the coverage measurement for the testcases to be run """
     builddir = os.environ.get("BUILDDIR")
     coveragerc = "%s/.coveragerc" % builddir
@@ -384,10 +390,25 @@ def coverage_setup(run_tests, run_all_tests):
         cps.write("branch = True\n")
         # Measure just BBLAYERS, scripts and bitbake folders
         cps.write("source = \n")
-        for layer in get_bb_var('BBLAYERS').split():
-            cps.write("    %s\n" % layer)
-        cps.write("    %s\n" % os.path.dirname(os.path.realpath(__file__)))
-        cps.write("    %s\n" % os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'bitbake'))
+        if coverage_source:
+            for directory in coverage_source:
+                if not os.path.isdir(directory):
+                    log.warn("Directory %s is not valid.", directory)
+                cps.write("    %s\n" % directory)
+        else:
+            for layer in get_bb_var('BBLAYERS').split():
+                cps.write("    %s\n" % layer)
+            cps.write("    %s\n" % os.path.dirname(os.path.realpath(__file__)))
+            cps.write("    %s\n" % os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))),'bitbake'))
+
+        if coverage_include:
+            cps.write("include = \n")
+            for pattern in coverage_include:
+                cps.write("    %s\n" % pattern)
+        if coverage_omit:
+            cps.write("omit = \n")
+            for pattern in coverage_omit:
+                cps.write("    %s\n" % pattern)
 
         return coveragerc
 
@@ -463,7 +484,7 @@ def main():
         log.info('Listing all available test modules:')
         testslist = get_tests(include_hidden=True)
         for test in testslist:
-            module = test.split('.')[-1]
+            module = test.split('oeqa.selftest.')[-1]
             info = ''
             if module.startswith('_'):
                 info = ' (hidden)'
@@ -535,6 +556,7 @@ def main():
 
 def buildResultClass(args):
     """Build a Result Class to use in the testcase execution"""
+    import site
 
     class StampedResult(unittest.TextTestResult):
         """
@@ -550,25 +572,40 @@ def buildResultClass(args):
 
         def startTestRun(self):
             """ Setup coverage before running any testcase """
-            if args.coverage:
+
+            # variable holding the coverage configuration file allowing subprocess to be measured
+            self.coveragepth = None
+
+            # indicates the system if coverage is currently installed
+            self.coverage_installed = True
+
+            if args.coverage or args.coverage_source or args.coverage_include or args.coverage_omit:
                 try:
                     # check if user can do coverage
                     import coverage
-                    log.info("Coverage is enabled")
-
-                    # In case the user has not set the variable COVERAGE_PROCESS_START,
-                    # create a default one and export it. The COVERAGE_PROCESS_START
-                    # value indicates where the coverage configuration file resides
-                    # More info on https://pypi.python.org/pypi/coverage
-                    if not os.environ.get('COVERAGE_PROCESS_START'):
-                        os.environ['COVERAGE_PROCESS_START'] = coverage_setup(args.run_tests, args.run_all_tests)
-
-                    self.coverage_installed = True
                 except:
                     log.warn('\n'.join(["python coverage is not installed",
                         "Make sure your coverage takes into account sub-process",
                         "More info on https://pypi.python.org/pypi/coverage"]))
                     self.coverage_installed = False
+
+                if self.coverage_installed:
+                    log.info("Coverage is enabled")
+
+                # In case the user has not set the variable COVERAGE_PROCESS_START,
+                # create a default one and export it. The COVERAGE_PROCESS_START
+                # value indicates where the coverage configuration file resides
+                # More info on https://pypi.python.org/pypi/coverage
+                if not os.environ.get('COVERAGE_PROCESS_START'):
+                    os.environ['COVERAGE_PROCESS_START'] = coverage_setup(args.run_tests, args.run_all_tests, args.coverage_source, args.coverage_include, args.coverage_omit)
+
+                # Use default site.USER_SITE and write corresponding config file
+                site.ENABLE_USER_SITE = True
+                if not os.path.exists(site.USER_SITE):
+                    os.makedirs(site.USER_SITE)
+                self.coveragepth = os.path.join(site.USER_SITE, "coverage.pth")
+                with open(self.coveragepth, 'w') as cps:
+                    cps.write('import sys,site; sys.path.extend(site.getsitepackages()); import coverage; coverage.process_startup();')
 
         def stopTestRun(self):
             """ Report coverage data after the testcases are run """
@@ -581,8 +618,14 @@ def buildResultClass(args):
 
                 log.info("Coverage Report")
                 log.info("===============")
-
-                coverage_report()
+                try:
+                    coverage_report()
+                    # remove the pth file
+                finally:
+                    try:
+                        os.remove(self.coveragepth)
+                    except OSError:
+                        log.warn("Expected temporal file from coverage is missing, ignoring removal.")
 
     return StampedResult
 
