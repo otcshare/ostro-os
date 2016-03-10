@@ -32,6 +32,7 @@ SRC_URI = "\
      file://0010-Fix-rpath-in-libtool-when-sysroot-is-enabled.patch \
      file://0011-Change-default-emulation-for-mips64-linux.patch \
      file://0012-Add-XLP-instructions-support.patch \
+     file://0013-Enable-Bsymbolic-and-Bsymbolic-functions-to-PIE.patch \
      "
 S  = "${WORKDIR}/git"
 

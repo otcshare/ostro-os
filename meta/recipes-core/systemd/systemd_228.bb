@@ -54,6 +54,23 @@ SRC_URI_append_libc-uclibc = "\
            "
 SRC_URI_append_qemuall = " file://0004-core-device.c-Change-the-default-device-timeout-to-2.patch "
 
+# Patch systemd-nspawn to
+#   - delay binary/OS-tree check after mounts
+#   - support starting DHCP client in non-system containers
+# meta-appfw depends on these changes.
+SRC_URI += " \
+    file://0001-nspawn-don-t-check-binary-OS-tree-before-all-mounts-.patch \
+    file://0002-nspawn-added-support-for-starting-DHCP-client-in-non.patch \
+"
+
+# meta-appfw wants/needs systemd-networkd. This should not be removed,
+# therefore it gets added via _append instead of changing the (configurable)
+# default below.
+PACKAGECONFIG_append = " iptc networkd"
+
+# systemd-nspawn needs getent (from glibc).
+RDEPENDS_${PN} += "glibc-getent"
+
 S = "${WORKDIR}/git"
 
 LDFLAGS_append_libc-uclibc = " -lrt -lssp_nonshared -lssp "
