@@ -6,11 +6,12 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=04d0b48662817042d80393e7511fa41b \
 
 SRC_URI = " \
   file://swupd-client-${PV}.tar.gz \
-  file://Fix-build-failure-on-Yocto.patch \
-  file://Right-usage-of-AC_ARG_ENABLE-on-bzip2.patch \
-  file://Change-systemctl-path-to-Ostro-systemctl-path.patch \
+  file://0001-change-systemctl-path-to-Ostro-systemctl-path.patch \
+  file://0002-Fix-build-failure-on-Yocto.patch \
+  file://0003-Right-usage-of-AC_ARG_ENABLE-on-bzip2.patch \
+  file://0004-Tolerate-quotes-in-os-release-files.patch \
+  file://0005-Disable-boot-file-heuristics.patch \
   file://efi_combo_updater.c \
-  file://workaround-version-id-quotas.patch \
   "
 SRC_URI[md5sum] = "58671adf559dd18620f11caf4ccf83dd"
 SRC_URI[sha256sum] = "09a70a423d10a6bf71f8675b7430c29a56f41f93493331c9ae515011713c229b"

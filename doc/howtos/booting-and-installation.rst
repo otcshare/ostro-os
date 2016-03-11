@@ -32,7 +32,7 @@ Using dd to Create Bootable Media
 
 Once you have the :file:`.dsk.xz` Ostro OS image you need to get it
 onto your hardware platform, typically by using removable media such as a 
-USB thumb drive or SD card.  The typical way to do this is with the :command:`dd` command.
+USB thumb drive or SD card.  The usual way to do this is with the :command:`dd` command.
 
 #. Connect your USB thumb drive or SD card to your Linux-based development system
    (minimum 8 GB card required).
@@ -41,13 +41,18 @@ USB thumb drive or SD card.  The typical way to do this is with the :command:`dd
 
      $ dmesg 
 
-   or you can use the :command:`lsblk` command to show the block-level devices; a USB drive usually shows up as ``/sdb`` or ``/sdc``
-   (almost never as ``/sda``)
+   or you can use the :command:`lsblk` command to show the block-level devices; a USB drive usually 
+   shows up as ``/sdb`` or ``/sdc``
+   (almost never as ``/sda``) and an SD card would usually show up as :file:`/dev/mmcblk0`.  
+   
+   Note: You should specify the whole device you're writing to with 
+   :command:`dd`:  (e.g., :file:`/dev/sdb` or
+   :file:`/dev/mmcblk0`) and **not** just a partition on that device (e.g., :file:`/dev/sdb1` or
+   :file:`/dev/mmcblk0p1`) on that device. 
 
 #. The :command:`dd` command will overwrite all content on the device so be careful specifying 
    the correct media device. In the example below, :file:`/dev/sdb` is the 
-   destination USB device on our development machine (an SD card device would typically show up 
-   as :file:`/dev/mmcblkX` where `X` is a number)::
+   destination USB device on our development machine::
 
       $ sudo umount /dev/sdb*
       $ xzcat <ostro-os-image.dsk.xz> | sudo dd of=/dev/sdb bs=512k
@@ -107,7 +112,7 @@ Flashing an `Intel Galileo Gen 2`_ requires use of a microSD card (booting off U
 
 Here are the basic steps for booting the Ostro OS:
 
-#. Flash the microSD card with the Ostro OS image as described in the `Using dd to Create Bootable Media` section above
+#. Flash the microSD card with the Ostro OS image as described in the `Using dd to Create Bootable Media`_ section above
 #. Insert the microSD card in the Galileo Gen 2 board
 #. Connect the serial FTDI cable from the `Intel Galileo Gen 2`_ to a USB port on your host computer and use a terminal emulator (settings: 115200 8N1)
 #. Power the board on (using a 5V, 3A power supply)

@@ -53,17 +53,13 @@ def pcbios_class(d):
 PCBIOS = "${@pcbios(d)}"
 PCBIOS_CLASS = "${@pcbios_class(d)}"
 
+# Get the build_syslinux_cfg() function from the syslinux class
 inherit ${PCBIOS_CLASS}
 inherit ${EFI_CLASS}
 
-# Get the build_syslinux_cfg() function from the syslinux class
-
-AUTO_SYSLINUXCFG = "1"
 DISK_SIGNATURE ?= "${DISK_SIGNATURE_GENERATED}"
-SYSLINUX_ROOT ?= "root=/dev/sda2"
-SYSLINUX_TIMEOUT ?= "10"
-
-IS_VM = '${@bb.utils.contains_any("IMAGE_FSTYPES", ["vmdk", "vdi", "qcow2"], "true", "false", d)}'
+SYSLINUX_ROOT_VM ?= "root=/dev/sda2"
+SYSLINUX_CFG_VM  ?= "${S}/syslinux_hdd.cfg"
 
 boot_direct_populate() {
 	dest=$1
@@ -103,12 +99,10 @@ build_boot_dd() {
 		efi_hddimg_populate $HDDDIR
 	fi
 
-	if [ "${IS_VM}" = "true" ]; then
-		if [ "x${AUTO_SYSLINUXMENU}" = "x1" ] ; then
-			install -m 0644 ${STAGING_DIR}/${MACHINE}/usr/share/syslinux/vesamenu.c32 $HDDDIR/${SYSLINUXDIR}/
-			if [ "x${SYSLINUX_SPLASH}" != "x" ] ; then
-				install -m 0644 ${SYSLINUX_SPLASH} $HDDDIR/${SYSLINUXDIR}/splash.lss
-			fi
+	if [ "x${AUTO_SYSLINUXMENU}" = "x1" ] ; then
+		install -m 0644 ${STAGING_DIR}/${MACHINE}/usr/share/syslinux/vesamenu.c32 $HDDDIR/${SYSLINUXDIR}/
+		if [ "x${SYSLINUX_SPLASH}" != "x" ] ; then
+			install -m 0644 ${SYSLINUX_SPLASH} $HDDDIR/${SYSLINUXDIR}/splash.lss
 		fi
 	fi
 
@@ -167,6 +161,7 @@ build_boot_dd() {
 python do_bootdirectdisk() {
     validate_disk_signature(d)
     if d.getVar("PCBIOS", True) == "1":
+        syslinux_set_vars(d, 'VM')
         bb.build.exec_func('build_syslinux_cfg', d)
     if d.getVar("EFI", True) == "1":
         bb.build.exec_func('build_efi_cfg', d)

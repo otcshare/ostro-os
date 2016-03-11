@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="ostro-image"
+IMAGE_NAME=""
 BACKUP_IFS=$IFS
 IFS=$(echo -en "\n\b")
 
@@ -45,6 +45,8 @@ function print-usage {
 	cat << EOF
 Usage: ${0##*/} [-i <image-name>][--image=<image-name>] [-h][--help][--recovery] [--keep-data]
 Update all software and restore board to its initial state.
+ -i <name>     flash specified image, image name is the name given to bitbake
+ --image=<name>
  -h,--help     display this help and exit.
  -v            verbose output
  --recovery    recover the board to DFU mode using a dedicated tool,
@@ -158,6 +160,12 @@ while true; do
 	esac
 done
 
+if test -z ${IMAGE_NAME} ; then
+	echo "Image name not specified, please use -i / --image parameter!" ;
+	echo "Note! Image name is the same name given to bitbake when baking the image." ;
+	echo "" ;
+	print-usage ;
+fi;
 echo -n "Image name: "
 echo ${IMAGE_NAME}
 

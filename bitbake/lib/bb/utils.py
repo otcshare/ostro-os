@@ -363,15 +363,6 @@ def _print_exception(t, value, tb, realfile, text, context):
                         error.extend(_print_trace(text, tbextract[level+1][1]))
                 except:
                     error.append(tbformat[level+1])
-            elif "d" in context and tbextract[level+1][2]:
-                # Try and find the code in the datastore based on the functionname
-                d = context["d"]
-                functionname = tbextract[level+1][2]
-                text = d.getVar(functionname, True)
-                if text:
-                    error.extend(_print_trace(text.split('\n'), tbextract[level+1][1]))
-                else:
-                    error.append(tbformat[level+1])
             else:
                 error.append(tbformat[level+1])
             nexttb = tb.tb_next
@@ -538,6 +529,21 @@ def sha256_file(filename):
         return None
 
     s = hashlib.sha256()
+    with open(filename, "rb") as f:
+        for line in f:
+            s.update(line)
+    return s.hexdigest()
+
+def sha1_file(filename):
+    """
+    Return the hex string representation of the SHA1 checksum of the filename
+    """
+    try:
+        import hashlib
+    except ImportError:
+        return None
+
+    s = hashlib.sha1()
     with open(filename, "rb") as f:
         for line in f:
             s.update(line)

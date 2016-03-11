@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils.encoding import force_bytes
 from orm.models import Project, ProjectLayer, ProjectVariable, ProjectTarget, Build, Layer_Version
 
 # a BuildEnvironment is the equivalent of the "build/" directory on the localhost
@@ -12,10 +14,8 @@ class BuildEnvironment(models.Model):
     )
 
     TYPE_LOCAL = 0
-    TYPE_SSH   = 1
     TYPE = (
         (TYPE_LOCAL, "local"),
-        (TYPE_SSH, "ssh"),
     )
 
     LOCK_FREE = 0
@@ -42,13 +42,17 @@ class BuildEnvironment(models.Model):
     def get_artifact(self, path):
         if self.betype == BuildEnvironment.TYPE_LOCAL:
             return open(path, "r")
-        raise Exception("FIXME: artifact download not implemented for build environment type %s" % self.get_betype_display())
+        raise NotImplementedError("FIXME: artifact download not implemented "\
+                                  "for build environment type %s" % \
+                                  self.get_betype_display())
 
     def has_artifact(self, path):
         import os
         if self.betype == BuildEnvironment.TYPE_LOCAL:
             return os.path.exists(path)
-        raise Exception("FIXME: has artifact not implemented for build environment type %s" % self.get_betype_display())
+        raise NotImplementedError("FIXME: has artifact not implemented for "\
+                                  "build environment type %s" % \
+                                  self.get_betype_display())
 
 # a BuildRequest is a request that the scheduler will build using a BuildEnvironment
 # the build request queue is the table itself, ordered by state
@@ -92,7 +96,7 @@ class BuildRequest(models.Model):
         return self.brvariable_set.get(name="MACHINE").value
 
     def __str__(self):
-        return "%s %s" % (self.project, self.get_state_display())
+        return force_bytes('%s %s' % (self.project, self.get_state_display()))
 
 # These tables specify the settings for running an actual build.
 # They MUST be kept in sync with the tables in orm.models.Project*

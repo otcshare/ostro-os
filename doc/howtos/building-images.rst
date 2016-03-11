@@ -47,9 +47,9 @@ these keys or disable the features which depend on them.
 
 In addition, images are locked down by default: for example, none of
 the existing user accounts (including root) has a password set, so
-logging into the running system is impossible. Some way of interacting
-with the system after booting it has to be chosen before building
-images.
+logging into the running system is impossible. Before building an image,
+you must choose a way of interacting with the system after it has booted.
+
 
 Target MACHINE Architecture
 ----------------------------
@@ -62,14 +62,14 @@ For currently :ref:`platforms`, the appropriate ``MACHINE`` selections are:
 
 .. table:: Yocto MACHINE selection for Supported Hardware platforms
 
-    ============  ====================================
-    Platform      Yocto Project MACHINE selection
-    ============  ====================================
-    GigaByte      intel-corei7-64
-    Galileo       intel-quark
-    MinnowBoard   intel-corei7-64
-    Edison        edison
-    ============  ====================================
+    ==========================  ====================================
+    Platform                    Yocto Project MACHINE selection
+    ==========================  ====================================
+    GigaByte GB-BXBT-3825       intel-corei7-64
+    Intel Galileo Gen2          intel-quark
+    MinnowBoard MAX compatible  intel-corei7-64
+    Intel Edison                edison
+    ==========================  ====================================
 
 Virtual machine images (a :file:`.vdi` file) are created for each of these builds hardware platforms as part 
 of the build process (and included in the prebuilt image folders too).
@@ -97,7 +97,7 @@ ostro-image-minimal:
 
 Additional image variants can be defined in the ``local.conf``. For
 example, the following adds ``ostro-image-noima`` and
-``ostro-os-dev-noima`` as build targets where IMA is disabled and thus
+``ostro-image-dev-noima`` as build targets where IMA is disabled and thus
 no IMA keys are needed::
 
     OSTRO_EXTRA_IMAGE_VARIANTS = "imagevariant:noima imagevariant:dev,noima"
@@ -122,11 +122,31 @@ with ``# require conf/distro/include/ostro-os-development.inc`` and
 uncomment it.
 
 
+Accelerating Build Time Using Shared-State Files Cache
+------------------------------------------------------
+
+As explained in the `Yocto Project Shared State Cache documentation`_, by design
+the build system builds everything from scratch unless it can determine that
+parts do not need to be rebuilt. The Yocto Project shared state code supports
+incremental builds and attempts to accelerate build time through the use
+of prebuilt data cache objects configured with the ``SSTATE_MIRRORS`` setting.
+
+By default, this ``SSTATE_MIRRORS`` configuration is disabled in :file:`conf/local.conf`
+but can be easily enabled by uncommenting the ``SSTATE_MIRRORS`` line
+in your :file:`conf/local.conf` file, as shown here:::
+
+   # Example for Ostro OS setup, recommended to use it:
+   #SSTATE_MIRRORS ?= "file://.* http://download.ostroproject.org/sstate/ostro-os/PATH"
+
+ 
+
+.. _Yocto Project Shared State Cache documentation: http://www.yoctoproject.org/docs/2.0/mega-manual/mega-manual.html#shared-state-cache
+
 Production Images
 -----------------
 
 When building production images, first follow the instructions
-provided in :file:`meta-integrity/doc/README.md` for creating your own
+provided in :file:`meta-intel-iot-security/meta-integrity/README.md` for creating your own
 keys. Then edit the :file:`conf/local.conf` configuration file and
 set ``IMA_EVM_KEY_DIR`` to the directory containing
 these keys or set the individual variables for each required
@@ -158,7 +178,7 @@ only that one), here is how you can proceed::
 
 Beware of the leading space, it is needed when using ``_append``.
 
-This example assumes that :command:`bitbake ostro-image` is used to build
+This example assumes that :command:`bitbake ostro-image-dev` is used to build
 an image. By making the append conditional on the name of the image,
 different images can be built with different content inside the same
 build configuration.

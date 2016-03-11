@@ -14,6 +14,7 @@
 import os
 import time
 import string
+from oeqa.runtime.wifi import wifi
 import ConfigParser
 from oeqa.oetest import oeRuntimeTest
 from oeqa.utils.helper import shell_cmd_timeout
@@ -35,50 +36,13 @@ class IOtvtWiFi(oeRuntimeTest):
         @param cls
         @return
         '''
-        # Connect to WiFi
-        cls.tc.target.run('rfkill unblock all')
-        cls.tc.target.run('connmanctl enable wifi')
-        time.sleep(20)
+        wifi = wifi.WiFiFunction(cls.tc.target)
 
-        target_ip = cls.tc.target.ip
-        m_type = ssid_config.get("Connect","type")
+        ap_type = ssid_config.get("Connect","type")
         ssid = ssid_config.get("Connect","ssid")
         pwd = ssid_config.get("Connect","passwd")
-        service = "nothing"
-        if (m_type == "broadcast"):
-            # For broadcast AP, get its service firstly.
-            retry = 0
-            while (retry < 4):
-                (status, output) = cls.tc.target.run('connmanctl scan wifi')
-                (status, output) = cls.tc.target.run("connmanctl services | grep %s" % ssid)
-                retry = retry + 1
-                if (status == 0):
-                    break
-            assert status == 0, "Not found AP service"
-            service = output.split(" ")[-1]
-            exp = os.path.join(os.path.dirname(__file__), "../sanity/files/wifi_connect.exp")
-            cmd = "expect %s %s %s %s %s" % (exp, target_ip, "connmanctl", service, pwd)
-        else:
-            # Scan nearby to get service of none-encryption broadcasting ssid
-            hidden_str = "hidden_managed_psk"
-            retry = 0
-            while (retry < 4):
-                (status, output) = cls.tc.target.run('connmanctl scan wifi')
-                (status, output) = cls.tc.target.run("connmanctl services | grep %s" % hidden_str)
-                retry = retry + 1
-                if (status == 0):
-                    break
-            assert status == 0, "Not found hidden AP service"
-            service = output.strip()
-            exp = os.path.join(os.path.dirname(__file__), "../sanity/files/wifi_hidden_connect.exp")
-            cmd = "expect %s %s %s %s %s %s" % (exp, target_ip, "connmanctl", service, ssid, pwd)
 
-        status, output = shell_cmd_timeout(cmd, timeout=60)
-        assert status == 2, "Error messages: %s" % output
-        time.sleep(3)
-        (status, wifi_interface) = cls.tc.target.run("ifconfig | grep '^wlp|^wlan' | awk '{print $1}'")
-        (status, output) = cls.tc.target.run("ifconfig %s | grep 'inet addr:'" % wifi_interface)
-        assert status == 0, "No wifi IP address"
+        wifi.execute_connection(ap_type, ssid, pwd)
         
         # Clean up all iotivity related daemons
         cls.tc.target.run("killall presenceserver presenceclient devicediscoveryserver devicediscoveryclient")        
@@ -98,7 +62,8 @@ class IOtvtWiFi(oeRuntimeTest):
         @param cls
         @return
         '''
-        cls.tc.target.run("connmanctl disable wifi")
+        wifi = wifi.WiFiFunction(cls.tc.target)
+        wifi.disable_wifi()
 
     def test_iotvt_wifi_findresource(self):
         '''Target finds resource, registered by Host

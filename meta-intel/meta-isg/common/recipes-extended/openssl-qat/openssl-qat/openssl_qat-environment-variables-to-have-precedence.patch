@@ -1,0 +1,59 @@
+From dde5f7d6603d875b1d871498ae95a6837ccd591d Mon Sep 17 00:00:00 2001
+From: Anuj Mittal <anujx.mittal@intel.com>
+Date: Sat, 20 Jun 2015 00:25:27 +0800
+Subject: [PATCH] openssl_qat: environment variables to have precedence
+
+Upstream-Status: Inappropriate [configuration]
+
+(From meta/recipes-connectivity/openssl/openssl/shared-libs.patch
+ rev: 5dd1d7566964c90d33c0c44f569d9336fb0724ce)
+
+Signed-off-by: Anuj Mittal <anujx.mittal@intel.com>
+---
+ Makefile.org    |    2 +-
+ crypto/Makefile |    2 +-
+ ssl/Makefile    |    2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Makefile.org b/Makefile.org
+index 1f2f5e1..679c884 100644
+--- a/Makefile.org
++++ b/Makefile.org
+@@ -311,7 +311,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a fips_premain_dso$(EXE_EXT)
+ 
+ libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
+ 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
+-		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
++		$(MAKE) -e SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
+ 	else \
+ 		echo "There's no support for shared libraries on this platform" >&2; \
+ 		exit 1; \
+diff --git a/crypto/Makefile b/crypto/Makefile
+index 2355661..1b0c324 100644
+--- a/crypto/Makefile
++++ b/crypto/Makefile
+@@ -107,7 +107,7 @@ $(LIB):	$(LIBOBJ)
+ 
+ shared: buildinf.h lib subdirs
+ 	if [ -n "$(SHARED_LIBS)" ]; then \
+-		(cd ..; $(MAKE) $(SHARED_LIB)); \
++		(cd ..; $(MAKE) -e $(SHARED_LIB)); \
+ 	fi
+ 
+ libs:
+diff --git a/ssl/Makefile b/ssl/Makefile
+index e05ada2..6f51862 100644
+--- a/ssl/Makefile
++++ b/ssl/Makefile
+@@ -64,7 +64,7 @@ lib:	$(LIBOBJ)
+ 
+ shared: lib
+ 	if [ -n "$(SHARED_LIBS)" ]; then \
+-		(cd ..; $(MAKE) $(SHARED_LIB)); \
++		(cd ..; $(MAKE) -e $(SHARED_LIB)); \
+ 	fi
+ 
+ files:
+-- 
+1.7.9.5
+

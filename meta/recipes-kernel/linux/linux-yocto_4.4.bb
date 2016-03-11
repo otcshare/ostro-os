@@ -11,20 +11,20 @@ KBRANCH_qemux86  ?= "standard/base"
 KBRANCH_qemux86-64 ?= "standard/base"
 KBRANCH_qemumips64 ?= "standard/mti-malta64"
 
-SRCREV_machine_qemuarm ?= "f7bc1fb5f438f019bcd3d5fd8362e0960ed0fffc"
-SRCREV_machine_qemuarm64 ?= "57af322eecf5750f8f09cb8b093d613caede5c48"
-SRCREV_machine_qemumips ?= "5b05677721ce8b0625a7e155dcdf93325fc460fe"
-SRCREV_machine_qemuppc ?= "57af322eecf5750f8f09cb8b093d613caede5c48"
-SRCREV_machine_qemux86 ?= "57af322eecf5750f8f09cb8b093d613caede5c48"
-SRCREV_machine_qemux86-64 ?= "57af322eecf5750f8f09cb8b093d613caede5c48"
-SRCREV_machine_qemumips64 ?= "ac3f6e9508fb6963e9db844fe28b7a50589decc4"
-SRCREV_machine ?= "57af322eecf5750f8f09cb8b093d613caede5c48"
-SRCREV_meta ?= "dc760c3189ed868dc59050206b7899c35a4ad8e8"
+SRCREV_machine_qemuarm ?= "d3ce63d0c83f579605b308f83c62a49e5dbf73e6"
+SRCREV_machine_qemuarm64 ?= "dadb4369046246d7788db1f3cdf0a34298e35b4b"
+SRCREV_machine_qemumips ?= "06c34af69f436c8dca8ff23a30a7d1f834e1d07c"
+SRCREV_machine_qemuppc ?= "dadb4369046246d7788db1f3cdf0a34298e35b4b"
+SRCREV_machine_qemux86 ?= "dadb4369046246d7788db1f3cdf0a34298e35b4b"
+SRCREV_machine_qemux86-64 ?= "dadb4369046246d7788db1f3cdf0a34298e35b4b"
+SRCREV_machine_qemumips64 ?= "79b496614c5d0b4862796928ef9890f2eb375a3b"
+SRCREV_machine ?= "dadb4369046246d7788db1f3cdf0a34298e35b4b"
+SRCREV_meta ?= "89419d8b902aa81cb4c52f9dd12a6c9e083ce198"
 
 SRC_URI = "git://git.yoctoproject.org/linux-yocto-4.4.git;name=machine;branch=${KBRANCH}; \
            git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-4.4;destsuffix=${KMETA}"
 
-LINUX_VERSION ?= "4.4"
+LINUX_VERSION ?= "4.4.3"
 
 PV = "${LINUX_VERSION}+git${SRCPV}"
 
@@ -40,3 +40,5 @@ KERNEL_FEATURES_append_qemuall=" cfg/virtio.scc"
 KERNEL_FEATURES_append_qemux86=" cfg/sound.scc cfg/paravirt_kvm.scc"
 KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
 KERNEL_FEATURES_append = " ${@bb.utils.contains("TUNE_FEATURES", "mx32", " cfg/x32.scc", "" ,d)}"
+
+SRC_URI_append = " file://0001-Fix-qemux86-pat-issue.patch"

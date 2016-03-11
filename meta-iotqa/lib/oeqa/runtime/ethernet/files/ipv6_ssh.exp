@@ -5,7 +5,7 @@ set ip6      [lindex $argv 0]
 set password [lindex $argv 1]
 set eth      [lindex $argv 2]
 
-spawn ssh root@$ip6%$eth ls /
+spawn ssh root@$ip6%$eth -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR ls /
  expect {
  "yes/no"
    {

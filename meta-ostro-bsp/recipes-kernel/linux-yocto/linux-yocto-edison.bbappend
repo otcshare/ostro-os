@@ -1,1 +1,1 @@
-linux-yocto_%.bbappend
+linux-yocto_4.4.bbappend

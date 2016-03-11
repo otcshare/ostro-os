@@ -1,5 +1,5 @@
 LICENSE = "LGPLv2.1"
-LIC_FILES_CHKSUM = "files://LICENSE;md5=4fbd65380cdd255951079008b364516c"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=4fbd65380cdd255951079008b364516c"
 
 SUMMARY = "Clear systemd config files for swupd"
 
