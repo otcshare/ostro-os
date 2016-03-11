@@ -24,15 +24,11 @@
 #   This is required to identify it and pass its Partition UUID to the kernel, for booting.
 
 
-# The mask used is dsk_xz instead of dsk.xz because of
-# https://bugzilla.yoctoproject.org/show_bug.cgi?id=9076
-IMAGE_TYPEDEP_dsk.xz = "dsk"
-IMAGE_TYPES_MASKED += "dsk_xz"
-
-IMAGE_TYPEDEP_dsk.vdi = "dsk"
-IMAGE_TYPES_MASKED += "dsk.vdi"
-
-IMAGE_DSK_ACTIVE = "${@bb.utils.contains_any('IMAGE_FSTYPES', 'dsk dsk_xz dsk.vdi', True, False, d)}"
+IMAGE_DSK_ACTIVE = "${@ 'True' if image_type_active('dsk', d) else 'False' }"
+python () {
+    if d.getVar('IMAGE_DSK_ACTIVE', True) == 'True':
+        d.setVar('IMAGE_NAME_SUFFIX', '')
+}
 
 do_uefiapp[depends] += " \
                          systemd:do_deploy \
@@ -48,8 +44,6 @@ IMAGE_DEPENDS_dsk += " \
                        mtools-native:do_populate_sysroot \
                        dosfstools-native:do_populate_sysroot \
                        dosfstools-native:do_populate_sysroot \
-                       qemu-native:do_populate_sysroot \
-                       xz-native:do_populate_sysroot \
                      "
 INITRD_append = "${@ ('${DEPLOY_DIR_IMAGE}/' + d.getVar('INITRD_IMAGE', expand=True) + '-${MACHINE}.cpio.gz') if d.getVar('INITRD_IMAGE', True) and ${IMAGE_DSK_ACTIVE} else ''}"
 
@@ -211,7 +205,6 @@ IMAGE_DSK_VARIABLES = " \
     BPN \
     DEPLOY_DIR_IMAGE \
     DSK_IMAGE_LAYOUT \
-    IMAGE_FSTYPES \
     IMAGE_NAME \
     IMAGE_ROOTFS \
     INITRD \

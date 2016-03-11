@@ -98,7 +98,6 @@ def do_dsk_image():
     check_call(['truncate',  '-s', str(full_image_size_mb) + 'M',
                full_image_name])
     check_call(['sgdisk', '-o', full_image_name])
-    symlink(expand_vars('${IMAGE_NAME}.dsk'), full_image_name_link)
 
     partition_start_mb = partition_table["gpt_initial_offset_mb"]
     for key in sorted(partition_table.iterkeys()):
@@ -139,34 +138,6 @@ def do_dsk_image():
         if os.path.exists(full_partition_name):
             os.remove(full_partition_name)
         partition_start_mb += partition_table[key]["size_mb"]
-
-    image_types = lookup_var("IMAGE_FSTYPES").split()
-    # Build .vdi images for use with VirtualBox, if so requested.
-    if "dsk.vdi" in image_types:
-        vdi_image_name = \
-            os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
-                         expand_vars('${IMAGE_NAME}.dsk.vdi'))
-        vdi_image_name_link = \
-            os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
-                         expand_vars('${BPN}-${MACHINE}.dsk.vdi'))
-        check_call(['qemu-img', 'convert', '-O', 'vdi',
-                                full_image_name, vdi_image_name])
-        symlink(expand_vars('${IMAGE_NAME}.dsk.vdi'), vdi_image_name_link)
-    # If requested, create a xz compressed version of the dsk image.
-    if "dsk_xz" in image_types:
-        xz_image_name = \
-            os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
-                         expand_vars('${IMAGE_NAME}.dsk.xz'))
-        xz_image_name_link = \
-            os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
-                         expand_vars('${BPN}-${MACHINE}.dsk.xz'))
-        check_call(['xz', '-3', '-vk', full_image_name])
-        symlink(expand_vars('${IMAGE_NAME}.dsk.xz'), xz_image_name_link)
-    # If the plain .dsk file was not requested, remove it and save space.
-    if not "dsk" in image_types:
-        os.remove(full_image_name)
-        os.remove(full_image_name_link)
-
 
 if __name__ == "__main__":
     do_dsk_image()

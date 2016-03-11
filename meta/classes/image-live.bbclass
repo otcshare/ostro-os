@@ -6,7 +6,7 @@ SYSLINUX_LABELS_LIVE ?= "boot install"
 LABELS_LIVE ?= "${SYSLINUX_LABELS_LIVE}"
 SYSLINUX_CFG_LIVE ?= "${S}/syslinux_live.cfg"
 
-ROOTFS ?= "${DEPLOY_DIR_IMAGE}/${IMAGE_LINK_NAME}.ext4"
+ROOTFS ?= "${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.ext4"
 
 do_bootimg[depends] += "${PN}:do_image_ext4"
 
