@@ -20,3 +20,17 @@ SRC_URI += " ${@d.getVar('SYSTEMD_APPFW_PATCHES_' + d.getVar('PV', False)[0:3], 
 
 # systemd-nspawn needs getent (from glibc).
 RDEPENDS_${PN} += "glibc-getent"
+
+# Separate systemd-networkd to a subpackage.
+PACKAGES_prepend     = "${PN}-networkd "
+FILES_${PN}-networkd = " \
+    ${base_libdir}/systemd/systemd-networkd \
+    ${base_libdir}/systemd/system/systemd-network.service \
+    ${base_libdir}/systemd/system/systemd-network.socket \
+"
+
+# And override service activation for the new subpackage.
+SYSTEMD_PACKAGES += "${PN}-networkd"
+SYSTEMD_SERVICE_${PN}-networkd = "systemd-networkd.socket"
+
+RDEPENDS_${PN} += "systemd-networkd"
