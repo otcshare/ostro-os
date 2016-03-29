@@ -7,12 +7,12 @@ LIC_FILES_CHKSUM = "file://LICENSE-BSD;md5=f9f435c1bd3a753365e799edf375fc42"
 DEPENDS = "json-c systemd"
 
 SRC_URI = " \
-    git://git@github.com/ostroproject/iot-app-fw.git;protocol=ssh;branch=kli/devel/systemd-generator \
+    git://git@github.com/ostroproject/iot-app-fw.git;protocol=https;branch=kli/devel/smpl \
     file://80-container-host0.network \
     file://80-container-ve.network \
   "
 
-SRCREV = "8be21ead5bbf4ef62bc689545e1caf619715d112"
+SRCREV = "d6646e157becbfc8deeea16350b2809ef652dfad"
 
 inherit autotools pkgconfig systemd
 
@@ -22,11 +22,9 @@ S = "${WORKDIR}/git"
 
 # possible package configurations
 PACKAGECONFIG ??= ""
-PACKAGECONFIG[glib-2.0] = "--enable-glib,--disable-glib,glib-2.0"
-PACKAGECONFIG[shave]    = "--enable-shave,--disable-shave"
 
 FILES_${PN} = "${base_libdir}/systemd/system-generators/iot-service-generator \
-               ${libexecdir}/iot-app-fw/service.jmpl \
+               ${libexecdir}/iot-app-fw \
                ${libdir}/systemd/network/80-container-host0.network \
                ${libdir}/systemd/network/80-container-ve.network \
 "
