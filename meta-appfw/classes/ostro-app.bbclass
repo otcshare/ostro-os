@@ -48,6 +48,9 @@ ostro_app_install () {
             mv "${D}/$i" "${D}/${OSTRO_APP_ROOT}"
         fi
     done
+    for i in $(find "${D}/${OSTRO_APP_ROOT}"); do
+        chmod o-rwx $i
+    done
 }
 
 # Package app files by default.
