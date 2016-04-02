@@ -1,13 +1,12 @@
-From 9c37ad63f49b8218ae40e4aa22f7a9035b42e088 Mon Sep 17 00:00:00 2001
+From fcfd7ebde85684c4d45144bdb8de8219f56a06ca Mon Sep 17 00:00:00 2001
 From: Krisztian Litkey <krisztian.litkey@intel.com>
 Date: Fri, 18 Dec 2015 12:44:11 +0200
-Subject: [PATCH 2/2] nspawn: added support for starting DHCP client in
+Subject: [PATCH 2/3] nspawn: added support for starting DHCP client in
  non-system containers.
 
 Added --auto-dhcp option for starting a DHCP client in the container
 before privileges are dropped or the actual container command gets
-executed. This is done only for non-system containers started without
---share-system.
+executed. This is done only for non-system containers.
 
 The DHCP client command can be specified as an argument to the option.
 If none is specified {/sbin,/usr/sbin}/{dhclient,udhcpc} are tried in
@@ -135,7 +134,7 @@ index 9ab1606..fd9fb99 100644
 +
 +int spawn_dhcp_client(const char *dhcp_client, pid_t *rpid);
 diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
-index 50f4892..35b610f 100644
+index 50f4892..b674714 100644
 --- a/src/nspawn/nspawn.c
 +++ b/src/nspawn/nspawn.c
 @@ -121,6 +121,8 @@ static const char *arg_selinux_context = NULL;
@@ -179,8 +178,8 @@ index 50f4892..35b610f 100644
                  return -EINVAL;
          }
  
-+        if (arg_auto_dhcp && (arg_start_mode == START_BOOT || arg_share_system)) {
-+                log_error("--dhcp-client may not be combined with --boot or --share-system.");
++        if (arg_auto_dhcp && (arg_start_mode == START_BOOT)) {
++                log_error("--dhcp-client may not be combined with --boot.");
 +                return -EINVAL;
 +        }
 +
@@ -199,5 +198,5 @@ index 50f4892..35b610f 100644
          if (r < 0)
                  return log_error_errno(r, "drop_capabilities() failed: %m");
 -- 
-2.5.0
+2.5.5
 
