@@ -63,6 +63,14 @@ ostro_app_install () {
         chgrp ${OSTRO_USER_APP_NAME} $i
         chmod o-rwx $i
     done
+
+    if [ -f ${D}/${OSTRO_APP_ROOT}/manifest.in ]; then
+        cat ${D}/${OSTRO_APP_ROOT}/manifest.in | \
+            sed "s#@OSTRO_APP_ROOT@#${OSTRO_APP_ROOT}#g" > \
+                ${D}/${OSTRO_APP_ROOT}/manifest
+        chown root:root ${D}/${OSTRO_APP_ROOT}/manifest
+        rm ${D}/${OSTRO_APP_ROOT}/manifest.in
+    fi
 }
 
 # Package app files by default.
