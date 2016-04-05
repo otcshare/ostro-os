@@ -48,7 +48,19 @@ ostro_app_install () {
             mv "${D}/$i" "${D}/${OSTRO_APP_ROOT}"
         fi
     done
+
     for i in $(find "${D}/${OSTRO_APP_ROOT}"); do
+        if [ -f $i ]; then
+            if [ -r $i ]; then
+               chmod g+r $i
+            fi
+            if [ -x $i ]; then
+               chmod g+x $i
+            fi
+        fi
+
+        chown root $i
+        chgrp ${OSTRO_USER_APP_NAME} $i
         chmod o-rwx $i
     done
 }
