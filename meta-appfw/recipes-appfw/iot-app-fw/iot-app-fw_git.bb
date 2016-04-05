@@ -12,7 +12,7 @@ SRC_URI = " \
     file://80-container-ve.network \
   "
 
-SRCREV = "d6646e157becbfc8deeea16350b2809ef652dfad"
+SRCREV = "6c2461a8e4602081a19e5d3eae83fc4326fa9050"
 
 inherit autotools pkgconfig systemd
 
@@ -24,12 +24,17 @@ S = "${WORKDIR}/git"
 PACKAGECONFIG ??= ""
 
 FILES_${PN} = "${base_libdir}/systemd/system-generators/iot-service-generator \
+               ${base_libdir}/systemd/systemd/applications.target \
                ${libexecdir}/iot-app-fw \
                ${libdir}/systemd/network/80-container-host0.network \
                ${libdir}/systemd/network/80-container-ve.network \
 "
 
 FILES_${PN}-dbg =+ "${base_libdir}/systemd/system-generators/.debug"
+
+SYSTEMD_PACKAGES      += "${PN}"
+SYSTEMD_SERVICE_${PN}  = "applications.target"
+SYSTEMD_AUTO_ENABLE    = "enable"
 
 do_install_append () {
     mkdir -p ${D}${libdir}/systemd/network
