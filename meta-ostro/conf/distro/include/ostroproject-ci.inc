@@ -31,7 +31,7 @@ SDKMACHINE ?= "x86_64"
 # Generate source mirror tarballs:
 BB_GENERATE_MIRROR_TARBALLS = "1"
 
-# Include the devel settings
+# Configure images in "development mode".
 require conf/distro/include/ostro-os-development.inc
 
 # XXX Drop the VM hack after taking care also of the non UEFI devices
@@ -44,19 +44,35 @@ OSTRO_VM_IMAGE_TYPES = "dsk.xz dsk.zip dsk.vdi.zip dsk.bmap dsk.xz.sha256sum dsk
 # which must contain only alphanumeric symbols,'-' and '_'.
 # Any other symbols would be skipped in parser.
 #
-# Following targets would be used to perform default build task:
-OSTROPROJECT_CI_BUILD_TARGETS="${DISTRO}-image ${DISTRO}-image-dev"
+# Following targets would be used to perform default build task.
+OSTROPROJECT_CI_BUILD_TARGETS="ostro-image-noswupd ostro-image-swupd ostro-image-swupd-dev ostro-image-swupd-reference"
 # Following targets would be executed with do_populate_sdk task
 OSTROPROJECT_CI_SDK_TARGETS=""
-# Following targets would be executed with do_populate_sdk_ext task
-OSTROPROJECT_CI_ESDK_TARGETS="${DISTRO}-image"
+# Following targets would be executed with do_populate_sdk_ext task.
+# Uses the fully-populated image to ensure that the eSDK is as complete
+# as possible.
+OSTROPROJECT_CI_ESDK_TARGETS="ostro-image-swupd-all"
 # Following targets would be executed with do_test_iot_export task
-OSTROPROJECT_CI_TEST_EXPORT_TARGETS="${DISTRO}-image"
+# (same image that also later gets tested by the CI system).
+OSTROPROJECT_CI_TEST_EXPORT_TARGETS="ostro-image-swupd-dev"
 # Execute automatic tests for following images with corresponding
 # test suite and test files.
 # Space separated list of tuples, each should in format:
 # <image_name>,<testsuite_name>,<testfiles_name>,$MACHINE
-OSTROPROJECT_CI_TEST_RUNS="${DISTRO}-image,iot-testsuite.tar.gz,iot-testfiles.${MACHINE}.tar.gz,${MACHINE}"
+OSTROPROJECT_CI_TEST_RUNS="ostro-image-swupd-dev,iot-testsuite.tar.gz,iot-testfiles.${MACHINE}.tar.gz,${MACHINE}"
+
+# In the CI system, the integer OS version used for swupd is derived
+# from the Jenkins build number part of the BUILD_ID. The conversion
+# to int and back to string acts as sanity check that we really get a
+# number out of the BUILD_ID.
+#
+# BUILD_ID is expected to have this format:
+# BUILD_ID = "<parent-build-timestamp (of Jenkins top job)>" + "-build-" + "<jenkins-top-job-build-number>"
+#
+# We multiply it by ten, to ensure that the version space has some gap
+# for minor updates. How to actually build minor updates with Jenkins
+# still needs to be determined.
+OS_VERSION ?= "${@ str(int('${BUILD_ID}'.split('-')[-1]) * 10) }"
 
 #
 # Dymamic section.

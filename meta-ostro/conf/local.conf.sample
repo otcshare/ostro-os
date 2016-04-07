@@ -272,6 +272,12 @@ CONF_VERSION = "2"
 # are not secure.
 #
 # require conf/distro/include/ostro-os-development.inc
+#
+# Including that file reconfigures "ostro-image" to have the same
+# content and configuration as the published "ostro-image-swupd-reference".
+# Uncomment these lines if that is not desired:
+# OSTRO_DEVELOPMENT_EXTRA_FEATURES = ""
+# OSTRO_DEVELOPMENT_EXTRA_INSTALL = ""
 
 # When building production images, configure IMA signing
 # as described in meta-integrity/README.md if IMA is enabled

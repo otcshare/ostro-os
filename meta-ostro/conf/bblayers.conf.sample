@@ -1,6 +1,6 @@
 # LAYER_CONF_VERSION is increased each time build/conf/bblayers.conf
 # changes incompatibly
-LCONF_VERSION = "7"
+LCONF_VERSION = "8"
 
 BBPATH = "${TOPDIR}"
 BBFILES ?= ""
@@ -23,6 +23,7 @@ OSTRO_LAYERS = " \
   ##OEROOT##/meta-iotqa \
   ##OEROOT##/meta-appfw \
   ##OEROOT##/meta-security-isafw \
+  ##OEROOT##/meta-swupd \
   "
 
 # The following layers are available in the combined repository.

@@ -1,4 +1,4 @@
-SUMMARY = "Ostro OS Image."
+# Base class for Ostro images.
 
 OSTRO_IMAGE_EXTRA_INSTALL ?= ""
 IMAGE_INSTALL = " \
@@ -10,121 +10,234 @@ IMAGE_INSTALL = " \
                 ${OSTRO_IMAGE_EXTRA_INSTALL} \
 		"
 
+# In Ostro OS, /bin/sh is always dash, even if bash is installed for
+# interactive use.
+IMAGE_INSTALL += "dash"
+
+# Certain keywords, like "iotivity" are used in different contexts:
+# - as image feature name
+# - as bundle name
+# - optional: as additional image suffix
+#
+# While this keeps the names short, it can also be a bit confusing and
+# makes some of the definitions below look redundant. They are needed,
+# though, because the naming convention could also be different.
+
+
 # Image features sometimes affect image building (for example,
 # ima enables image signing) and/or adds certain packages
 # via FEATURE_PACKAGES.
 #
-# TODO: document IoT specific image feature somewhere. Here?
-IMAGE_FEATURES[validitems] += " \
-    app-privileges \
-    autologin \
+# This is the list of image features which merely add packages.
+# This list also gets turned into the default set of swupd bundles.
+OSTRO_IMAGE_PKG_FEATURES = " \
     can \
     connectivity \
     devkit \
-    ima \
     iotivity \
     java-jdk \
     node-runtime \
     nodejs-runtime-tools \
     python-runtime \
     qatests \
-    smack \
+    ssh-server \
     soletta \
     soletta-tools \
-    swupd \
+    tools-debug \
     tools-develop \
+    tools-interactive \
 "
 
-# These features come from base recipes, but are not added to
-# IMAGE_FEATURES[validitems]. Should better be fixed there.
+# Here is the complete list of image features, also including
+# those that modify the image configuration.
+#
+# TODO: document all relevant (not just IoT) image features
+# in building-images.rst.
+#
+# swupd = install swupd client and enabled generation of swupd bundles
 IMAGE_FEATURES[validitems] += " \
-    ptest-pkgs \
-    ssh-server-openssh \
-    tools-debug \
-    tools-profile \
+    app-privileges \
+    autologin \
+    ima \
+    smack \
+    swupd \
+    ${OSTRO_IMAGE_PKG_FEATURES} \
 "
 
-# "dev" images have the following features turned on.
-# ptests are enabled because (platform) developers might want
-# to run them and because it is a relatively small change which
-# avoids unnecessary proliferation of image variations that
-# need to be built automatically.
-IMAGE_VARIANT[dev] = " \
-    nodejs-runtime-tools \
-    ptest-pkgs \
-    tools-debug \
-    tools-develop \
-    tools-profile \
-    soletta-tools \
-    qatests \
-"
-
-# "minimal" images are the opposite of the "dev" images:
-# all non-essential features are turned off, while keeping
-# security features turned on.
-IMAGE_VARIANT[minimal] = " \
-    no-can \
-    no-devkit \
-    no-iotivity \
-    no-node-runtime \
-    no-nodejs-runtime-tools \
-    no-python-runtime \
-    no-soletta \
-    no-soletta-tools \
-    no-qatests \
-    no-java-jdk \
-    ${OSTRO_EXTRA_MINIMAL_IMAGE_FEATURES} \
-"
-OSTRO_EXTRA_MINIMAL_IMAGE_FEATURES ?= ""
-
-# Default list of features in "ostro-image" images. Additional
-# image variations modify this list, see BBCLASSEXTEND below.
-# OSTRO_EXTRA_IMAGE_FEATURES can be used to add more features
-# to the default list.
+# The default "ostro-image" is very minimal. Its content determines
+# the "core-os" swupd bundle which always must be present on a
+# device. All additional components must be added explicitly to the
+# image by setting OSTRO_IMAGE_EXTRA_FEATURES or
+# OSTRO_IMAGE_EXTRA_INSTALL (making it part of the core-os bundle and
+# the "ostro-image" image file) or by defining additional bundles via
+# SWUPD_BUNDLES.
+#
 IMAGE_FEATURES += " \
-                        can \
-                        connectivity \
-                        devkit \
-                        ${@bb.utils.contains('DISTRO_FEATURES', 'ima', 'ima', '', d)} \
-                        iotivity \
-                        ssh-server-openssh \
-                        node-runtime \
-                        python-runtime \
-                        java-jdk \
-                        soletta \
-                        ${@bb.utils.contains('DISTRO_FEATURES', 'smack', 'smack', '', d)} \
-                        swupd \
-                        ${OSTRO_EXTRA_IMAGE_FEATURES} \
-                        "
-OSTRO_EXTRA_IMAGE_FEATURES ?= ""
+    ${@bb.utils.contains('DISTRO_FEATURES', 'ima', 'ima', '', d)} \
+    ${@bb.utils.contains('DISTRO_FEATURES', 'smack', 'smack', '', d)} \
+    ${OSTRO_IMAGE_EXTRA_FEATURES} \
+"
+OSTRO_IMAGE_EXTRA_FEATURES ?= ""
+inherit ${@bb.utils.contains('IMAGE_FEATURES', 'swupd', 'swupd-image', '', d)}
 
+# Make progress messages from do_swupd_update visible as normal command
+# line output, instead of just recording it to the logs. Useful
+# because that task can run for a long time without any output.
+SWUPD_LOG_FN ?= "bbplain"
 
-# Create variants of the base recipe where certain features are
-# turned on or off. The name of these modified recipes are
-# ostro-image-<variant1>-<variant2>-..., for example:
-#   ostro-image-dev
-#   ostro-image-dev-noima (not enabled by default at the moment)
+# When using the "swupd" image feature, ensure that OS_VERSION is
+# set as intended. The default for local build works, but yields very
+# unpredictable version numbers (see ostro.conf for details).
 #
-# These variants are created on-the-fly by the imagevariant.bbclass.
-# Features preceeded by a "no" or "no-" are explicitly turned off.
-# Features mentioned by name are turned on. All other features are on
-# or off according to the original IMAGE_FEATURES list.
-#
-# Creating virtual recipes for all possible combinations of non-standard
-# features leads to an increase in parsing time due to the combinatorial
-# explosion. Therefore we define only those images that are both expected to
-# be useful and (more important) supported. Users can still enable
-# unsupported variations in the local.conf via OSTRO_EXTRA_IMAGE_VARIANTS.
-OSTRO_EXTRA_IMAGE_VARIANTS ?= ""
-BBCLASSEXTEND = " \
-    imagevariant:dev \
-    imagevariant:minimal \
-    ${OSTRO_EXTRA_IMAGE_VARIANTS} \
+# For example, build with:
+#   BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE OS_VERSION" OS_VERSION=100 bitbake ostro-image-swupd
+#   BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE OS_VERSION" OS_VERSION=110 bitbake ostro-image-swupd
+#   ...
+
+# Define additional bundles. This matches 1:1 to image features
+# which add packages (i.e. OSTRO_IMAGE_PKG_FEATURES).
+# In addition, for each of these we also create a development bundle
+# that also contains the development files.
+#SWUPD_BUNDLES ??= " \
+#    ${OSTRO_IMAGE_PKG_FEATURES} \
+#    ${@ ' '.join([x + '-dev' for x in '${OSTRO_IMAGE_PKG_FEATURES}'.split()])} \
+#"
+BUNDLE_CONTENTS[can] = "${FEATURE_PACKAGES_can}"
+BUNDLE_CONTENTS[connectivity] = "${FEATURE_PACKAGES_connectivity}"
+BUNDLE_CONTENTS[devkit] = "${FEATURE_PACKAGES_devkit}"
+BUNDLE_CONTENTS[iotivity] = "${FEATURE_PACKAGES_iotivity}"
+BUNDLE_CONTENTS[java-jdk] = "${FEATURE_PACKAGES_java-jdk}"
+BUNDLE_CONTENTS[node-runtime] = "${FEATURE_PACKAGES_node-runtime}"
+BUNDLE_CONTENTS[nodejs-runtime-tools] = "${FEATURE_PACKAGES_nodejs-runtime-tools}"
+BUNDLE_CONTENTS[python-runtime] = "${FEATURE_PACKAGES_python-runtime}"
+BUNDLE_CONTENTS[qatests] = "${FEATURE_PACKAGES_qatests}"
+BUNDLE_CONTENTS[ssh-server] = "${FEATURE_PACKAGES_ssh-server-openssh}"
+BUNDLE_CONTENTS[soletta] = "${FEATURE_PACKAGES_soletta}"
+BUNDLE_CONTENTS[soletta-tools] = "${FEATURE_PACKAGES_soletta-tools}"
+BUNDLE_CONTENTS[tools-debug] = "${FEATURE_PACKAGES_tools-debug}"
+BUNDLE_CONTENTS[tools-develop] = "${FEATURE_PACKAGES_tools-develop}"
+BUNDLE_CONTENTS[tools-interactive] = "${FEATURE_PACKAGES_tools-interactive}"
+
+# Defining bundles as above is currently too slow (build times in the CI
+# of more than three hours despite reused sstate cache). Let's cut down
+# the number of bundles to something more manageable and increase it again
+# after improving bundle creation performance.
+SWUPD_BUNDLES ??= " \
+    reference \
+    full \
+    full-dev \
+"
+BUNDLE_CONTENTS[reference] = " \
+    ${FEATURE_PACKAGES_connectivity} \
+    ${FEATURE_PACKAGES_tools-interactive} \
+    ${FEATURE_PACKAGES_ssh-server-openssh} \
+"
+BUNDLE_CONTENTS[full] = " \
+    ${FEATURE_PACKAGES_can} \
+    ${FEATURE_PACKAGES_devkit} \
+    ${FEATURE_PACKAGES_iotivity} \
+    ${FEATURE_PACKAGES_java-jdk} \
+    ${FEATURE_PACKAGES_node-runtime} \
+    ${FEATURE_PACKAGES_python-runtime} \
+    ${FEATURE_PACKAGES_qatests} \
+    ${FEATURE_PACKAGES_soletta} \
+    ${FEATURE_PACKAGES_soletta-tools} \
+    ${FEATURE_PACKAGES_tools-debug} \
+    ${FEATURE_PACKAGES_tools-develop} \
+    ${FEATURE_PACKAGES_tools-interactive} \
 "
 
-# Once officially supported, variations with IMA disabled can be
-# added. Right now, users need to do that in their local.conf:
-# OSTRO_EXTRA_IMAGE_VARIANTS = "imagevariant:noima imagevariant:dev,noima"
+# When swupd bundles are enabled, choose explicitly which images
+# are created. The base image will only have the core-os bundle and
+# thus might not be very useful. For use in ostro-image-swupd.bb we
+# pre-define additional images:
+# ostro-image-swupd-reference -
+#    Base image plus login via getty and ssh, plus connectivity.
+#    This is what developers  are expected to start with when
+#    building their first image.
+# ostro-image-swupd-dev -
+#    Image used for testing Ostro OS. Contains most of the software
+#    pre-installed, including the corresponding development files
+#    for on-target compilation.
+# ostro-image-swupd-all -
+#    Contains all defined bundles. Useful as meta target, but not
+#    guaranteed to build images successfully, for example because
+#    the content might get too large for machines with a fixed image
+#    size.
+SWUPD_IMAGES ??= " \
+    reference \
+    dev \
+    all \
+"
+# SWUPD_IMAGES[reference] = " \
+#     connectivity \
+#     ssh-server \
+# "
+SWUPD_IMAGES[reference] = " \
+    reference \
+"
+
+# In practice the same as "all" at the moment, but conceptually different
+# and thus defined separately.
+SWUPD_IMAGES[dev] = " \
+    ${SWUPD_BUNDLES} \
+"
+SWUPD_IMAGES[all] = " \
+    ${SWUPD_BUNDLES} \
+"
+
+# When building without swupd, choose which content is to be included
+# in the image. If the default "ostro-image-noswupd" name is
+# undesirable, write a custom image recipe or customize the image file
+# names. We provide variables that can be used to select the same
+# content as in the swupd images.
+#
+# Example for local.conf, partly covered already by ostro-development.inc:
+# IMAGE_BASENAME_pn-ostro-image-noswupd = "my-ostro-image-reference"
+# OSTRO_IMAGE_EXTRA_INSTALL = "${OSTRO_IMAGE_INSTALL_REFERENCE} my-own-package"
+# OSTRO_IMAGE_EXTRA_FEATURES = "${OSTRO_IMAGE_FEATURES_REFERENCE}"
+
+# Customize priorities of alternative components. See ostro.conf.
+#
+# In general, Busybox or Toybox are preferred over alternatives.
+# The expectation is that either Busybox or Toybox are used, but if
+# both get installed, Toybox is used for those commands that it
+# provides.
+#
+# It is still possible to build images with coreutils providing
+# core system tools, one just has to remove Toybox/Busybox from
+# the image.
+export ALTERNATIVE_PRIORITY_BUSYBOX ?= "300"
+export ALTERNATIVE_PRIORITY_TOYBOX ?= "301"
+export ALTERNATIVE_PRIORITY_BASH ?= "305"
+
+# Both systemd and the efi_combo_updater have problems when
+# "mount" is provided by busybox: systemd fails to remount
+# the rootfs read/write and the updater segfaults because
+# it does not parse the output correctly.
+#
+# For now avoid these problems by sticking to the traditional
+# mount utilities from util-linux.
+export ALTERNATIVE_PRIORITY_UTIL_LINUX ?= "305"
+
+# We do not know exactly which util-linux packages will get
+# pulled into bundles, so we have to install all of them
+# also in the os-core. Alternatively we could try to select
+# just mount/umount as overrides for Toybox/Busybox.
+IMAGE_INSTALL += "util-linux"
+
+# Currently the definitions of swupd images depend on bundles and thus
+# BUNDLE_CONTENTS. OSTRO_IMAGE_FEATURES are defined as empty in case
+# that this will change in the future.
+OSTRO_IMAGE_FEATURES_REFERENCE = ""
+OSTRO_IMAGE_FEATURES_QA = ""
+OSTRO_IMAGE_FEATURES_ALL = ""
+def ostro_image_bundles_to_packages (image, d):
+    bundles = (d.getVarFlag('SWUPD_IMAGES', image, True) or '').split()
+    return ' '.join([(d.getVarFlag('BUNDLE_CONTENTS', bundle, True) or '') for bundle in bundles])
+OSTRO_IMAGE_INSTALL_REFERENCE = "${@ostro_image_bundles_to_packages('reference', d)}"
+OSTRO_IMAGE_INSTALL_QA = "${@ostro_image_bundles_to_packages('qa', d)}"
+OSTRO_IMAGE_INSTALL_ALL = "${@ostro_image_bundles_to_packages('all', d)}"
 
 # The AppFW depends on the security framework and user management, and these frameworks
 # (currently?) make little sense without apps, therefore a single image feature is used
@@ -156,7 +269,21 @@ FEATURE_PACKAGES_soletta-tools = "soletta-dev-app"
 # because it is the most common source code management tool.
 FEATURE_PACKAGES_tools-develop = "packagegroup-core-buildessential git"
 
-FEATURE_PACKAGES_swupd = "packagegroup-swupd"
+# Add bash because it is more convenient to use than dash.
+# This does not change /bin/sh due to re-organized update-alternative
+# priorities.
+FEATURE_PACKAGES_tools-interactive = "packagegroup-tools-interactive bash"
+
+# We could make bash the login shell for interactive accounts as shown
+# below, but that would have to be done also in the os-core and thus
+# tools-interactive would have to be set in all swupd images.
+# TODO (?): introduce a bash-login-shell image feature?
+# ROOTFS_POSTPROCESS_COMMAND_append = "${@bb.utils.contains('IMAGE_FEATURES', 'tools-interactive', ' root_bash_shell; ', '', d)}"
+# root_bash_shell () {
+#     sed -i -e 's;/bin/sh;/bin/bash;' \
+#        ${IMAGE_ROOTFS}${sysconfdir}/passwd \
+#        ${IMAGE_ROOTFS}${sysconfdir}/default/useradd
+# }
 
 FEATURE_PACKAGES_qatests = "packagegroup-qa-tests"
 
@@ -197,8 +324,7 @@ IMAGE_FSTYPES_remove_intel-quark = "live"
 IMAGE_FSTYPES_append_intel-quark = " ${OSTRO_VM_IMAGE_TYPES}"
 
 # Activate "dsk" image type.
-# Currently this supports only EFI-based booting, so let's enable it only for the EFI platforms.
-IMAGE_CLASSES += "${@bb.utils.contains_any('MACHINE', 'intel-core2-32 intel-corei7-64 intel-quark', 'image-dsk', '', d)}"
+IMAGE_CLASSES += "${@ 'image-dsk' if ${OSTRO_USE_DSK_IMAGES} else ''}"
 
 # Inherit after setting variables that get evaluated when importing
 # the classes. In particular IMAGE_FSTYPES is relevant because it causes
@@ -348,6 +474,27 @@ ima_evm_sign_rootfs_prepend () {
 # for that machine.
 APPEND_append = "${@bb.utils.contains('IMAGE_FEATURES', 'smack', '', ' security=none', d)}"
 
+# In addition, when Smack is disabled in the image but enabled in the
+# distro, we strip all Smack xattrs from the rootfs. Otherwise we still
+# end up with Smack labels in the filesystem although we neither need
+# nor want them, because the packages that were compiled for the distro
+# have Smack enabled and will set the xattrs while getting installed.
+ostro_image_strip_smack () {
+    echo "Removing Smack xattrs:"
+    set -e
+    cd ${IMAGE_ROOTFS}
+    find . -exec sh -c "getfattr -h -m ^security.SMACK.* '{}' | grep -q ^security" \; -print | while read path; do
+        # Print removed Smack attributes to the log before removing them.
+        getfattr -h -d -m ^security.SMACK.* "$path"
+        getfattr -h -d -m ^security.SMACK.* "$path" | grep ^security | cut -d = -f1 | while read attr; do
+           setfattr -h -x "$xattr" "$path"
+        done
+    done
+}
+OSTRO_IMAGE_STRIP_SMACK = "${@ 'ostro_image_strip_smack' if not bb.utils.contains('IMAGE_FEATURES', 'smack', True, False, d) and bb.utils.contains('DISTRO_FEATURES', 'smack', True, False, d) else '' }"
+do_rootfs[postfuncs] += "${OSTRO_IMAGE_STRIP_SMACK}"
+DEPENDS += "${@ 'attr-native' if '${OSTRO_IMAGE_STRIP_SMACK}' else '' }"
+
 # Debug option:
 # in case of problems during the transition from initramfs to rootfs, spawn a shell.
 APPEND_append = " init_fatal_sh"
@@ -404,3 +551,18 @@ python extra_motd () {
         f.write(d.getVar('OSTRO_EXTRA_MOTD', True))
 }
 ROOTFS_POSTPROCESS_COMMAND += "${@'extra_motd;' if d.getVar('OSTRO_EXTRA_MOTD', True) else ''}"
+
+# Ensure that the os-release file contains values matching the current image creation build.
+# We do not want to rebuild the the os-release package for that, because that would
+# also trigger image rebuilds when nothing else changed.
+ostro_image_patch_os_release () {
+    sed -i \
+        -e 's/distro-version-to-be-added-during-image-creation/${DISTRO_VERSION}/' \
+        -e 's/build-id-to-be-added-during-image-creation/${BUILD_ID}/' \
+        ${IMAGE_ROOTFS}/usr/lib/os-release
+}
+ostro_image_patch_os_release[vardepsexclude] = " \
+    DISTRO_VERSION \
+    BUILD_ID \
+"
+ROOTFS_POSTPROCESS_COMMAND += "ostro_image_patch_os_release; "

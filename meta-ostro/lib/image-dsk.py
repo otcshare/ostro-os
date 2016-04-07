@@ -129,7 +129,7 @@ def do_dsk_image():
                      expand_vars('${IMAGE_NAME}-disk-layout.json'))
     disk_layout_file_link = \
         os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
-                     expand_vars('${BPN}-${MACHINE}-disk-layout.json'))
+                     expand_vars('${IMAGE_LINK_NAME}-disk-layout.json'))
     with open(disk_layout_file, 'w') as disk_layout:
         json.dump(obj=partition_table, fp=disk_layout,
                   indent=4, separators=(',', ': '))

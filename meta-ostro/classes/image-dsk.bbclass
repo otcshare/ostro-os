@@ -220,12 +220,11 @@ deltask do_rootfs_wicenv
 # All variables explicitly passed to image-iot.py.
 IMAGE_DSK_VARIABLES = " \
     APPEND \
-    BPN \
     DEPLOY_DIR_IMAGE \
     DSK_IMAGE_LAYOUT \
+    IMAGE_LINK_NAME \
     IMAGE_NAME \
     IMAGE_ROOTFS \
-    MACHINE \
     ROOTFS_TYPE \
     ROOTFS_PARTUUID_VALUE \
     PARTITION_TYPE_EFI \

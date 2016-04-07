@@ -1,0 +1,64 @@
+#! /bin/bash
+#
+# Simple HTTP server for the swupd "www" directory. Useful
+# for testing swupd bundles locally during development.
+# Can be used together with
+#   swupd verify -u http://192.168.7.1:8000
+# when using runqemu and the default port.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+show_help () {
+    echo "$(basename $0) [-p http-port] [-d swupd-www-directory]"
+    echo 'Must run in the background. Can be killed with'
+    echo '   kill $(pidof swupd-http-server)'
+}
+
+set -e
+
+dir=$BUILDDIR/tmp*/deploy/swupd/*/ostro-image-swupd/www
+port=8000
+
+while getopts "h?p:d:" opt; do
+    case "$opt" in
+    h|\?)
+        show_help
+        exit 0
+        ;;
+    p)  port="$OPTARG"
+        ;;
+    d)  dir="$OPTARG"
+        ;;
+    esac
+done
+
+count=$(ls -d -1 $dir | wc -l)
+if [ $count -eq 0 ]; then
+    echo >&2 "$dir does not exist."
+    exit 1
+fi
+if [ $count -gt 1 ]; then
+    echo >&2 "$dir is ambiguous. Specify one as parameter:"
+    ls >&2 -d -1 $dir
+    exit 1
+fi
+
+echo "Serving swupd files from" $dir
+cd $dir
+exec -a swupd-http-server python -m SimpleHTTPServer $port

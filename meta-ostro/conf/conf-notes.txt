@@ -1,10 +1,7 @@
 Common targets are:
-    ostro-image
-    ostro-image-dev
-    core-image-minimal
-    meta-toolchain
-    adt-installer
-    meta-ide-support
+    ostro-image-noswupd (when building without swupd,
+                         the recommended mode for local image building)
+    ostro-image-swupd-reference (when building with swupd)
 
 We recommend to use VirtualBox if you wish to run an Ostro image in a
 virtual environment. Please check the doc/howtos/booting-and-installation.rst

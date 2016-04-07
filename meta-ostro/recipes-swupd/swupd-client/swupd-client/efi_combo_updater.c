@@ -10,20 +10,20 @@ const char EFI_TYPE[] = "EF00";
 const char EFI_BACKUP_TYPE[] = "2700";
 
 const char ROOT_BLOCK_DEVICE_CMD[] =
-  "/bin/mount |/bin/grep \"/dev/sd\" "
-  "|/bin/grep \"on / type\" |/bin/sed 's/[0-9].*$//'";
+  "mount |grep \"/dev/sd\" "
+  "|grep \"on / type\" |sed 's/[0-9].*$//'";
 
 const char ROOT_BLOCK_DEVICE_SD_CMD[] =
-  "/bin/mount |/bin/grep \"/dev/mmcblk\" "
-  "|/bin/grep \"on / type\" |/bin/sed 's/p[0-9].*$//'";
+  "mount |grep \"/dev/mmcblk\" "
+  "|grep \"on / type\" |sed 's/p[0-9].*$//'";
 
 const char EFI_PARTITION_NR_CMD[] =
-  "/usr/sbin/sgdisk -p %s 2> /dev/null |/bin/grep %s "
-  "|/bin/sed -e 's/[ ]*//' |/usr/bin/cut -d ' ' -f 1";
+  "sgdisk -p %s 2> /dev/null |grep %s "
+  "|sed -e 's/[ ]*//' |cut -d ' ' -f 1";
 
 const char EFI_BACKUP_PARTITION_NR_CMD[] =
-  "/usr/sbin/sgdisk -p %s 2> /dev/null |/bin/grep %s "
-  "|/bin/sed -e 's/[ ]*//' |/usr/bin/cut -d ' ' -f 1";
+  "sgdisk -p %s 2> /dev/null |grep %s "
+  "|sed -e 's/[ ]*//' |cut -d ' ' -f 1";
 
 
 /* Runs a command, with optional parameters.
@@ -97,40 +97,40 @@ int main(void) {
   printf("EFI_BACKUP_PARTITION_NR %s\n", efi_backup_partition_nr);
 
   /* Cleanup possible leftovers.*/
-  execute(NULL, "/bin/umount /tmp/mnt 2>&1");
-  execute(NULL, "/bin/rm -rf /tmp/mnt 2>&1");
+  execute(NULL, "umount /tmp/mnt 2>&1");
+  execute(NULL, "rm -rf /tmp/mnt 2>&1");
 
   /* Check if the current efi combo file is up-to-date. */
-  assert(execute(NULL, "/bin/mkdir /tmp/mnt 2>&1") ==0);
-  assert(execute(NULL, "/bin/mount %s%s%s /tmp/mnt/ 2>&1",
+  assert(execute(NULL, "mkdir /tmp/mnt 2>&1") ==0);
+  assert(execute(NULL, "mount %s%s%s /tmp/mnt/ 2>&1",
                        root_block_device, part_prefix,
                        efi_partition_nr) == 0);
-  update_needed = execute(NULL, "/usr/bin/diff /tmp/mnt/EFI/BOOT/*.efi "
+  update_needed = execute(NULL, "diff /tmp/mnt/EFI/BOOT/*.efi "
                                 "/boot/EFI/BOOT/*.efi 2>&1");
 
   if (!update_needed)
     return 0;
 
   /*Update required, so mount the inactive EFI partition.*/
-  assert(execute(NULL, "/bin/umount /tmp/mnt/ 2>&1") == 0);
-  assert(execute(NULL, "/bin/mount %s%s%s /tmp/mnt/ 2>&1",
+  assert(execute(NULL, "umount /tmp/mnt/ 2>&1") == 0);
+  assert(execute(NULL, "mount %s%s%s /tmp/mnt/ 2>&1",
                        root_block_device, part_prefix,
                        efi_backup_partition_nr) == 0);
 
   /* Nuke the old content and deploy the new one.*/
-  assert(execute(NULL, "/bin/rm /tmp/mnt/EFI/BOOT/*") == 0);
-  assert(execute(NULL, "/bin/sync") == 0);
-  assert(execute(NULL, "/bin/cp /boot/EFI/BOOT/*.efi "
+  assert(execute(NULL, "rm /tmp/mnt/EFI/BOOT/*") == 0);
+  assert(execute(NULL, "sync") == 0);
+  assert(execute(NULL, "cp /boot/EFI/BOOT/*.efi "
                        "/tmp/mnt/EFI/BOOT/") == 0);
-  assert(execute(NULL, "/bin/sync") == 0);
-  assert(execute(NULL, "/bin/umount /tmp/mnt/ 2>&1") == 0);
-  assert(execute(NULL, "/bin/sync") == 0);
+  assert(execute(NULL, "sync") == 0);
+  assert(execute(NULL, "umount /tmp/mnt/ 2>&1") == 0);
+  assert(execute(NULL, "sync") == 0);
 
 
   /* Make the inactive partition active and vice-versa.*/
-  assert(execute(NULL, "/usr/sbin/sgdisk -t %s:%s -t %s:%s %s",
+  assert(execute(NULL, "sgdisk -t %s:%s -t %s:%s %s",
                        efi_partition_nr, EFI_BACKUP_TYPE,
                        efi_backup_partition_nr, EFI_TYPE,
                        root_block_device) == 0);
-  assert(execute(NULL, "/bin/sync") == 0);
+  assert(execute(NULL, "sync") == 0);
 }

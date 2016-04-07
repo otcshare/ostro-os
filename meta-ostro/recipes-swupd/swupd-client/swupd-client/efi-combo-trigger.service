@@ -1,0 +1,10 @@
+[Unit]
+Description=Updates the EFI combo application
+BindsTo=update-triggers.target
+
+[Install]
+WantedBy=update-triggers.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/efi_combo_updater

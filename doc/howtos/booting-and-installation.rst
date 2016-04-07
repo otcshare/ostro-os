@@ -21,10 +21,10 @@ Two images are of interest for this process (depending if you're using real hard
 Ostro OS Images
 ===============
 
-As explained in the :ref:`Building Images` tech note, there are several image variants available
-depending on your need.  For simplicity and the needs of this tech note, we'll use the dev image that includes
-additional build and debugging tools that wouldn't typically be included in a production device image. This
-dev image also will auto-login as ``root`` at the console, something that normally would not be available
+As explained in the :ref:`Building Images` tech note, there are several image configurations available
+depending on your need.  For simplicity and the needs of this tech note, we'll use the reference image that includes
+additional configuration changes that wouldn't typically be included in a production device image. This
+reference image will auto-login as ``root`` at the console, something that normally would not be available
 in a production device image but is quite useful during development.
 
 
@@ -190,7 +190,7 @@ Flashing an Intel Edison requires use of a breakout board and two micro-USB cabl
    for recovery cases.)
 #. Plug in a micro-USB cable to the J3 connector on the board (corner next to the FTDI chip).
 #. Flip the DIP switch towards jumper J16.
-#. Download the ``ostro-image`` or ``ostro-image-dev`` image from the Ostro OS download folder for
+#. Download the ``ostro-image-swupd-reference`` image from the Ostro OS download folder for
    Edison (on https://download.ostroproject.org/releases/ostro-os/milestone/).
 #. Extract the image from the archive using the command::
 
@@ -237,7 +237,7 @@ In our setup steps below, we're using an 8GB microSD card in an SD adapter that'
    Download these four files to your host computer::
 
       MLO
-      ostro-image-dev-beaglebone-*.rootfs.tar.bz2
+      ostro-image-swupd-reference-beaglebone-*.rootfs.tar.bz2
       u-boot.img
       zImage-am335x-boneblack.dtb
 
@@ -306,7 +306,7 @@ In our setup steps below, we're using an 8GB microSD card in an SD adapter that'
 
      $ mkdir rootfs
      $ sudo mount /dev/mmcblk0p2 rootfs
-     $ sudo tar xvjf ostro-image-dev-beaglebone*.rootfs.tar.bz2 --wildcards --xattrs --xattrs-include=*  -C rootfs
+     $ sudo tar xvjf ostro-image-swupd-reference-beaglebone*.rootfs.tar.bz2 --wildcards --xattrs --xattrs-include=*  -C rootfs
 
 #.  Before unmounting the device, we also need to add the device tree blob file (``zImage-am335x-boneblack.dtb``)
     that you downloaded (or from your own build).
@@ -369,7 +369,7 @@ own build from source.  As with the other examples above, we recommend you start
    While still on the system configuration, click on the "Acceleration" tab and verify that
    "Enable VT-x/AMX-V" (HW virtualization support) is checked. Click OK.
 #. Finally, click on the "Start" arrow button and your new virtual machine will start
-   booting the Ostro OS Dev image and auto-login as root, no password is required.
+   booting the Ostro OS reference image and auto-login as root, no password is required.
 
 If booting fails with a kernel panic, verify you’re using VirtualBox version 5.0.2 or later.  You can shut the machine down
 by either using the :command:`shutdown now` within the running Ostro OS image, or by using the VirtualBox menu

@@ -21,6 +21,7 @@ Ostro OS:
 - meta-java
 - meta-soletta
 - meta-openembedded
+- meta-swupd
 
 The top-level directory comes from openembedded-core and meta-ostro
 (including this README.rst), everything else is in its own
