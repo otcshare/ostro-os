@@ -7,12 +7,12 @@ LIC_FILES_CHKSUM = "file://LICENSE-BSD;md5=f9f435c1bd3a753365e799edf375fc42"
 DEPENDS = "json-c systemd"
 
 SRC_URI = " \
-    git://git@github.com/ostroproject/iot-app-fw.git;protocol=https;branch=kli/devel/smpl \
+    git://git@github.com/ostroproject/iot-app-fw.git;protocol=https;branch=kli/devel/1.x \
     file://80-container-host0.network \
     file://80-container-ve.network \
   "
 
-SRCREV = "55c34f8281b5655284ef940de0c69b9185dfcea1"
+SRCREV = "2888595ac6e067d11305bc089e38f018e080aeff"
 
 inherit autotools pkgconfig systemd
 
