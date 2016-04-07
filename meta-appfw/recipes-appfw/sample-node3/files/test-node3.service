@@ -1,0 +1,10 @@
+[Unit]
+Description=A NodeJS sample app.
+
+[Service]
+Type=simple
+User=test-node3
+ExecStart=/usr/bin/node /lib/node_modules/node3/sample.js 23459
+
+[Install]
+WantedBy=applications.target

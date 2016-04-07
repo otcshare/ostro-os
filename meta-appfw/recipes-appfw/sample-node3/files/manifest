@@ -1,0 +1,22 @@
+{
+    "application": "node3",
+    "description": "node3 - A NodeJS sample app.",
+    "provider": "test",
+    "groups": "test-node3",
+    "environment": {
+        "NODE3_FOO": "node3-foo",
+        "NODE3_BAR": "node3-bar",
+    },
+    "command": [
+        "/usr/bin/node",
+        "/lib/node_modules/node2/sample.js",
+        "23459",
+        "'test-node2 NodeJS sample application'",
+    ],
+    "autostart": "yes",
+    "container": {
+        "type":    "nspawn-system",
+        "network": "VirtualEthernet",
+        "portmap": [ { "proto": "tcp", "host": 23459, "container": 23459 }, ],
+    },
+}

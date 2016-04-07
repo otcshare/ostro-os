@@ -1,0 +1,21 @@
+{
+    "application": "node0",
+    "description": "node0 - A NodeJS sample app.",
+    "provider": "test",
+    "groups": "test-node0",
+    "environment": {
+        "NODE0_FOO": "node0-foo",
+        "NODE0_BAR": "node0-bar",
+    },
+    "command": [
+        "/usr/bin/node",
+        "@OSTRO_APP_ROOT@/lib/node_modules/node0/sample.js",
+        "23456",
+        "'test-node0 NodeJS sample application'",
+    ],
+    "autostart": "yes",
+    "container": {
+        "type":    "none",
+        "portmap": [ { "proto": "tcp", "host": 23456 } ],
+    },
+}
