@@ -12,6 +12,6 @@
     "container": {
         "type": "nspawn",
         "network": "VirtualEthernet",
-        "portmap": [ { "proto": "tcp", "host": 12345, "container": 12345 } ],
+        "portmap": [ { "proto": "tcp", "host": 2000, "container": 12345 } ],
     },
 }

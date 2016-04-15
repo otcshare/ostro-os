@@ -1,6 +1,6 @@
 {
     "application": "node3",
-    "description": "node3 - A NodeJS sample app.",
+    "description": "node3 - A dummy NodeJS application, running in a full system container.",
     "provider": "test",
     "groups": "test-node3",
     "environment": {
@@ -9,14 +9,14 @@
     },
     "command": [
         "/usr/bin/node",
-        "/lib/node_modules/node2/sample.js",
-        "23459",
-        "'test-node2 NodeJS sample application'",
+        "/lib/node_modules/node3/sample.js",
+        "23456",
+        "'test-node3 NodeJS sample application'",
     ],
     "autostart": "yes",
     "container": {
         "type":    "nspawn-system",
         "network": "VirtualEthernet",
-        "portmap": [ { "proto": "tcp", "host": 23459, "container": 23459 }, ],
+        "portmap": [ { "proto": "tcp", "host": 2004, "container": 23456 }, ],
     },
 }

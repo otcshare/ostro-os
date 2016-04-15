@@ -1,6 +1,6 @@
 {
     "application": "node0",
-    "description": "node0 - A NodeJS sample app.",
+    "description": "node0 - A dummy NodeJS application, running without a container.",
     "provider": "test",
     "groups": "test-node0",
     "environment": {
@@ -10,12 +10,12 @@
     "command": [
         "/usr/bin/node",
         "@OSTRO_APP_ROOT@/lib/node_modules/node0/sample.js",
-        "23456",
+        "2001",
         "'test-node0 NodeJS sample application'",
     ],
     "autostart": "yes",
     "container": {
         "type":    "none",
-        "portmap": [ { "proto": "tcp", "host": 23456 } ],
+        "portmap": [ { "proto": "tcp", "host": 2001 } ],
     },
 }
