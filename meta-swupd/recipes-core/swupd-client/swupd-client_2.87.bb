@@ -14,6 +14,7 @@ SRC_URI = "\
     file://0007-Add-compatibility-with-libarchive-s-bsdtar-command.patch \
     file://0001-log.c-avoid-segfault-and-show-staging-file-name.patch \
     file://0002-downloads-minimize-syscalls-to-improve-performance.patch \
+    file://0001-globals.c-Use-fake-address-as-default-updates-url.patch \
 "
 
 SRC_URI[md5sum] = "5d272c62edb8a9c576005ac5e1182ea3"
