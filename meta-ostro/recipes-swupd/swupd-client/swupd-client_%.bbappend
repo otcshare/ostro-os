@@ -2,6 +2,9 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 inherit systemd
 
+# Make swupd "stateful" by letting it update files in /etc.
+PACKAGECONFIG_remove = "stateless"
+
 SRC_URI_append = "file://0001-Disable-boot-file-heuristics.patch \
                   file://efi_combo_updater.c \
                   ${@ 'file://efi-combo-trigger.service' if ${OSTRO_USE_DSK_IMAGES} else ''} \
