@@ -14,6 +14,7 @@ SRC_URI = "\
     file://0007-Add-compatibility-with-libarchive-s-bsdtar-command.patch \
     file://0001-log.c-avoid-segfault-and-show-staging-file-name.patch \
     file://0002-downloads-minimize-syscalls-to-improve-performance.patch \
+    file://0001-Add-configure-option-to-re-enable-updating-of-config.patch \
 "
 
 SRC_URI[md5sum] = "5d272c62edb8a9c576005ac5e1182ea3"
@@ -27,6 +28,9 @@ RRECOMMENDS_${PN}_class-target = "os-release"
 inherit pkgconfig autotools-brokensep systemd
 
 EXTRA_OECONF = "--with-systemdsystemunitdir=${systemd_system_unitdir} --enable-bsdtar"
+
+PACKAGECONFIG ??= "stateless"
+PACKAGECONFIG[stateless] = ",--disable-stateless"
 
 #TODO: create and install /var/lib/swupd/{delta,staged/download}
 do_install_append () {

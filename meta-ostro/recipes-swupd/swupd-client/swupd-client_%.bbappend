@@ -2,12 +2,16 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 inherit systemd
 
+# Make swupd "stateful" by letting it update files in /etc.
+PACKAGECONFIG_remove = "stateless"
+
 SRC_URI_append = "file://0001-Disable-boot-file-heuristics.patch \
                   file://efi_combo_updater.c \
                   ${@ 'file://efi-combo-trigger.service' if ${OSTRO_USE_DSK_IMAGES} else ''} \
                  "
 
 RDEPENDS_${PN}_class-target_append = "${@ ' gptfdisk' if ${OSTRO_USE_DSK_IMAGES} else '' }"
+DEPENDS_${PN}_append = " xattr-native"
 
 # Get rid of check-update entirely, otherwise we cannot enable
 # auto-activation.
@@ -35,4 +39,13 @@ do_install_append () {
 
     # Don't install and enable check-update.timer by default
     rm -f ${D}/${systemd_system_unitdir}/check-update.* ${D}/${systemd_system_unitdir}/multi-user.target.wants/check-update.*
+}
+
+pkg_postinst_${PN}_append () {
+    # Setting a label explicitly on the directory prevents it
+    # from inheriting other undesired attributes like security.SMACK64TRANSMUTE
+    # from upper folders (see xattr-images.bbclass for details).
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'smack', 'true', 'false', d)}; then
+       setfattr -n security.SMACK64 -v "_" $D/var/lib/swupd
+    fi
 }
