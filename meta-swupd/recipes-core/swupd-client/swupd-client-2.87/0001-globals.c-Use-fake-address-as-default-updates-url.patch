@@ -1,0 +1,37 @@
+From e7af0013dd550c72641ea841f1177d6b0af99dce Mon Sep 17 00:00:00 2001
+From: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+Date: Fri, 15 Apr 2016 10:02:45 +0300
+Subject: [PATCH] globals.c: Use fake address as default updates' url
+
+If a user forgets to provide its swupd server URL then
+ClearLinux's default is used unconditionally which may
+reult in a corrupted system.
+
+Upstream-Status: Inappropriate [latest code doesn't use hardcoded defaults]
+
+Signed-off-by: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+---
+ src/globals.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/globals.c b/src/globals.c
+index 8ca3fd9..0e78f34 100644
+--- a/src/globals.c
++++ b/src/globals.c
+@@ -62,11 +62,11 @@ bool have_network = false; /* assume no access until proved */
+ #define URL_COUNT 2
+ char *version_server_urls[URL_COUNT] = {
+ 	NULL,
+-	"https://download.clearlinux.org/update",
++	"https://example.com/update",
+ };
+ char *content_server_urls[URL_COUNT] = {
+ 	NULL,
+-	"https://download.clearlinux.org/update",
++	"https://example.com/update",
+ };
+ char *preferred_version_url;
+ char *preferred_content_url;
+-- 
+2.5.0
+

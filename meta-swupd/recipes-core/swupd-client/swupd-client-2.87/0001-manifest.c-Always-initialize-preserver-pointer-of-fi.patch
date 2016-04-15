@@ -1,0 +1,34 @@
+From ad26f092f1b2102bf6e298a2a6dd8115f4e88d99 Mon Sep 17 00:00:00 2001
+From: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+Date: Fri, 15 Apr 2016 18:36:57 +0300
+Subject: [PATCH] manifest.c: Always initialize preserver pointer of file list
+
+In case a bundle has nothing in common with any other installed
+bundle (no files duplicated in different bundles) the preserver
+pointer inside deduplicate_files_from_manifest() isn't
+initialized which leads to NULL as output of the function.
+As result no files of the deleted bundle get deleted at all.
+
+Upstream-Status: Backported [v3.5.0+]
+
+Signed-off-by: Dmitry Rozhkov <dmitry.rozhkov@linux.intel.com>
+---
+ src/manifest.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/manifest.c b/src/manifest.c
+index 7c356d7..10b7daa 100644
+--- a/src/manifest.c
++++ b/src/manifest.c
+@@ -1326,7 +1326,7 @@ void deduplicate_files_from_manifest(struct manifest **m1, struct manifest *m2)
+ 	int count = 0;
+ 
+ 	bmanifest = *m1;
+-	iter1 = list_head(bmanifest->files);
++	iter1 = preserver = list_head(bmanifest->files);
+ 	iter2 = list_head(m2->files);
+ 
+ 	while (iter1 && iter2) {
+-- 
+2.5.0
+
