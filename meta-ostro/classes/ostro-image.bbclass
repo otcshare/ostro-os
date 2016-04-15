@@ -481,3 +481,23 @@ ostro_image_patch_os_release[vardepsexclude] = " \
     BUILD_ID \
 "
 ROOTFS_POSTPROCESS_COMMAND += "ostro_image_patch_os_release; "
+
+# The systemd-firstboot service makes no sense in Ostro. If it runs
+# (apparently triggered by not having an /etc/machine-id), it asks
+# interactively on the console for a default timezone and locale. We
+# cannot rely on users answering these questions.
+#
+# Instead we pre-configure some defaults in the image and can remove
+# the useless service.
+ostro_image_disable_firstboot () {
+    for i in /etc/systemd /lib/systemd /usr/lib/systemd /bin /usr/bin; do
+        d="${IMAGE_ROOTFS}$i"
+        if [ -d "$d" ] && [ ! -h "$d" ]; then
+            for e in $(find "$d" -name systemd-firstboot.service -o -name systemd-firstboot.service.d -o -name systemd-firstboot); do
+                echo "disable_firstboot: removing $e"
+                rm -rf "$e"
+            done
+        fi
+    done
+}
+ROOTFS_POSTPROCESS_COMMAND += "ostro_image_disable_firstboot; "
