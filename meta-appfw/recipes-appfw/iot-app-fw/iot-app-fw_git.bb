@@ -12,7 +12,7 @@ SRC_URI = " \
     file://80-container-ve.network \
   "
 
-SRCREV = "2888595ac6e067d11305bc089e38f018e080aeff"
+SRCREV = "e764dfa558e649f64f73bed7b96080f9f844c508"
 
 inherit autotools pkgconfig systemd
 
