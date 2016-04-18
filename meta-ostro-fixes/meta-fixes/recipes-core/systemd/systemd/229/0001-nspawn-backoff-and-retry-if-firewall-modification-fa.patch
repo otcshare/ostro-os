@@ -1,0 +1,132 @@
+From 7e5ff4682e6588bf0cd56b343b3b4e4155342175 Mon Sep 17 00:00:00 2001
+From: Krisztian Litkey <krisztian.litkey@intel.com>
+Date: Mon, 18 Apr 2016 16:49:58 +0300
+Subject: [PATCH 1/1] nspawn: backoff and retry if firewall modification fails.
+
+If several simultaneously or near simultaneously started processes
+attempt to alter iptables/xtables rules on their startup path some
+of them might fail with EAGAIN. For systemd-nspawn this can happen
+in practice if one tries to start up several independent nspawned
+containers by systemd which will try to start them in parallel.
+
+This patch will retry modifying the firewall rules a few times with
+an increasing backoff in between before finally giving it up.
+
+Upstream-Status: Pending
+
+Signed-off-by: Krisztian Litkey <krisztian.litkey@intel.com>
+---
+ src/nspawn/nspawn-expose-ports.c | 74 +++++++++++++++++++++++++++-------------
+ 1 file changed, 51 insertions(+), 23 deletions(-)
+
+diff --git a/src/nspawn/nspawn-expose-ports.c b/src/nspawn/nspawn-expose-ports.c
+index 86124b8..7813cb6 100644
+--- a/src/nspawn/nspawn-expose-ports.c
++++ b/src/nspawn/nspawn-expose-ports.c
+@@ -97,9 +97,34 @@ void expose_port_free_all(ExposePort *p) {
+         }
+ }
+ 
++static int backoff(int retry) {
++#define MAX_RETRY 8
++        static int timeout[MAX_RETRY] = {
++                10, 10, 20, 50, 100, 100, 250, 250,
++        };
++        struct timespec delay = { .tv_sec = 0 };
++        int r;
++
++        if (0 <= retry && retry < MAX_RETRY) {
++                log_warning("Backing off for %d ms...", timeout[retry]);
++                delay.tv_nsec = 1000 * 1000 * timeout[retry];
++        }
++        else
++                return -1;
++
++        while ((r = nanosleep(&delay, &delay)) < 0 && errno == EINTR)
++                ;
++
++        if (r == 0 && retry < MAX_RETRY)
++                return ++retry;
++
++        return -1;
++#undef MAX_RETRY
++}
++
+ int expose_port_flush(ExposePort* l, union in_addr_union *exposed) {
+         ExposePort *p;
+-        int r, af = AF_INET;
++        int r, af = AF_INET, retry = 0;
+ 
+         assert(exposed);
+ 
+@@ -112,16 +137,18 @@ int expose_port_flush(ExposePort* l, union in_addr_union *exposed) {
+         log_debug("Lost IP address.");
+ 
+         LIST_FOREACH(ports, p, l) {
+-                r = fw_add_local_dnat(false,
+-                                      af,
+-                                      p->protocol,
+-                                      NULL,
+-                                      NULL, 0,
+-                                      NULL, 0,
+-                                      p->host_port,
+-                                      exposed,
+-                                      p->container_port,
+-                                      NULL);
++                while ((r = fw_add_local_dnat(false,
++                                              af,
++                                              p->protocol,
++                                              NULL,
++                                              NULL, 0,
++                                              NULL, 0,
++                                              p->host_port,
++                                              exposed,
++                                              p->container_port,
++                                              NULL)) == -EAGAIN &&
++                       (retry = backoff(retry)) > 0)
++                        ;
+                 if (r < 0)
+                         log_warning_errno(r, "Failed to modify firewall: %m");
+         }
+@@ -136,7 +163,7 @@ int expose_port_execute(sd_netlink *rtnl, ExposePort *l, union in_addr_union *ex
+         union in_addr_union new_exposed;
+         ExposePort *p;
+         bool add;
+-        int af = AF_INET, r;
++        int af = AF_INET, r, retry = 0;
+ 
+         assert(exposed);
+ 
+@@ -165,17 +192,18 @@ int expose_port_execute(sd_netlink *rtnl, ExposePort *l, union in_addr_union *ex
+         log_debug("New container IP is %s.", strna(pretty));
+ 
+         LIST_FOREACH(ports, p, l) {
+-
+-                r = fw_add_local_dnat(true,
+-                                      af,
+-                                      p->protocol,
+-                                      NULL,
+-                                      NULL, 0,
+-                                      NULL, 0,
+-                                      p->host_port,
+-                                      &new_exposed,
+-                                      p->container_port,
+-                                      in_addr_is_null(af, exposed) ? NULL : exposed);
++                while ((r = fw_add_local_dnat(true,
++                                              af,
++                                              p->protocol,
++                                              NULL,
++                                              NULL, 0,
++                                              NULL, 0,
++                                              p->host_port,
++                                              &new_exposed,
++                                              p->container_port,
++                                              in_addr_is_null(af, exposed) ? NULL : exposed)) == -EAGAIN &&
++                       (retry = backoff(retry)) > 0)
++                        ;
+                 if (r < 0)
+                         log_warning_errno(r, "Failed to modify firewall: %m");
+         }
+-- 
+2.5.5
+
