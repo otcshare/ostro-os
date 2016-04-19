@@ -381,10 +381,6 @@ OSTRO_IMAGE_STRIP_SMACK = "${@ 'ostro_image_strip_smack' if not bb.utils.contain
 do_rootfs[postfuncs] += "${OSTRO_IMAGE_STRIP_SMACK}"
 DEPENDS += "${@ 'attr-native' if '${OSTRO_IMAGE_STRIP_SMACK}' else '' }"
 
-# Debug option:
-# in case of problems during the transition from initramfs to rootfs, spawn a shell.
-APPEND_append = " init_fatal_sh"
-
 # Mount read-only at first. This gives systemd a chance to run fsck
 # and then mount read/write.
 APPEND_append = " ro"
