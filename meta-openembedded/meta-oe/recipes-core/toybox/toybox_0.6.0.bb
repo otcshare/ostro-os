@@ -36,9 +36,14 @@ do_install() {
         install -m 0755 ${B}/toybox_unstripped ${D}${base_bindir}/toybox
     fi
 
-    install -d ${D}${sysconfdir}
-    install -m 0644 ${B}/toybox.links ${D}${sysconfdir}
+    install -d ${D}${datadir}
+    install -m 0644 ${B}/toybox.links ${D}${datadir}
 }
+
+# Installing toybox.links seems to be a trick to pass information from "do_install"
+# to "do_package". Doing that via /etc runs afoul of making a distro stateless,
+# so use ${datadir} instead.
+FILES_${PN}_append = " ${datadir}/toybox.links"
 
 inherit update-alternatives
 
@@ -47,14 +52,14 @@ inherit update-alternatives
 ALTERNATIVE_PRIORITY = "60"
 
 python do_package_prepend () {
-    # Read links from /etc/toybox.links and create appropriate
+    # Read links from /usr/share/toybox.links and create appropriate
     # update-alternatives variables
 
-    dvar = d.getVar('D', True)
+    path = d.expand('${D}${datadir}')
     pn = d.getVar('PN', True)
     target = "/bin/toybox"
 
-    f = open('%s/etc/toybox.links' % (dvar), 'r')
+    f = open('%s/toybox.links' % (path), 'r')
     for alt_link_name in f:
         alt_link_name = alt_link_name.strip()
         alt_name = os.path.basename(alt_link_name)

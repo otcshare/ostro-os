@@ -11,7 +11,7 @@ DESCRIPTION = "Small image capable of booting a device. The kernel includes \
 the Minimal RAM-based Initial Root Filesystem (initramfs), which finds the \
 first 'init' program more efficiently."
 
-PACKAGE_INSTALL = "busybox base-passwd ${ROOTFS_BOOTSTRAP_INSTALL} ${FEATURE_INSTALL}"
+PACKAGE_INSTALL = "${VIRTUAL-RUNTIME_base-utils} base-passwd ${ROOTFS_BOOTSTRAP_INSTALL} ${FEATURE_INSTALL}"
 
 # e2fs: loads fs modules and adds ext2/ext3/ext4=<device>:<path> boot parameter
 #       for mounting additional partitions

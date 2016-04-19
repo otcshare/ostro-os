@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Fake mesg replacement which does not do anything.
+
+case "$@" in
+    "") echo "is n";;
+    "n"|"y") : ;;
+    *) echo >/dev/stderr "mesg: unknown parameters $@"; exit 1;;
+esac
