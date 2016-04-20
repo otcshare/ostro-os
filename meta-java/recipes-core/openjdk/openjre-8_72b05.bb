@@ -11,14 +11,9 @@ PATCHES_URI_append = "\
     file://openjdk8-use_builtin_frame_address_0_rather_than_returning_address_of_local_variable.patch;apply=no \
 "
 
-do_compile_append() {
-    find ${B}/images/j2re-image -name "*.jar" -print0 | \
-      xargs -0 -n1 ${STAGING_LIBDIR_NATIVE}/jvm/openjdk-8-native/bin/pack200 --repack --effort=9 --segment-limit=-1 --modification-time=latest --strip-debug
-}
-
 do_install() {
     rm -rf ${D}${JRE_HOME}
-        mkdir -p ${D}${JRE_HOME}
+    mkdir -p ${D}${JRE_HOME}
     cp -rp ${B}/images/j2re-image/* ${D}${JRE_HOME}
     chown -R root:root ${D}${JRE_HOME}
     install -m644 ${WORKDIR}/jvm.cfg  ${D}${JRE_HOME}/lib/${JDK_ARCH}/

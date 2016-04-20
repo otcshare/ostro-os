@@ -6,7 +6,7 @@ DEPENDS = "\
     jpeg libpng krb5 libffi fontconfig freetype \
 "
 
-PACKAGECONFIG ??= ""
+PACKAGECONFIG ??= "repack"
 PACKAGECONFIG[x11] = "--with-x,,libx11 xproto libxt libxext libxrender"
 PACKAGECONFIG[cups] = "--with-cups,,cups"
 PACKAGECONFIG[alsa] = "--with-alsa,,alsa-lib-native"
@@ -19,6 +19,8 @@ PACKAGECONFIG[gif] = "--with-giflib=system,--with-giflib=bundled,giflib,"
 export WANT_LLVM_RELEASE = "3.5.2"
 PACKAGECONFIG[zero] = "--with-jvm-variants=zero,,,"
 PACKAGECONFIG[shark] = "--with-jvm-variants=zeroshark,,llvm3.5,"
+
+PACKAGECONFIG[repack] = ",,,"
 
 require openjdk-8-common.inc
 
@@ -47,6 +49,23 @@ EXTRA_OECONF_append = "\
 
 do_configure_append() {
     sed -i -e 's,POST_STRIP_CMD:=.*,POST_STRIP_CMD:=,g' ${B}/spec.gmk
+}
+
+do_install_append() {
+    if ${@bb.utils.contains('PACKAGECONFIG', 'repack', 'true', 'false', d)} ; then
+      if [ -d ${D}${JDK_HOME} ] ; then
+        find ${D}${JDK_HOME} -name "*.jar" -print0 | \
+          xargs -0 -n1 -P ${@get_jdk8_native_jobs(d)} sh -c ' \
+              echo "Repacking" "$0" ; \
+              pack200 --repack --effort=9 --segment-limit=-1 --modification-time=latest --strip-debug "$0"'
+      fi
+      if [ -d ${D}${JRE_HOME} ] ; then
+        find ${D}${JRE_HOME} -name "*.jar" -print0 | \
+          xargs -0 -n1 -P ${@get_jdk8_native_jobs(d)} sh -c ' \
+              echo "Repacking" "$0" ; \
+              pack200 --repack --effort=9 --segment-limit=-1 --modification-time=latest --strip-debug "$0"'
+      fi
+    fi
 }
 
 export MAKE_VERBOSE = "y"

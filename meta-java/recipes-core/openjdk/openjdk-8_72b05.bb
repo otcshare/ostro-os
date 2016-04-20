@@ -13,14 +13,9 @@ PATCHES_URI_append = "\
     file://openjdk8-fix-adlc-flags.patch;apply=no \
 "
 
-do_compile_append() {
-    find ${B}/images/j2sdk-image -name "*.jar" -print0 | \
-      xargs -0 -n1 ${STAGING_LIBDIR_NATIVE}/jvm/openjdk-8-native/bin/pack200 --repack --effort=9 --segment-limit=-1 --modification-time=latest
-}
-
 do_install() {
     rm -rf ${D}${JDK_HOME}
-        mkdir -p ${D}${JDK_HOME}
+    mkdir -p ${D}${JDK_HOME}
     cp -rp ${B}/images/j2sdk-image/* ${D}${JDK_HOME}
     chown -R root:root ${D}${JDK_HOME}
     install -m644 ${WORKDIR}/jvm.cfg  ${D}${JDK_HOME}/jre/lib/${JDK_ARCH}/
