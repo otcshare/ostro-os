@@ -2,7 +2,7 @@ DESCRIPTION = "Soletta Development Application"
 DEPENDS = "nodejs-native"
 RDEPENDS_${PN} = "soletta nodejs systemd graphviz libmicrohttpd avahi-daemon bash git"
 LICENSE = "Apache-2.0"
-PV = "1_beta7+git${SRCPV}"
+PV = "1_beta8+git${SRCPV}"
 
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=93888867ace35ffec2c845ea90b2e16b"
 
@@ -11,7 +11,7 @@ SRC_URI = "git://git@github.com/solettaproject/soletta-dev-app.git;protocol=http
            file://soletta-dev-app-mac.sh \
            file://soletta-dev-app-avahi-discover.service \
 "
-SRCREV = "cdb0eb0aaed0a10202bc443531bbacc3378cdc20"
+SRCREV = "f9f011a47394bcb0c04b4e0439a20e56e0f69ce1"
 
 S = "${WORKDIR}/git"
 

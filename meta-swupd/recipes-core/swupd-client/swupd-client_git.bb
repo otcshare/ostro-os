@@ -10,6 +10,7 @@ SRC_URI = "\
     git://github.com/clearlinux/swupd-client.git;protocol=https \
     file://Change-systemctl-path-to-OE-systemctl-path.patch \
     file://0001-staging.c-Protect-tar-command-against-special-charac.patch \
+    file://0001-Add-configure-option-to-re-enable-updating-of-config.patch \
 "
 SRCREV = "e4b2a32448d9fd9ab494f861f1bb143468659c75"
 
@@ -25,6 +26,9 @@ EXTRA_OECONF = "\
     --with-systemdsystemunitdir=${systemd_system_unitdir} \
     --enable-bsdtar \
 "
+
+PACKAGECONFIG ??= "stateless"
+PACKAGECONFIG[stateless] = ",--disable-stateless"
 
 do_install_append () {
     # TODO: This should be a less os-specific directory and not hard-code datadir

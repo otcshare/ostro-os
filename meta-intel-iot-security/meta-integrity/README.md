@@ -98,7 +98,7 @@ for that are included in the layer. This is also how the
     $IMA_EVM_BASE/scripts/ima-gen-self-signed.sh
 
     # 2. Keys signed by a new CA.
-    # When asked for a PEM pass phrase, that will be for the root CA.
+    # When asked for a PEM passphrase, that will be for the root CA.
     # Signing images then will not require entering that passphrase,
     # only creating new certificates does. Most likely the default
     # attributes for these certificates need to be adapted; modify
@@ -107,7 +107,7 @@ for that are included in the layer. This is also how the
     # $IMA_EVM_BASE/scripts/ima-gen-CA-signed.sh
 
     # 3. Keys signed by an existing CA.
-    # $IMA_EVM_BASE/scripts/ima-gen-CA-signed.sh <CA .pem> <CA .priv>
+    # $IMA_EVM_BASE/scripts/ima-gen-CA-signed.sh <CA.pem> <CA.priv>
     exit
 
 When using ``ima-self-signed.sh`` as described above, self-signed keys
@@ -143,7 +143,7 @@ by overriding the default "find" expression, for example like this:
 ========
 
 After creating an image with IMA/EVM enabled, one needs to enable
-the builtin policies before IMA/EVM is active at runtime. To do this,
+the built-in policies before IMA/EVM is active at runtime. To do this,
 add one or both of these boot parameters:
 
     ima_tcb # measures all files read as root and all files executed
@@ -153,7 +153,7 @@ add one or both of these boot parameters:
 Instead of booting with default policies, one can also activate custom
 policies in different ways. First, boot without any IMA policy and
 then cat a policy file into
-`/sys/ke/sys/kernel/security/ima/policy`. This can only be done once
+`/sys/kernel/security/ima/policy`. This can only be done once
 after booting and is useful for debugging.
 
 In production, the long term goal is to load a verified policy

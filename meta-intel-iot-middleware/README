@@ -15,7 +15,10 @@ This layer depends on:
 Guidelines for submitting patches
 =================================
 
-Please submit any patches to the meta-intel mailing list
+Please submit pull requests on the github mirror here: 
+https://github.com/tripzero/meta-intel-iot-middleware
+
+Alternatively patches can be submitted to the meta-intel mailing list
 (meta-intel@yoctoproject.org) and cc the most appropriate maintainer in the
 MAINTAINERS file. Prefix your email with [meta-intel-iot-middleware]. Also, if
 your patches are available via a public git repository, please also include a

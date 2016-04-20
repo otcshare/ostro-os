@@ -1,0 +1,25 @@
+bysmyyr:nodejs(master)> cat something/0001-nodejs-add-compile-flag-options-for-quark.patch 
+From cd0426d38a14b2470fd32d5048487eb680419820 Mon Sep 17 00:00:00 2001
+From: Olli Raula <olli.raula@intel.com>
+Date: Fri, 8 Jan 2016 12:31:48 +0200
+Subject: [PATCH] nodejs: add compile flag options for quark
+
+---
+ configure | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configure b/configure
+index 0e83d8a..280618b 100755
+--- a/configure
++++ b/configure
+@@ -769,6 +769,7 @@ def configure_v8(o):
+   o['variables']['v8_optimized_debug'] = 0  # Compile with -O0 in debug builds.
+   o['variables']['v8_random_seed'] = 0  # Use a random seed for hash tables.
+   o['variables']['v8_use_snapshot'] = 'false' if options.without_snapshot else 'true'
++  o['variables']['v8_target_arch']= 'x87'
+
+ def configure_openssl(o):
+   o['variables']['node_use_openssl'] = b(not options.without_ssl)
+-- 
+1.9.1
+

@@ -1148,6 +1148,7 @@ python populate_packages () {
             mkdir_recurse(dvar, root, os.path.dirname(file))
             fpath = os.path.join(root,file)
             if not cpath.islink(file):
+                print("file: {}, fpath: {}".format(file, fpath))
                 os.link(file, fpath)
                 fstat = cpath.stat(file)
                 os.chmod(fpath, fstat.st_mode)

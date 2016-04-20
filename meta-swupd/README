@@ -2,7 +2,7 @@ meta-swupd
 ==========
 
 OpenEmbedded meta layer for swupd software-update. For information on how to
-best make use of this layer see HOWTO.md
+best make use of this layer see docs/Guide.md
 
 This layer depends on:
 
@@ -12,5 +12,9 @@ This layer depends on:
 
 Layer Maintainer: Joshua Lock <joshua.g.lock@intel.com>
 
-Please send changes to the Yocto Project mailing list <yocto@yoctoproject.org>
-with [meta-swupd] in the subject line.
+Please file bugs on the Yocto Project Bugzilla in the 'Layers' Product,
+selecting the 'layers' Component and prefixing the Summary with '[meta-swupd]'
+https://bugzilla.yoctoproject.org/enter_bug.cgi?product=Layers
+
+Patches are welcome, please send them to the Yocto Project mailing list
+<yocto@yoctoproject.org> with '[meta-swupd]' in the subject line.

@@ -1,22 +1,23 @@
-From d648898c8f9823a8d511507f93390079954bc24a Mon Sep 17 00:00:00 2001
+From 1f2ad4cdff6b999fcd00193cdd1dc8a35e49c0b2 Mon Sep 17 00:00:00 2001
 From: Joshua Lock <joshua.g.lock@intel.com>
-Date: Mon, 18 Apr 2016 13:30:18 +0100
+Date: Thu, 3 Mar 2016 19:55:41 +0000
 Subject: [PATCH] Add configure option to re-enable updating of config files
+
+Signed-off-by: Joshua Lock <joshua.g.lock@intel.com>
 
 Upstream-Status: Pending
 
-Signed-off-by: Joshua Lock <joshua.g.lock@intel.com>
 ---
  configure.ac     | 7 +++++++
  src/heuristics.c | 5 +++--
  2 files changed, 10 insertions(+), 2 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index b1905f0..4a5c029 100644
+index f94a17d..0063463 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -63,6 +63,13 @@ AS_IF([test "x$enable_bsdtar" = "xyes" ],
- 	[AC_DEFINE(SWUPD_WITHOUT_BSDTAR, 1, [Use default tar])]
+@@ -78,6 +78,13 @@ AC_ARG_ENABLE(
+ 	enable_linux_rootfs_build="no"
  )
  
 +AC_ARG_ENABLE(
@@ -26,23 +27,23 @@ index b1905f0..4a5c029 100644
 +        AC_DEFINE(OS_IS_STATELESS,1,[OS is stateless])
 +)
 +
- AC_ARG_WITH([systemdsystemunitdir], AS_HELP_STRING([--with-systemdsystemunitdir=DIR],
-             [path to systemd system service dir @<:@default=/usr/lib/systemd/system@:>@]), [unitpath=${withval}],
-             [unitpath="$($PKG_CONFIG --variable=systemdsystemunitdir systemd)"])
+ AS_IF([test "$enable_linux_btrfs_build" = "yes" -a "$enable_android_build" = "yes"],
+       [AC_MSG_ERROR([Cannot enable more than one build variant. Choose a single variant.])])
+ 
 diff --git a/src/heuristics.c b/src/heuristics.c
-index e7c0632..c488e17 100644
+index 12fb59c..92dbcdc 100644
 --- a/src/heuristics.c
 +++ b/src/heuristics.c
 @@ -27,6 +27,7 @@
  #include <string.h>
- #include <unistd.h>
+ #include <assert.h>
  
-+#include "config.h"
- #include "swupd.h"
++#include <config.h>
+ #include <swupd.h>
  
  /* trailing slash is to indicate dir itself is expected to exist, but
-@@ -121,8 +122,8 @@ void apply_heuristics(struct file *file)
-  */
+@@ -113,8 +114,8 @@ void apply_heuristics(struct file *file)
+ 
  bool ignore(struct file *file)
  {
 -	if ((file->is_config) ||
@@ -51,7 +52,7 @@ index e7c0632..c488e17 100644
 +	    (OS_IS_STATELESS && is_config(file->filename)) || // ideally we trust the manifest but short term reapply check here
  	    (file->is_state) ||
  	    is_state(file->filename) || // ideally we trust the manifest but short term reapply check here
- 	    (file->is_boot && file->is_deleted) ||
+ 	    (file->is_boot &&  fix &&  file->is_deleted) || // shouldn't happen
 -- 
-2.5.5
+2.5.0
 
