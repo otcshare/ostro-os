@@ -83,7 +83,7 @@ do_compile() {
             ;;
     esac
 
-    npm install --arch=${targetArch} --production --verbose -g bower@v1.6.8
+    npm install --arch=${targetArch} --production --verbose -g bower@v1.7.9
 
     # compile and install node modules in source directory
     npm --arch=${targetArch} --production --verbose install
