@@ -12,7 +12,7 @@ RPROVIDES_${PN} = "java2-runtime"
 
 SRC_URI = "http://www.complang.tuwien.ac.at/cacaojvm/download/cacao-${PV}/cacao-${PV}.tar.xz \
            file://system-boehm-gc.patch \
-           file://cacao-1.6.1-do_not_rely_on_absolute_paths.patch \
+           file://cacao-1.6.1-do-not-rely-on-absolute-paths.patch \
 "
 
 SRC_URI[md5sum] = "2c18478404afd1cffdd15ad1e9d85a57"

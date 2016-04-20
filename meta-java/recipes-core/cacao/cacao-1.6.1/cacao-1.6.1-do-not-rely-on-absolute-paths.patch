@@ -6,25 +6,26 @@ identical workers, if build time paths are not identical.
 
 Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
 ---
- cacao-1.6.1/src/scripts/java.in | 8 +++++++-
- 1 file changed, 7 insertions(+), 1 deletion(-)
+ cacao-1.6.1/src/scripts/java.in | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
 diff --git cacao-1.6.1/src/scripts/java.in cacao-1.6.1/src/scripts/java.in
-index 0790f02..b6cc24a 100644
+index 0790f02..2118de7 100644
 --- cacao-1.6.1/src/scripts/java.in
 +++ cacao-1.6.1/src/scripts/java.in
-@@ -23,4 +23,17 @@
+@@ -22,5 +22,17 @@
+ ## Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  ## 02110-1301, USA.
 
- IFS=""
+-IFS=""
 -exec $(dirname ${0})/cacao ${1+"$@"}
 +SH_DIR=`dirname "$0"`
 +CURRENT_DIR=`cd "${SH_DIR}" && pwd`
 +
-+# if this shell script is invoked through symlink, we get invalid paths. Instead, use python to check the path behind the link
-+# this becomes incredibly painful, we he have to use shell script, so use python instead.
++# if this shell script is invoked through symlink, we get invalid paths. As getting the real path to this file is
++# very painful using only /bin/sh, python is used instead.
 +PYTHON_STR="import os; print os.path.dirname(os.path.realpath(os.readlink(\"${CURRENT_DIR}/java\"))) if os.path.islink(\"${CURRENT_DIR}/java\") else \"${CURRENT_DIR}\""
-+REAL_DIR=`python -c ${PYTHON_STR}`
++REAL_DIR=`python -c "${PYTHON_STR}"`
 +
 +PARENT_DIR=`dirname ${REAL_DIR}`
 +
