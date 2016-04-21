@@ -33,6 +33,7 @@ SRC_URI = " \
   ${ICEDTEA_PATCHES} \
   ${OPENJDK_PATCHES} \
   file://allow-headless-build.patch;striplevel=0 \
+  file://jaxws_fix_NullPointerException.patch;apply=no \
   "
 
 S = "${WORKDIR}/${ICEDTEA}"
@@ -154,6 +155,8 @@ do_configure_append() {
 	done
 	${POST_CONFIGURE_CLEAN_X11}
 	oe_runmake patch-boot
+
+	patch -p1 < ${WORKDIR}/jaxws_fix_NullPointerException.patch
 }
 
 EXTRA_OEMAKE = ' \
