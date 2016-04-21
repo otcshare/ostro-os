@@ -6,6 +6,15 @@ DEPENDS = "\
     jpeg libpng krb5 libffi fontconfig freetype \
 "
 
+PRIVATE_LIBS = "\
+    libattach.so libawt_headless.so libawt.so libawt_xawt.so libdt_socket.so \
+    libfontmanager.so libhprof.so libinstrument.so libj2gss.so libj2pcsc.so \
+    libj2pkcs11.so libjaas_unix.so libjava_crw_demo.so libjava.so libjawt.so \
+    libjdwp.so libjli.so libjpeg.so libjsdt.so libjsig.so libjvm.so liblcms.so \
+    libmanagement.so libmlib_image.so libnet.so libnio.so libnpt.so libsaproc.so \
+    libsctp.so libsplashscreen.so libsunec.so libunpack.so libverify.so libzip.so \
+"
+
 PACKAGECONFIG ??= "repack"
 PACKAGECONFIG[x11] = "--with-x,,libx11 xproto libxt libxext libxrender"
 PACKAGECONFIG[cups] = "--with-cups,,cups"
