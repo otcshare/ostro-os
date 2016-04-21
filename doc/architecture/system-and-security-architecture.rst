@@ -242,7 +242,7 @@ To become root in the core system:
 * Add a personal public key to the ``~root/.ssh/authorized_keys`` file,
   then use ``ssh`` for remote access. There are different approaches for this (build-time
   configuration option, modifying pre-built images, customizing a
-  running image) which are described in detail elsewhere.
+  running image) which are described in :ref:`authorized-keys`.
 
 * \*Only in the development image\*: root automatically gets logged in
   on a local console or serial port.

@@ -106,6 +106,8 @@ with ``# require conf/distro/include/ostro-os-development.inc`` and
 uncomment it. This will also add some recommended software to the ``ostro-image-noswupd``
 reference image, see below for details.
 
+By default, remote access via ssh is not permitted, but you can learn how to configure
+Ostro OS to allow this in your development image in this :ref:`authorized-keys` tech note.
 
 Production Images
 -----------------
