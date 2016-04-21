@@ -6,6 +6,7 @@ PATCHES_URI="\
     file://openjdk8-no-unused-deps.patch;apply=no \
     file://openjdk8-find-compiler-fix-env-respect.patch;apply=no \
     file://openjdk8-prevent-debuginfo-in-favour-of-openembedded-package-split.patch;apply=no \
+    file://openjdk8-silence-d_fortify_source-warning.patch;apply=no \
 "
 
 # Name of the directory containing the compiled output
@@ -15,7 +16,7 @@ BUILD_DIR_ECJ = "openjdk.build-ecj"
 # Force arm mode for now
 ARM_INSTRUCTION_SET_armv4t = "ARM"
 
-# Enable zero mode for arm based builds, as normal hotspot fails to build 
+# Enable zero mode for arm based builds, as normal hotspot fails to build
 PACKAGECONFIG_append_arm = " zero"
 
 CORBA_CHANGESET = "7deeb4f70404"
