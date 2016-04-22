@@ -43,6 +43,10 @@ B = "${S}/build"
 export ALT_FREETYPE_HEADERS_PATH = "${STAGING_INCDIR}/freetype2"
 export ALT_FREETYPE_LIB_PATH = "${STAGING_LIBDIR}"
 
+# libfreetype.so.6 is copied from STAGING_LIBDIR
+# which is already stripped.
+INSANE_SKIP_${PN} = "already-stripped"
+
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
 # e.g. "-j 4".
