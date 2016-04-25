@@ -6,8 +6,8 @@ SECTION = "net"
 DEPENDS = "libgcrypt gnutls file"
 
 SRC_URI = "http://ftp.gnu.org/gnu/libmicrohttpd/${BPN}-${PV}.tar.gz"
-SRC_URI[md5sum] = "86c9cb728b4bd4fcb8aeca18ba6c0548"
-SRC_URI[sha256sum] = "4f937b6065c366d776be86b1d24b8fc400ebc7ea006a9d77c49a8f2f0cd7e373"
+SRC_URI[md5sum] = "3209aa2ac6199b874a6325342b86edbc"
+SRC_URI[sha256sum] = "9407d8252548ab97ace3276e0032f073820073c0599d43baff832902a8dab11c"
 
 inherit autotools lib_package pkgconfig
 
