@@ -12,6 +12,8 @@ PV = "1_beta19+git${SRCPV}"
 
 SRC_URI = "gitsm://github.com/solettaproject/soletta.git;protocol=git \
            file://run-ptest \
+           file://i2c-dev.conf \
+           file://iio-trig-sysfs.conf \
           "
 SRCREV = "6a7bc32376904ac385dea073cb8d71a74f2e8629"
 
@@ -43,6 +45,7 @@ FILES_${PN}-dev = " \
                 ${libdir}/soletta/modules/pin-mux/* \
                 ${libdir}/soletta/modules/linux-micro/* \
                 ${libdir}/soletta/modules/flow-metatype/* \
+                ${sysconfdir}/modules-load.d/* \
 "
 
 FILES_${PN} = " \
@@ -145,6 +148,12 @@ do_install() {
 
    # Remove nan module as it is not needed.
    rm -rf ${WORKDIR}/image/usr/lib/node_modules/soletta/node_modules/nan
+}
+
+do_install_append() {
+   install -d ${D}${sysconfdir}/modules-load.d
+   install -m 0644 ${WORKDIR}/i2c-dev.conf ${D}${sysconfdir}/modules-load.d
+   install -m 0644 ${WORKDIR}/iio-trig-sysfs.conf ${D}${sysconfdir}/modules-load.d
 }
 
 inherit ptest
