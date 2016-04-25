@@ -1,0 +1,22 @@
+{
+    "application": "node1",
+    "description": "node1 - A dummy NodeJS application, running in a shared-system single-app container.",
+    "provider": "test",
+    "groups": "test-node1",
+    "environment": {
+        "NODE1_FOO": "node1-foo",
+        "NODE1_BAR": "node1-bar",
+    },
+    "command": [
+        "/usr/bin/node",
+        "/lib/node_modules/node1/sample.js",
+        "23456",
+        "'test-node1 NodeJS sample application'",
+    ],
+    "autostart": "yes",
+    "container": {
+        "type":    "nspawn-shared",
+        "network": "VirtualEthernet",
+        "portmap": [ { "proto": "tcp", "host": 2002, "container": 23456 }, ],
+    },
+}

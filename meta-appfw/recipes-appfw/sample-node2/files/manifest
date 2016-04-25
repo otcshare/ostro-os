@@ -1,0 +1,22 @@
+{
+    "application": "node2",
+    "description": "node2 - A dummy NodeJS application, running in a single-app container.",
+    "provider": "test",
+    "groups": "test-node2",
+    "environment": {
+        "NODE2_FOO": "node2-foo",
+        "NODE2_BAR": "node2-bar",
+    },
+    "command": [
+        "/usr/bin/node",
+        "/lib/node_modules/node2/sample.js",
+        "23456",
+        "'test-node2 NodeJS sample application'",
+        ],
+    "autostart": "yes",
+    "container": {
+        "type":    "nspawn",
+        "network": "VirtualEthernet",
+        "portmap": [ { "proto": "tcp", "host": 2003, "container": 23456 }, ],
+    },
+}

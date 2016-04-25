@@ -9,10 +9,9 @@
     },
     "command": [  "/usr/bin/node", "/lib/node_modules/nodetest/example.js" ],
     "autostart": "yes",
-     "container": {
+    "container": {
         "type": "nspawn",
         "network": "VirtualEthernet",
-        "sharedsystem": false,
-        "portmap": 12345,
+        "portmap": [ { "proto": "tcp", "host": 2000, "container": 12345 } ],
     },
 }

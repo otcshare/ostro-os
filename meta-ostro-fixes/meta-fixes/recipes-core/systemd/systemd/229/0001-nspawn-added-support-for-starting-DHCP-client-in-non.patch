@@ -1,13 +1,12 @@
-From 8d0a1a54f7facc85a9c3012c0161991e8324f67e Mon Sep 17 00:00:00 2001
+From fcfd7ebde85684c4d45144bdb8de8219f56a06ca Mon Sep 17 00:00:00 2001
 From: Krisztian Litkey <krisztian.litkey@intel.com>
 Date: Fri, 18 Dec 2015 12:44:11 +0200
-Subject: [PATCH 2/2] nspawn: added support for starting DHCP client in
+Subject: [PATCH 1/1] nspawn: added support for starting DHCP client in
  non-system containers.
 
 Added --auto-dhcp option for starting a DHCP client in the container
 before privileges are dropped or the actual container command gets
-executed. This is done only for non-system containers started without
---share-system.
+executed. This is done only for non-system containers.
 
 The DHCP client command can be specified as an argument to the option.
 If none is specified {/sbin,/usr/sbin}/{dhclient,udhcpc} are tried in
@@ -24,10 +23,10 @@ Signed-off-by: Krisztian Litkey <krisztian.litkey@intel.com>
  3 files changed, 106 insertions(+)
 
 diff --git a/src/nspawn/nspawn-network.c b/src/nspawn/nspawn-network.c
-index 3104c8e..edc12e1 100644
+index fcb1efa..13c76e6 100644
 --- a/src/nspawn/nspawn-network.c
 +++ b/src/nspawn/nspawn-network.c
-@@ -33,6 +33,8 @@
+@@ -31,6 +31,8 @@
  #include "siphash24.h"
  #include "string-util.h"
  #include "udev-util.h"
@@ -36,7 +35,7 @@ index 3104c8e..edc12e1 100644
  #include "util.h"
  
  #define HOST_HASH_KEY SD_ID128_MAKE(1a,37,6f,c7,46,ec,45,0b,ad,a3,d5,31,06,60,5d,b1)
-@@ -540,3 +542,87 @@ int veth_extra_parse(char ***l, const char *p) {
+@@ -538,3 +540,87 @@ int veth_extra_parse(char ***l, const char *p) {
          a = b = NULL;
          return 0;
  }
@@ -125,17 +124,17 @@ index 3104c8e..edc12e1 100644
 +        return 0;
 +}
 diff --git a/src/nspawn/nspawn-network.h b/src/nspawn/nspawn-network.h
-index c91fc79..8180ec3 100644
+index 9ab1606..fd9fb99 100644
 --- a/src/nspawn/nspawn-network.h
 +++ b/src/nspawn/nspawn-network.h
-@@ -36,3 +36,5 @@ int setup_ipvlan(const char *machine_name, pid_t pid, char **ifaces);
+@@ -34,3 +34,5 @@ int setup_ipvlan(const char *machine_name, pid_t pid, char **ifaces);
  int move_network_interfaces(pid_t pid, char **ifaces);
  
  int veth_extra_parse(char ***l, const char *p);
 +
 +int spawn_dhcp_client(const char *dhcp_client, pid_t *rpid);
 diff --git a/src/nspawn/nspawn.c b/src/nspawn/nspawn.c
-index 655a714..a59f952 100644
+index 50f4892..b674714 100644
 --- a/src/nspawn/nspawn.c
 +++ b/src/nspawn/nspawn.c
 @@ -121,6 +121,8 @@ static const char *arg_selinux_context = NULL;
@@ -145,26 +144,26 @@ index 655a714..a59f952 100644
 +static char *arg_dhcp_client = NULL;
 +static bool arg_auto_dhcp = false;
  static bool arg_read_only = false;
- static bool arg_boot = false;
+ static StartMode arg_start_mode = START_PID1;
  static bool arg_ephemeral = false;
-@@ -345,6 +347,7 @@ static int parse_argv(int argc, char *argv[]) {
-                 ARG_PRIVATE_USERS,
+@@ -348,6 +350,7 @@ static int parse_argv(int argc, char *argv[]) {
                  ARG_KILL_SIGNAL,
                  ARG_SETTINGS,
+                 ARG_CHDIR,
 +                ARG_AUTO_DHCP,
          };
  
          static const struct option options[] = {
-@@ -389,6 +392,7 @@ static int parse_argv(int argc, char *argv[]) {
-                 { "private-users",         optional_argument, NULL, ARG_PRIVATE_USERS     },
+@@ -394,6 +397,7 @@ static int parse_argv(int argc, char *argv[]) {
                  { "kill-signal",           required_argument, NULL, ARG_KILL_SIGNAL       },
                  { "settings",              required_argument, NULL, ARG_SETTINGS          },
+                 { "chdir",                 required_argument, NULL, ARG_CHDIR             },
 +                { "auto-dhcp",             optional_argument, NULL, ARG_AUTO_DHCP         },
                  {}
          };
  
-@@ -849,6 +853,11 @@ static int parse_argv(int argc, char *argv[]) {
- 
+@@ -882,6 +886,11 @@ static int parse_argv(int argc, char *argv[]) {
+                         arg_settings_mask |= SETTING_WORKING_DIRECTORY;
                          break;
  
 +                case ARG_AUTO_DHCP:
@@ -175,19 +174,19 @@ index 655a714..a59f952 100644
                  case '?':
                          return -EINVAL;
  
-@@ -899,6 +908,11 @@ static int parse_argv(int argc, char *argv[]) {
+@@ -932,6 +941,11 @@ static int parse_argv(int argc, char *argv[]) {
                  return -EINVAL;
          }
  
-+        if (arg_auto_dhcp && (arg_boot || arg_share_system)) {
-+                log_error("--dhcp-client may not be combined with --boot or --share-system.");
++        if (arg_auto_dhcp && (arg_start_mode == START_BOOT)) {
++                log_error("--dhcp-client may not be combined with --boot.");
 +                return -EINVAL;
 +        }
 +
          if (arg_userns && access("/proc/self/uid_map", F_OK) < 0)
                  return log_error_errno(EOPNOTSUPP, "--private-users= is not supported, kernel compiled without user namespace support.");
  
-@@ -2497,6 +2511,10 @@ static int inner_child(
+@@ -2531,6 +2545,10 @@ static int inner_child(
                  rtnl_socket = safe_close(rtnl_socket);
          }
  
@@ -199,5 +198,5 @@ index 655a714..a59f952 100644
          if (r < 0)
                  return log_error_errno(r, "drop_capabilities() failed: %m");
 -- 
-2.5.0
+2.5.5
 

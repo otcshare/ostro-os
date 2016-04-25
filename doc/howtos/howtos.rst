@@ -16,6 +16,7 @@ Technical Notes
    
    building-images
    booting-and-installation
+   authorized-keys
    modifying-ostro-kernel
    uefi-secure-boot
    certificate-handling

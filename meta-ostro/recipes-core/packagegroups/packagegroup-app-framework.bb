@@ -1,4 +1,4 @@
-SUMMARY = "Application framework middleware components"
+SUMMARY = "Ostro Application Framework"
 LICENSE = "MIT"
 
 inherit packagegroup

@@ -1,0 +1,22 @@
+{
+    "application": "node3",
+    "description": "node3 - A dummy NodeJS application, running in a full system container.",
+    "provider": "test",
+    "groups": "test-node3",
+    "environment": {
+        "NODE3_FOO": "node3-foo",
+        "NODE3_BAR": "node3-bar",
+    },
+    "command": [
+        "/usr/bin/node",
+        "/lib/node_modules/node3/sample.js",
+        "23456",
+        "'test-node3 NodeJS sample application'",
+    ],
+    "autostart": "yes",
+    "container": {
+        "type":    "nspawn-system",
+        "network": "VirtualEthernet",
+        "portmap": [ { "proto": "tcp", "host": 2004, "container": 23456 }, ],
+    },
+}

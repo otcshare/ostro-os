@@ -17,7 +17,6 @@ Getting Started
    :maxdepth: 1
 
    quick_start/about
-   quick_start/platforms
    quick_start/quick_start
    quick_start/access-support
 

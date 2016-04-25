@@ -48,6 +48,29 @@ ostro_app_install () {
             mv "${D}/$i" "${D}/${OSTRO_APP_ROOT}"
         fi
     done
+
+    for i in $(find "${D}/${OSTRO_APP_ROOT}"); do
+        if [ -f $i ]; then
+            if [ -r $i ]; then
+               chmod g+r $i
+            fi
+            if [ -x $i ]; then
+               chmod g+x $i
+            fi
+        fi
+
+        chown root $i
+        chgrp ${OSTRO_USER_APP_NAME} $i
+        chmod o-rwx $i
+    done
+
+    if [ -f ${D}/${OSTRO_APP_ROOT}/manifest.in ]; then
+        cat ${D}/${OSTRO_APP_ROOT}/manifest.in | \
+            sed "s#@OSTRO_APP_ROOT@#${OSTRO_APP_ROOT}#g" > \
+                ${D}/${OSTRO_APP_ROOT}/manifest
+        chown root:root ${D}/${OSTRO_APP_ROOT}/manifest
+        rm ${D}/${OSTRO_APP_ROOT}/manifest.in
+    fi
 }
 
 # Package app files by default.
