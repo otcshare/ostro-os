@@ -8,17 +8,12 @@ DEPENDS = "glib-2.0 libpcre pkgconfig python3-jsonschema-native icu curl libmicr
 DEPENDS += " ${@bb.utils.contains('DISTRO_FEATURES','systemd','systemd','',d)}"
 LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=93888867ace35ffec2c845ea90b2e16b"
-PV = "1_beta18+git${SRCPV}"
+PV = "1_beta19+git${SRCPV}"
 
 SRC_URI = "gitsm://github.com/solettaproject/soletta.git;protocol=git \
            file://run-ptest \
-           file://0013-lib-sol-iio-release-buffer-on-sol_iio_close.patch \
-           file://0047-oic-gen-fix-rep_vec-issue.patch \
-           file://0048-oic-gen-ReadOnly-props-from-imported-json-objs-were-.patch \
-           file://0049-oic-gen-Don-t-add-client-to_repr_vec-when-all-props-.patch \
-           file://0050-oic-gen-Always-generate-code-using-same-order-of-res.patch \
           "
-SRCREV = "97091af414193c37278ba5ff88c70c596eecd7ea"
+SRCREV = "6a7bc32376904ac385dea073cb8d71a74f2e8629"
 
 S = "${WORKDIR}/git"
 
