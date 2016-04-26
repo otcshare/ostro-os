@@ -519,6 +519,7 @@ END
 SWUPDDEPENDS = "\
     virtual/fakeroot-native:do_populate_sysroot \
     rsync-native:do_populate_sysroot \
+    bsdiff-native:do_populate_sysroot \
     swupd-server-native:do_populate_sysroot \
 "
 addtask swupd_update after do_image_complete after do_copy_bundle_contents after do_prune_bundle before do_build
