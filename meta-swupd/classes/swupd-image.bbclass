@@ -33,8 +33,6 @@ SWUPD_LOG_FN ??= "bbdebug 1"
 OS_VERSION ??= "${DISTRO_VERSION}"
 
 IMAGE_INSTALL_append = " swupd-client os-release"
-# We need full-fat versions of these for swupd (at least as of 2.87)
-IMAGE_INSTALL_append = " gzip bzip2 tar xz"
 
 # We need to preserve xattrs which is only supported by GNU tar >= 1.27
 # to be sure this functionality works as expected use the tar-replacement-native
