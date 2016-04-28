@@ -9,6 +9,8 @@ PATCHES_URI_append = "\
     file://openjdk8-fix-shark-build.patch;apply=no \
     file://openjdk8-fix-shark-stdc++11.patch;apply=no \
     file://openjdk8-use_builtin_frame_address_0_rather_than_returning_address_of_local_variable.patch;apply=no \
+    file://openjdk8-fix-assembler-flag-handling-in-makefile.patch;apply=no \
+    file://openjdk8-fix-adlc-flags.patch;apply=no \
     file://openjdk8-silence-d_fortify_source-warning.patch;apply=no \
 "
 
