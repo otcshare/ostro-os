@@ -54,6 +54,9 @@ do_configure_prepend () {
     mkdir -p src/mm/boehm-gc/m4
 }
 
+do_install_append_class-target() {
+    rm ${D}/${bindir}/java
+}
 
 FILES_${PN} = "${bindir}/${PN} ${libdir}/cacao/lib*.so ${libdir}/lib*.so* ${datadir}/${PN}"
 FILES_${PN}-dbg += "${bindir}/.debug ${libdir}/.debug/lib*.so*"
