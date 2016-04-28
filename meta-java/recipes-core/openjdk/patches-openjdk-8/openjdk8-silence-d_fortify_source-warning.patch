@@ -1,0 +1,56 @@
+makefiles: Add -Wno-cpp to CFLAGS
+
+The security flag '-D_FORTIFY_SOURCE' requires at least -O to work,
+otherwise a warning is given. If CFLAGS additionally contains -Werror,
+this warning turns into an error. As Openjdk build system intentionally
+deoptimizes certains files due to potential bad codegen during optimization,
+build will fail when both '-D_FORTIFY_SOURCE' and '-Werror' are used.
+As turning the optimizations back on will likely break things, the
+warning is silenced instead.
+
+Upstream-Status: Inappropriate [Yocto-specific fixes]
+
+Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
+---
+ hotspot/make/linux/makefiles/amd64.make | 2 ++
+ hotspot/make/linux/makefiles/i486.make  | 2 ++
+ hotspot/make/linux/makefiles/zero.make  | 2 ++
+ 3 files changed, 6 insertions(+)
+
+diff --git hotspot/make/linux/makefiles/amd64.make hotspot/make/linux/makefiles/amd64.make
+index 2b77dba..db3965b 100644
+--- hotspot/make/linux/makefiles/amd64.make
++++ hotspot/make/linux/makefiles/amd64.make
+@@ -31,4 +31,6 @@ CFLAGS += -DVM_LITTLE_ENDIAN
+
+ CFLAGS += -D_LP64=1
+
++CFLAGS += -Wno-cpp
++
+ OPT_CFLAGS/compactingPermGenGen.o = -O1
+diff --git hotspot/make/linux/makefiles/i486.make hotspot/make/linux/makefiles/i486.make
+index 86e825d..6a92f09 100644
+--- hotspot/make/linux/makefiles/i486.make
++++ hotspot/make/linux/makefiles/i486.make
+@@ -31,4 +31,6 @@ OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/NOOPT)
+ # Must also specify if CPU is little endian
+ CFLAGS += -DVM_LITTLE_ENDIAN
+
++CFLAGS += -Wno-cpp
++
+ OPT_CFLAGS/compactingPermGenGen.o = -O1
+diff --git hotspot/make/linux/makefiles/zero.make hotspot/make/linux/makefiles/zero.make
+index 0270711..2b05f33 100644
+--- hotspot/make/linux/makefiles/zero.make
++++ hotspot/make/linux/makefiles/zero.make
+@@ -28,5 +28,7 @@
+ # Select which files to use (in top.make)
+ TYPE = ZERO
+
++CFLAGS += -Wno-cpp
++
+ # Install libjvm.so, etc in in server directory.
+ VM_SUBDIR = server
+--
+2.7.4
+
