@@ -1,1 +1,0 @@
-${RUNTIME} -Xmx512m -Djdt.compiler.useSingleThread=true -cp ${ECJ_JAR} org.eclipse.jdt.internal.compiler.batch.Main ${1+"$@"}
