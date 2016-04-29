@@ -1,0 +1,33 @@
+java.in: Do not use hardcode paths
+
+Cacao uses hardcoded paths to various files, if these paths are not
+provided. This causes issues when sharing sstate with otherwise
+identical workers, if build time paths are not identical.
+
+Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
+
+Upstream-Status: Inappropriate [Yocto-specific fixes]
+
+---
+ cacao-0.98/src/scripts/java.in | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git cacao-0.98/src/scripts/java.in cacao-0.98/src/scripts/java.in
+index 8a402e4..1738897 100644
+--- cacao-0.98/src/scripts/java.in
++++ cacao-0.98/src/scripts/java.in
+@@ -32,4 +32,10 @@
+ ##
+ ## $Id: java.in 5659 2006-10-04 10:37:09Z twisti $
+
+-exec cacao ${1+"$@"}
++SH_DIR=`dirname "$0"`
++CURRENT_DIR=`cd "${SH_DIR}" && pwd`
++PARENT_DIR=`dirname ${CURRENT_DIR}`
++export BOOTCLASSPATH="${PARENT_DIR}/share/cacao-initial/vm.zip:${PARENT_DIR}/share/classpath-initial/glibj.zip"
++
++LIBRARY_PATH="-Djava.library.path=${PARENT_DIR}/lib/classpath-initial"
++exec cacao ${LIBRARY_PATH} ${1+"$@"}
++
+--
+2.7.4
