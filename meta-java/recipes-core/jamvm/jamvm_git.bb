@@ -3,8 +3,12 @@
 
 require jamvm.inc
 
-SRCREV = "ebd11bde0a97b57f0d18938c6b65468d3c932719"
-PV = "1.5.5+1.6.0-devel+git${SRCPV}"
+inherit distro_features_check
+
+REQUIRED_DISTRO_FEATURES = "x11"
+
+SRCREV = "6cef41d859fbc9ce7868a97cb2cb5dd2b10b9103"
+PV = "2.0.0-devel+git${SRCPV}"
 
 SRC_URI = "git://git.code.sf.net/p/jamvm/code;protocol=git \
            file://jamvm-jni_h-noinst.patch \

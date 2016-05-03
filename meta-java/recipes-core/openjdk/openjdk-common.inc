@@ -7,7 +7,6 @@ SECTION  = "libs"
 ICEDTEA_VERSION = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1].split("-")[1] or '1.0'}"
 
 S = "${WORKDIR}/${ICEDTEA}"
-B = "${S}/build"
 
 DEPENDS_append_libc-uclibc = " virtual/libiconv "
 
@@ -18,6 +17,8 @@ DEPENDS_append_libc-uclibc = " virtual/libiconv "
 DEPENDS_append = " qemu-native "
 
 inherit java autotools gettext qemu pkgconfig
+
+B = "${S}/build"
 
 # OpenJDK uses slightly different names for certain arches. We need to know
 #	this to create some files which are expected by the build.
@@ -72,6 +73,6 @@ export WANT_LLVM_RELEASE = "2.8"
 export LLVM_CONFIGURE_ARCH="${@get_llvm_configure_arch(d)}"
 
 # Large stack is required at least on x86_64 host, otherwise random segfaults appear:
-QEMU = "${@qemu_target_binary(d)} ${QEMU_OPTIONS} -s 2097152 -L ${STAGING_DIR_TARGET} -E LD_LIBRARY_PATH=${STAGING_BASELIBDIR}"
+QEMU = "${@qemu_target_binary(d)} ${QEMU_OPTIONS} -s 2097152"
 
 EXTRA_OEMAKE += 'QEMU="${QEMU}"'

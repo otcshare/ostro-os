@@ -1,0 +1,10 @@
+--- openjdk/jdk/make/common/Release.gmk.orig	2015-08-20 10:08:34.631526528 +0200
++++ openjdk/jdk/make/common/Release.gmk	2015-08-20 10:10:13.823526901 +0200
+@@ -340,7 +340,6 @@
+ 	sun/security/tools/SignatureFile.class \
+ 	sun/security/tools/TimestampedSigner.class \
+ 	sun/rmi/rmic		\
+-	sun/applet		\
+ 	sun/jvmstat		\
+ 	com/sun/javadoc		\
+ 	com/sun/jdi		\

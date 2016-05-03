@@ -34,7 +34,3 @@ SRC_URI[langtools.sha256sum] = "3a4039348aa49547fffa96563b77b704c72e2ac3ead2c132
 OPENJDK_CHANGESET = "f89009ada191"
 SRC_URI[openjdk.md5sum] = "c26bbb33addfaeb14d28a1329b4b5a3e"
 SRC_URI[openjdk.sha256sum] = "54a0ef02b56b265b4122324e08a33c42ececbf2a300ada260611e7b6ccdba96d"
-
-
-# Hardcoded for now as icedtea7 is used in headless mode
-RDEPENDS_remove = " libxrender-native libxrender"

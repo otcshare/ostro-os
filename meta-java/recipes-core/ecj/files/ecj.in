@@ -9,10 +9,6 @@ while [ ${error_counter} -le ${error_max} -a ${error_occured} = true ]; do
         echo "ecj crashed ${error_counter} - silently trying again"
         error_occured=true
         error_counter=$(( $error_counter + 1 ))
-    elif [ ${error_number} -eq 255 ]; then
-        echo "ecj returned -1 - likely internal compiler error or similar - silently trying again"
-        error_occured=true
-        error_counter=$(( $error_counter + 1 ))
     else
         error_occured=false
     fi

@@ -1,0 +1,11 @@
+--- openjdk/jdk/make/java/nio/Makefile
++++ openjdk/jdk/make/java/nio/Makefile
+@@ -961,7 +961,7 @@
+ ifeq ($(PLATFORM), macosx)
+   NIO_CC=$(HOST_CC)
+ else
+-  NIO_CC=$(CC)
++  NIO_CC=$(CC_FOR_BUILD)
+ endif
+ 
+ $(GENSOR_EXE) : $(TEMPDIR)/$(GENSOR_SRC)

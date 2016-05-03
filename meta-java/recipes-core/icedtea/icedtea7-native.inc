@@ -5,14 +5,19 @@ INC_PR = "r1"
 
 DEPENDS = "virtual/javac-native virtual/java-native classpath-native \
            rhino-native ant-native libxslt-native attr-native \
-           libx11-native xproto-native libxt-native libxext-native libxrender-native \
            giflib-native jpeg-native libpng-native \
            glib-2.0-native freetype-native zlib-native \
-           fontconfig-native zip-native alsa-lib-native \
+           fontconfig-native zip-native \
 	   unzip-native \
           "
 
-inherit native java autotools
+PACKAGECONFIG ??= ""
+PACKAGECONFIG[x11] = ",--disable-headful,libx11-native xproto-native libxt-native libxext-native libxrender-native"
+
+OEMAKE_BUILD_HEADLESS_ONLY = "${@base_contains('PACKAGECONFIG', 'x11', '', 'BUILD_HEADLESS_ONLY=1', d)}"
+CFLAGS_append = "${@base_contains('PACKAGECONFIG', 'x11', '', ' -DHEADLESS=true', d)}"
+
+inherit native java autotools pkgconfig
 
 JAVA_HOME[unexport] = "1"
 
@@ -27,6 +32,8 @@ SRC_URI = " \
   ${LANGTOOLS_URI} \
   ${ICEDTEA_PATCHES} \
   ${OPENJDK_PATCHES} \
+  file://allow-headless-build.patch;striplevel=0 \
+  file://jaxws_fix_NullPointerException.patch;apply=no \
   "
 
 S = "${WORKDIR}/${ICEDTEA}"
@@ -35,6 +42,10 @@ B = "${S}/build"
 # openjdk looks in /usr/include and /usr/lib for freetype by default.
 export ALT_FREETYPE_HEADERS_PATH = "${STAGING_INCDIR}/freetype2"
 export ALT_FREETYPE_LIB_PATH = "${STAGING_LIBDIR}"
+
+# libfreetype.so.6 is copied from STAGING_LIBDIR
+# which is already stripped.
+INSANE_SKIP_${PN} = "already-stripped"
 
 # OpenJDK supports parallel compilation but uses a plain number for this.
 # In OE we have PARALLEL_MAKE which is the actual option passed to make,
@@ -66,7 +77,6 @@ EXTRA_OECONF = "\
         --disable-docs \
         --disable-nss \
         --disable-system-lcms \
-        --enable-zero \
 	--disable-system-gtk \
 	\
 	--with-jdk-home=${WORKDIR}/fake-jdk \
@@ -80,6 +90,7 @@ EXTRA_OECONF = "\
         --with-jaxws-src-zip=${DL_DIR}/${JAXWS_FILE} \
         --with-jdk-src-zip=${DL_DIR}/${JDK_FILE} \
         --with-langtools-src-zip=${DL_DIR}/${LANGTOOLS_FILE} \
+        ac_cv_path_UNZIP_BIN="${STAGING_BINDIR_NATIVE}/unzip" \
   "
 
 JDK_DIR = "icedtea7-native"
@@ -125,6 +136,8 @@ do_configure_prepend() {
 	done
 }
 
+POST_CONFIGURE_CLEAN_X11 = "${@base_contains('PACKAGECONFIG', 'x11', '', 'rm openjdk*/jdk/src/solaris/classes/sun/awt/X11/*.java', d)}"
+
 do_configure_append() {
 	oe_runmake patch-fsg
 
@@ -144,7 +157,10 @@ do_configure_append() {
 			-e"s|g++\$(GCC_SUFFIX)|${CXX}|" \
 			$F
 	done
+	${POST_CONFIGURE_CLEAN_X11}
 	oe_runmake patch-boot
+
+	patch -p1 < ${WORKDIR}/jaxws_fix_NullPointerException.patch
 }
 
 EXTRA_OEMAKE = ' \
@@ -153,7 +169,9 @@ EXTRA_OEMAKE = ' \
                 OE_CXXFLAGS="${CXXFLAGS}" \
                 OE_LDFLAGS="${LDFLAGS}" \
                 ZIPEXE="${STAGING_BINDIR_NATIVE}/zip" \
-                DISABLE_HOTSPOT_OS_VERSION_CHECK=ok \
+		${OEMAKE_BUILD_HEADLESS_ONLY} \
+		DISABLE_HOTSPOT_OS_VERSION_CHECK=ok \
+                UNZIP_BIN="${STAGING_BINDIR_NATIVE}/unzip" \
                '
 
 do_compile() {

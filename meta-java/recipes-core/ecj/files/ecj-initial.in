@@ -1,1 +1,3 @@
+# -Djdt.compiler.useSingleThread=true forces the compiler to only use a single thread. This is a workaround to a race condition
+# bug in cacao-initial-native, where using multiple java thread could cause sporadic segmentation faults
 ${RUNTIME} -Xmx512m -Djdt.compiler.useSingleThread=true -cp ${ECJ_JAR} org.eclipse.jdt.internal.compiler.batch.Main ${1+"$@"}

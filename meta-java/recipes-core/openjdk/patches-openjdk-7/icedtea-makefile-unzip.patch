@@ -1,0 +1,176 @@
+Use UNZIP_BIN instead of UNZIP.
+
+Fails with an error message /usr/bin/unzip not found.
+Additionally, icedtea7 enables you to specify an unzip to use by setting
+the variable UNZIP, this results in an error because unzip uses UNZIP
+to specify options, hence you'll end up with unzip trying to unzip unzip.
+
+Upstream-Status: Inappropriate
+
+Signed-off-by: Amy Fong <amy.fong@windriver.com>
+Signed-off-by: Jackie Huang <jackie.huang@windriver.com>
+---
+ Makefile.am  | 14 +++++++-------
+ Makefile.in  | 16 ++++++++--------
+ configure.ac |  2 +-
+ 3 files changed, 16 insertions(+), 16 deletions(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index ebb79cd..c109c7a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1369,7 +1369,7 @@ else
+ 	if ! test -d openjdk ; then \
+ 	  if [ ! -z $(OPENJDK_SRC_ZIP) ] ; then \
+ 	    case "$(OPENJDK_SRC_ZIP)" in \
+-	      *.zip) $(UNZIP) -q $(OPENJDK_SRC_ZIP) ;; \
++	      *.zip) $(UNZIP_BIN) -q $(OPENJDK_SRC_ZIP) ;; \
+ 	      *.tar.*) $(TAR) xf $(OPENJDK_SRC_ZIP) ;; \
+ 	    esac; \
+ 	    mv `echo $(ICEDTEA_PREFIX)|$(SED) 's#\.#-#'`-$(OPENJDK_CHANGESET) openjdk ; \
+@@ -1403,7 +1403,7 @@ else
+ 	    if ! test -d openjdk/corba ; \
+ 	    then \
+ 	      case "$(CORBA_SRC_ZIP)" in \
+-	        *.zip) $(UNZIP) -q $(CORBA_SRC_ZIP) ;; \
++	        *.zip) $(UNZIP_BIN) -q $(CORBA_SRC_ZIP) ;; \
+ 	        *.tar.*) $(TAR) xf $(CORBA_SRC_ZIP) ;; \
+ 	      esac; \
+ 	      mv corba-$(CORBA_CHANGESET) openjdk/corba ; \
+@@ -1431,7 +1431,7 @@ else
+ 	    if ! test -d openjdk/jaxp ; \
+ 	    then \
+ 	      case "$(JAXP_SRC_ZIP)" in \
+-	        *.zip) $(UNZIP) -q $(JAXP_SRC_ZIP) ;; \
++	        *.zip) $(UNZIP_BIN) -q $(JAXP_SRC_ZIP) ;; \
+ 	        *.tar.*) $(TAR) xf $(JAXP_SRC_ZIP) ;; \
+ 	      esac; \
+ 	      mv jaxp-$(JAXP_CHANGESET) openjdk/jaxp ; \
+@@ -1459,7 +1459,7 @@ else
+ 	    if ! test -d openjdk/jaxws ; \
+ 	    then \
+ 	      case "$(JAXWS_SRC_ZIP)" in \
+-	        *.zip) $(UNZIP) -q $(JAXWS_SRC_ZIP) ;; \
++	        *.zip) $(UNZIP_BIN) -q $(JAXWS_SRC_ZIP) ;; \
+ 	        *.tar.*) $(TAR) xf $(JAXWS_SRC_ZIP) ;; \
+ 	      esac; \
+ 	      mv jaxws-$(JAXWS_CHANGESET) openjdk/jaxws ; \
+@@ -1487,7 +1487,7 @@ else
+ 	    if ! test -d openjdk/jdk ; \
+ 	    then \
+ 	      case "$(JDK_SRC_ZIP)" in \
+-	        *.zip) $(UNZIP) -q $(JDK_SRC_ZIP) ;; \
++	        *.zip) $(UNZIP_BIN) -q $(JDK_SRC_ZIP) ;; \
+ 	        *.tar.*) $(TAR) xf $(JDK_SRC_ZIP) ;; \
+ 	      esac; \
+ 	      mv jdk-$(JDK_CHANGESET) openjdk/jdk ; \
+@@ -1515,7 +1515,7 @@ else
+ 	    if ! test -d openjdk/langtools ; \
+ 	    then \
+ 	      case "$(LANGTOOLS_SRC_ZIP)" in \
+-	        *.zip) $(UNZIP) -q $(LANGTOOLS_SRC_ZIP) ;; \
++	        *.zip) $(UNZIP_BIN) -q $(LANGTOOLS_SRC_ZIP) ;; \
+ 	        *.tar.*) $(TAR) xf $(LANGTOOLS_SRC_ZIP) ;; \
+ 	      esac; \
+ 	      mv langtools-$(LANGTOOLS_CHANGESET) openjdk/langtools ; \
+@@ -1541,7 +1541,7 @@ else
+ 	  if test -e ${HOTSPOT_SRC_ZIP} ; \
+ 	  then \
+ 	    case "$(HOTSPOT_SRC_ZIP)" in \
+-	      *.zip) $(UNZIP) -q $(HOTSPOT_SRC_ZIP) ;; \
++	      *.zip) $(UNZIP_BIN) -q $(HOTSPOT_SRC_ZIP) ;; \
+ 	      *.tar.*) $(TAR) xf $(HOTSPOT_SRC_ZIP) ;; \
+ 	    esac; \
+ 	    if test "x${HSBUILD}" != "xdefault"; then \
+diff --git a/Makefile.in b/Makefile.in
+index f890991..fd09bda 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -495,7 +495,7 @@ SYSTEM_JDK_DIR = @SYSTEM_JDK_DIR@
+ TAR = @TAR@
+ TOOLS_JAR = @TOOLS_JAR@
+ TZDATA_DIR = @TZDATA_DIR@
+-UNZIP = @UNZIP@
++UNZIP_BIN = @UNZIP@
+ USING_CACAO = @USING_CACAO@
+ USING_ECJ = @USING_ECJ@
+ VERSION = @VERSION@
+@@ -1845,7 +1845,7 @@ stamps/extract-openjdk.stamp: stamps/download-openjdk.stamp
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	if ! test -d openjdk ; then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  if [ ! -z $(OPENJDK_SRC_ZIP) ] ; then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    case "$(OPENJDK_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      *.zip) $(UNZIP) -q $(OPENJDK_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      *.zip) $(UNZIP_BIN) -q $(OPENJDK_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      *.tar.*) $(TAR) xf $(OPENJDK_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    mv `echo $(ICEDTEA_PREFIX)|$(SED) 's#\.#-#'`-$(OPENJDK_CHANGESET) openjdk ; \
+@@ -1873,7 +1873,7 @@ stamps/extract-corba.stamp: stamps/extract-openjdk.stamp stamps/download-corba.s
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    if ! test -d openjdk/corba ; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      case "$(CORBA_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP) -q $(CORBA_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP_BIN) -q $(CORBA_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.tar.*) $(TAR) xf $(CORBA_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      mv corba-$(CORBA_CHANGESET) openjdk/corba ; \
+@@ -1895,7 +1895,7 @@ stamps/extract-jaxp.stamp: stamps/extract-openjdk.stamp stamps/download-jaxp.sta
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    if ! test -d openjdk/jaxp ; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      case "$(JAXP_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP) -q $(JAXP_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP_BIN) -q $(JAXP_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.tar.*) $(TAR) xf $(JAXP_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      mv jaxp-$(JAXP_CHANGESET) openjdk/jaxp ; \
+@@ -1917,7 +1917,7 @@ stamps/extract-jaxws.stamp: stamps/extract-openjdk.stamp stamps/download-jaxws.s
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    if ! test -d openjdk/jaxws ; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      case "$(JAXWS_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP) -q $(JAXWS_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP_BIN) -q $(JAXWS_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.tar.*) $(TAR) xf $(JAXWS_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      mv jaxws-$(JAXWS_CHANGESET) openjdk/jaxws ; \
+@@ -1939,7 +1939,7 @@ stamps/extract-jdk.stamp: stamps/extract-openjdk.stamp stamps/download-jdk.stamp
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    if ! test -d openjdk/jdk ; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      case "$(JDK_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP) -q $(JDK_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP_BIN) -q $(JDK_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.tar.*) $(TAR) xf $(JDK_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      mv jdk-$(JDK_CHANGESET) openjdk/jdk ; \
+@@ -1961,7 +1961,7 @@ stamps/extract-langtools.stamp: stamps/extract-openjdk.stamp stamps/download-lan
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    if ! test -d openjdk/langtools ; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      case "$(LANGTOOLS_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP) -q $(LANGTOOLS_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.zip) $(UNZIP_BIN) -q $(LANGTOOLS_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	        *.tar.*) $(TAR) xf $(LANGTOOLS_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      mv langtools-$(LANGTOOLS_CHANGESET) openjdk/langtools ; \
+@@ -1981,7 +1981,7 @@ stamps/extract-hotspot.stamp: stamps/extract-openjdk.stamp stamps/download-hotsp
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  if test -e ${HOTSPOT_SRC_ZIP} ; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	  then \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    case "$(HOTSPOT_SRC_ZIP)" in \
+-@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      *.zip) $(UNZIP) -q $(HOTSPOT_SRC_ZIP) ;; \
++@OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      *.zip) $(UNZIP_BIN) -q $(HOTSPOT_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	      *.tar.*) $(TAR) xf $(HOTSPOT_SRC_ZIP) ;; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    esac; \
+ @OPENJDK_SRC_DIR_FOUND_FALSE@@USE_HG_FALSE@	    if test "x${HSBUILD}" != "xdefault"; then \
+diff --git a/configure.ac b/configure.ac
+index 5291130..8fbccad 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -34,7 +34,7 @@ IT_FIND_TOOL([CHMOD], [chmod])
+ IT_FIND_TOOLS([SHA256SUM], [gsha256sum sha256sum])
+ IT_FIND_TOOL([WGET], [wget])
+ IT_FIND_TOOL([ZIP], [zip])
+-IT_FIND_TOOL([UNZIP], [unzip])
++IT_FIND_TOOL([UNZIP_BIN], [unzip])
+ IT_FIND_TOOL([CPIO], [cpio])
+ IT_FIND_TOOL([FILE], [file])
+ IT_FIND_TOOL([READLINK], [readlink])
+-- 
+2.3.5
+
