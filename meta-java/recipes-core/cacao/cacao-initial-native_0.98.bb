@@ -15,6 +15,7 @@ SRC_URI = "\
         file://cacao-0.98-initial.patch \
         file://disable_hw_exceptions.patch \
         file://cacao-0.9.8-initial-fix-gc-undefined-behaviour.patch \
+        file://cacao-0.9.8-do-not-rely-on-absolute-paths.patch \
         "
 
 # libjvm disabled - it would conflict with cacao-native installations

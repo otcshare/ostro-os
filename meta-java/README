@@ -36,7 +36,7 @@ Source code:
 
 When creating patches, please use something like:
 
-    git format-patch -s --subject-prefix='meta-java][PATCH' origin
+    git format-patch -M -s --subject-prefix='meta-java][PATCH' origin
 
 When sending patches, please use something like:
 
@@ -46,7 +46,7 @@ Main layer maintainers:
 
   Henning Heinold <henning@itconsulting-heinold.de>
   Mario Domenech Goulart <mario@ossystems.com.br>
-  Maxin John <maxin.john@enea.com>
+  Maxin John <maxin.john@intel.com>
   Otavio Salvador <otavio@ossystems.com.br>
 
 Usage instructions
@@ -54,26 +54,16 @@ Usage instructions
 
 You should define at least the following variables in a distro include file or local.conf
 
+# Possible provider: cacao-initial-native and jamvm-initial-native
 PREFERRED_PROVIDER_virtual/java-initial-native = "cacao-initial-native"
 
+# Possible provider: cacao-native and jamvm-native
 PREFERRED_PROVIDER_virtual/java-native = "jamvm-native"
+
+# Optional since there is only one provider for now
 PREFERRED_PROVIDER_virtual/javac-native = "ecj-bootstrap-native"
 
-#For openjdk6:
-#PREFERRED_VERSION_openjdk-6-jre = "6b24-1.11.9"
-#or
-#PREFERRED_VERSION_openjdk-6-jre = "6b27-1.12.8"
-#or
-PREFERRED_VERSION_openjdk-6-jre = "6b32-1.13.4"
-PREFERRED_VERSION_icedtea6-native = "1.8.11"
-
-#For openjdk7:
-PREFERRED_VERSION_openjdk-7-jre = "75b13-2.5.4"
-PREFERRED_VERSION_icedtea7-native = "2.1.3"
-
-#Sometimes the following is needed:
-PREFERRED_PROVIDER_openjdk-6-jre = "openjdk-6-jre"
-PREFERRED_PROVIDER_openjdk-7-jre = "openjdk-7-jre"
+Simply rely on openjdk-7-jre, openjdk-7, openjdk-8 or openjre-8.
 
 For conf/bblayers.conf you have to add
 
@@ -83,7 +73,7 @@ BBLAYERS ?= " \
   path_to_source/sources/meta-java \
   "
 
-Please note that libstdc++ static is needed on your host to compile icedtea6/7-native
+Please note that libstdc++ static is needed on your host to compile icedtea7-native
 (install libstdc++-static on a Fedora).
 
 For debian-based distributions you need the libstdc++6-$compilerversion-dev package.

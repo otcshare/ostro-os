@@ -1,6 +1,6 @@
-From b47573456292e90988b661fe3d81c900462d7687 Mon Sep 17 00:00:00 2001
+From 81a63484820c3f8ac2808c74957a62b773f7f342 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Erkka=20K=C3=A4=C3=A4ri=C3=A4?= <erkka.kaaria@intel.com>
-Date: Thu, 10 Dec 2015 08:58:21 +0200
+Date: Fri, 11 Dec 2015 14:24:23 +0200
 Subject: [PATCH] gnumail: Fix race condition in makefile
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

@@ -71,7 +71,7 @@ ICEDTEA_PATCHES = " \
         file://build-hacks-native.patch \
         file://icedtea-sane-x86-arch-name.patch \
 	file://fix-checksums.patch \
-        file://ecj-3.8.2-build-hack.patch \
+	file://icedtea-makefile-unzip.patch \
         "
 
 OPENJDK_PATCHES = " \
@@ -83,9 +83,20 @@ OPENJDK_PATCHES = " \
 	file://icedtea-flags.patch;apply=no \
 	file://icedtea-openjdk-remove-currency-data-generation-expi.patch;apply=no \
 	file://icedtea-change-to-gdb-debug-format.patch;apply=no \
-        file://icedtea-fix-zero-mode-undefined-behaviour.patch;apply=no \
-        file://icedtea-ecj-3.8.2-build-hacks.patch;apply=no \
+	file://icedtea-disable-x11-in-headless.patch;apply=no \
+	file://icedtea-disable-sun.applet-for-tools-in-headless.patch;apply=no \
+	file://icedtea-hotspot-fix-undefined-behaviour.patch;apply=no \
+	file://icedtea-x11_extension_cleanup.patch;apply=no \
+	file://icedtea-CVE-2014-1876-unpack.patch;apply=no \
+	file://icedtea-jdk-unzip.patch;apply=no \
         "
+
+OPENJDK_HEADLESS_PATCHES = " \
+	patches/icedtea-disable-x11-in-headless.patch \
+	patches/icedtea-disable-sun.applet-for-tools-in-headless.patch \
+	"
+
+CLEAN_X11_DISTRIBUTION_PATCH = "${@base_contains('PACKAGECONFIG', 'x11', '', '${OPENJDK_HEADLESS_PATCHES}', d)}"
 
 export DISTRIBUTION_PATCHES = " \
         patches/icedtea-ecj-disable-compilation.patch \
@@ -96,6 +107,9 @@ export DISTRIBUTION_PATCHES = " \
 	patches/icedtea-flags.patch \
 	patches/icedtea-openjdk-remove-currency-data-generation-expi.patch \
 	patches/icedtea-change-to-gdb-debug-format.patch \
-        patches/icedtea-fix-zero-mode-undefined-behaviour.patch \
-        patches/icedtea-ecj-3.8.2-build-hacks.patch \
+	patches/icedtea-hotspot-fix-undefined-behaviour.patch \
+	patches/icedtea-x11_extension_cleanup.patch \
+	patches/icedtea-CVE-2014-1876-unpack.patch \
+	patches/icedtea-jdk-unzip.patch \
+	${CLEAN_X11_DISTRIBUTION_PATCH} \
         "

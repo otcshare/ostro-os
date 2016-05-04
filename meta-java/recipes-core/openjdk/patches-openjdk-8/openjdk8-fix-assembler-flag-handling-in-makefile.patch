@@ -1,0 +1,20 @@
+Delay $CXX insertion until after make has evaluated the comma-separated list,
+as any comma separated parameters in CXX (such as assembler arguments) would
+break the build
+
+Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
+
+Upstream-Status: Pending
+
+---
+--- make/common/NativeCompilation.gmk
++++ make/common/NativeCompilation.gmk
+@@ -372,7 +372,7 @@ define SetupNativeCompilation
+   $$(foreach p,$$($1_SRCS), \
+       $$(eval $$(call add_native_source,$1,$$p,$$($1_OBJECT_DIR), \
+           $$($1_CFLAGS) $$($1_EXTRA_CFLAGS),$$($1_CC), \
+-          $$($1_CXXFLAGS) $$($1_EXTRA_CXXFLAGS),$(CXX),$$($1_ASFLAGS))))
++          $$($1_CXXFLAGS) $$($1_EXTRA_CXXFLAGS),$$(CXX),$$($1_ASFLAGS))))
+
+   # On windows we need to create a resource file
+   ifeq ($(OPENJDK_TARGET_OS), windows)

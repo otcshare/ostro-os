@@ -1,0 +1,2730 @@
+--- hotspot/src/share/vm/memory/cardTableModRefBS.hpp.orig	2015-09-02 09:45:31.000000000 +0200
++++ hotspot/src/share/vm/memory/cardTableModRefBS.hpp	2015-09-02 09:46:59.000000000 +0200
+@@ -158,8 +158,8 @@
+   // Mapping from address to card marking array entry
+   jbyte* byte_for(const void* p) const {
+     assert(_whole_heap.contains(p),
+-           err_msg("Attempt to access p = "PTR_FORMAT" out of bounds of "
+-                   " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
++           err_msg("Attempt to access p = " PTR_FORMAT " out of bounds of "
++                   " card marking array's _whole_heap = [" PTR_FORMAT "," PTR_FORMAT ")",
+                    p2i(p), p2i(_whole_heap.start()), p2i(_whole_heap.end())));
+     jbyte* result = &byte_map_base[uintptr_t(p) >> card_shift];
+     assert(result >= _byte_map && result < _byte_map + _byte_map_size,
+@@ -436,8 +436,8 @@
+     size_t delta = pointer_delta(p, byte_map_base, sizeof(jbyte));
+     HeapWord* result = (HeapWord*) (delta << card_shift);
+     assert(_whole_heap.contains(result),
+-           err_msg("Returning result = "PTR_FORMAT" out of bounds of "
+-                   " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
++           err_msg("Returning result = " PTR_FORMAT " out of bounds of "
++                   " card marking array's _whole_heap = [" PTR_FORMAT "," PTR_FORMAT ")",
+                    p2i(result), p2i(_whole_heap.start()), p2i(_whole_heap.end())));
+     return result;
+   }
+@@ -445,8 +445,8 @@
+   // Mapping from address to card marking array index.
+   size_t index_for(void* p) {
+     assert(_whole_heap.contains(p),
+-           err_msg("Attempt to access p = "PTR_FORMAT" out of bounds of "
+-                   " card marking array's _whole_heap = ["PTR_FORMAT","PTR_FORMAT")",
++           err_msg("Attempt to access p = " PTR_FORMAT " out of bounds of "
++                   " card marking array's _whole_heap = [" PTR_FORMAT "," PTR_FORMAT ")",
+                    p2i(p), p2i(_whole_heap.start()), p2i(_whole_heap.end())));
+     return byte_for(p) - _byte_map;
+   }
+--- hotspot/src/share/vm/memory/generation.hpp.orig	2015-09-02 09:45:31.000000000 +0200
++++ hotspot/src/share/vm/memory/generation.hpp	2015-09-02 09:47:36.000000000 +0200
+@@ -422,7 +422,7 @@
+     // have to guard against non-monotonicity.
+     NOT_PRODUCT(
+       if (now < _time_of_last_gc) {
+-        warning("time warp: "INT64_FORMAT" to "INT64_FORMAT, (int64_t)_time_of_last_gc, (int64_t)now);
++        warning("time warp: " INT64_FORMAT " to " INT64_FORMAT, (int64_t)_time_of_last_gc, (int64_t)now);
+       }
+     )
+     return _time_of_last_gc;
+--- hotspot/src/share/vm/memory/threadLocalAllocBuffer.inline.hpp.orig	2015-09-02 09:45:31.000000000 +0200
++++ hotspot/src/share/vm/memory/threadLocalAllocBuffer.inline.hpp	2015-09-02 09:48:07.000000000 +0200
+@@ -94,10 +94,10 @@
+
+   if (PrintTLAB && Verbose) {
+     Thread* thrd = myThread();
+-    gclog_or_tty->print("TLAB: %s thread: "INTPTR_FORMAT" [id: %2d]"
+-                        " obj: "SIZE_FORMAT
+-                        " free: "SIZE_FORMAT
+-                        " waste: "SIZE_FORMAT"\n",
++    gclog_or_tty->print("TLAB: %s thread: " INTPTR_FORMAT " [id: %2d]"
++                        " obj: " SIZE_FORMAT
++                        " free: " SIZE_FORMAT
++                        " waste: " SIZE_FORMAT "\n",
+                         "slow", p2i(thrd), thrd->osthread()->thread_id(),
+                         obj_size, free(), refill_waste_limit());
+   }
+--- hotspot/src/share/vm/trace/traceStream.hpp.orig	2015-09-02 09:45:31.000000000 +0200
++++ hotspot/src/share/vm/trace/traceStream.hpp	2015-09-02 09:49:16.000000000 +0200
+@@ -40,31 +40,31 @@
+   TraceStream(outputStream& stream): _st(stream) {}
+
+   void print_val(const char* label, u1 val) {
+-    _st.print("%s = "UINT32_FORMAT, label, val);
++    _st.print("%s = " UINT32_FORMAT, label, val);
+   }
+
+   void print_val(const char* label, u2 val) {
+-    _st.print("%s = "UINT32_FORMAT, label, val);
++    _st.print("%s = " UINT32_FORMAT, label, val);
+   }
+
+   void print_val(const char* label, s2 val) {
+-    _st.print("%s = "INT32_FORMAT, label, val);
++    _st.print("%s = " INT32_FORMAT, label, val);
+   }
+
+   void print_val(const char* label, u4 val) {
+-    _st.print("%s = "UINT32_FORMAT, label, val);
++    _st.print("%s = " UINT32_FORMAT, label, val);
+   }
+
+   void print_val(const char* label, s4 val) {
+-    _st.print("%s = "INT32_FORMAT, label, val);
++    _st.print("%s = " INT32_FORMAT, label, val);
+   }
+
+   void print_val(const char* label, u8 val) {
+-    _st.print("%s = "UINT64_FORMAT, label, val);
++    _st.print("%s = " UINT64_FORMAT, label, val);
+   }
+
+   void print_val(const char* label, s8 val) {
+-    _st.print("%s = "INT64_FORMAT, label, (int64_t) val);
++    _st.print("%s = " INT64_FORMAT, label, (int64_t) val);
+   }
+
+   void print_val(const char* label, bool val) {
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegionManager.inline.hpp.orig	2015-09-02 09:59:23.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegionManager.inline.hpp	2015-09-02 10:04:07.000000000 +0200
+@@ -31,9 +31,9 @@
+
+ inline HeapRegion* HeapRegionManager::addr_to_region(HeapWord* addr) const {
+   assert(addr < heap_end(),
+-        err_msg("addr: "PTR_FORMAT" end: "PTR_FORMAT, p2i(addr), p2i(heap_end())));
++        err_msg("addr: " PTR_FORMAT " end: " PTR_FORMAT, p2i(addr), p2i(heap_end())));
+   assert(addr >= heap_bottom(),
+-        err_msg("addr: "PTR_FORMAT" bottom: "PTR_FORMAT, p2i(addr), p2i(heap_bottom())));
++        err_msg("addr: " PTR_FORMAT " bottom: " PTR_FORMAT, p2i(addr), p2i(heap_bottom())));
+
+   HeapRegion* hr = _regions.get_by_address(addr);
+   return hr;
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegion.inline.hpp.orig	2015-09-02 09:59:23.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegion.inline.hpp	2015-09-02 10:03:44.000000000 +0200
+@@ -112,7 +112,7 @@
+
+   assert(ClassUnloadingWithConcurrentMark,
+       err_msg("All blocks should be objects if G1 Class Unloading isn't used. "
+-              "HR: ["PTR_FORMAT", "PTR_FORMAT", "PTR_FORMAT") "
++              "HR: [" PTR_FORMAT ", " PTR_FORMAT ", " PTR_FORMAT ") "
+               "addr: " PTR_FORMAT,
+               p2i(bottom()), p2i(top()), p2i(end()), p2i(addr)));
+
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegion.hpp.orig	2015-09-02 09:59:23.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegion.hpp	2015-09-02 10:03:17.000000000 +0200
+@@ -52,7 +52,7 @@
+ class HeapRegionSetBase;
+ class nmethod;
+
+-#define HR_FORMAT "%u:(%s)["PTR_FORMAT","PTR_FORMAT","PTR_FORMAT"]"
++#define HR_FORMAT "%u:(%s)[" PTR_FORMAT "," PTR_FORMAT "," PTR_FORMAT "]"
+ #define HR_FORMAT_PARAMS(_hr_) \
+                 (_hr_)->hrm_index(), \
+                 (_hr_)->get_short_type_str(), \
+@@ -542,8 +542,8 @@
+   void set_containing_set(HeapRegionSetBase* containing_set) {
+     assert((containing_set == NULL && _containing_set != NULL) ||
+            (containing_set != NULL && _containing_set == NULL),
+-           err_msg("containing_set: "PTR_FORMAT" "
+-                   "_containing_set: "PTR_FORMAT,
++           err_msg("containing_set: " PTR_FORMAT " "
++                   "_containing_set: " PTR_FORMAT,
+                    p2i(containing_set), p2i(_containing_set)));
+
+     _containing_set = containing_set;
+--- hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.inline.hpp.orig	2015-09-02 09:59:23.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.inline.hpp	2015-09-02 10:02:55.000000000 +0200
+@@ -46,7 +46,7 @@
+
+ inline uint G1CollectedHeap::addr_to_region(HeapWord* addr) const {
+   assert(is_in_reserved(addr),
+-         err_msg("Cannot calculate region index for address "PTR_FORMAT" that is outside of the heap ["PTR_FORMAT", "PTR_FORMAT")",
++         err_msg("Cannot calculate region index for address " PTR_FORMAT " that is outside of the heap [" PTR_FORMAT ", " PTR_FORMAT ")",
+                  p2i(addr), p2i(_reserved.start()), p2i(_reserved.end())));
+   return (uint)(pointer_delta(addr, _reserved.start(), sizeof(uint8_t)) >> HeapRegion::LogOfHRGrainBytes);
+ }
+@@ -59,7 +59,7 @@
+ inline HeapRegion* G1CollectedHeap::heap_region_containing_raw(const T addr) const {
+   assert(addr != NULL, "invariant");
+   assert(is_in_g1_reserved((const void*) addr),
+-      err_msg("Address "PTR_FORMAT" is outside of the heap ranging from ["PTR_FORMAT" to "PTR_FORMAT")",
++      err_msg("Address " PTR_FORMAT " is outside of the heap ranging from [" PTR_FORMAT " to " PTR_FORMAT ")",
+           p2i((void*)addr), p2i(g1_reserved().start()), p2i(g1_reserved().end())));
+   return _hrm.addr_to_region((HeapWord*) addr);
+ }
+--- hotspot/src/share/vm/gc_implementation/g1/g1BlockOffsetTable.inline.hpp.orig	2015-09-02 09:59:22.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1BlockOffsetTable.inline.hpp	2015-09-02 10:01:43.000000000 +0200
+@@ -47,15 +47,15 @@
+   }
+ }
+
+-#define check_index(index, msg)                                                \
+-  assert((index) < (_reserved.word_size() >> LogN_words),                      \
+-         err_msg("%s - index: "SIZE_FORMAT", _vs.committed_size: "SIZE_FORMAT, \
+-                 msg, (index), (_reserved.word_size() >> LogN_words)));        \
+-  assert(G1CollectedHeap::heap()->is_in_exact(address_for_index_raw(index)),   \
+-         err_msg("Index "SIZE_FORMAT" corresponding to "PTR_FORMAT             \
+-                 " (%u) is not in committed area.",                            \
+-                 (index),                                                      \
+-                 p2i(address_for_index_raw(index)),                            \
++#define check_index(index, msg)                                                   \
++  assert((index) < (_reserved.word_size() >> LogN_words),                         \
++         err_msg("%s - index: " SIZE_FORMAT ", _vs.committed_size: " SIZE_FORMAT, \
++                 msg, (index), (_reserved.word_size() >> LogN_words)));           \
++  assert(G1CollectedHeap::heap()->is_in_exact(address_for_index_raw(index)),      \
++         err_msg("Index " SIZE_FORMAT " corresponding to " PTR_FORMAT             \
++                 " (%u) is not in committed area.",                               \
++                 (index),                                                         \
++                 p2i(address_for_index_raw(index)),                               \
+                  G1CollectedHeap::heap()->addr_to_region(address_for_index_raw(index))));
+
+ u_char G1BlockOffsetSharedArray::offset_array(size_t index) const {
+--- hotspot/src/share/vm/gc_implementation/g1/g1Allocator.hpp.orig	2015-09-02 09:59:22.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1Allocator.hpp	2015-09-02 10:00:36.000000000 +0200
+@@ -78,7 +78,7 @@
+
+    void decrease_used(size_t bytes) {
+      assert(_summary_bytes_used >= bytes,
+-            err_msg("invariant: _summary_bytes_used: "SIZE_FORMAT" should be >= bytes: "SIZE_FORMAT,
++            err_msg("invariant: _summary_bytes_used: " SIZE_FORMAT " should be >= bytes: " SIZE_FORMAT,
+                 _summary_bytes_used, bytes));
+      _summary_bytes_used -= bytes;
+    }
+--- hotspot/src/share/vm/gc_implementation/g1/collectionSetChooser.hpp.orig	2015-09-02 09:59:22.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/collectionSetChooser.hpp	2015-09-02 10:00:20.000000000 +0200
+@@ -92,7 +92,7 @@
+     regions_at_put(_curr_index, NULL);
+     assert(hr->reclaimable_bytes() <= _remaining_reclaimable_bytes,
+            err_msg("remaining reclaimable bytes inconsistent "
+-                   "from region: "SIZE_FORMAT" remaining: "SIZE_FORMAT,
++                   "from region: " SIZE_FORMAT " remaining: " SIZE_FORMAT,
+                    hr->reclaimable_bytes(), _remaining_reclaimable_bytes));
+     _remaining_reclaimable_bytes -= hr->reclaimable_bytes();
+     _curr_index += 1;
+--- hotspot/src/share/vm/compiler/compileBroker.cpp.orig	2015-09-02 10:08:43.000000000 +0200
++++ hotspot/src/share/vm/compiler/compileBroker.cpp	2015-09-02 10:09:37.000000000 +0200
+@@ -203,7 +203,7 @@
+   }
+
+   void log_nmethod(JavaThread* thread, nmethod* nm) {
+-    log(thread, "nmethod %d%s " INTPTR_FORMAT " code ["INTPTR_FORMAT ", " INTPTR_FORMAT "]",
++    log(thread, "nmethod %d%s " INTPTR_FORMAT " code [" INTPTR_FORMAT ", " INTPTR_FORMAT "]",
+         nm->compile_id(), nm->is_osr_method() ? "%" : "",
+         p2i(nm), p2i(nm->code_begin()), p2i(nm->code_end()));
+   }
+--- hotspot/src/share/vm/gc_implementation/g1/g1ErgoVerbose.hpp.orig	2015-09-02 10:08:44.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1ErgoVerbose.hpp	2015-09-02 10:09:56.000000000 +0200
+@@ -121,15 +121,15 @@
+ // Single parameter format strings
+ #define ergo_format_str(_name_)      ", " _name_ ": %s"
+ #define ergo_format_region(_name_)   ", " _name_ ": %u regions"
+-#define ergo_format_byte(_name_)     ", " _name_ ": "SIZE_FORMAT" bytes"
++#define ergo_format_byte(_name_)     ", " _name_ ": " SIZE_FORMAT " bytes"
+ #define ergo_format_double(_name_)   ", " _name_ ": %1.2f"
+ #define ergo_format_perc(_name_)     ", " _name_ ": %1.2f %%"
+ #define ergo_format_ms(_name_)       ", " _name_ ": %1.2f ms"
+-#define ergo_format_size(_name_)     ", " _name_ ": "SIZE_FORMAT
++#define ergo_format_size(_name_)     ", " _name_ ": " SIZE_FORMAT
+
+ // Double parameter format strings
+ #define ergo_format_byte_perc(_name_)                                   \
+-                             ", " _name_ ": "SIZE_FORMAT" bytes (%1.2f %%)"
++                             ", " _name_ ": " SIZE_FORMAT " bytes (%1.2f %%)"
+
+ // Generates the format string
+ #define ergo_format(_extra_format_)                           \
+--- hotspot/src/share/vm/gc_implementation/g1/concurrentMark.inline.hpp.orig	2015-09-02 10:12:49.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/concurrentMark.inline.hpp	2015-09-02 10:21:24.000000000 +0200
+@@ -196,8 +196,8 @@
+   assert(_bmStartWord <= (addr) && (addr) < (_bmStartWord + _bmWordSize),      \
+          "outside underlying space?");                                         \
+   assert(G1CollectedHeap::heap()->is_in_exact(addr),                           \
+-         err_msg("Trying to access not available bitmap "PTR_FORMAT            \
+-                 " corresponding to "PTR_FORMAT" (%u)",                        \
++         err_msg("Trying to access not available bitmap " PTR_FORMAT           \
++                 " corresponding to " PTR_FORMAT " (%u)",                      \
+                  p2i(this), p2i(addr), G1CollectedHeap::heap()->addr_to_region(addr)));
+
+ inline void CMBitMap::mark(HeapWord* addr) {
+@@ -270,7 +270,7 @@
+
+ inline void CMTask::deal_with_reference(oop obj) {
+   if (_cm->verbose_high()) {
+-    gclog_or_tty->print_cr("[%u] we're dealing with reference = "PTR_FORMAT,
++    gclog_or_tty->print_cr("[%u] we're dealing with reference = " PTR_FORMAT,
+                            _worker_id, p2i((void*) obj));
+   }
+
+@@ -374,7 +374,7 @@
+   // assert that word_size is under an upper bound which is its
+   // containing region's capacity.
+   assert(word_size * HeapWordSize <= hr->capacity(),
+-         err_msg("size: "SIZE_FORMAT" capacity: "SIZE_FORMAT" "HR_FORMAT,
++         err_msg("size: " SIZE_FORMAT " capacity: " SIZE_FORMAT " " HR_FORMAT,
+                  word_size * HeapWordSize, hr->capacity(),
+                  HR_FORMAT_PARAMS(hr)));
+
+--- hotspot/src/share/vm/gc_implementation/g1/g1CardCounts.hpp.orig	2015-09-02 10:12:49.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1CardCounts.hpp	2015-09-02 10:21:38.000000000 +0200
+@@ -91,7 +91,7 @@
+
+   jbyte* card_num_2_ptr(size_t card_num) {
+     assert(card_num >= 0 && card_num < _reserved_max_card_num,
+-           err_msg("card num out of range: "SIZE_FORMAT, card_num));
++           err_msg("card num out of range: " SIZE_FORMAT, card_num));
+     return (jbyte*) (_ct_bot + card_num);
+   }
+
+--- hotspot/src/share/vm/gc_implementation/g1/g1OopClosures.inline.hpp.orig	2015-09-02 10:24:04.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1OopClosures.inline.hpp	2015-09-02 10:24:14.000000000 +0200
+@@ -118,7 +118,7 @@
+   oop obj = oopDesc::load_decode_heap_oop(p);
+   if (_cm->verbose_high()) {
+     gclog_or_tty->print_cr("[%u] we're looking at location "
+-                           "*"PTR_FORMAT" = "PTR_FORMAT,
++                           "*" PTR_FORMAT " = " PTR_FORMAT,
+                            _task->worker_id(), p2i(p), p2i((void*) obj));
+   }
+   _task->deal_with_reference(obj);
+--- hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp.orig	2015-09-06 14:02:06.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	2015-09-10 12:03:16.130020385 +0200
+@@ -284,7 +284,7 @@
+     if (PrintGCDetails && Verbose) {
+       // Failed to double capacity, continue;
+       gclog_or_tty->print(" (benign) Failed to expand marking stack capacity from "
+-                          SIZE_FORMAT"K to " SIZE_FORMAT"K",
++                          SIZE_FORMAT "K to " SIZE_FORMAT "K",
+                           _capacity / K, new_capacity / K);
+     }
+   }
+@@ -581,7 +581,7 @@
+   _verbose_level = verbose_level;
+
+   if (verbose_low()) {
+-    gclog_or_tty->print_cr("[global] init, heap start = "PTR_FORMAT", "
++    gclog_or_tty->print_cr("[global] init, heap start = " PTR_FORMAT ", "
+                            "heap end = " INTPTR_FORMAT, p2i(_heap_start), p2i(_heap_end));
+   }
+
+@@ -838,7 +838,7 @@
+     // in a STW phase.
+     assert(!concurrent_marking_in_progress(), "invariant");
+     assert(out_of_regions(),
+-           err_msg("only way to get here: _finger: "PTR_FORMAT", _heap_end: "PTR_FORMAT,
++           err_msg("only way to get here: _finger: " PTR_FORMAT ", _heap_end: " PTR_FORMAT,
+                    p2i(_finger), p2i(_heap_end)));
+   }
+ }
+@@ -1453,7 +1453,7 @@
+
+     assert(start <= hr->end() && start <= ntams && ntams <= hr->end(),
+            err_msg("Preconditions not met - "
+-                   "start: "PTR_FORMAT", ntams: "PTR_FORMAT", end: "PTR_FORMAT,
++                   "start: " PTR_FORMAT ", ntams: " PTR_FORMAT ", end: " PTR_FORMAT,
+                    p2i(start), p2i(ntams), p2i(hr->end())));
+
+     // Find the first marked object at or after "start".
+@@ -1770,10 +1770,10 @@
+       }
+
+       assert(end_idx <= _card_bm->size(),
+-             err_msg("oob: end_idx=  "SIZE_FORMAT", bitmap size= "SIZE_FORMAT,
++             err_msg("oob: end_idx=  " SIZE_FORMAT ", bitmap size= " SIZE_FORMAT,
+                      end_idx, _card_bm->size()));
+       assert(start_idx < _card_bm->size(),
+-             err_msg("oob: start_idx=  "SIZE_FORMAT", bitmap size= "SIZE_FORMAT,
++             err_msg("oob: start_idx=  " SIZE_FORMAT ", bitmap size= " SIZE_FORMAT,
+                      start_idx, _card_bm->size()));
+
+       _cm->set_card_bitmap_range(_card_bm, start_idx, end_idx, true /* is_par */);
+@@ -2278,7 +2278,7 @@
+       oop obj = oopDesc::load_decode_heap_oop(p);
+       if (_cm->verbose_high()) {
+         gclog_or_tty->print_cr("\t[%u] we're looking at location "
+-                               "*"PTR_FORMAT" = "PTR_FORMAT,
++                               "*" PTR_FORMAT " = " PTR_FORMAT,
+                                _task->worker_id(), p2i(p), p2i((void*) obj));
+       }
+
+@@ -2847,7 +2847,7 @@
+       }
+     }
+
+-    _out->print_cr("  "PTR_FORMAT": "PTR_FORMAT"%s%s",
++    _out->print_cr("  " PTR_FORMAT ": " PTR_FORMAT "%s%s",
+                    p2i(p), p2i((void*) obj), str, str2);
+   }
+ };
+@@ -2874,7 +2874,7 @@
+     bool print_it = _all || over_tams || marked;
+
+     if (print_it) {
+-      _out->print_cr(" "PTR_FORMAT"%s",
++      _out->print_cr(" " PTR_FORMAT "%s",
+                      p2i((void *)o), (over_tams) ? " >" : (marked) ? " M" : "");
+       PrintReachableOopClosure oopCl(_out, _vo, _all);
+       o->oop_iterate_no_header(&oopCl);
+@@ -2895,7 +2895,7 @@
+     HeapWord* e = hr->end();
+     HeapWord* t = hr->top();
+     HeapWord* p = _g1h->top_at_mark_start(hr, _vo);
+-    _out->print_cr("** ["PTR_FORMAT", "PTR_FORMAT"] top: "PTR_FORMAT" "
++    _out->print_cr("** [" PTR_FORMAT ", " PTR_FORMAT "] top: " PTR_FORMAT " "
+                    "TAMS: " PTR_FORMAT, p2i(b), p2i(e), p2i(t), p2i(p));
+     _out->cr();
+
+@@ -3019,9 +3019,9 @@
+       HeapWord*   limit         = curr_region->next_top_at_mark_start();
+
+       if (verbose_low()) {
+-        gclog_or_tty->print_cr("[%u] curr_region = "PTR_FORMAT" "
+-                               "["PTR_FORMAT", "PTR_FORMAT"), "
+-                               "limit = "PTR_FORMAT,
++        gclog_or_tty->print_cr("[%u] curr_region = " PTR_FORMAT " "
++                               "[" PTR_FORMAT ", " PTR_FORMAT "), "
++                               "limit = " PTR_FORMAT,
+                                worker_id, p2i(curr_region), p2i(bottom), p2i(end), p2i(limit));
+       }
+
+@@ -3036,7 +3036,7 @@
+
+       if (limit > bottom) {
+         if (verbose_low()) {
+-          gclog_or_tty->print_cr("[%u] region "PTR_FORMAT" is not empty, "
++          gclog_or_tty->print_cr("[%u] region " PTR_FORMAT " is not empty, "
+                                  "returning it ", worker_id, p2i(curr_region));
+         }
+         return curr_region;
+@@ -3044,7 +3044,7 @@
+         assert(limit == bottom,
+                "the region limit should be at bottom");
+         if (verbose_low()) {
+-          gclog_or_tty->print_cr("[%u] region "PTR_FORMAT" is empty, "
++          gclog_or_tty->print_cr("[%u] region " PTR_FORMAT " is empty, "
+                                  "returning NULL", worker_id, p2i(curr_region));
+         }
+         // we return NULL and the caller should try calling
+@@ -3056,13 +3056,13 @@
+       if (verbose_low()) {
+         if (curr_region == NULL) {
+           gclog_or_tty->print_cr("[%u] found uncommitted region, moving finger, "
+-                                 "global finger = "PTR_FORMAT", "
+-                                 "our finger = "PTR_FORMAT,
++                                 "global finger = " PTR_FORMAT ", "
++                                 "our finger = " PTR_FORMAT,
+                                  worker_id, p2i(_finger), p2i(finger));
+         } else {
+           gclog_or_tty->print_cr("[%u] somebody else moved the finger, "
+-                                 "global finger = "PTR_FORMAT", "
+-                                 "our finger = "PTR_FORMAT,
++                                 "global finger = " PTR_FORMAT ", "
++                                 "our finger = " PTR_FORMAT,
+                                  worker_id, p2i(_finger), p2i(finger));
+         }
+       }
+@@ -3098,7 +3098,7 @@
+
+   void do_object_work(oop obj) {
+     guarantee(!_g1h->obj_in_cs(obj),
+-              err_msg("obj: "PTR_FORMAT" in CSet, phase: %s, info: %d",
++              err_msg("obj: " PTR_FORMAT " in CSet, phase: %s, info: %d",
+                       p2i((void*) obj), phase_str(), _info));
+   }
+
+@@ -3159,7 +3159,7 @@
+     // here.
+     HeapRegion* global_hr = _g1h->heap_region_containing_raw(global_finger);
+     guarantee(global_hr == NULL || global_finger == global_hr->bottom(),
+-              err_msg("global finger: "PTR_FORMAT" region: "HR_FORMAT,
++              err_msg("global finger: " PTR_FORMAT " region: " HR_FORMAT,
+                       p2i(global_finger), HR_FORMAT_PARAMS(global_hr)));
+   }
+
+@@ -3173,7 +3173,7 @@
+       HeapRegion* task_hr = _g1h->heap_region_containing_raw(task_finger);
+       guarantee(task_hr == NULL || task_finger == task_hr->bottom() ||
+                 !task_hr->in_collection_set(),
+-                err_msg("task finger: "PTR_FORMAT" region: "HR_FORMAT,
++                err_msg("task finger: " PTR_FORMAT " region: " HR_FORMAT,
+                         p2i(task_finger), HR_FORMAT_PARAMS(task_hr)));
+     }
+   }
+@@ -3215,8 +3215,8 @@
+
+     assert(start <= limit && limit <= hr->top() && hr->top() <= hr->end(),
+            err_msg("Preconditions not met - "
+-                   "start: "PTR_FORMAT", limit: "PTR_FORMAT", "
+-                   "top: "PTR_FORMAT", end: "PTR_FORMAT,
++                   "start: " PTR_FORMAT ", limit: " PTR_FORMAT ", "
++                   "top: " PTR_FORMAT ", end: " PTR_FORMAT,
+                    p2i(start), p2i(limit), p2i(hr->top()), p2i(hr->end())));
+
+     assert(hr->next_marked_bytes() == 0, "Precondition");
+@@ -3495,7 +3495,7 @@
+ #ifndef PRODUCT
+ // for debugging purposes
+ void ConcurrentMark::print_finger() {
+-  gclog_or_tty->print_cr("heap ["PTR_FORMAT", "PTR_FORMAT"), global finger = "PTR_FORMAT,
++  gclog_or_tty->print_cr("heap [" PTR_FORMAT ", " PTR_FORMAT "), global finger = " PTR_FORMAT,
+                          p2i(_heap_start), p2i(_heap_end), p2i(_finger));
+   for (uint i = 0; i < _max_worker_id; ++i) {
+     gclog_or_tty->print("   %u: " PTR_FORMAT, i, p2i(_tasks[i]->finger()));
+@@ -3580,7 +3580,7 @@
+         "claim_region() should have filtered out continues humongous regions");
+
+   if (_cm->verbose_low()) {
+-    gclog_or_tty->print_cr("[%u] setting up for region "PTR_FORMAT,
++    gclog_or_tty->print_cr("[%u] setting up for region " PTR_FORMAT,
+                            _worker_id, p2i(hr));
+   }
+
+@@ -3597,7 +3597,7 @@
+   if (limit == bottom) {
+     if (_cm->verbose_low()) {
+       gclog_or_tty->print_cr("[%u] found an empty region "
+-                             "["PTR_FORMAT", "PTR_FORMAT")",
++                             "[" PTR_FORMAT ", " PTR_FORMAT ")",
+                              _worker_id, p2i(bottom), p2i(limit));
+     }
+     // The region was collected underneath our feet.
+@@ -3629,7 +3629,7 @@
+ void CMTask::giveup_current_region() {
+   assert(_curr_region != NULL, "invariant");
+   if (_cm->verbose_low()) {
+-    gclog_or_tty->print_cr("[%u] giving up region "PTR_FORMAT,
++    gclog_or_tty->print_cr("[%u] giving up region " PTR_FORMAT,
+                            _worker_id, p2i(_curr_region));
+   }
+   clear_region_fields();
+@@ -3751,7 +3751,7 @@
+
+   if (_cm->verbose_medium()) {
+       gclog_or_tty->print_cr("[%u] regular clock, interval = %1.2lfms, "
+-                        "scanned = "SIZE_FORMAT"%s, refs reached = "SIZE_FORMAT"%s",
++                        "scanned = " SIZE_FORMAT "%s, refs reached = " SIZE_FORMAT "%s",
+                         _worker_id, last_interval_ms,
+                         _words_scanned,
+                         (_words_scanned >= _words_scanned_limit) ? " (*)" : "",
+@@ -3920,7 +3920,7 @@
+       statsOnly( ++_local_pops );
+
+       if (_cm->verbose_high()) {
+-        gclog_or_tty->print_cr("[%u] popped "PTR_FORMAT, _worker_id,
++        gclog_or_tty->print_cr("[%u] popped " PTR_FORMAT, _worker_id,
+                                p2i((void*) obj));
+       }
+
+@@ -4273,8 +4273,8 @@
+
+       if (_cm->verbose_low()) {
+         gclog_or_tty->print_cr("[%u] we're scanning part "
+-                               "["PTR_FORMAT", "PTR_FORMAT") "
+-                               "of region "HR_FORMAT,
++                               "[" PTR_FORMAT ", " PTR_FORMAT ") "
++                               "of region " HR_FORMAT,
+                                _worker_id, p2i(_finger), p2i(_region_limit),
+                                HR_FORMAT_PARAMS(_curr_region));
+       }
+@@ -4361,7 +4361,7 @@
+
+         if (_cm->verbose_low()) {
+           gclog_or_tty->print_cr("[%u] we successfully claimed "
+-                                 "region "PTR_FORMAT,
++                                 "region " PTR_FORMAT,
+                                  _worker_id, p2i(claimed_region));
+         }
+
+@@ -4422,7 +4422,7 @@
+
+       if (_cm->try_stealing(_worker_id, &_hash_seed, obj)) {
+         if (_cm->verbose_medium()) {
+-          gclog_or_tty->print_cr("[%u] stolen "PTR_FORMAT" successfully",
++          gclog_or_tty->print_cr("[%u] stolen " PTR_FORMAT " successfully",
+                                  _worker_id, p2i((void*) obj));
+         }
+
+@@ -4630,7 +4630,7 @@
+ // identify them easily in a large log file.
+ #define G1PPRL_LINE_PREFIX            "###"
+
+-#define G1PPRL_ADDR_BASE_FORMAT    " "PTR_FORMAT"-"PTR_FORMAT
++#define G1PPRL_ADDR_BASE_FORMAT    " " PTR_FORMAT "-" PTR_FORMAT
+ #ifdef _LP64
+ #define G1PPRL_ADDR_BASE_H_FORMAT  " %37s"
+ #else // _LP64
+@@ -4640,16 +4640,16 @@
+ // For per-region info
+ #define G1PPRL_TYPE_FORMAT            "   %-4s"
+ #define G1PPRL_TYPE_H_FORMAT          "   %4s"
+-#define G1PPRL_BYTE_FORMAT            "  "SIZE_FORMAT_W(9)
++#define G1PPRL_BYTE_FORMAT            "  " SIZE_FORMAT_W(9)
+ #define G1PPRL_BYTE_H_FORMAT          "  %9s"
+ #define G1PPRL_DOUBLE_FORMAT          "  %14.1f"
+ #define G1PPRL_DOUBLE_H_FORMAT        "  %14s"
+
+ // For summary info
+-#define G1PPRL_SUM_ADDR_FORMAT(tag)    "  "tag":"G1PPRL_ADDR_BASE_FORMAT
+-#define G1PPRL_SUM_BYTE_FORMAT(tag)    "  "tag": "SIZE_FORMAT
+-#define G1PPRL_SUM_MB_FORMAT(tag)      "  "tag": %1.2f MB"
+-#define G1PPRL_SUM_MB_PERC_FORMAT(tag) G1PPRL_SUM_MB_FORMAT(tag)" / %1.2f %%"
++#define G1PPRL_SUM_ADDR_FORMAT(tag)    "  " tag ":" G1PPRL_ADDR_BASE_FORMAT
++#define G1PPRL_SUM_BYTE_FORMAT(tag)    "  " tag ": " SIZE_FORMAT
++#define G1PPRL_SUM_MB_FORMAT(tag)      "  " tag ": %1.2f MB"
++#define G1PPRL_SUM_MB_PERC_FORMAT(tag) G1PPRL_SUM_MB_FORMAT(tag) " / %1.2f %%"
+
+ G1PrintRegionLivenessInfoClosure::
+ G1PrintRegionLivenessInfoClosure(outputStream* out, const char* phase_name)
+--- hotspot/src/share/vm/oops/constantPool.cpp.orig	2015-09-02 10:35:07.000000000 +0200
++++ hotspot/src/share/vm/oops/constantPool.cpp	2015-09-02 10:36:03.000000000 +0200
+@@ -1494,7 +1494,7 @@
+       }
+       case JVM_CONSTANT_Long: {
+         u8 val = Bytes::get_Java_u8(bytes);
+-        printf("long         "INT64_FORMAT, (int64_t) *(jlong *) &val);
++        printf("long         " INT64_FORMAT, (int64_t) *(jlong *) &val);
+         ent_size = 8;
+         idx++; // Long takes two cpool slots
+         break;
+--- hotspot/src/share/vm/oops/cpCache.cpp.orig	2015-09-02 10:35:13.000000000 +0200
++++ hotspot/src/share/vm/oops/cpCache.cpp	2015-09-02 10:36:48.000000000 +0200
+@@ -305,7 +305,7 @@
+                    adapter->size_of_parameters());
+
+   if (TraceInvokeDynamic) {
+-    tty->print_cr("set_method_handle bc=%d appendix="PTR_FORMAT"%s method_type="PTR_FORMAT"%s method="PTR_FORMAT" ",
++    tty->print_cr("set_method_handle bc=%d appendix=" PTR_FORMAT "%s method_type=" PTR_FORMAT "%s method=" PTR_FORMAT " ",
+                   invoke_code,
+                   (void *)appendix(),    (has_appendix    ? "" : " (unused)"),
+                   (void *)method_type(), (has_method_type ? "" : " (unused)"),
+@@ -540,12 +540,12 @@
+   // print separator
+   if (index == 0) st->print_cr("                 -------------");
+   // print entry
+-  st->print("%3d  ("PTR_FORMAT")  ", index, (intptr_t)this);
++  st->print("%3d  (" PTR_FORMAT ")  ", index, (intptr_t)this);
+   st->print_cr("[%02x|%02x|%5d]", bytecode_2(), bytecode_1(),
+                constant_pool_index());
+-  st->print_cr("                 [   "PTR_FORMAT"]", (intptr_t)_f1);
+-  st->print_cr("                 [   "PTR_FORMAT"]", (intptr_t)_f2);
+-  st->print_cr("                 [   "PTR_FORMAT"]", (intptr_t)_flags);
++  st->print_cr("                 [   " PTR_FORMAT "]", (intptr_t)_f1);
++  st->print_cr("                 [   " PTR_FORMAT "]", (intptr_t)_f2);
++  st->print_cr("                 [   " PTR_FORMAT "]", (intptr_t)_flags);
+   st->print_cr("                 -------------");
+ }
+
+--- hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp.orig	2015-09-02 10:12:48.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/concurrentMarkSweepGeneration.cpp	2015-09-02 10:39:26.000000000 +0200
+@@ -838,18 +838,18 @@
+   GenCollectedHeap* gch = GenCollectedHeap::heap();
+   if (PrintGCDetails) {
+     if (Verbose) {
+-      gclog_or_tty->print("[%d %s-%s: "SIZE_FORMAT"("SIZE_FORMAT")]",
++      gclog_or_tty->print("[%d %s-%s: " SIZE_FORMAT "(" SIZE_FORMAT ")]",
+         level(), short_name(), s, used(), capacity());
+     } else {
+-      gclog_or_tty->print("[%d %s-%s: "SIZE_FORMAT"K("SIZE_FORMAT"K)]",
++      gclog_or_tty->print("[%d %s-%s: " SIZE_FORMAT "K(" SIZE_FORMAT "K)]",
+         level(), short_name(), s, used() / K, capacity() / K);
+     }
+   }
+   if (Verbose) {
+-    gclog_or_tty->print(" "SIZE_FORMAT"("SIZE_FORMAT")",
++    gclog_or_tty->print(" " SIZE_FORMAT "(" SIZE_FORMAT ")",
+               gch->used(), gch->capacity());
+   } else {
+-    gclog_or_tty->print(" "SIZE_FORMAT"K("SIZE_FORMAT"K)",
++    gclog_or_tty->print(" " SIZE_FORMAT "K(" SIZE_FORMAT "K)",
+               gch->used() / K, gch->capacity() / K);
+   }
+ }
+@@ -879,8 +879,8 @@
+   bool   res = (available >= av_promo) || (available >= max_promotion_in_bytes);
+   if (Verbose && PrintGCDetails) {
+     gclog_or_tty->print_cr(
+-      "CMS: promo attempt is%s safe: available("SIZE_FORMAT") %s av_promo("SIZE_FORMAT"),"
+-      "max_promo("SIZE_FORMAT")",
++      "CMS: promo attempt is%s safe: available(" SIZE_FORMAT ") %s av_promo(" SIZE_FORMAT "),"
++      "max_promo(" SIZE_FORMAT ")",
+       res? "":" not", available, res? ">=":"<",
+       av_promo, max_promotion_in_bytes);
+   }
+@@ -966,8 +966,8 @@
+         desired_free_percentage);
+       gclog_or_tty->print_cr("  Maximum free fraction %f",
+         maximum_free_percentage);
+-      gclog_or_tty->print_cr("  Capactiy "SIZE_FORMAT, capacity()/1000);
+-      gclog_or_tty->print_cr("  Desired capacity "SIZE_FORMAT,
++      gclog_or_tty->print_cr("  Capactiy " SIZE_FORMAT, capacity()/1000);
++      gclog_or_tty->print_cr("  Desired capacity " SIZE_FORMAT,
+         desired_capacity/1000);
+       int prev_level = level() - 1;
+       if (prev_level >= 0) {
+@@ -975,14 +975,14 @@
+         GenCollectedHeap* gch = GenCollectedHeap::heap();
+         Generation* prev_gen = gch->_gens[prev_level];
+         prev_size = prev_gen->capacity();
+-          gclog_or_tty->print_cr("  Younger gen size "SIZE_FORMAT,
++          gclog_or_tty->print_cr("  Younger gen size " SIZE_FORMAT,
+                                  prev_size/1000);
+       }
+-      gclog_or_tty->print_cr("  unsafe_max_alloc_nogc "SIZE_FORMAT,
++      gclog_or_tty->print_cr("  unsafe_max_alloc_nogc " SIZE_FORMAT,
+         unsafe_max_alloc_nogc()/1000);
+-      gclog_or_tty->print_cr("  contiguous available "SIZE_FORMAT,
++      gclog_or_tty->print_cr("  contiguous available " SIZE_FORMAT,
+         contiguous_available()/1000);
+-      gclog_or_tty->print_cr("  Expand by "SIZE_FORMAT" (bytes)",
++      gclog_or_tty->print_cr("  Expand by " SIZE_FORMAT " (bytes)",
+         expand_bytes);
+     }
+     // safe if expansion fails
+@@ -1513,8 +1513,8 @@
+     stats().print_on(gclog_or_tty);
+     gclog_or_tty->print_cr("time_until_cms_gen_full %3.7f",
+       stats().time_until_cms_gen_full());
+-    gclog_or_tty->print_cr("free="SIZE_FORMAT, _cmsGen->free());
+-    gclog_or_tty->print_cr("contiguous_available="SIZE_FORMAT,
++    gclog_or_tty->print_cr("free=" SIZE_FORMAT, _cmsGen->free());
++    gclog_or_tty->print_cr("contiguous_available=" SIZE_FORMAT,
+                            _cmsGen->contiguous_available());
+     gclog_or_tty->print_cr("promotion_rate=%g", stats().promotion_rate());
+     gclog_or_tty->print_cr("cms_allocation_rate=%g", stats().cms_allocation_rate());
+@@ -2792,7 +2792,7 @@
+     assert(_numObjectsPromoted == 0, "check");
+     assert(_numWordsPromoted   == 0, "check");
+     if (Verbose && PrintGC) {
+-      gclog_or_tty->print("Allocated "SIZE_FORMAT" objects, "
++      gclog_or_tty->print("Allocated " SIZE_FORMAT " objects, "
+                           SIZE_FORMAT" bytes concurrently",
+       _numObjectsAllocated, _numWordsAllocated*sizeof(HeapWord));
+     }
+@@ -2879,7 +2879,7 @@
+     assert(_numObjectsAllocated == 0, "check");
+     assert(_numWordsAllocated == 0, "check");
+     if (Verbose && PrintGC) {
+-      gclog_or_tty->print("Promoted "SIZE_FORMAT" objects, "
++      gclog_or_tty->print("Promoted " SIZE_FORMAT " objects, "
+                           SIZE_FORMAT" bytes",
+                  _numObjectsPromoted, _numWordsPromoted*sizeof(HeapWord));
+     }
+@@ -2890,7 +2890,7 @@
+   if (PrintGC && Verbose) {
+     // Call down the chain in contiguous_available needs the freelistLock
+     // so print this out before releasing the freeListLock.
+-    gclog_or_tty->print(" Contiguous available "SIZE_FORMAT" bytes ",
++    gclog_or_tty->print(" Contiguous available " SIZE_FORMAT " bytes ",
+                         contiguous_available());
+   }
+ }
+@@ -2978,7 +2978,7 @@
+     HeapWord* addr = _marks->offsetToHeapWord(offset);
+     if (!_marks->isMarked(addr)) {
+       oop(addr)->print_on(gclog_or_tty);
+-      gclog_or_tty->print_cr(" ("INTPTR_FORMAT" should have been marked)", addr);
++      gclog_or_tty->print_cr(" (" INTPTR_FORMAT " should have been marked)", addr);
+       _failed = true;
+     }
+     return true;
+@@ -5037,7 +5037,7 @@
+
+   SpecializationStats::clear();
+   if (PrintGCDetails) {
+-    gclog_or_tty->print("[YG occupancy: "SIZE_FORMAT" K ("SIZE_FORMAT" K)]",
++    gclog_or_tty->print("[YG occupancy: " SIZE_FORMAT " K (" SIZE_FORMAT " K)]",
+                         _young_gen->used() / K,
+                         _young_gen->capacity() / K);
+   }
+@@ -5170,8 +5170,8 @@
+   if (ser_ovflw > 0) {
+     if (PrintCMSStatistics != 0) {
+       gclog_or_tty->print_cr("Marking stack overflow (benign) "
+-        "(pmc_pc="SIZE_FORMAT", pmc_rm="SIZE_FORMAT", kac="SIZE_FORMAT
+-        ", kac_preclean="SIZE_FORMAT")",
++        "(pmc_pc=" SIZE_FORMAT ", pmc_rm=" SIZE_FORMAT ", kac=" SIZE_FORMAT
++        ", kac_preclean=" SIZE_FORMAT ")",
+         _ser_pmc_preclean_ovflw, _ser_pmc_remark_ovflw,
+         _ser_kac_ovflw, _ser_kac_preclean_ovflw);
+     }
+@@ -5184,7 +5184,7 @@
+   if (_par_pmc_remark_ovflw > 0 || _par_kac_ovflw > 0) {
+     if (PrintCMSStatistics != 0) {
+       gclog_or_tty->print_cr("Work queue overflow (benign) "
+-        "(pmc_rm="SIZE_FORMAT", kac="SIZE_FORMAT")",
++        "(pmc_rm=" SIZE_FORMAT ", kac=" SIZE_FORMAT ")",
+         _par_pmc_remark_ovflw, _par_kac_ovflw);
+     }
+     _par_pmc_remark_ovflw = 0;
+@@ -5192,12 +5192,12 @@
+   }
+   if (PrintCMSStatistics != 0) {
+      if (_markStack._hit_limit > 0) {
+-       gclog_or_tty->print_cr(" (benign) Hit max stack size limit ("SIZE_FORMAT")",
++       gclog_or_tty->print_cr(" (benign) Hit max stack size limit (" SIZE_FORMAT ")",
+                               _markStack._hit_limit);
+      }
+      if (_markStack._failed_double > 0) {
+-       gclog_or_tty->print_cr(" (benign) Failed stack doubling ("SIZE_FORMAT"),"
+-                              " current capacity "SIZE_FORMAT,
++       gclog_or_tty->print_cr(" (benign) Failed stack doubling (" SIZE_FORMAT "),"
++                              " current capacity " SIZE_FORMAT,
+                               _markStack._failed_double,
+                               _markStack.capacity());
+      }
+@@ -5961,7 +5961,7 @@
+                                                &markFromDirtyCardsClosure);
+       verify_work_stacks_empty();
+       if (PrintCMSStatistics != 0) {
+-        gclog_or_tty->print(" (re-scanned "SIZE_FORMAT" dirty cards in cms gen) ",
++        gclog_or_tty->print(" (re-scanned " SIZE_FORMAT " dirty cards in cms gen) ",
+           markFromDirtyCardsClosure.num_dirty_cards());
+       }
+     }
+@@ -6892,7 +6892,7 @@
+   } else if (_failed_double++ == 0 && !CMSConcurrentMTEnabled && PrintGCDetails) {
+     // Failed to double capacity, continue;
+     // we print a detail message only once per CMS cycle.
+-    gclog_or_tty->print(" (benign) Failed to expand marking stack from "SIZE_FORMAT"K to "
++    gclog_or_tty->print(" (benign) Failed to expand marking stack from " SIZE_FORMAT "K to "
+             SIZE_FORMAT"K",
+             _capacity / K, new_capacity / K);
+   }
+@@ -8215,25 +8215,25 @@
+     ShouldNotReachHere();
+   }
+   if (Verbose && PrintGC) {
+-    gclog_or_tty->print("Collected "SIZE_FORMAT" objects, " SIZE_FORMAT " bytes",
++    gclog_or_tty->print("Collected " SIZE_FORMAT " objects, " SIZE_FORMAT " bytes",
+                         _numObjectsFreed, _numWordsFreed*sizeof(HeapWord));
+-    gclog_or_tty->print_cr("\nLive "SIZE_FORMAT" objects,  "
++    gclog_or_tty->print_cr("\nLive " SIZE_FORMAT " objects,  "
+                            SIZE_FORMAT" bytes  "
+-      "Already free "SIZE_FORMAT" objects, "SIZE_FORMAT" bytes",
++      "Already free " SIZE_FORMAT " objects, " SIZE_FORMAT " bytes",
+       _numObjectsLive, _numWordsLive*sizeof(HeapWord),
+       _numObjectsAlreadyFree, _numWordsAlreadyFree*sizeof(HeapWord));
+     size_t totalBytes = (_numWordsFreed + _numWordsLive + _numWordsAlreadyFree)
+                         * sizeof(HeapWord);
+-    gclog_or_tty->print_cr("Total sweep: "SIZE_FORMAT" bytes", totalBytes);
++    gclog_or_tty->print_cr("Total sweep: " SIZE_FORMAT " bytes", totalBytes);
+
+     if (PrintCMSStatistics && CMSVerifyReturnedBytes) {
+       size_t indexListReturnedBytes = _sp->sumIndexedFreeListArrayReturnedBytes();
+       size_t dict_returned_bytes = _sp->dictionary()->sum_dict_returned_bytes();
+       size_t returned_bytes = indexListReturnedBytes + dict_returned_bytes;
+-      gclog_or_tty->print("Returned "SIZE_FORMAT" bytes", returned_bytes);
+-      gclog_or_tty->print("   Indexed List Returned "SIZE_FORMAT" bytes",
++      gclog_or_tty->print("Returned " SIZE_FORMAT " bytes", returned_bytes);
++      gclog_or_tty->print("   Indexed List Returned " SIZE_FORMAT " bytes",
+         indexListReturnedBytes);
+-      gclog_or_tty->print_cr("        Dictionary Returned "SIZE_FORMAT" bytes",
++      gclog_or_tty->print_cr("        Dictionary Returned " SIZE_FORMAT " bytes",
+         dict_returned_bytes);
+     }
+   }
+@@ -8312,13 +8312,13 @@
+     // coalesced chunk to the appropriate free list.
+     if (inFreeRange()) {
+       assert(freeFinger() >= _sp->bottom() && freeFinger() < _limit,
+-             err_msg("freeFinger() " PTR_FORMAT" is out-of-bounds", freeFinger()));
++             err_msg("freeFinger() " PTR_FORMAT " is out-of-bounds", freeFinger()));
+       flush_cur_free_chunk(freeFinger(),
+                            pointer_delta(addr, freeFinger()));
+       if (CMSTraceSweeper) {
+         gclog_or_tty->print("Sweep: last chunk: ");
+-        gclog_or_tty->print("put_free_blk 0x%x ("SIZE_FORMAT") "
+-                   "[coalesced:"SIZE_FORMAT"]\n",
++        gclog_or_tty->print("put_free_blk 0x%x (" SIZE_FORMAT ") "
++                   "[coalesced:" SIZE_FORMAT "]\n",
+                    freeFinger(), pointer_delta(addr, freeFinger()),
+                    lastFreeRangeCoalesced());
+       }
+--- hotspot/src/share/vm/classfile/dictionary.hpp.orig	2015-09-02 10:40:01.000000000 +0200
++++ hotspot/src/share/vm/classfile/dictionary.hpp	2015-09-02 10:40:32.000000000 +0200
+@@ -370,7 +370,7 @@
+
+   void print_on(outputStream* st) const {
+     symbol()->print_value_on(st);
+-    st->print("/mode="INTX_FORMAT, symbol_mode());
++    st->print("/mode=" INTX_FORMAT, symbol_mode());
+     st->print(" -> ");
+     bool printed = false;
+     if (method() != NULL) {
+--- hotspot/src/share/vm/compiler/disassembler.cpp.orig	2015-09-02 10:40:09.000000000 +0200
++++ hotspot/src/share/vm/compiler/disassembler.cpp	2015-09-02 10:41:33.000000000 +0200
+@@ -60,7 +60,7 @@
+ Disassembler::decode_func_virtual Disassembler::_decode_instructions_virtual = NULL;
+ Disassembler::decode_func Disassembler::_decode_instructions = NULL;
+
+-static const char hsdis_library_name[] = "hsdis-"HOTSPOT_LIB_ARCH;
++static const char hsdis_library_name[] = "hsdis-" HOTSPOT_LIB_ARCH;
+ static const char decode_instructions_virtual_name[] = "decode_instructions_virtual";
+ static const char decode_instructions_name[] = "decode_instructions";
+ static bool use_new_version = true;
+--- hotspot/src/share/vm/code/exceptionHandlerTable.cpp.orig	2015-09-02 10:44:06.000000000 +0200
++++ hotspot/src/share/vm/code/exceptionHandlerTable.cpp	2015-09-02 10:44:32.000000000 +0200
+@@ -186,7 +186,7 @@
+ void ImplicitExceptionTable::print(address base) const {
+   tty->print("{");
+   for( uint i=0; i<len(); i++ )
+-    tty->print("< "INTPTR_FORMAT", "INTPTR_FORMAT" > ",base + *adr(i), base + *(adr(i)+1));
++    tty->print("< " INTPTR_FORMAT ", " INTPTR_FORMAT " > ",base + *adr(i), base + *(adr(i)+1));
+   tty->print_cr("}");
+ }
+
+--- hotspot/src/share/vm/gc_implementation/g1/g1AllocRegion.cpp.orig	2015-09-02 10:47:14.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1AllocRegion.cpp	2015-09-02 10:47:49.000000000 +0200
+@@ -140,7 +140,7 @@
+ }
+
+ void G1AllocRegion::fill_in_ext_msg(ar_ext_msg* msg, const char* message) {
+-  msg->append("[%s] %s c: %u b: %s r: "PTR_FORMAT" u: "SIZE_FORMAT,
++  msg->append("[%s] %s c: %u b: %s r: " PTR_FORMAT " u: " SIZE_FORMAT,
+               _name, message, _count, BOOL_TO_STR(_bot_updates),
+               p2i(_alloc_region), _used_bytes_before);
+ }
+@@ -217,7 +217,7 @@
+
+     if (G1_ALLOC_REGION_TRACING > 1) {
+       if (result != NULL) {
+-        jio_snprintf(rest_buffer, buffer_length, SIZE_FORMAT" "PTR_FORMAT,
++        jio_snprintf(rest_buffer, buffer_length, SIZE_FORMAT " " PTR_FORMAT,
+                      word_size, result);
+       } else if (word_size != 0) {
+         jio_snprintf(rest_buffer, buffer_length, SIZE_FORMAT, word_size);
+--- hotspot/src/share/vm/gc_implementation/g1/g1BlockOffsetTable.cpp.orig	2015-09-02 10:47:14.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1BlockOffsetTable.cpp	2015-09-02 10:53:32.000000000 +0200
+@@ -385,11 +385,11 @@
+     HeapWord* card_addr = _array->address_for_index(card);
+     HeapWord* block_start = block_start_const(card_addr);
+     if (block_start != obj_start) {
+-      gclog_or_tty->print_cr("block start: "PTR_FORMAT" is incorrect - "
+-                             "card index: "SIZE_FORMAT" "
+-                             "card addr: "PTR_FORMAT" BOT entry: %u "
+-                             "obj: "PTR_FORMAT" word size: "SIZE_FORMAT" "
+-                             "cards: ["SIZE_FORMAT","SIZE_FORMAT"]",
++      gclog_or_tty->print_cr("block start: " PTR_FORMAT " is incorrect - "
++                             "card index: " SIZE_FORMAT " "
++                             "card addr: " PTR_FORMAT " BOT entry: %u "
++                             "obj: " PTR_FORMAT " word size: " SIZE_FORMAT " "
++                             "cards: [" SIZE_FORMAT "," SIZE_FORMAT "]",
+                              block_start, card, card_addr,
+                              _array->offset_array(card),
+                              obj_start, word_size, first_card, last_card);
+@@ -404,11 +404,11 @@
+ G1BlockOffsetArray::print_on(outputStream* out) {
+   size_t from_index = _array->index_for(_bottom);
+   size_t to_index = _array->index_for(_end);
+-  out->print_cr(">> BOT for area ["PTR_FORMAT","PTR_FORMAT") "
+-                "cards ["SIZE_FORMAT","SIZE_FORMAT")",
++  out->print_cr(">> BOT for area [" PTR_FORMAT "," PTR_FORMAT ") "
++                "cards [" SIZE_FORMAT "," SIZE_FORMAT ")",
+                 _bottom, _end, from_index, to_index);
+   for (size_t i = from_index; i < to_index; ++i) {
+-    out->print_cr("  entry "SIZE_FORMAT_W(8)" | "PTR_FORMAT" : %3u",
++    out->print_cr("  entry " SIZE_FORMAT_W(8) " | " PTR_FORMAT " : %3u",
+                   i, _array->address_for_index(i),
+                   (uint) _array->offset_array(i));
+   }
+@@ -488,7 +488,7 @@
+ void
+ G1BlockOffsetArrayContigSpace::print_on(outputStream* out) {
+   G1BlockOffsetArray::print_on(out);
+-  out->print_cr("  next offset threshold: "PTR_FORMAT, _next_offset_threshold);
+-  out->print_cr("  next offset index:     "SIZE_FORMAT, _next_offset_index);
++  out->print_cr("  next offset threshold: " PTR_FORMAT, _next_offset_threshold);
++  out->print_cr("  next offset index:     " SIZE_FORMAT, _next_offset_index);
+ }
+ #endif // !PRODUCT
+--- hotspot/src/share/vm/gc_implementation/g1/g1CardCounts.cpp.orig	2015-09-02 10:47:15.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1CardCounts.cpp	2015-09-02 10:54:04.000000000 +0200
+@@ -44,7 +44,7 @@
+ void G1CardCounts::clear_range(size_t from_card_num, size_t to_card_num) {
+   if (has_count_table()) {
+     assert(from_card_num < to_card_num,
+-           err_msg("Wrong order? from: " SIZE_FORMAT ", to: "SIZE_FORMAT,
++           err_msg("Wrong order? from: " SIZE_FORMAT ", to: " SIZE_FORMAT,
+                    from_card_num, to_card_num));
+     Copy::fill_to_bytes(&_card_counts[from_card_num], (to_card_num - from_card_num));
+   }
+@@ -87,7 +87,7 @@
+   if (has_count_table()) {
+     size_t card_num = ptr_2_card_num(card_ptr);
+     assert(card_num < _reserved_max_card_num,
+-           err_msg("Card "SIZE_FORMAT" outside of card counts table (max size "SIZE_FORMAT")",
++           err_msg("Card " SIZE_FORMAT " outside of card counts table (max size " SIZE_FORMAT ")",
+                    card_num, _reserved_max_card_num));
+     count = (uint) _card_counts[card_num];
+     if (count < G1ConcRSHotCardLimit) {
+--- hotspot/src/share/vm/gc_implementation/g1/g1CollectorPolicy.cpp.orig	2015-09-02 10:57:01.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1CollectorPolicy.cpp	2015-09-02 11:02:01.000000000 +0200
+@@ -199,7 +199,7 @@
+   const size_t region_size = HeapRegion::GrainWords;
+   if (YoungPLABSize > region_size || OldPLABSize > region_size) {
+     char buffer[128];
+-    jio_snprintf(buffer, sizeof(buffer), "%sPLABSize should be at most "SIZE_FORMAT,
++    jio_snprintf(buffer, sizeof(buffer), "%sPLABSize should be at most " SIZE_FORMAT,
+                  OldPLABSize > region_size ? "Old" : "Young", region_size);
+     vm_exit_during_initialization(buffer);
+   }
+@@ -846,7 +846,7 @@
+   update_survivors_policy();
+
+   assert(_g1->used() == _g1->recalculate_used(),
+-         err_msg("sanity, used: "SIZE_FORMAT" recalculate_used: "SIZE_FORMAT,
++         err_msg("sanity, used: " SIZE_FORMAT " recalculate_used: " SIZE_FORMAT,
+                  _g1->used(), _g1->recalculate_used()));
+
+   double s_w_t_ms = (start_time_sec - _stop_world_start) * 1000.0;
+@@ -1231,10 +1231,10 @@
+     (_young_list_target_length * HeapRegion::GrainBytes) - survivor_used_bytes_after_gc;
+
+   gclog_or_tty->print(
+-    "   [Eden: "EXT_SIZE_FORMAT"("EXT_SIZE_FORMAT")->"EXT_SIZE_FORMAT"("EXT_SIZE_FORMAT") "
+-    "Survivors: "EXT_SIZE_FORMAT"->"EXT_SIZE_FORMAT" "
+-    "Heap: "EXT_SIZE_FORMAT"("EXT_SIZE_FORMAT")->"
+-    EXT_SIZE_FORMAT"("EXT_SIZE_FORMAT")]",
++    "   [Eden: " EXT_SIZE_FORMAT "(" EXT_SIZE_FORMAT ")->" EXT_SIZE_FORMAT "(" EXT_SIZE_FORMAT ") "
++    "Survivors: " EXT_SIZE_FORMAT "->" EXT_SIZE_FORMAT " "
++    "Heap: " EXT_SIZE_FORMAT "(" EXT_SIZE_FORMAT ")->"
++    EXT_SIZE_FORMAT "(" EXT_SIZE_FORMAT ")]",
+     EXT_SIZE_PARAMS(_eden_used_bytes_before_gc),
+     EXT_SIZE_PARAMS(_eden_capacity_bytes_before_gc),
+     EXT_SIZE_PARAMS(eden_used_bytes_after_gc),
+@@ -1863,7 +1863,7 @@
+   while (csr != NULL) {
+     HeapRegion* next = csr->next_in_collection_set();
+     assert(csr->in_collection_set(), "bad CS");
+-    st->print_cr("  "HR_FORMAT", P: "PTR_FORMAT "N: "PTR_FORMAT", age: %4d",
++    st->print_cr("  " HR_FORMAT ", P: " PTR_FORMAT "N: " PTR_FORMAT ", age: %4d",
+                  HR_FORMAT_PARAMS(csr),
+                  csr->prev_top_at_mark_start(), csr->next_top_at_mark_start(),
+                  csr->age_in_surv_rate_group_cond());
+--- hotspot/src/share/vm/gc_implementation/g1/g1GCPhaseTimes.cpp.orig	2015-09-06 14:02:06.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1GCPhaseTimes.cpp	2015-09-10 13:33:10.594040691 +0200
+@@ -330,7 +330,7 @@
+ }
+
+ void G1GCPhaseTimes::print_stats(int level, const char* str, size_t value) {
+-  LineBuffer(level).append_and_print_cr("[%s: "SIZE_FORMAT"]", str, value);
++  LineBuffer(level).append_and_print_cr("[%s: " SIZE_FORMAT "]", str, value);
+ }
+
+ void G1GCPhaseTimes::print_stats(int level, const char* str, double value, uint workers) {
+@@ -450,7 +450,7 @@
+
+     if (phase->_thread_work_items != NULL) {
+       LineBuffer buf2(phase->_thread_work_items->_indent_level);
+-      buf2.append_and_print_cr("[%s:  "SIZE_FORMAT"]", phase->_thread_work_items->_title, _phase_times->sum_thread_work_items(phase_id));
++      buf2.append_and_print_cr("[%s:  " SIZE_FORMAT "]", phase->_thread_work_items->_title, _phase_times->sum_thread_work_items(phase_id));
+     }
+   }
+
+--- hotspot/src/share/vm/gc_implementation/g1/g1HRPrinter.cpp.orig	2015-09-02 10:57:01.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1HRPrinter.cpp	2015-09-02 11:03:16.000000000 +0200
+@@ -84,18 +84,18 @@
+
+   if (type_str != NULL) {
+     if (top != NULL) {
+-      gclog_or_tty->print_cr(G1HR_PREFIX" %s(%s) "PTR_FORMAT" "PTR_FORMAT,
++      gclog_or_tty->print_cr(G1HR_PREFIX" %s(%s) " PTR_FORMAT " " PTR_FORMAT,
+                              action_str, type_str, bottom, top);
+     } else {
+-      gclog_or_tty->print_cr(G1HR_PREFIX" %s(%s) "PTR_FORMAT,
++      gclog_or_tty->print_cr(G1HR_PREFIX" %s(%s) " PTR_FORMAT,
+                              action_str, type_str, bottom);
+     }
+   } else {
+     if (top != NULL) {
+-      gclog_or_tty->print_cr(G1HR_PREFIX" %s "PTR_FORMAT" "PTR_FORMAT,
++      gclog_or_tty->print_cr(G1HR_PREFIX" %s " PTR_FORMAT " " PTR_FORMAT,
+                              action_str, bottom, top);
+     } else {
+-      gclog_or_tty->print_cr(G1HR_PREFIX" %s "PTR_FORMAT,
++      gclog_or_tty->print_cr(G1HR_PREFIX" %s " PTR_FORMAT,
+                              action_str, bottom);
+     }
+   }
+@@ -104,11 +104,11 @@
+ void G1HRPrinter::print(ActionType action, HeapWord* bottom, HeapWord* end) {
+   const char* action_str = action_name(action);
+
+-  gclog_or_tty->print_cr(G1HR_PREFIX" %s ["PTR_FORMAT","PTR_FORMAT"]",
++  gclog_or_tty->print_cr(G1HR_PREFIX" %s [" PTR_FORMAT "," PTR_FORMAT "]",
+                          action_str, bottom, end);
+ }
+
+ void G1HRPrinter::print(PhaseType phase, size_t phase_num) {
+   const char* phase_str = phase_name(phase);
+-  gclog_or_tty->print_cr(G1HR_PREFIX" #%s "SIZE_FORMAT, phase_str, phase_num);
++  gclog_or_tty->print_cr(G1HR_PREFIX" #%s " SIZE_FORMAT, phase_str, phase_num);
+ }
+--- hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp.orig	2015-09-06 14:02:06.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp	2015-09-10 12:46:24.202030127 +0200
+@@ -230,7 +230,7 @@
+   HeapRegion* last = NULL;
+   while (curr != NULL) {
+     if (!curr->is_young()) {
+-      gclog_or_tty->print_cr("### YOUNG REGION "PTR_FORMAT"-"PTR_FORMAT" "
++      gclog_or_tty->print_cr("### YOUNG REGION " PTR_FORMAT "-" PTR_FORMAT " "
+                              "incorrectly tagged (y: %d, surv: %d)",
+                              curr->bottom(), curr->end(),
+                              curr->is_young(), curr->is_survivor());
+@@ -359,7 +359,7 @@
+     if (curr == NULL)
+       gclog_or_tty->print_cr("  empty");
+     while (curr != NULL) {
+-      gclog_or_tty->print_cr("  "HR_FORMAT", P: "PTR_FORMAT ", N: "PTR_FORMAT", age: %4d",
++      gclog_or_tty->print_cr("  " HR_FORMAT ", P: " PTR_FORMAT ", N: " PTR_FORMAT ", age: %4d",
+                              HR_FORMAT_PARAMS(curr),
+                              curr->prev_top_at_mark_start(),
+                              curr->next_top_at_mark_start(),
+@@ -490,7 +490,7 @@
+   gclog_or_tty->print_cr("Log entries = %d, dirty cards = %d.",
+                          clear.num_processed(), orig_count);
+   guarantee(redirty.num_processed() == clear.num_processed(),
+-            err_msg("Redirtied "SIZE_FORMAT" cards, bug cleared "SIZE_FORMAT,
++            err_msg("Redirtied " SIZE_FORMAT " cards, bug cleared " SIZE_FORMAT,
+                     redirty.num_processed(), clear.num_processed()));
+
+   CountNonCleanMemRegionClosure count3(this);
+@@ -528,7 +528,7 @@
+       HeapRegion* res = _hrm.allocate_free_region(is_old);
+       if (G1ConcRegionFreeingVerbose) {
+         gclog_or_tty->print_cr("G1ConcRegionFreeing [region alloc] : "
+-                               "allocated "HR_FORMAT" from secondary_free_list",
++                               "allocated " HR_FORMAT " from secondary_free_list",
+                                HR_FORMAT_PARAMS(res));
+       }
+       return res;
+@@ -1597,8 +1597,8 @@
+   // This assert only makes sense here, before we adjust them
+   // with respect to the min and max heap size.
+   assert(minimum_desired_capacity <= maximum_desired_capacity,
+-         err_msg("minimum_desired_capacity = "SIZE_FORMAT", "
+-                 "maximum_desired_capacity = "SIZE_FORMAT,
++         err_msg("minimum_desired_capacity = " SIZE_FORMAT ", "
++                 "maximum_desired_capacity = " SIZE_FORMAT,
+                  minimum_desired_capacity, maximum_desired_capacity));
+
+   // Should not be greater than the heap max size. No need to adjust
+@@ -2256,7 +2256,7 @@
+   virtual bool doHeapRegion(HeapRegion* hr) {
+     unsigned region_gc_time_stamp = hr->get_gc_time_stamp();
+     if (_gc_time_stamp != region_gc_time_stamp) {
+-      gclog_or_tty->print_cr("Region "HR_FORMAT" has GC time stamp = %d, "
++      gclog_or_tty->print_cr("Region " HR_FORMAT " has GC time stamp = %d, "
+                              "expected %d", HR_FORMAT_PARAMS(hr),
+                              region_gc_time_stamp, _gc_time_stamp);
+       _failures = true;
+@@ -2678,7 +2678,7 @@
+     } else if (r->continuesHumongous()) {
+       if (r->humongous_start_region() != _sh_region) {
+         gclog_or_tty->print_cr("Region " HR_FORMAT ", "
+-                               "HS = "PTR_FORMAT", should be "PTR_FORMAT,
++                               "HS = " PTR_FORMAT ", should be " PTR_FORMAT,
+                                HR_FORMAT_PARAMS(r),
+                                r->humongous_start_region(),
+                                _sh_region);
+@@ -2990,10 +2990,10 @@
+     if (!oopDesc::is_null(heap_oop)) {
+       oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+       if (_g1h->is_obj_dead_cond(obj, _vo)) {
+-        gclog_or_tty->print_cr("Root location "PTR_FORMAT" "
+-                              "points to dead obj "PTR_FORMAT, p, (void*) obj);
++        gclog_or_tty->print_cr("Root location " PTR_FORMAT " "
++                              "points to dead obj " PTR_FORMAT, p, (void*) obj);
+         if (_vo == VerifyOption_G1UseMarkWord) {
+-          gclog_or_tty->print_cr("  Mark word: "PTR_FORMAT, (void*)(obj->mark()));
++          gclog_or_tty->print_cr("  Mark word: " PTR_FORMAT, (void*)(obj->mark()));
+         }
+         obj->print_on(gclog_or_tty);
+         _failures = true;
+@@ -3040,9 +3040,9 @@
+       // Verify that the strong code root list for this region
+       // contains the nmethod
+       if (!hrrs->strong_code_roots_list_contains(_nm)) {
+-        gclog_or_tty->print_cr("Code root location "PTR_FORMAT" "
+-                              "from nmethod "PTR_FORMAT" not in strong "
+-                              "code roots for region ["PTR_FORMAT","PTR_FORMAT")",
++        gclog_or_tty->print_cr("Code root location " PTR_FORMAT " "
++                              "from nmethod " PTR_FORMAT " not in strong "
++                              "code roots for region [" PTR_FORMAT "," PTR_FORMAT ")",
+                               p, _nm, hr->bottom(), hr->end());
+         _failures = true;
+       }
+@@ -3172,7 +3172,7 @@
+     if (o != NULL) {
+       HeapWord *start = (HeapWord *) o;
+       size_t word_sz = o->size();
+-      gclog_or_tty->print("\nPrinting obj "PTR_FORMAT" of size " SIZE_FORMAT
++      gclog_or_tty->print("\nPrinting obj " PTR_FORMAT " of size " SIZE_FORMAT
+                           " isMarkedPrev %d isMarkedNext %d isAllocSince %d\n",
+                           (void*) o, word_sz,
+                           _g1->isMarkedPrev(o),
+@@ -3183,7 +3183,7 @@
+       int *val;
+       for (cur = start; cur < end; cur++) {
+         val = (int *) cur;
+-        gclog_or_tty->print("\t "PTR_FORMAT":"PTR_FORMAT"\n", val, *val);
++        gclog_or_tty->print("\t " PTR_FORMAT ":" PTR_FORMAT "\n", val, *val);
+       }
+     }
+   }
+@@ -3218,9 +3218,9 @@
+         r->object_iterate(&not_dead_yet_cl);
+         if (_vo != VerifyOption_G1UseNextMarking) {
+           if (r->max_live_bytes() < not_dead_yet_cl.live_bytes()) {
+-            gclog_or_tty->print_cr("["PTR_FORMAT","PTR_FORMAT"] "
+-                                   "max_live_bytes "SIZE_FORMAT" "
+-                                   "< calculated "SIZE_FORMAT,
++            gclog_or_tty->print_cr("[" PTR_FORMAT "," PTR_FORMAT "] "
++                                   "max_live_bytes " SIZE_FORMAT " "
++                                   "< calculated " SIZE_FORMAT,
+                                    r->bottom(), r->end(),
+                                    r->max_live_bytes(),
+                                  not_dead_yet_cl.live_bytes());
+@@ -3532,7 +3532,7 @@
+     size_t occupied = hrrs->occupied();
+     _occupied_sum += occupied;
+
+-    gclog_or_tty->print_cr("Printing RSet for region "HR_FORMAT,
++    gclog_or_tty->print_cr("Printing RSet for region " HR_FORMAT,
+                            HR_FORMAT_PARAMS(r));
+     if (occupied == 0) {
+       gclog_or_tty->print_cr("  RSet is empty");
+@@ -3551,7 +3551,7 @@
+   }
+
+   ~PrintRSetsClosure() {
+-    gclog_or_tty->print_cr("Occupied Sum: "SIZE_FORMAT, _occupied_sum);
++    gclog_or_tty->print_cr("Occupied Sum: " SIZE_FORMAT, _occupied_sum);
+     gclog_or_tty->print_cr("========================================");
+     gclog_or_tty->cr();
+   }
+@@ -4372,7 +4372,7 @@
+ G1CollectedHeap::handle_evacuation_failure_par(G1ParScanThreadState* _par_scan_state,
+                                                oop old) {
+   assert(obj_in_cs(old),
+-         err_msg("obj: "PTR_FORMAT" should still be in the CSet",
++         err_msg("obj: " PTR_FORMAT " should still be in the CSet",
+                  (HeapWord*) old));
+   markOop m = old->mark();
+   oop forward_ptr = old->forward_to_atomic(old);
+@@ -4406,7 +4406,7 @@
+     // space for this object (old != forward_ptr) or they beat us in
+     // self-forwarding it (old == forward_ptr).
+     assert(old == forward_ptr || !obj_in_cs(forward_ptr),
+-           err_msg("obj: "PTR_FORMAT" forwarded to: "PTR_FORMAT" "
++           err_msg("obj: " PTR_FORMAT " forwarded to: " PTR_FORMAT " "
+                    "should not be in the CSet",
+                    (HeapWord*) old, (HeapWord*) forward_ptr));
+     return forward_ptr;
+@@ -4793,16 +4793,16 @@
+
+   ~G1StringSymbolTableUnlinkTask() {
+     guarantee(!_process_strings || !_do_in_parallel || StringTable::parallel_claimed_index() >= _initial_string_table_size,
+-              err_msg("claim value "INT32_FORMAT" after unlink less than initial string table size "INT32_FORMAT,
++              err_msg("claim value " INT32_FORMAT " after unlink less than initial string table size " INT32_FORMAT,
+                       StringTable::parallel_claimed_index(), _initial_string_table_size));
+     guarantee(!_process_symbols || !_do_in_parallel || SymbolTable::parallel_claimed_index() >= _initial_symbol_table_size,
+-              err_msg("claim value "INT32_FORMAT" after unlink less than initial symbol table size "INT32_FORMAT,
++              err_msg("claim value " INT32_FORMAT " after unlink less than initial symbol table size " INT32_FORMAT,
+                       SymbolTable::parallel_claimed_index(), _initial_symbol_table_size));
+
+     if (G1TraceStringSymbolTableScrubbing) {
+       gclog_or_tty->print_cr("Cleaned string and symbol table, "
+-                             "strings: "SIZE_FORMAT" processed, "SIZE_FORMAT" removed, "
+-                             "symbols: "SIZE_FORMAT" processed, "SIZE_FORMAT" removed",
++                             "strings: " SIZE_FORMAT " processed, " SIZE_FORMAT " removed, "
++                             "symbols: " SIZE_FORMAT " processed, " SIZE_FORMAT " removed",
+                              strings_processed(), strings_removed(),
+                              symbols_processed(), symbols_removed());
+     }
+@@ -6001,13 +6001,13 @@
+ bool G1CollectedHeap::verify_no_bits_over_tams(const char* bitmap_name, CMBitMapRO* bitmap,
+                                                HeapWord* tams, HeapWord* end) {
+   guarantee(tams <= end,
+-            err_msg("tams: "PTR_FORMAT" end: "PTR_FORMAT, tams, end));
++            err_msg("tams: " PTR_FORMAT " end: " PTR_FORMAT, tams, end));
+   HeapWord* result = bitmap->getNextMarkedWordAddress(tams, end);
+   if (result < end) {
+     gclog_or_tty->cr();
+-    gclog_or_tty->print_cr("## wrong marked address on %s bitmap: "PTR_FORMAT,
++    gclog_or_tty->print_cr("## wrong marked address on %s bitmap: " PTR_FORMAT,
+                            bitmap_name, result);
+-    gclog_or_tty->print_cr("## %s tams: "PTR_FORMAT" end: "PTR_FORMAT,
++    gclog_or_tty->print_cr("## %s tams: " PTR_FORMAT " end: " PTR_FORMAT,
+                            bitmap_name, tams, end);
+     return false;
+   }
+@@ -6033,7 +6033,7 @@
+     res_n = verify_no_bits_over_tams("next", next_bitmap, ntams, end);
+   }
+   if (!res_p || !res_n) {
+-    gclog_or_tty->print_cr("#### Bitmap verification failed for "HR_FORMAT,
++    gclog_or_tty->print_cr("#### Bitmap verification failed for " HR_FORMAT,
+                            HR_FORMAT_PARAMS(hr));
+     gclog_or_tty->print_cr("#### Caller: %s", caller);
+     return false;
+@@ -6345,7 +6345,7 @@
+         !r->rem_set()->is_empty()) {
+
+       if (G1TraceEagerReclaimHumongousObjects) {
+-        gclog_or_tty->print_cr("Live humongous region %u size "SIZE_FORMAT" start "PTR_FORMAT" length "UINT32_FORMAT" with remset "SIZE_FORMAT" code roots "SIZE_FORMAT" is marked %d reclaim candidate %d type array %d",
++        gclog_or_tty->print_cr("Live humongous region %u size " SIZE_FORMAT " start " PTR_FORMAT " length " UINT32_FORMAT " with remset " SIZE_FORMAT " code roots " SIZE_FORMAT " is marked %d reclaim candidate %d type array %d",
+                                region_idx,
+                                obj->size()*HeapWordSize,
+                                r->bottom(),
+@@ -6367,7 +6367,7 @@
+                       r->bottom()));
+
+     if (G1TraceEagerReclaimHumongousObjects) {
+-      gclog_or_tty->print_cr("Dead humongous region %u size "SIZE_FORMAT" start "PTR_FORMAT" length "UINT32_FORMAT" with remset "SIZE_FORMAT" code roots "SIZE_FORMAT" is marked %d reclaim candidate %d type array %d",
++      gclog_or_tty->print_cr("Dead humongous region %u size " SIZE_FORMAT " start " PTR_FORMAT " length " UINT32_FORMAT " with remset " SIZE_FORMAT " code roots " SIZE_FORMAT " is marked %d reclaim candidate %d type array %d",
+                              region_idx,
+                              obj->size()*HeapWordSize,
+                              r->bottom(),
+@@ -6523,7 +6523,7 @@
+   NoYoungRegionsClosure() : _success(true) { }
+   bool doHeapRegion(HeapRegion* r) {
+     if (r->is_young()) {
+-      gclog_or_tty->print_cr("Region ["PTR_FORMAT", "PTR_FORMAT") tagged as young",
++      gclog_or_tty->print_cr("Region [" PTR_FORMAT ", " PTR_FORMAT ") tagged as young",
+                              r->bottom(), r->end());
+       _success = false;
+     }
+@@ -6652,7 +6652,7 @@
+   }
+   assert(_allocator->used_unlocked() == recalculate_used(),
+          err_msg("inconsistent _allocator->used_unlocked(), "
+-                 "value: "SIZE_FORMAT" recalculated: "SIZE_FORMAT,
++                 "value: " SIZE_FORMAT " recalculated: " SIZE_FORMAT,
+                  _allocator->used_unlocked(), recalculate_used()));
+ }
+
+@@ -6873,8 +6873,8 @@
+       oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+       HeapRegion* hr = _g1h->heap_region_containing(obj);
+       assert(!hr->continuesHumongous(),
+-             err_msg("trying to add code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+-                     " starting at "HR_FORMAT,
++             err_msg("trying to add code root " PTR_FORMAT " in continuation of humongous region " HR_FORMAT
++                     " starting at " HR_FORMAT,
+                      _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
+
+       // HeapRegion::add_strong_code_root_locked() avoids adding duplicate entries.
+@@ -6900,8 +6900,8 @@
+       oop obj = oopDesc::decode_heap_oop_not_null(heap_oop);
+       HeapRegion* hr = _g1h->heap_region_containing(obj);
+       assert(!hr->continuesHumongous(),
+-             err_msg("trying to remove code root "PTR_FORMAT" in continuation of humongous region "HR_FORMAT
+-                     " starting at "HR_FORMAT,
++             err_msg("trying to remove code root " PTR_FORMAT " in continuation of humongous region " HR_FORMAT
++                     " starting at " HR_FORMAT,
+                      _nm, HR_FORMAT_PARAMS(hr), HR_FORMAT_PARAMS(hr->humongous_start_region())));
+
+       hr->remove_strong_code_root(_nm);
+--- hotspot/src/share/vm/gc_implementation/g1/g1RemSet.cpp.orig	2015-09-02 11:07:35.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1RemSet.cpp	2015-09-02 11:08:48.000000000 +0200
+@@ -475,7 +475,7 @@
+ bool G1RemSet::refine_card(jbyte* card_ptr, uint worker_i,
+                            bool check_for_refs_into_cset) {
+   assert(_g1->is_in_exact(_ct_bs->addr_for(card_ptr)),
+-         err_msg("Card at "PTR_FORMAT" index "SIZE_FORMAT" representing heap at "PTR_FORMAT" (%u) must be in committed heap",
++         err_msg("Card at " PTR_FORMAT " index " SIZE_FORMAT " representing heap at " PTR_FORMAT " (%u) must be in committed heap",
+                  p2i(card_ptr),
+                  _ct_bs->index_for(_ct_bs->addr_for(card_ptr)),
+                  _ct_bs->addr_for(card_ptr),
+--- hotspot/src/share/vm/gc_implementation/g1/g1RemSetSummary.cpp.orig	2015-09-02 11:13:52.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1RemSetSummary.cpp	2015-09-02 11:15:30.000000000 +0200
+@@ -187,22 +187,22 @@
+   size_t code_root_elems() const { return _code_root_elems; }
+
+   void print_rs_mem_info_on(outputStream * out, size_t total) {
+-    out->print_cr("    "SIZE_FORMAT_W(8)"K (%5.1f%%) by "SIZE_FORMAT" %s regions",
++    out->print_cr("    " SIZE_FORMAT_W(8) "K (%5.1f%%) by " SIZE_FORMAT " %s regions",
+         round_to_K(rs_mem_size()), rs_mem_size_percent_of(total), amount(), _name);
+   }
+
+   void print_cards_occupied_info_on(outputStream * out, size_t total) {
+-    out->print_cr("     "SIZE_FORMAT_W(8)" (%5.1f%%) entries by "SIZE_FORMAT" %s regions",
++    out->print_cr("     " SIZE_FORMAT_W(8) " (%5.1f%%) entries by " SIZE_FORMAT " %s regions",
+         cards_occupied(), cards_occupied_percent_of(total), amount(), _name);
+   }
+
+   void print_code_root_mem_info_on(outputStream * out, size_t total) {
+-    out->print_cr("    "SIZE_FORMAT_W(8)"K (%5.1f%%) by "SIZE_FORMAT" %s regions",
++    out->print_cr("    " SIZE_FORMAT_W(8) "K (%5.1f%%) by " SIZE_FORMAT " %s regions",
+         round_to_K(code_root_mem_size()), code_root_mem_size_percent_of(total), amount(), _name);
+   }
+
+   void print_code_root_elems_info_on(outputStream * out, size_t total) {
+-    out->print_cr("     "SIZE_FORMAT_W(8)" (%5.1f%%) elements by "SIZE_FORMAT" %s regions",
++    out->print_cr("     " SIZE_FORMAT_W(8) " (%5.1f%%) elements by " SIZE_FORMAT " %s regions",
+         code_root_elems(), code_root_elems_percent_of(total), amount(), _name);
+   }
+ };
+@@ -280,19 +280,19 @@
+     RegionTypeCounter* counters[] = { &_young, &_humonguous, &_free, &_old, NULL };
+
+     out->print_cr("\n Current rem set statistics");
+-    out->print_cr("  Total per region rem sets sizes = "SIZE_FORMAT"K."
+-                  " Max = "SIZE_FORMAT"K.",
++    out->print_cr("  Total per region rem sets sizes = " SIZE_FORMAT "K."
++                  " Max = " SIZE_FORMAT "K.",
+                   round_to_K(total_rs_mem_sz()), round_to_K(max_rs_mem_sz()));
+     for (RegionTypeCounter** current = &counters[0]; *current != NULL; current++) {
+       (*current)->print_rs_mem_info_on(out, total_rs_mem_sz());
+     }
+
+-    out->print_cr("   Static structures = "SIZE_FORMAT"K,"
+-                  " free_lists = "SIZE_FORMAT"K.",
++    out->print_cr("   Static structures = " SIZE_FORMAT "K,"
++                  " free_lists = " SIZE_FORMAT "K.",
+                   round_to_K(HeapRegionRemSet::static_mem_size()),
+                   round_to_K(HeapRegionRemSet::fl_mem_size()));
+
+-    out->print_cr("    "SIZE_FORMAT" occupied cards represented.",
++    out->print_cr("    " SIZE_FORMAT " occupied cards represented.",
+                   total_cards_occupied());
+     for (RegionTypeCounter** current = &counters[0]; *current != NULL; current++) {
+       (*current)->print_cards_occupied_info_on(out, total_cards_occupied());
+@@ -301,29 +301,29 @@
+     // Largest sized rem set region statistics
+     HeapRegionRemSet* rem_set = max_rs_mem_sz_region()->rem_set();
+     out->print_cr("    Region with largest rem set = "HR_FORMAT", "
+-                  "size = "SIZE_FORMAT "K, occupied = "SIZE_FORMAT"K.",
++                  "size = " SIZE_FORMAT "K, occupied = " SIZE_FORMAT "K.",
+                   HR_FORMAT_PARAMS(max_rs_mem_sz_region()),
+                   round_to_K(rem_set->mem_size()),
+                   round_to_K(rem_set->occupied()));
+
+     // Strong code root statistics
+     HeapRegionRemSet* max_code_root_rem_set = max_code_root_mem_sz_region()->rem_set();
+-    out->print_cr("  Total heap region code root sets sizes = "SIZE_FORMAT"K."
+-                  "  Max = "SIZE_FORMAT"K.",
++    out->print_cr("  Total heap region code root sets sizes = " SIZE_FORMAT "K."
++                  "  Max = " SIZE_FORMAT "K.",
+                   round_to_K(total_code_root_mem_sz()),
+                   round_to_K(max_code_root_rem_set->strong_code_roots_mem_size()));
+     for (RegionTypeCounter** current = &counters[0]; *current != NULL; current++) {
+       (*current)->print_code_root_mem_info_on(out, total_code_root_mem_sz());
+     }
+
+-    out->print_cr("    "SIZE_FORMAT" code roots represented.",
++    out->print_cr("    " SIZE_FORMAT " code roots represented.",
+                   total_code_root_elems());
+     for (RegionTypeCounter** current = &counters[0]; *current != NULL; current++) {
+       (*current)->print_code_root_elems_info_on(out, total_code_root_elems());
+     }
+
+-    out->print_cr("    Region with largest amount of code roots = "HR_FORMAT", "
+-                  "size = "SIZE_FORMAT "K, num_elems = "SIZE_FORMAT".",
++    out->print_cr("    Region with largest amount of code roots = " HR_FORMAT ", "
++                  "size = " SIZE_FORMAT "K, num_elems = " SIZE_FORMAT ".",
+                   HR_FORMAT_PARAMS(max_code_root_mem_sz_region()),
+                   round_to_K(max_code_root_rem_set->strong_code_roots_mem_size()),
+                   round_to_K(max_code_root_rem_set->strong_code_roots_list_length()));
+@@ -332,16 +332,16 @@
+
+ void G1RemSetSummary::print_on(outputStream* out) {
+   out->print_cr("\n Recent concurrent refinement statistics");
+-  out->print_cr("  Processed "SIZE_FORMAT" cards",
++  out->print_cr("  Processed " SIZE_FORMAT " cards",
+                 num_concurrent_refined_cards());
+-  out->print_cr("  Of "SIZE_FORMAT" completed buffers:", num_processed_buf_total());
+-  out->print_cr("     "SIZE_FORMAT_W(8)" (%5.1f%%) by concurrent RS threads.",
++  out->print_cr("  Of " SIZE_FORMAT " completed buffers:", num_processed_buf_total());
++  out->print_cr("     " SIZE_FORMAT_W(8) " (%5.1f%%) by concurrent RS threads.",
+                 num_processed_buf_total(),
+                 percent_of(num_processed_buf_rs_threads(), num_processed_buf_total()));
+-  out->print_cr("     "SIZE_FORMAT_W(8)" (%5.1f%%) by mutator threads.",
++  out->print_cr("     " SIZE_FORMAT_W(8) " (%5.1f%%) by mutator threads.",
+                 num_processed_buf_mutator(),
+                 percent_of(num_processed_buf_mutator(), num_processed_buf_total()));
+-  out->print_cr("  Did "SIZE_FORMAT" coarsenings.", num_coarsenings());
++  out->print_cr("  Did " SIZE_FORMAT " coarsenings.", num_coarsenings());
+   out->print_cr("  Concurrent RS threads times (s)");
+   out->print("     ");
+   for (uint i = 0; i < _num_vtimes; i++) {
+--- hotspot/src/share/vm/gc_implementation/g1/g1StringDedupQueue.cpp.orig	2015-09-02 11:13:52.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1StringDedupQueue.cpp	2015-09-02 11:15:44.000000000 +0200
+@@ -151,7 +151,7 @@
+ void G1StringDedupQueue::print_statistics(outputStream* st) {
+   st->print_cr(
+     "   [Queue]\n"
+-    "      [Dropped: "UINTX_FORMAT"]", _queue->_dropped);
++    "      [Dropped: " UINTX_FORMAT "]", _queue->_dropped);
+ }
+
+ void G1StringDedupQueue::verify() {
+--- hotspot/src/share/vm/gc_implementation/g1/g1StringDedupStat.cpp.orig	2015-09-02 11:13:52.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1StringDedupStat.cpp	2015-09-02 11:18:07.000000000 +0200
+@@ -80,8 +80,8 @@
+   st->stamp(PrintGCTimeStamps);
+   st->print_cr(
+     "[GC concurrent-string-deduplication, "
+-    G1_STRDEDUP_BYTES_FORMAT_NS"->"G1_STRDEDUP_BYTES_FORMAT_NS"("G1_STRDEDUP_BYTES_FORMAT_NS"), avg "
+-    G1_STRDEDUP_PERCENT_FORMAT_NS", "G1_STRDEDUP_TIME_FORMAT"]",
++    G1_STRDEDUP_BYTES_FORMAT_NS "->" G1_STRDEDUP_BYTES_FORMAT_NS "(" G1_STRDEDUP_BYTES_FORMAT_NS "), avg "
++    G1_STRDEDUP_PERCENT_FORMAT_NS ", " G1_STRDEDUP_TIME_FORMAT "]",
+     G1_STRDEDUP_BYTES_PARAM(last_stat._new_bytes),
+     G1_STRDEDUP_BYTES_PARAM(last_stat._new_bytes - last_stat._deduped_bytes),
+     G1_STRDEDUP_BYTES_PARAM(last_stat._deduped_bytes),
+@@ -135,22 +135,22 @@
+
+   if (total) {
+     st->print_cr(
+-      "   [Total Exec: "UINTX_FORMAT"/"G1_STRDEDUP_TIME_FORMAT", Idle: "UINTX_FORMAT"/"G1_STRDEDUP_TIME_FORMAT", Blocked: "UINTX_FORMAT"/"G1_STRDEDUP_TIME_FORMAT"]",
++      "   [Total Exec: " UINTX_FORMAT "/" G1_STRDEDUP_TIME_FORMAT ", Idle: " UINTX_FORMAT "/" G1_STRDEDUP_TIME_FORMAT ", Blocked: " UINTX_FORMAT "/" G1_STRDEDUP_TIME_FORMAT "]",
+       stat._exec, stat._exec_elapsed, stat._idle, stat._idle_elapsed, stat._block, stat._block_elapsed);
+   } else {
+     st->print_cr(
+-      "   [Last Exec: "G1_STRDEDUP_TIME_FORMAT", Idle: "G1_STRDEDUP_TIME_FORMAT", Blocked: "UINTX_FORMAT"/"G1_STRDEDUP_TIME_FORMAT"]",
++      "   [Last Exec: " G1_STRDEDUP_TIME_FORMAT ", Idle: " G1_STRDEDUP_TIME_FORMAT ", Blocked: " UINTX_FORMAT "/" G1_STRDEDUP_TIME_FORMAT "]",
+       stat._exec_elapsed, stat._idle_elapsed, stat._block, stat._block_elapsed);
+   }
+   st->print_cr(
+-    "      [Inspected:    "G1_STRDEDUP_OBJECTS_FORMAT"]\n"
+-    "         [Skipped:   "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT")]\n"
+-    "         [Hashed:    "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT")]\n"
+-    "         [Known:     "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT")]\n"
+-    "         [New:       "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT") "G1_STRDEDUP_BYTES_FORMAT"]\n"
+-    "      [Deduplicated: "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT") "G1_STRDEDUP_BYTES_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT")]\n"
+-    "         [Young:     "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT") "G1_STRDEDUP_BYTES_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT")]\n"
+-    "         [Old:       "G1_STRDEDUP_OBJECTS_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT") "G1_STRDEDUP_BYTES_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT")]",
++    "      [Inspected:    " G1_STRDEDUP_OBJECTS_FORMAT "]\n"
++    "         [Skipped:   " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ")]\n"
++    "         [Hashed:    " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ")]\n"
++    "         [Known:     " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ")]\n"
++    "         [New:       " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ") " G1_STRDEDUP_BYTES_FORMAT "]\n"
++    "      [Deduplicated: " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ") " G1_STRDEDUP_BYTES_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ")]\n"
++    "         [Young:     " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ") " G1_STRDEDUP_BYTES_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ")]\n"
++    "         [Old:       " G1_STRDEDUP_OBJECTS_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ") " G1_STRDEDUP_BYTES_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT ")]",
+     stat._inspected,
+     stat._skipped, skipped_percent,
+     stat._hashed, hashed_percent,
+--- hotspot/src/share/vm/gc_implementation/g1/g1RemSetSummary.cpp.orig	2015-09-02 12:36:40.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1RemSetSummary.cpp	2015-09-02 12:37:19.000000000 +0200
+@@ -300,7 +300,7 @@
+
+     // Largest sized rem set region statistics
+     HeapRegionRemSet* rem_set = max_rs_mem_sz_region()->rem_set();
+-    out->print_cr("    Region with largest rem set = "HR_FORMAT", "
++    out->print_cr("    Region with largest rem set = " HR_FORMAT ", "
+                   "size = " SIZE_FORMAT "K, occupied = " SIZE_FORMAT "K.",
+                   HR_FORMAT_PARAMS(max_rs_mem_sz_region()),
+                   round_to_K(rem_set->mem_size()),
+--- hotspot/src/share/vm/gc_implementation/g1/g1StringDedupTable.cpp.orig	2015-09-02 12:36:40.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/g1StringDedupTable.cpp	2015-09-02 12:41:56.000000000 +0200
+@@ -554,12 +554,12 @@
+ void G1StringDedupTable::print_statistics(outputStream* st) {
+   st->print_cr(
+     "   [Table]\n"
+-    "      [Memory Usage: "G1_STRDEDUP_BYTES_FORMAT_NS"]\n"
+-    "      [Size: "SIZE_FORMAT", Min: "SIZE_FORMAT", Max: "SIZE_FORMAT"]\n"
+-    "      [Entries: "UINTX_FORMAT", Load: "G1_STRDEDUP_PERCENT_FORMAT_NS", Cached: " UINTX_FORMAT ", Added: "UINTX_FORMAT", Removed: "UINTX_FORMAT"]\n"
+-    "      [Resize Count: "UINTX_FORMAT", Shrink Threshold: "UINTX_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT_NS"), Grow Threshold: "UINTX_FORMAT"("G1_STRDEDUP_PERCENT_FORMAT_NS")]\n"
+-    "      [Rehash Count: "UINTX_FORMAT", Rehash Threshold: "UINTX_FORMAT", Hash Seed: 0x%x]\n"
+-    "      [Age Threshold: "UINTX_FORMAT"]",
++    "      [Memory Usage: " G1_STRDEDUP_BYTES_FORMAT_NS "]\n"
++    "      [Size: " SIZE_FORMAT ", Min: " SIZE_FORMAT ", Max: " SIZE_FORMAT "]\n"
++    "      [Entries: " UINTX_FORMAT ", Load: " G1_STRDEDUP_PERCENT_FORMAT_NS ", Cached: " UINTX_FORMAT ", Added: " UINTX_FORMAT ", Removed: " UINTX_FORMAT "]\n"
++    "      [Resize Count: " UINTX_FORMAT ", Shrink Threshold: " UINTX_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT_NS "), Grow Threshold: " UINTX_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT_NS ")]\n"
++    "      [Rehash Count: " UINTX_FORMAT ", Rehash Threshold: " UINTX_FORMAT ", Hash Seed: 0x%x]\n"
++    "      [Age Threshold: " UINTX_FORMAT "]",
+     G1_STRDEDUP_BYTES_PARAM(_table->_size * sizeof(G1StringDedupEntry*) + (_table->_entries + _entry_cache->size()) * sizeof(G1StringDedupEntry)),
+     _table->_size, _min_size, _max_size,
+     _table->_entries, (double)_table->_entries / (double)_table->_size * 100.0, _entry_cache->size(), _entries_added, _entries_removed,
+--- hotspot/src/share/vm/memory/genCollectedHeap.cpp.orig	2015-09-02 12:51:37.000000000 +0200
++++ hotspot/src/share/vm/memory/genCollectedHeap.cpp	2015-09-02 12:52:12.000000000 +0200
+@@ -1315,7 +1315,7 @@
+   // back a time later than 'now'.
+   jlong retVal = now - tolgc_cl.time();
+   if (retVal < 0) {
+-    NOT_PRODUCT(warning("time warp: "INT64_FORMAT, (int64_t) retVal);)
++    NOT_PRODUCT(warning("time warp: " INT64_FORMAT, (int64_t) retVal);)
+     return 0;
+   }
+   return retVal;
+--- hotspot/src/share/vm/memory/generation.cpp.orig	2015-09-02 12:51:38.000000000 +0200
++++ hotspot/src/share/vm/memory/generation.cpp	2015-09-02 12:52:33.000000000 +0200
+@@ -187,7 +187,7 @@
+   bool   res = (available >= max_promotion_in_bytes);
+   if (PrintGC && Verbose) {
+     gclog_or_tty->print_cr(
+-      "Generation: promo attempt is%s safe: available("SIZE_FORMAT") %s max_promo("SIZE_FORMAT")",
++      "Generation: promo attempt is%s safe: available(" SIZE_FORMAT ") %s max_promo(" SIZE_FORMAT ")",
+       res? "":" not", available, res? ">=":"<",
+       max_promotion_in_bytes);
+   }
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegion.cpp.orig	2015-09-02 12:57:25.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegion.cpp	2015-09-02 13:00:29.000000000 +0200
+@@ -371,7 +371,7 @@
+                                                   bool during_conc_mark,
+                                                   size_t marked_bytes) {
+   assert(0 <= marked_bytes && marked_bytes <= used(),
+-         err_msg("marked: "SIZE_FORMAT" used: "SIZE_FORMAT,
++         err_msg("marked: " SIZE_FORMAT " used: " SIZE_FORMAT,
+                  marked_bytes, used()));
+   _prev_top_at_mark_start = top();
+   _prev_marked_bytes = marked_bytes;
+@@ -559,9 +559,9 @@
+         // Object is in the region. Check that its less than top
+         if (_hr->top() <= (HeapWord*)obj) {
+           // Object is above top
+-          gclog_or_tty->print_cr("Object "PTR_FORMAT" in region "
+-                                 "["PTR_FORMAT", "PTR_FORMAT") is above "
+-                                 "top "PTR_FORMAT,
++          gclog_or_tty->print_cr("Object " PTR_FORMAT " in region "
++                                 "[" PTR_FORMAT ", " PTR_FORMAT ") is above "
++                                 "top " PTR_FORMAT,
+                                  (void *)obj, _hr->bottom(), _hr->end(), _hr->top());
+           _failures = true;
+           return;
+@@ -595,22 +595,22 @@
+     if (nm != NULL) {
+       // Verify that the nemthod is live
+       if (!nm->is_alive()) {
+-        gclog_or_tty->print_cr("region ["PTR_FORMAT","PTR_FORMAT"] has dead nmethod "
+-                               PTR_FORMAT" in its strong code roots",
++        gclog_or_tty->print_cr("region [" PTR_FORMAT "," PTR_FORMAT "] has dead nmethod "
++                               PTR_FORMAT " in its strong code roots",
+                                _hr->bottom(), _hr->end(), nm);
+         _failures = true;
+       } else {
+         VerifyStrongCodeRootOopClosure oop_cl(_hr, nm);
+         nm->oops_do(&oop_cl);
+         if (!oop_cl.has_oops_in_region()) {
+-          gclog_or_tty->print_cr("region ["PTR_FORMAT","PTR_FORMAT"] has nmethod "
+-                                 PTR_FORMAT" in its strong code roots "
++          gclog_or_tty->print_cr("region [" PTR_FORMAT "," PTR_FORMAT "] has nmethod "
++                                 PTR_FORMAT " in its strong code roots "
+                                  "with no pointers into region",
+                                  _hr->bottom(), _hr->end(), nm);
+           _failures = true;
+         } else if (oop_cl.failures()) {
+-          gclog_or_tty->print_cr("region ["PTR_FORMAT","PTR_FORMAT"] has other "
+-                                 "failures for nmethod "PTR_FORMAT,
++          gclog_or_tty->print_cr("region [" PTR_FORMAT "," PTR_FORMAT "] has other "
++                                 "failures for nmethod " PTR_FORMAT,
+                                  _hr->bottom(), _hr->end(), nm);
+           _failures = true;
+         }
+@@ -644,8 +644,8 @@
+   // on its strong code root list
+   if (is_empty()) {
+     if (strong_code_roots_length > 0) {
+-      gclog_or_tty->print_cr("region ["PTR_FORMAT","PTR_FORMAT"] is empty "
+-                             "but has "SIZE_FORMAT" code root entries",
++      gclog_or_tty->print_cr("region [" PTR_FORMAT "," PTR_FORMAT "] is empty "
++                             "but has " SIZE_FORMAT " code root entries",
+                              bottom(), end(), strong_code_roots_length);
+       *failures = true;
+     }
+@@ -654,8 +654,8 @@
+
+   if (continuesHumongous()) {
+     if (strong_code_roots_length > 0) {
+-      gclog_or_tty->print_cr("region "HR_FORMAT" is a continuation of a humongous "
+-                             "region but has "SIZE_FORMAT" code root entries",
++      gclog_or_tty->print_cr("region " HR_FORMAT " is a continuation of a humongous "
++                             "region but has " SIZE_FORMAT " code root entries",
+                              HR_FORMAT_PARAMS(this), strong_code_roots_length);
+       *failures = true;
+     }
+@@ -679,7 +679,7 @@
+   else
+     st->print("   ");
+   st->print(" TS %5d", _gc_time_stamp);
+-  st->print(" PTAMS "PTR_FORMAT" NTAMS "PTR_FORMAT,
++  st->print(" PTAMS " PTR_FORMAT " NTAMS " PTR_FORMAT,
+             prev_top_at_mark_start(), next_top_at_mark_start());
+   G1OffsetTableContigSpace::print_on(st);
+ }
+@@ -744,25 +744,25 @@
+         }
+         if (!_g1h->is_in_closed_subset(obj)) {
+           HeapRegion* from = _g1h->heap_region_containing((HeapWord*)p);
+-          gclog_or_tty->print_cr("Field "PTR_FORMAT
+-                                 " of live obj "PTR_FORMAT" in region "
+-                                 "["PTR_FORMAT", "PTR_FORMAT")",
++          gclog_or_tty->print_cr("Field " PTR_FORMAT
++                                 " of live obj " PTR_FORMAT " in region "
++                                 "[" PTR_FORMAT ", " PTR_FORMAT ")",
+                                  p, (void*) _containing_obj,
+                                  from->bottom(), from->end());
+           print_object(gclog_or_tty, _containing_obj);
+-          gclog_or_tty->print_cr("points to obj "PTR_FORMAT" not in the heap",
++          gclog_or_tty->print_cr("points to obj " PTR_FORMAT " not in the heap",
+                                  (void*) obj);
+         } else {
+           HeapRegion* from = _g1h->heap_region_containing((HeapWord*)p);
+           HeapRegion* to   = _g1h->heap_region_containing((HeapWord*)obj);
+-          gclog_or_tty->print_cr("Field "PTR_FORMAT
+-                                 " of live obj "PTR_FORMAT" in region "
+-                                 "["PTR_FORMAT", "PTR_FORMAT")",
++          gclog_or_tty->print_cr("Field " PTR_FORMAT
++                                 " of live obj " PTR_FORMAT " in region "
++                                 "[" PTR_FORMAT ", " PTR_FORMAT ")",
+                                  p, (void*) _containing_obj,
+                                  from->bottom(), from->end());
+           print_object(gclog_or_tty, _containing_obj);
+-          gclog_or_tty->print_cr("points to dead obj "PTR_FORMAT" in region "
+-                                 "["PTR_FORMAT", "PTR_FORMAT")",
++          gclog_or_tty->print_cr("points to dead obj " PTR_FORMAT " in region "
++                                 "[" PTR_FORMAT ", " PTR_FORMAT ")",
+                                  (void*) obj, to->bottom(), to->end());
+           print_object(gclog_or_tty, obj);
+         }
+@@ -798,14 +798,14 @@
+               gclog_or_tty->print_cr("----------");
+             }
+             gclog_or_tty->print_cr("Missing rem set entry:");
+-            gclog_or_tty->print_cr("Field "PTR_FORMAT" "
+-                                   "of obj "PTR_FORMAT", "
+-                                   "in region "HR_FORMAT,
++            gclog_or_tty->print_cr("Field " PTR_FORMAT " "
++                                   "of obj " PTR_FORMAT ", "
++                                   "in region " HR_FORMAT,
+                                    p, (void*) _containing_obj,
+                                    HR_FORMAT_PARAMS(from));
+             _containing_obj->print_on(gclog_or_tty);
+-            gclog_or_tty->print_cr("points to obj "PTR_FORMAT" "
+-                                   "in region "HR_FORMAT,
++            gclog_or_tty->print_cr("points to obj " PTR_FORMAT " "
++                                   "in region " HR_FORMAT,
+                                    (void*) obj,
+                                    HR_FORMAT_PARAMS(to));
+             obj->print_on(gclog_or_tty);
+@@ -842,8 +842,8 @@
+
+     if (is_humongous != g1->isHumongous(obj_size) &&
+         !g1->is_obj_dead(obj, this)) { // Dead objects may have bigger block_size since they span several objects.
+-      gclog_or_tty->print_cr("obj "PTR_FORMAT" is of %shumongous size ("
+-                             SIZE_FORMAT" words) in a %shumongous region",
++      gclog_or_tty->print_cr("obj " PTR_FORMAT " is of %shumongous size ("
++                             SIZE_FORMAT " words) in a %shumongous region",
+                              p, g1->isHumongous(obj_size) ? "" : "non-",
+                              obj_size, is_humongous ? "" : "non-");
+        *failures = true;
+@@ -866,12 +866,12 @@
+                                    (vo == VerifyOption_G1UsePrevMarking &&
+                                    ClassLoaderDataGraph::unload_list_contains(klass));
+         if (!is_metaspace_object) {
+-          gclog_or_tty->print_cr("klass "PTR_FORMAT" of object "PTR_FORMAT" "
++          gclog_or_tty->print_cr("klass " PTR_FORMAT " of object " PTR_FORMAT " "
+                                  "not metadata", klass, (void *)obj);
+           *failures = true;
+           return;
+         } else if (!klass->is_klass()) {
+-          gclog_or_tty->print_cr("klass "PTR_FORMAT" of object "PTR_FORMAT" "
++          gclog_or_tty->print_cr("klass " PTR_FORMAT " of object " PTR_FORMAT " "
+                                  "not a klass", klass, (void *)obj);
+           *failures = true;
+           return;
+@@ -887,7 +887,7 @@
+           }
+         }
+       } else {
+-        gclog_or_tty->print_cr(PTR_FORMAT" no an oop", (void *)obj);
++        gclog_or_tty->print_cr(PTR_FORMAT " no an oop", (void *)obj);
+         *failures = true;
+         return;
+       }
+@@ -897,8 +897,8 @@
+   }
+
+   if (p != top()) {
+-    gclog_or_tty->print_cr("end of last object "PTR_FORMAT" "
+-                           "does not match top "PTR_FORMAT, p, top());
++    gclog_or_tty->print_cr("end of last object " PTR_FORMAT " "
++                           "does not match top " PTR_FORMAT, p, top());
+     *failures = true;
+     return;
+   }
+@@ -913,8 +913,8 @@
+     HeapWord* addr_1 = p;
+     HeapWord* b_start_1 = _offsets.block_start_const(addr_1);
+     if (b_start_1 != p) {
+-      gclog_or_tty->print_cr("BOT look up for top: "PTR_FORMAT" "
+-                             " yielded "PTR_FORMAT", expecting "PTR_FORMAT,
++      gclog_or_tty->print_cr("BOT look up for top: " PTR_FORMAT " "
++                             " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
+                              addr_1, b_start_1, p);
+       *failures = true;
+       return;
+@@ -925,8 +925,8 @@
+     if (addr_2 < the_end) {
+       HeapWord* b_start_2 = _offsets.block_start_const(addr_2);
+       if (b_start_2 != p) {
+-        gclog_or_tty->print_cr("BOT look up for top + 1: "PTR_FORMAT" "
+-                               " yielded "PTR_FORMAT", expecting "PTR_FORMAT,
++        gclog_or_tty->print_cr("BOT look up for top + 1: " PTR_FORMAT " "
++                               " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
+                                addr_2, b_start_2, p);
+         *failures = true;
+         return;
+@@ -939,8 +939,8 @@
+     if (addr_3 < the_end) {
+       HeapWord* b_start_3 = _offsets.block_start_const(addr_3);
+       if (b_start_3 != p) {
+-        gclog_or_tty->print_cr("BOT look up for top + diff: "PTR_FORMAT" "
+-                               " yielded "PTR_FORMAT", expecting "PTR_FORMAT,
++        gclog_or_tty->print_cr("BOT look up for top + diff: " PTR_FORMAT " "
++                               " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
+                                addr_3, b_start_3, p);
+         *failures = true;
+         return;
+@@ -951,8 +951,8 @@
+     HeapWord* addr_4 = the_end - 1;
+     HeapWord* b_start_4 = _offsets.block_start_const(addr_4);
+     if (b_start_4 != p) {
+-      gclog_or_tty->print_cr("BOT look up for end - 1: "PTR_FORMAT" "
+-                             " yielded "PTR_FORMAT", expecting "PTR_FORMAT,
++      gclog_or_tty->print_cr("BOT look up for end - 1: " PTR_FORMAT " "
++                             " yielded " PTR_FORMAT ", expecting " PTR_FORMAT,
+                              addr_4, b_start_4, p);
+       *failures = true;
+       return;
+@@ -960,8 +960,8 @@
+   }
+
+   if (is_humongous && object_num > 1) {
+-    gclog_or_tty->print_cr("region ["PTR_FORMAT","PTR_FORMAT"] is humongous "
+-                           "but has "SIZE_FORMAT", objects",
++    gclog_or_tty->print_cr("region [" PTR_FORMAT "," PTR_FORMAT "] is humongous "
++                           "but has " SIZE_FORMAT ", objects",
+                            bottom(), end(), object_num);
+     *failures = true;
+     return;
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegionManager.cpp.orig	2015-09-02 12:57:25.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegionManager.cpp	2015-09-02 13:01:10.000000000 +0200
+@@ -414,7 +414,7 @@
+     HeapRegion* hr = _regions.get_by_index(i);
+     guarantee(hr != NULL, err_msg("invariant: i: %u", i));
+     guarantee(!prev_committed || hr->bottom() == prev_end,
+-              err_msg("invariant i: %u "HR_FORMAT" prev_end: "PTR_FORMAT,
++              err_msg("invariant i: %u " HR_FORMAT " prev_end: " PTR_FORMAT,
+                       i, HR_FORMAT_PARAMS(hr), p2i(prev_end)));
+     guarantee(hr->hrm_index() == i,
+               err_msg("invariant: i: %u hrm_index(): %u", i, hr->hrm_index()));
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.orig	2015-09-02 12:57:25.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2015-09-02 13:03:44.000000000 +0200
+@@ -91,7 +91,7 @@
+     // concurrency.
+
+     if (G1TraceHeapRegionRememberedSet) {
+-      gclog_or_tty->print_cr("    PRT::Add_reference_work(" PTR_FORMAT "->" PTR_FORMAT").",
++      gclog_or_tty->print_cr("    PRT::Add_reference_work(" PTR_FORMAT "->" PTR_FORMAT ").",
+                              from,
+                              UseCompressedOops
+                              ? (void *)oopDesc::load_decode_heap_oop((narrowOop*)from)
+@@ -377,7 +377,7 @@
+
+ void FromCardCache::invalidate(uint start_idx, size_t new_num_regions) {
+   guarantee((size_t)start_idx + new_num_regions <= max_uintx,
+-            err_msg("Trying to invalidate beyond maximum region, from %u size "SIZE_FORMAT,
++            err_msg("Trying to invalidate beyond maximum region, from %u size " SIZE_FORMAT,
+                     start_idx, new_num_regions));
+   for (uint i = 0; i < HeapRegionRemSet::num_par_rem_sets(); i++) {
+     uint end_idx = (start_idx + (uint)new_num_regions);
+@@ -392,7 +392,7 @@
+ void FromCardCache::print(outputStream* out) {
+   for (uint i = 0; i < HeapRegionRemSet::num_par_rem_sets(); i++) {
+     for (uint j = 0; j < _max_regions; j++) {
+-      out->print_cr("_from_card_cache["UINT32_FORMAT"]["UINT32_FORMAT"] = "INT32_FORMAT".",
++      out->print_cr("_from_card_cache[" UINT32_FORMAT "][" UINT32_FORMAT "] = " INT32_FORMAT ".",
+                     i, j, at(i, j));
+     }
+   }
+@@ -432,7 +432,7 @@
+   int from_card = (int)(uintptr_t(from) >> CardTableModRefBS::card_shift);
+
+   if (G1TraceHeapRegionRememberedSet) {
+-    gclog_or_tty->print_cr("Table for [" PTR_FORMAT "...): card %d (cache = "INT32_FORMAT")",
++    gclog_or_tty->print_cr("Table for [" PTR_FORMAT "...): card %d (cache = " INT32_FORMAT ")",
+                   hr()->bottom(), from_card,
+                   FromCardCache::at((uint)tid, cur_hrm_ind));
+   }
+@@ -637,13 +637,13 @@
+
+   assert(_coarse_map.size() == region_bm->size(), "Precondition");
+   if (G1RSScrubVerbose) {
+-    gclog_or_tty->print("   Coarse map: before = "SIZE_FORMAT"...",
++    gclog_or_tty->print("   Coarse map: before = " SIZE_FORMAT "...",
+                         _n_coarse_entries);
+   }
+   _coarse_map.set_intersection(*region_bm);
+   _n_coarse_entries = _coarse_map.count_one_bits();
+   if (G1RSScrubVerbose) {
+-    gclog_or_tty->print_cr("   after = "SIZE_FORMAT".", _n_coarse_entries);
++    gclog_or_tty->print_cr("   after = " SIZE_FORMAT ".", _n_coarse_entries);
+   }
+
+   // Now do the fine-grained maps.
+@@ -1027,7 +1027,7 @@
+
+   card_index = _cur_region_card_offset + _cur_card_in_prt;
+   guarantee(_cur_card_in_prt < HeapRegion::CardsPerRegion,
+-            err_msg("Card index "SIZE_FORMAT" must be within the region", _cur_card_in_prt));
++            err_msg("Card index " SIZE_FORMAT " must be within the region", _cur_card_in_prt));
+   return true;
+ }
+
+@@ -1196,8 +1196,8 @@
+
+   size_t min_prt_size = sizeof(void*) + dummy->bm()->size_in_words() * HeapWordSize;
+   assert(dummy->mem_size() > min_prt_size,
+-         err_msg("PerRegionTable memory usage is suspiciously small, only has "SIZE_FORMAT" bytes. "
+-                 "Should be at least "SIZE_FORMAT" bytes.", dummy->mem_size(), min_prt_size));
++         err_msg("PerRegionTable memory usage is suspiciously small, only has " SIZE_FORMAT " bytes. "
++                 "Should be at least " SIZE_FORMAT " bytes.", dummy->mem_size(), min_prt_size));
+   free(dummy);
+   guarantee(dummy->mem_size() == fl_mem_size(), "fl_mem_size() does not return the correct element size");
+   // try to reset the state
+--- hotspot/src/share/vm/gc_implementation/g1/heapRegionSet.cpp.orig	2015-09-02 12:57:25.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/g1/heapRegionSet.cpp	2015-09-02 13:04:36.000000000 +0200
+@@ -32,7 +32,7 @@
+ uint FreeRegionList::_unrealistically_long_length = 0;
+
+ void HeapRegionSetBase::fill_in_ext_msg(hrs_ext_msg* msg, const char* message) {
+-  msg->append("[%s] %s ln: %u cy: "SIZE_FORMAT,
++  msg->append("[%s] %s ln: %u cy: " SIZE_FORMAT,
+               name(), message, length(), total_capacity_bytes());
+   fill_in_ext_msg_extra(msg);
+ }
+@@ -84,13 +84,13 @@
+
+ void HeapRegionSetBase::print_on(outputStream* out, bool print_contents) {
+   out->cr();
+-  out->print_cr("Set: %s ("PTR_FORMAT")", name(), this);
++  out->print_cr("Set: %s (" PTR_FORMAT ")", name(), this);
+   out->print_cr("  Region Assumptions");
+   out->print_cr("    humongous         : %s", BOOL_TO_STR(regions_humongous()));
+   out->print_cr("    free              : %s", BOOL_TO_STR(regions_free()));
+   out->print_cr("  Attributes");
+   out->print_cr("    length            : %14u", length());
+-  out->print_cr("    total capacity    : "SIZE_FORMAT_W(14)" bytes",
++  out->print_cr("    total capacity    : " SIZE_FORMAT_W(14) " bytes",
+                 total_capacity_bytes());
+ }
+
+@@ -106,7 +106,7 @@
+ }
+
+ void FreeRegionList::fill_in_ext_msg_extra(hrs_ext_msg* msg) {
+-  msg->append(" hd: "PTR_FORMAT" tl: "PTR_FORMAT, _head, _tail);
++  msg->append(" hd: " PTR_FORMAT " tl: " PTR_FORMAT, _head, _tail);
+ }
+
+ void FreeRegionList::remove_all() {
+@@ -277,8 +277,8 @@
+ void FreeRegionList::print_on(outputStream* out, bool print_contents) {
+   HeapRegionSetBase::print_on(out, print_contents);
+   out->print_cr("  Linking");
+-  out->print_cr("    head              : "PTR_FORMAT, _head);
+-  out->print_cr("    tail              : "PTR_FORMAT, _tail);
++  out->print_cr("    head              : " PTR_FORMAT, _head);
++  out->print_cr("    tail              : " PTR_FORMAT, _tail);
+
+   if (print_contents) {
+     out->print_cr("  Contents");
+@@ -306,7 +306,7 @@
+
+     count++;
+     guarantee(count < _unrealistically_long_length,
+-        hrs_err_msg("[%s] the calculated length: %u seems very long, is there maybe a cycle? curr: "PTR_FORMAT" prev0: "PTR_FORMAT" " "prev1: "PTR_FORMAT" length: %u", name(), count, curr, prev0, prev1, length()));
++        hrs_err_msg("[%s] the calculated length: %u seems very long, is there maybe a cycle? curr: " PTR_FORMAT " prev0: " PTR_FORMAT " " "prev1: " PTR_FORMAT " length: %u", name(), count, curr, prev0, prev1, length()));
+
+     if (curr->next() != NULL) {
+       guarantee(curr->next()->prev() == curr, "Next or prev pointers messed up");
+--- hotspot/src/share/vm/gc_implementation/shared/mutableNUMASpace.cpp.orig	2015-09-02 13:07:15.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/shared/mutableNUMASpace.cpp	2015-09-02 13:10:48.000000000 +0200
+@@ -86,7 +86,7 @@
+         while (words_left_to_fill > 0) {
+           size_t words_to_fill = MIN2(words_left_to_fill, CollectedHeap::filler_array_max_size());
+           assert(words_to_fill >= CollectedHeap::min_fill_size(),
+-            err_msg("Remaining size ("SIZE_FORMAT ") is too small to fill (based on " SIZE_FORMAT " and " SIZE_FORMAT ")",
++            err_msg("Remaining size (" SIZE_FORMAT ") is too small to fill (based on " SIZE_FORMAT " and " SIZE_FORMAT ")",
+             words_to_fill, words_left_to_fill, CollectedHeap::filler_array_max_size()));
+           CollectedHeap::fill_with_object((HeapWord*)cur_top, words_to_fill);
+           if (!os::numa_has_static_binding()) {
+--- hotspot/src/share/vm/prims/methodHandles.cpp.orig	2015-09-02 13:07:15.000000000 +0200
++++ hotspot/src/share/vm/prims/methodHandles.cpp	2015-09-02 13:10:16.000000000 +0200
+@@ -1300,27 +1300,27 @@
+
+ // These are the native methods on java.lang.invoke.MethodHandleNatives.
+ static JNINativeMethod MHN_methods[] = {
+-  {CC"init",                      CC"("MEM""OBJ")V",                     FN_PTR(MHN_init_Mem)},
+-  {CC"expand",                    CC"("MEM")V",                          FN_PTR(MHN_expand_Mem)},
+-  {CC"resolve",                   CC"("MEM""CLS")"MEM,                   FN_PTR(MHN_resolve_Mem)},
+-  {CC"getConstant",               CC"(I)I",                              FN_PTR(MHN_getConstant)},
++  {CC "init",                      CC "(" MEM "" OBJ ")V",                     FN_PTR(MHN_init_Mem)},
++  {CC "expand",                    CC "(" MEM ")V",                          FN_PTR(MHN_expand_Mem)},
++  {CC "resolve",                   CC "(" MEM "" CLS ")" MEM,                   FN_PTR(MHN_resolve_Mem)},
++  {CC "getConstant",               CC "(I)I",                              FN_PTR(MHN_getConstant)},
+   //  static native int getNamedCon(int which, Object[] name)
+-  {CC"getNamedCon",               CC"(I["OBJ")I",                        FN_PTR(MHN_getNamedCon)},
++  {CC "getNamedCon",               CC "(I[" OBJ ")I",                        FN_PTR(MHN_getNamedCon)},
+   //  static native int getMembers(Class<?> defc, String matchName, String matchSig,
+   //          int matchFlags, Class<?> caller, int skip, MemberName[] results);
+-  {CC"getMembers",                CC"("CLS""STRG""STRG"I"CLS"I["MEM")I", FN_PTR(MHN_getMembers)},
+-  {CC"objectFieldOffset",         CC"("MEM")J",                          FN_PTR(MHN_objectFieldOffset)},
+-  {CC"setCallSiteTargetNormal",   CC"("CS""MH")V",                       FN_PTR(MHN_setCallSiteTargetNormal)},
+-  {CC"setCallSiteTargetVolatile", CC"("CS""MH")V",                       FN_PTR(MHN_setCallSiteTargetVolatile)},
+-  {CC"staticFieldOffset",         CC"("MEM")J",                          FN_PTR(MHN_staticFieldOffset)},
+-  {CC"staticFieldBase",           CC"("MEM")"OBJ,                        FN_PTR(MHN_staticFieldBase)},
+-  {CC"getMemberVMInfo",           CC"("MEM")"OBJ,                        FN_PTR(MHN_getMemberVMInfo)}
++  {CC "getMembers",                CC "(" CLS "" STRG "" STRG "I" CLS "I[" MEM ")I", FN_PTR(MHN_getMembers)},
++  {CC "objectFieldOffset",         CC "(" MEM ")J",                          FN_PTR(MHN_objectFieldOffset)},
++  {CC "setCallSiteTargetNormal",   CC "(" CS "" MH ")V",                       FN_PTR(MHN_setCallSiteTargetNormal)},
++  {CC "setCallSiteTargetVolatile", CC "(" CS "" MH ")V",                       FN_PTR(MHN_setCallSiteTargetVolatile)},
++  {CC "staticFieldOffset",         CC "(" MEM ")J",                          FN_PTR(MHN_staticFieldOffset)},
++  {CC "staticFieldBase",           CC "(" MEM ")" OBJ,                        FN_PTR(MHN_staticFieldBase)},
++  {CC "getMemberVMInfo",           CC "(" MEM ")" OBJ,                        FN_PTR(MHN_getMemberVMInfo)}
+ };
+
+ static JNINativeMethod MH_methods[] = {
+   // UnsupportedOperationException throwers
+-  {CC"invoke",                    CC"(["OBJ")"OBJ,                       FN_PTR(MH_invoke_UOE)},
+-  {CC"invokeExact",               CC"(["OBJ")"OBJ,                       FN_PTR(MH_invokeExact_UOE)}
++  {CC"invoke",                    CC "([" OBJ ")" OBJ,                       FN_PTR(MH_invoke_UOE)},
++  {CC"invokeExact",               CC "([" OBJ ")" OBJ,                       FN_PTR(MH_invokeExact_UOE)}
+ };
+
+ /**
+--- hotspot/src/share/vm/oops/objArrayKlass.cpp.orig	2015-09-02 13:19:26.000000000 +0200
++++ hotspot/src/share/vm/oops/objArrayKlass.cpp	2015-09-02 13:22:11.000000000 +0200
+@@ -657,7 +657,7 @@
+       if (i > max_objArray_print_length) {
+         st->print("..."); break;
+       }
+-      st->print(" "INTPTR_FORMAT, (intptr_t)(void*)objArrayOop(obj)->obj_at(i));
++      st->print(" " INTPTR_FORMAT, (intptr_t)(void*)objArrayOop(obj)->obj_at(i));
+     }
+     st->print(" }");
+   }
+--- hotspot/src/share/vm/oops/oop.cpp.orig	2015-09-02 13:19:26.000000000 +0200
++++ hotspot/src/share/vm/oops/oop.cpp	2015-09-02 13:22:22.000000000 +0200
+@@ -46,7 +46,7 @@
+
+ void oopDesc::print_address_on(outputStream* st) const {
+   if (PrintOopAddress) {
+-    st->print("{"INTPTR_FORMAT"}", this);
++    st->print("{" INTPTR_FORMAT "}", this);
+   }
+ }
+
+--- hotspot/src/os/posix/vm/os_posix.cpp.orig	2015-09-02 13:32:01.000000000 +0200
++++ hotspot/src/os/posix/vm/os_posix.cpp	2015-09-02 13:33:42.000000000 +0200
+@@ -594,7 +594,7 @@
+   strncpy(buffer, "none", size);
+
+   const struct {
+-    int i;
++    unsigned i;
+     const char* s;
+   } flaginfo [] = {
+     { SA_NOCLDSTOP, "SA_NOCLDSTOP" },
+--- hotspot/src/share/vm/code/nmethod.cpp.orig	2015-09-02 13:19:26.000000000 +0200
++++ hotspot/src/share/vm/code/nmethod.cpp	2015-09-02 13:27:23.000000000 +0200
+@@ -2303,7 +2303,7 @@
+   void maybe_print(oop* p) {
+     if (_print_nm == NULL)  return;
+     if (!_detected_scavenge_root)  _print_nm->print_on(tty, "new scavenge root");
+-    tty->print_cr(""PTR_FORMAT"[offset=%d] detected scavengable oop "PTR_FORMAT" (found at "PTR_FORMAT")",
++    tty->print_cr("" PTR_FORMAT "[offset=%d] detected scavengable oop " PTR_FORMAT " (found at " PTR_FORMAT ")",
+                   _print_nm, (int)((intptr_t)p - (intptr_t)_print_nm),
+                   (void *)(*p), (intptr_t)p);
+     (*p)->print();
+@@ -2684,7 +2684,7 @@
+       _nm->print_nmethod(true);
+       _ok = false;
+     }
+-    tty->print_cr("*** non-oop "PTR_FORMAT" found at "PTR_FORMAT" (offset %d)",
++    tty->print_cr("*** non-oop " PTR_FORMAT " found at " PTR_FORMAT " (offset %d)",
+                   (void *)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
+   }
+   virtual void do_oop(narrowOop* p) { ShouldNotReachHere(); }
+@@ -2808,7 +2808,7 @@
+       _nm->print_nmethod(true);
+       _ok = false;
+     }
+-    tty->print_cr("*** scavengable oop "PTR_FORMAT" found at "PTR_FORMAT" (offset %d)",
++    tty->print_cr("*** scavengable oop " PTR_FORMAT " found at " PTR_FORMAT " (offset %d)",
+                   (void *)(*p), (intptr_t)p, (int)((intptr_t)p - (intptr_t)_nm));
+     (*p)->print();
+   }
+@@ -2853,7 +2853,7 @@
+   print_on(tty, NULL);
+
+   if (WizardMode) {
+-    tty->print("((nmethod*) "INTPTR_FORMAT ") ", this);
++    tty->print("((nmethod*) " INTPTR_FORMAT ") ", this);
+     tty->print(" for method " INTPTR_FORMAT , (address)method());
+     tty->print(" { ");
+     if (is_in_use())      tty->print("in_use ");
+--- hotspot/src/share/vm/gc_implementation/shared/parGCAllocBuffer.cpp.orig	2015-09-02 13:28:16.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/shared/parGCAllocBuffer.cpp	2015-09-02 13:31:09.000000000 +0200
+@@ -98,10 +98,10 @@
+   if (_allocated == 0) {
+     assert(_unused == 0,
+            err_msg("Inconsistency in PLAB stats: "
+-                   "_allocated: "SIZE_FORMAT", "
+-                   "_wasted: "SIZE_FORMAT", "
+-                   "_unused: "SIZE_FORMAT", "
+-                   "_used  : "SIZE_FORMAT,
++                   "_allocated: " SIZE_FORMAT ", "
++                   "_wasted: " SIZE_FORMAT ", "
++                   "_unused: " SIZE_FORMAT ", "
++                   "_used  : " SIZE_FORMAT,
+                    _allocated, _wasted, _unused, _used));
+
+     _allocated = 1;
+--- hotspot/src/share/vm/utilities/ostream.cpp.orig	2015-09-02 13:28:16.000000000 +0200
++++ hotspot/src/share/vm/utilities/ostream.cpp	2015-09-02 13:34:57.000000000 +0200
+@@ -277,7 +277,7 @@
+   size_t limit = (len + 16) / 16 * 16;
+   for (size_t i = 0; i < limit; ++i) {
+     if (i % 16 == 0) {
+-      indent().print(SIZE_FORMAT_HEX_W(07)":", i);
++      indent().print(SIZE_FORMAT_HEX_W(07) ":", i);
+     }
+     if (i % 2 == 0) {
+       print(" ");
+@@ -945,7 +945,7 @@
+     // %%% Should be: jlong time_ms = os::start_time_milliseconds(), if
+     // we ever get round to introduce that method on the os class
+     xs->head("hotspot_log version='%d %d'"
+-             " process='%d' time_ms='"INT64_FORMAT"'",
++             " process='%d' time_ms='" INT64_FORMAT "'",
+              LOG_MAJOR_VERSION, LOG_MINOR_VERSION,
+              os::current_process_id(), (int64_t)time_ms);
+     // Write VM version header immediately.
+--- hotspot/src/share/vm/prims/perf.cpp.orig	2015-09-02 13:36:01.000000000 +0200
++++ hotspot/src/share/vm/prims/perf.cpp	2015-09-02 13:37:33.000000000 +0200
+@@ -290,17 +290,17 @@
+ #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
+ #define BB "Ljava/nio/ByteBuffer;"
+ #define JLS "Ljava/lang/String;"
+-#define CL_ARGS     CC"("JLS"IIJ)"BB
+-#define CBA_ARGS    CC"("JLS"II[BI)"BB
++#define CL_ARGS     CC "(" JLS "IIJ)" BB
++#define CBA_ARGS    CC "(" JLS "II[BI)" BB
+
+ static JNINativeMethod perfmethods[] = {
+
+-  {CC"attach",              CC"("JLS"II)"BB,  FN_PTR(Perf_Attach)},
+-  {CC"detach",              CC"("BB")V",      FN_PTR(Perf_Detach)},
+-  {CC"createLong",          CL_ARGS,          FN_PTR(Perf_CreateLong)},
+-  {CC"createByteArray",     CBA_ARGS,         FN_PTR(Perf_CreateByteArray)},
+-  {CC"highResCounter",      CC"()J",          FN_PTR(Perf_HighResCounter)},
+-  {CC"highResFrequency",    CC"()J",          FN_PTR(Perf_HighResFrequency)}
++  {CC"attach",              CC "(" JLS "II)" BB, FN_PTR(Perf_Attach)},
++  {CC"detach",              CC "(" BB ")V",      FN_PTR(Perf_Detach)},
++  {CC"createLong",          CL_ARGS,             FN_PTR(Perf_CreateLong)},
++  {CC"createByteArray",     CBA_ARGS,            FN_PTR(Perf_CreateByteArray)},
++  {CC"highResCounter",      CC "()J",            FN_PTR(Perf_HighResCounter)},
++  {CC"highResFrequency",    CC "()J",            FN_PTR(Perf_HighResFrequency)}
+ };
+
+ #undef CBA_ARGS
+--- hotspot/src/share/vm/gc_implementation/parallelScavenge/psMarkSweep.cpp.orig	2015-09-02 13:39:42.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/parallelScavenge/psMarkSweep.cpp	2015-09-02 13:40:05.000000000 +0200
+@@ -669,7 +669,7 @@
+   jlong ret_val = now - _time_of_last_gc;
+   // XXX See note in genCollectedHeap::millis_since_last_gc().
+   if (ret_val < 0) {
+-    NOT_PRODUCT(warning("time warp: "INT64_FORMAT, ret_val);)
++    NOT_PRODUCT(warning("time warp: " INT64_FORMAT, ret_val);)
+     return 0;
+   }
+   return ret_val;
+--- hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp.orig	2015-09-02 13:39:42.000000000 +0200
++++ hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp	2015-09-02 13:40:50.000000000 +0200
+@@ -3292,7 +3292,7 @@
+   jlong ret_val = now - _time_of_last_gc;
+   // XXX See note in genCollectedHeap::millis_since_last_gc().
+   if (ret_val < 0) {
+-    NOT_PRODUCT(warning("time warp: "INT64_FORMAT, ret_val);)
++    NOT_PRODUCT(warning("time warp: " INT64_FORMAT, ret_val);)
+     return 0;
+   }
+   return ret_val;
+--- hotspot/src/share/vm/memory/referenceProcessor.cpp.orig	2015-09-02 13:42:24.000000000 +0200
++++ hotspot/src/share/vm/memory/referenceProcessor.cpp	2015-09-02 13:42:55.000000000 +0200
+@@ -161,7 +161,7 @@
+
+   NOT_PRODUCT(
+   if (now < _soft_ref_timestamp_clock) {
+-    warning("time warp: "INT64_FORMAT" to "INT64_FORMAT,
++    warning("time warp: " INT64_FORMAT " to " INT64_FORMAT,
+             _soft_ref_timestamp_clock, now);
+   }
+   )
+--- hotspot/src/share/vm/runtime/safepoint.cpp.orig	2015-09-02 14:51:21.000000000 +0200
++++ hotspot/src/share/vm/runtime/safepoint.cpp	2015-09-02 14:52:56.000000000 +0200
+@@ -983,7 +983,7 @@
+
+     case _running:
+     default:
+-       tty->print_cr("restart thread "INTPTR_FORMAT" with state %d",
++       tty->print_cr("restart thread " INTPTR_FORMAT " with state %d",
+                       _thread, _type);
+        _thread->print();
+       ShouldNotReachHere();
+@@ -1340,14 +1340,14 @@
+
+   for (int index = 0; index < VM_Operation::VMOp_Terminating; index++) {
+     if (_safepoint_reasons[index] != 0) {
+-      tty->print_cr("%-26s"UINT64_FORMAT_W(10), VM_Operation::name(index),
++      tty->print_cr("%-26s" UINT64_FORMAT_W(10), VM_Operation::name(index),
+                     _safepoint_reasons[index]);
+     }
+   }
+
+   tty->print_cr(UINT64_FORMAT_W(5)" VM operations coalesced during safepoint",
+                 _coalesced_vmop_count);
+-  tty->print_cr("Maximum sync time  "INT64_FORMAT_W(5)" ms",
++  tty->print_cr("Maximum sync time  " INT64_FORMAT_W(5) " ms",
+                 _max_sync_time / MICROUNITS);
+   tty->print_cr("Maximum vm operation time (except for Exit VM operation)  "
+                 INT64_FORMAT_W(5)" ms",
+--- hotspot/src/share/vm/memory/tenuredGeneration.cpp.orig	2015-09-02 18:11:24.000000000 +0200
++++ hotspot/src/share/vm/memory/tenuredGeneration.cpp	2015-09-02 18:11:32.000000000 +0200
+@@ -292,8 +292,8 @@
+   bool   res = (available >= av_promo) || (available >= max_promotion_in_bytes);
+   if (PrintGC && Verbose) {
+     gclog_or_tty->print_cr(
+-      "Tenured: promo attempt is%s safe: available("SIZE_FORMAT") %s av_promo("SIZE_FORMAT"),"
+-      "max_promo("SIZE_FORMAT")",
++      "Tenured: promo attempt is%s safe: available(" SIZE_FORMAT ") %s av_promo(" SIZE_FORMAT "),"
++      "max_promo(" SIZE_FORMAT ")",
+       res? "":" not", available, res? ">=":"<",
+       av_promo, max_promotion_in_bytes);
+   }
+--- hotspot/src/share/vm/services/threadService.cpp.orig	2015-09-02 18:11:24.000000000 +0200
++++ hotspot/src/share/vm/services/threadService.cpp	2015-09-02 18:11:32.000000000 +0200
+@@ -889,7 +889,7 @@
+       st->print("  waiting to lock monitor " INTPTR_FORMAT, waitingToLockMonitor);
+       oop obj = (oop)waitingToLockMonitor->object();
+       if (obj != NULL) {
+-        st->print(" (object "INTPTR_FORMAT ", a %s)", (address)obj,
++        st->print(" (object " INTPTR_FORMAT ", a %s)", (address)obj,
+                    (InstanceKlass::cast(obj->klass()))->external_name());
+
+         if (!currentThread->current_pending_monitor_is_from_java()) {
+--- hotspot/src/share/vm/memory/universe.cpp.orig	2015-09-02 18:25:28.000000000 +0200
++++ hotspot/src/share/vm/memory/universe.cpp	2015-09-02 18:26:04.000000000 +0200
+@@ -919,7 +919,7 @@
+ // Reserve the Java heap, which is now the same for all GCs.
+ ReservedSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
+   assert(alignment <= Arguments::conservative_max_heap_alignment(),
+-      err_msg("actual alignment "SIZE_FORMAT" must be within maximum heap alignment "SIZE_FORMAT,
++      err_msg("actual alignment " SIZE_FORMAT " must be within maximum heap alignment " SIZE_FORMAT,
+           alignment, Arguments::conservative_max_heap_alignment()));
+   size_t total_reserved = align_size_up(heap_size, alignment);
+   assert(!UseCompressedOops || (total_reserved <= (OopEncodingHeapMax - os::vm_page_size())),
+--- hotspot/src/share/vm/prims/unsafe.cpp.orig	2015-09-02 18:25:32.000000000 +0200
++++ hotspot/src/share/vm/prims/unsafe.cpp	2015-09-02 18:47:09.000000000 +0200
+@@ -977,7 +977,7 @@
+ UNSAFE_END
+
+
+-#define DAC_Args CLS"[B["OBJ
++#define DAC_Args CLS "[B[" OBJ
+ // define a class but do not make it known to the class loader or system dictionary
+ // - host_class:  supplies context for linkage, access control, protection domain, and class loader
+ // - data:  bytes of a class file, a raw memory address (length gives the number of bytes)
+@@ -1337,47 +1337,47 @@
+
+ #define LANG "Ljava/lang/"
+
+-#define OBJ LANG"Object;"
+-#define CLS LANG"Class;"
+-#define CTR LANG"reflect/Constructor;"
+-#define FLD LANG"reflect/Field;"
+-#define MTH LANG"reflect/Method;"
+-#define THR LANG"Throwable;"
++#define OBJ LANG "Object;"
++#define CLS LANG "Class;"
++#define CTR LANG "reflect/Constructor;"
++#define FLD LANG "reflect/Field;"
++#define MTH LANG "reflect/Method;"
++#define THR LANG "Throwable;"
+
+-#define DC0_Args LANG"String;[BII"
+-#define DC_Args  DC0_Args LANG"ClassLoader;" "Ljava/security/ProtectionDomain;"
++#define DC0_Args LANG "String;[BII"
++#define DC_Args  DC0_Args LANG "ClassLoader;" "Ljava/security/ProtectionDomain;"
+
+ #define CC (char*)  /*cast a literal from (const char*)*/
+ #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
+
+ // define deprecated accessors for compabitility with 1.4.0
+ #define DECLARE_GETSETOOP_140(Boolean, Z) \
+-    {CC"get"#Boolean,      CC"("OBJ"I)"#Z,      FN_PTR(Unsafe_Get##Boolean##140)}, \
+-    {CC"put"#Boolean,      CC"("OBJ"I"#Z")V",   FN_PTR(Unsafe_Set##Boolean##140)}
++    {CC"get"#Boolean,      CC"(" OBJ "I)" #Z,      FN_PTR(Unsafe_Get##Boolean##140)}, \
++    {CC"put"#Boolean,      CC"(" OBJ "I" #Z ")V",   FN_PTR(Unsafe_Set##Boolean##140)}
+
+ // Note:  In 1.4.1, getObject and kin take both int and long offsets.
+ #define DECLARE_GETSETOOP_141(Boolean, Z) \
+-    {CC"get"#Boolean,      CC"("OBJ"J)"#Z,      FN_PTR(Unsafe_Get##Boolean)}, \
+-    {CC"put"#Boolean,      CC"("OBJ"J"#Z")V",   FN_PTR(Unsafe_Set##Boolean)}
++    {CC"get"#Boolean,      CC"(" OBJ "J)" #Z,      FN_PTR(Unsafe_Get##Boolean)}, \
++    {CC"put"#Boolean,      CC"(" OBJ "J" #Z ")V",   FN_PTR(Unsafe_Set##Boolean)}
+
+ // Note:  In 1.5.0, there are volatile versions too
+ #define DECLARE_GETSETOOP(Boolean, Z) \
+-    {CC"get"#Boolean,      CC"("OBJ"J)"#Z,      FN_PTR(Unsafe_Get##Boolean)}, \
+-    {CC"put"#Boolean,      CC"("OBJ"J"#Z")V",   FN_PTR(Unsafe_Set##Boolean)}, \
+-    {CC"get"#Boolean"Volatile",      CC"("OBJ"J)"#Z,      FN_PTR(Unsafe_Get##Boolean##Volatile)}, \
+-    {CC"put"#Boolean"Volatile",      CC"("OBJ"J"#Z")V",   FN_PTR(Unsafe_Set##Boolean##Volatile)}
++    {CC"get"#Boolean,      CC"(" OBJ "J)" #Z,      FN_PTR(Unsafe_Get##Boolean)}, \
++    {CC"put"#Boolean,      CC"(" OBJ "J" #Z ")V",   FN_PTR(Unsafe_Set##Boolean)}, \
++    {CC"get"#Boolean "Volatile",      CC"(" OBJ "J)" #Z,      FN_PTR(Unsafe_Get##Boolean##Volatile)}, \
++    {CC"put"#Boolean "Volatile",      CC"(" OBJ "J" #Z ")V",   FN_PTR(Unsafe_Set##Boolean##Volatile)}
+
+
+ #define DECLARE_GETSETNATIVE(Byte, B) \
+-    {CC"get"#Byte,         CC"("ADR")"#B,       FN_PTR(Unsafe_GetNative##Byte)}, \
+-    {CC"put"#Byte,         CC"("ADR#B")V",      FN_PTR(Unsafe_SetNative##Byte)}
++    {CC"get"#Byte,         CC"(" ADR ")" #B,       FN_PTR(Unsafe_GetNative##Byte)}, \
++    {CC"put"#Byte,         CC"(" ADR #B ")V",      FN_PTR(Unsafe_SetNative##Byte)}
+
+
+
+ // These are the methods for 1.4.0
+ static JNINativeMethod methods_140[] = {
+-    {CC"getObject",        CC"("OBJ"I)"OBJ"",   FN_PTR(Unsafe_GetObject140)},
+-    {CC"putObject",        CC"("OBJ"I"OBJ")V",  FN_PTR(Unsafe_SetObject140)},
++    {CC"getObject",        CC"(" OBJ "I)" OBJ "",   FN_PTR(Unsafe_GetObject140)},
++    {CC"putObject",        CC"(" OBJ "I" OBJ ")V",  FN_PTR(Unsafe_SetObject140)},
+
+     DECLARE_GETSETOOP_140(Boolean, Z),
+     DECLARE_GETSETOOP_140(Byte, B),
+@@ -1396,33 +1396,33 @@
+     DECLARE_GETSETNATIVE(Float, F),
+     DECLARE_GETSETNATIVE(Double, D),
+
+-    {CC"getAddress",         CC"("ADR")"ADR,             FN_PTR(Unsafe_GetNativeAddress)},
+-    {CC"putAddress",         CC"("ADR""ADR")V",          FN_PTR(Unsafe_SetNativeAddress)},
++    {CC"getAddress",         CC"(" ADR ")" ADR,             FN_PTR(Unsafe_GetNativeAddress)},
++    {CC"putAddress",         CC"(" ADR "" ADR ")V",          FN_PTR(Unsafe_SetNativeAddress)},
+
+-    {CC"allocateMemory",     CC"(J)"ADR,                 FN_PTR(Unsafe_AllocateMemory)},
+-    {CC"reallocateMemory",   CC"("ADR"J)"ADR,            FN_PTR(Unsafe_ReallocateMemory)},
+-    {CC"freeMemory",         CC"("ADR")V",               FN_PTR(Unsafe_FreeMemory)},
+-
+-    {CC"fieldOffset",        CC"("FLD")I",               FN_PTR(Unsafe_FieldOffset)},
+-    {CC"staticFieldBase",    CC"("CLS")"OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromClass)},
+-    {CC"ensureClassInitialized",CC"("CLS")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
+-    {CC"arrayBaseOffset",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
+-    {CC"arrayIndexScale",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayIndexScale)},
++    {CC"allocateMemory",     CC"(J)" ADR,                 FN_PTR(Unsafe_AllocateMemory)},
++    {CC"reallocateMemory",   CC"(" ADR "J)" ADR,            FN_PTR(Unsafe_ReallocateMemory)},
++    {CC"freeMemory",         CC"(" ADR ")V",               FN_PTR(Unsafe_FreeMemory)},
++
++    {CC"fieldOffset",        CC"(" FLD ")I",               FN_PTR(Unsafe_FieldOffset)},
++    {CC"staticFieldBase",    CC"(" CLS ")" OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromClass)},
++    {CC"ensureClassInitialized",CC"(" CLS ")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
++    {CC"arrayBaseOffset",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
++    {CC"arrayIndexScale",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayIndexScale)},
+     {CC"addressSize",        CC"()I",                    FN_PTR(Unsafe_AddressSize)},
+     {CC"pageSize",           CC"()I",                    FN_PTR(Unsafe_PageSize)},
+
+-    {CC"defineClass",        CC"("DC0_Args")"CLS,        FN_PTR(Unsafe_DefineClass0)},
+-    {CC"defineClass",        CC"("DC_Args")"CLS,         FN_PTR(Unsafe_DefineClass)},
+-    {CC"allocateInstance",   CC"("CLS")"OBJ,             FN_PTR(Unsafe_AllocateInstance)},
+-    {CC"monitorEnter",       CC"("OBJ")V",               FN_PTR(Unsafe_MonitorEnter)},
+-    {CC"monitorExit",        CC"("OBJ")V",               FN_PTR(Unsafe_MonitorExit)},
+-    {CC"throwException",     CC"("THR")V",               FN_PTR(Unsafe_ThrowException)}
++    {CC"defineClass",        CC"(" DC0_Args ")" CLS,        FN_PTR(Unsafe_DefineClass0)},
++    {CC"defineClass",        CC"(" DC_Args ")" CLS,         FN_PTR(Unsafe_DefineClass)},
++    {CC"allocateInstance",   CC"(" CLS ")" OBJ,             FN_PTR(Unsafe_AllocateInstance)},
++    {CC"monitorEnter",       CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorEnter)},
++    {CC"monitorExit",        CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorExit)},
++    {CC"throwException",     CC"(" THR ")V",               FN_PTR(Unsafe_ThrowException)}
+ };
+
+ // These are the methods prior to the JSR 166 changes in 1.5.0
+ static JNINativeMethod methods_141[] = {
+-    {CC"getObject",        CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObject)},
+-    {CC"putObject",        CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObject)},
++    {CC"getObject",        CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObject)},
++    {CC"putObject",        CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObject)},
+
+     DECLARE_GETSETOOP_141(Boolean, Z),
+     DECLARE_GETSETOOP_141(Byte, B),
+@@ -1441,37 +1441,37 @@
+     DECLARE_GETSETNATIVE(Float, F),
+     DECLARE_GETSETNATIVE(Double, D),
+
+-    {CC"getAddress",         CC"("ADR")"ADR,             FN_PTR(Unsafe_GetNativeAddress)},
+-    {CC"putAddress",         CC"("ADR""ADR")V",          FN_PTR(Unsafe_SetNativeAddress)},
++    {CC"getAddress",         CC"(" ADR ")" ADR,             FN_PTR(Unsafe_GetNativeAddress)},
++    {CC"putAddress",         CC"(" ADR "" ADR ")V",          FN_PTR(Unsafe_SetNativeAddress)},
+
+-    {CC"allocateMemory",     CC"(J)"ADR,                 FN_PTR(Unsafe_AllocateMemory)},
+-    {CC"reallocateMemory",   CC"("ADR"J)"ADR,            FN_PTR(Unsafe_ReallocateMemory)},
+-    {CC"freeMemory",         CC"("ADR")V",               FN_PTR(Unsafe_FreeMemory)},
+-
+-    {CC"objectFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
+-    {CC"staticFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_StaticFieldOffset)},
+-    {CC"staticFieldBase",    CC"("FLD")"OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
+-    {CC"ensureClassInitialized",CC"("CLS")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
+-    {CC"arrayBaseOffset",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
+-    {CC"arrayIndexScale",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayIndexScale)},
++    {CC"allocateMemory",     CC"(J)" ADR,                 FN_PTR(Unsafe_AllocateMemory)},
++    {CC"reallocateMemory",   CC"(" ADR "J)" ADR,            FN_PTR(Unsafe_ReallocateMemory)},
++    {CC"freeMemory",         CC"(" ADR ")V",               FN_PTR(Unsafe_FreeMemory)},
++
++    {CC"objectFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
++    {CC"staticFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_StaticFieldOffset)},
++    {CC"staticFieldBase",    CC"(" FLD ")" OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
++    {CC"ensureClassInitialized",CC"(" CLS ")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
++    {CC"arrayBaseOffset",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
++    {CC"arrayIndexScale",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayIndexScale)},
+     {CC"addressSize",        CC"()I",                    FN_PTR(Unsafe_AddressSize)},
+     {CC"pageSize",           CC"()I",                    FN_PTR(Unsafe_PageSize)},
+
+-    {CC"defineClass",        CC"("DC0_Args")"CLS,        FN_PTR(Unsafe_DefineClass0)},
+-    {CC"defineClass",        CC"("DC_Args")"CLS,         FN_PTR(Unsafe_DefineClass)},
+-    {CC"allocateInstance",   CC"("CLS")"OBJ,             FN_PTR(Unsafe_AllocateInstance)},
+-    {CC"monitorEnter",       CC"("OBJ")V",               FN_PTR(Unsafe_MonitorEnter)},
+-    {CC"monitorExit",        CC"("OBJ")V",               FN_PTR(Unsafe_MonitorExit)},
+-    {CC"throwException",     CC"("THR")V",               FN_PTR(Unsafe_ThrowException)}
++    {CC"defineClass",        CC"(" DC0_Args ")" CLS,        FN_PTR(Unsafe_DefineClass0)},
++    {CC"defineClass",        CC"(" DC_Args ")" CLS,         FN_PTR(Unsafe_DefineClass)},
++    {CC"allocateInstance",   CC"(" CLS ")" OBJ,             FN_PTR(Unsafe_AllocateInstance)},
++    {CC"monitorEnter",       CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorEnter)},
++    {CC"monitorExit",        CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorExit)},
++    {CC"throwException",     CC"(" THR ")V",               FN_PTR(Unsafe_ThrowException)}
+
+ };
+
+ // These are the methods prior to the JSR 166 changes in 1.6.0
+ static JNINativeMethod methods_15[] = {
+-    {CC"getObject",        CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObject)},
+-    {CC"putObject",        CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObject)},
+-    {CC"getObjectVolatile",CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObjectVolatile)},
+-    {CC"putObjectVolatile",CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObjectVolatile)},
++    {CC"getObject",        CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObject)},
++    {CC"putObject",        CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObject)},
++    {CC"getObjectVolatile",CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObjectVolatile)},
++    {CC"putObjectVolatile",CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObjectVolatile)},
+
+
+     DECLARE_GETSETOOP(Boolean, Z),
+@@ -1491,42 +1491,42 @@
+     DECLARE_GETSETNATIVE(Float, F),
+     DECLARE_GETSETNATIVE(Double, D),
+
+-    {CC"getAddress",         CC"("ADR")"ADR,             FN_PTR(Unsafe_GetNativeAddress)},
+-    {CC"putAddress",         CC"("ADR""ADR")V",          FN_PTR(Unsafe_SetNativeAddress)},
++    {CC"getAddress",         CC"(" ADR ")" ADR,             FN_PTR(Unsafe_GetNativeAddress)},
++    {CC"putAddress",         CC"(" ADR "" ADR ")V",          FN_PTR(Unsafe_SetNativeAddress)},
+
+-    {CC"allocateMemory",     CC"(J)"ADR,                 FN_PTR(Unsafe_AllocateMemory)},
+-    {CC"reallocateMemory",   CC"("ADR"J)"ADR,            FN_PTR(Unsafe_ReallocateMemory)},
+-    {CC"freeMemory",         CC"("ADR")V",               FN_PTR(Unsafe_FreeMemory)},
+-
+-    {CC"objectFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
+-    {CC"staticFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_StaticFieldOffset)},
+-    {CC"staticFieldBase",    CC"("FLD")"OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
+-    {CC"ensureClassInitialized",CC"("CLS")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
+-    {CC"arrayBaseOffset",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
+-    {CC"arrayIndexScale",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayIndexScale)},
++    {CC"allocateMemory",     CC"(J)" ADR,                 FN_PTR(Unsafe_AllocateMemory)},
++    {CC"reallocateMemory",   CC"(" ADR "J)" ADR,            FN_PTR(Unsafe_ReallocateMemory)},
++    {CC"freeMemory",         CC"(" ADR ")V",               FN_PTR(Unsafe_FreeMemory)},
++
++    {CC"objectFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
++    {CC"staticFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_StaticFieldOffset)},
++    {CC"staticFieldBase",    CC"(" FLD ")" OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
++    {CC"ensureClassInitialized",CC"(" CLS ")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
++    {CC"arrayBaseOffset",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
++    {CC"arrayIndexScale",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayIndexScale)},
+     {CC"addressSize",        CC"()I",                    FN_PTR(Unsafe_AddressSize)},
+     {CC"pageSize",           CC"()I",                    FN_PTR(Unsafe_PageSize)},
+
+-    {CC"defineClass",        CC"("DC0_Args")"CLS,        FN_PTR(Unsafe_DefineClass0)},
+-    {CC"defineClass",        CC"("DC_Args")"CLS,         FN_PTR(Unsafe_DefineClass)},
+-    {CC"allocateInstance",   CC"("CLS")"OBJ,             FN_PTR(Unsafe_AllocateInstance)},
+-    {CC"monitorEnter",       CC"("OBJ")V",               FN_PTR(Unsafe_MonitorEnter)},
+-    {CC"monitorExit",        CC"("OBJ")V",               FN_PTR(Unsafe_MonitorExit)},
+-    {CC"throwException",     CC"("THR")V",               FN_PTR(Unsafe_ThrowException)},
+-    {CC"compareAndSwapObject", CC"("OBJ"J"OBJ""OBJ")Z",  FN_PTR(Unsafe_CompareAndSwapObject)},
+-    {CC"compareAndSwapInt",  CC"("OBJ"J""I""I"")Z",      FN_PTR(Unsafe_CompareAndSwapInt)},
+-    {CC"compareAndSwapLong", CC"("OBJ"J""J""J"")Z",      FN_PTR(Unsafe_CompareAndSwapLong)},
++    {CC"defineClass",        CC"(" DC0_Args ")" CLS,        FN_PTR(Unsafe_DefineClass0)},
++    {CC"defineClass",        CC"(" DC_Args ")" CLS,         FN_PTR(Unsafe_DefineClass)},
++    {CC"allocateInstance",   CC"(" CLS ")" OBJ,             FN_PTR(Unsafe_AllocateInstance)},
++    {CC"monitorEnter",       CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorEnter)},
++    {CC"monitorExit",        CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorExit)},
++    {CC"throwException",     CC"(" THR ")V",               FN_PTR(Unsafe_ThrowException)},
++    {CC"compareAndSwapObject", CC"(" OBJ "J" OBJ "" OBJ ")Z",  FN_PTR(Unsafe_CompareAndSwapObject)},
++    {CC"compareAndSwapInt",  CC"(" OBJ "J""I""I"")Z",      FN_PTR(Unsafe_CompareAndSwapInt)},
++    {CC"compareAndSwapLong", CC"(" OBJ "J""J""J"")Z",      FN_PTR(Unsafe_CompareAndSwapLong)},
+     {CC"park",               CC"(ZJ)V",                  FN_PTR(Unsafe_Park)},
+-    {CC"unpark",             CC"("OBJ")V",               FN_PTR(Unsafe_Unpark)}
++    {CC"unpark",             CC"(" OBJ ")V",               FN_PTR(Unsafe_Unpark)}
+
+ };
+
+ // These are the methods for 1.6.0 and 1.7.0
+ static JNINativeMethod methods_16[] = {
+-    {CC"getObject",        CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObject)},
+-    {CC"putObject",        CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObject)},
+-    {CC"getObjectVolatile",CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObjectVolatile)},
+-    {CC"putObjectVolatile",CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObjectVolatile)},
++    {CC"getObject",        CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObject)},
++    {CC"putObject",        CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObject)},
++    {CC"getObjectVolatile",CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObjectVolatile)},
++    {CC"putObjectVolatile",CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObjectVolatile)},
+
+     DECLARE_GETSETOOP(Boolean, Z),
+     DECLARE_GETSETOOP(Byte, B),
+@@ -1545,45 +1545,45 @@
+     DECLARE_GETSETNATIVE(Float, F),
+     DECLARE_GETSETNATIVE(Double, D),
+
+-    {CC"getAddress",         CC"("ADR")"ADR,             FN_PTR(Unsafe_GetNativeAddress)},
+-    {CC"putAddress",         CC"("ADR""ADR")V",          FN_PTR(Unsafe_SetNativeAddress)},
++    {CC"getAddress",         CC"(" ADR ")" ADR,             FN_PTR(Unsafe_GetNativeAddress)},
++    {CC"putAddress",         CC"(" ADR "" ADR ")V",          FN_PTR(Unsafe_SetNativeAddress)},
+
+-    {CC"allocateMemory",     CC"(J)"ADR,                 FN_PTR(Unsafe_AllocateMemory)},
+-    {CC"reallocateMemory",   CC"("ADR"J)"ADR,            FN_PTR(Unsafe_ReallocateMemory)},
+-    {CC"freeMemory",         CC"("ADR")V",               FN_PTR(Unsafe_FreeMemory)},
+-
+-    {CC"objectFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
+-    {CC"staticFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_StaticFieldOffset)},
+-    {CC"staticFieldBase",    CC"("FLD")"OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
+-    {CC"ensureClassInitialized",CC"("CLS")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
+-    {CC"arrayBaseOffset",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
+-    {CC"arrayIndexScale",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayIndexScale)},
++    {CC"allocateMemory",     CC"(J)" ADR,                 FN_PTR(Unsafe_AllocateMemory)},
++    {CC"reallocateMemory",   CC"(" ADR "J)" ADR,            FN_PTR(Unsafe_ReallocateMemory)},
++    {CC"freeMemory",         CC"(" ADR ")V",               FN_PTR(Unsafe_FreeMemory)},
++
++    {CC"objectFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
++    {CC"staticFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_StaticFieldOffset)},
++    {CC"staticFieldBase",    CC"(" FLD ")" OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
++    {CC"ensureClassInitialized",CC"(" CLS ")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
++    {CC"arrayBaseOffset",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
++    {CC"arrayIndexScale",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayIndexScale)},
+     {CC"addressSize",        CC"()I",                    FN_PTR(Unsafe_AddressSize)},
+     {CC"pageSize",           CC"()I",                    FN_PTR(Unsafe_PageSize)},
+
+-    {CC"defineClass",        CC"("DC0_Args")"CLS,        FN_PTR(Unsafe_DefineClass0)},
+-    {CC"defineClass",        CC"("DC_Args")"CLS,         FN_PTR(Unsafe_DefineClass)},
+-    {CC"allocateInstance",   CC"("CLS")"OBJ,             FN_PTR(Unsafe_AllocateInstance)},
+-    {CC"monitorEnter",       CC"("OBJ")V",               FN_PTR(Unsafe_MonitorEnter)},
+-    {CC"monitorExit",        CC"("OBJ")V",               FN_PTR(Unsafe_MonitorExit)},
+-    {CC"tryMonitorEnter",    CC"("OBJ")Z",               FN_PTR(Unsafe_TryMonitorEnter)},
+-    {CC"throwException",     CC"("THR")V",               FN_PTR(Unsafe_ThrowException)},
+-    {CC"compareAndSwapObject", CC"("OBJ"J"OBJ""OBJ")Z",  FN_PTR(Unsafe_CompareAndSwapObject)},
+-    {CC"compareAndSwapInt",  CC"("OBJ"J""I""I"")Z",      FN_PTR(Unsafe_CompareAndSwapInt)},
+-    {CC"compareAndSwapLong", CC"("OBJ"J""J""J"")Z",      FN_PTR(Unsafe_CompareAndSwapLong)},
+-    {CC"putOrderedObject",   CC"("OBJ"J"OBJ")V",         FN_PTR(Unsafe_SetOrderedObject)},
+-    {CC"putOrderedInt",      CC"("OBJ"JI)V",             FN_PTR(Unsafe_SetOrderedInt)},
+-    {CC"putOrderedLong",     CC"("OBJ"JJ)V",             FN_PTR(Unsafe_SetOrderedLong)},
++    {CC"defineClass",        CC"(" DC0_Args ")" CLS,        FN_PTR(Unsafe_DefineClass0)},
++    {CC"defineClass",        CC"(" DC_Args ")" CLS,         FN_PTR(Unsafe_DefineClass)},
++    {CC"allocateInstance",   CC"(" CLS ")" OBJ,             FN_PTR(Unsafe_AllocateInstance)},
++    {CC"monitorEnter",       CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorEnter)},
++    {CC"monitorExit",        CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorExit)},
++    {CC"tryMonitorEnter",    CC"(" OBJ ")Z",               FN_PTR(Unsafe_TryMonitorEnter)},
++    {CC"throwException",     CC"(" THR ")V",               FN_PTR(Unsafe_ThrowException)},
++    {CC"compareAndSwapObject", CC"(" OBJ "J" OBJ "" OBJ ")Z",  FN_PTR(Unsafe_CompareAndSwapObject)},
++    {CC"compareAndSwapInt",  CC"(" OBJ "J""I""I"")Z",      FN_PTR(Unsafe_CompareAndSwapInt)},
++    {CC"compareAndSwapLong", CC"(" OBJ "J""J""J"")Z",      FN_PTR(Unsafe_CompareAndSwapLong)},
++    {CC"putOrderedObject",   CC"(" OBJ "J" OBJ ")V",         FN_PTR(Unsafe_SetOrderedObject)},
++    {CC"putOrderedInt",      CC"(" OBJ "JI)V",             FN_PTR(Unsafe_SetOrderedInt)},
++    {CC"putOrderedLong",     CC"(" OBJ "JJ)V",             FN_PTR(Unsafe_SetOrderedLong)},
+     {CC"park",               CC"(ZJ)V",                  FN_PTR(Unsafe_Park)},
+-    {CC"unpark",             CC"("OBJ")V",               FN_PTR(Unsafe_Unpark)}
++    {CC"unpark",             CC"(" OBJ ")V",               FN_PTR(Unsafe_Unpark)}
+ };
+
+ // These are the methods for 1.8.0
+ static JNINativeMethod methods_18[] = {
+-    {CC"getObject",        CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObject)},
+-    {CC"putObject",        CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObject)},
+-    {CC"getObjectVolatile",CC"("OBJ"J)"OBJ"",   FN_PTR(Unsafe_GetObjectVolatile)},
+-    {CC"putObjectVolatile",CC"("OBJ"J"OBJ")V",  FN_PTR(Unsafe_SetObjectVolatile)},
++    {CC"getObject",        CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObject)},
++    {CC"putObject",        CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObject)},
++    {CC"getObjectVolatile",CC"(" OBJ "J)" OBJ "",   FN_PTR(Unsafe_GetObjectVolatile)},
++    {CC"putObjectVolatile",CC"(" OBJ "J" OBJ ")V",  FN_PTR(Unsafe_SetObjectVolatile)},
+
+     DECLARE_GETSETOOP(Boolean, Z),
+     DECLARE_GETSETOOP(Byte, B),
+@@ -1602,36 +1602,36 @@
+     DECLARE_GETSETNATIVE(Float, F),
+     DECLARE_GETSETNATIVE(Double, D),
+
+-    {CC"getAddress",         CC"("ADR")"ADR,             FN_PTR(Unsafe_GetNativeAddress)},
+-    {CC"putAddress",         CC"("ADR""ADR")V",          FN_PTR(Unsafe_SetNativeAddress)},
++    {CC"getAddress",         CC"(" ADR ")" ADR,             FN_PTR(Unsafe_GetNativeAddress)},
++    {CC"putAddress",         CC"(" ADR "" ADR ")V",          FN_PTR(Unsafe_SetNativeAddress)},
+
+-    {CC"allocateMemory",     CC"(J)"ADR,                 FN_PTR(Unsafe_AllocateMemory)},
+-    {CC"reallocateMemory",   CC"("ADR"J)"ADR,            FN_PTR(Unsafe_ReallocateMemory)},
+-    {CC"freeMemory",         CC"("ADR")V",               FN_PTR(Unsafe_FreeMemory)},
+-
+-    {CC"objectFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
+-    {CC"staticFieldOffset",  CC"("FLD")J",               FN_PTR(Unsafe_StaticFieldOffset)},
+-    {CC"staticFieldBase",    CC"("FLD")"OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
+-    {CC"ensureClassInitialized",CC"("CLS")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
+-    {CC"arrayBaseOffset",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
+-    {CC"arrayIndexScale",    CC"("CLS")I",               FN_PTR(Unsafe_ArrayIndexScale)},
++    {CC"allocateMemory",     CC"(J)" ADR,                 FN_PTR(Unsafe_AllocateMemory)},
++    {CC"reallocateMemory",   CC"(" ADR "J)" ADR,            FN_PTR(Unsafe_ReallocateMemory)},
++    {CC"freeMemory",         CC"(" ADR ")V",               FN_PTR(Unsafe_FreeMemory)},
++
++    {CC"objectFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_ObjectFieldOffset)},
++    {CC"staticFieldOffset",  CC"(" FLD ")J",               FN_PTR(Unsafe_StaticFieldOffset)},
++    {CC"staticFieldBase",    CC"(" FLD ")" OBJ,             FN_PTR(Unsafe_StaticFieldBaseFromField)},
++    {CC"ensureClassInitialized",CC"(" CLS ")V",            FN_PTR(Unsafe_EnsureClassInitialized)},
++    {CC"arrayBaseOffset",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayBaseOffset)},
++    {CC"arrayIndexScale",    CC"(" CLS ")I",               FN_PTR(Unsafe_ArrayIndexScale)},
+     {CC"addressSize",        CC"()I",                    FN_PTR(Unsafe_AddressSize)},
+     {CC"pageSize",           CC"()I",                    FN_PTR(Unsafe_PageSize)},
+
+-    {CC"defineClass",        CC"("DC_Args")"CLS,         FN_PTR(Unsafe_DefineClass)},
+-    {CC"allocateInstance",   CC"("CLS")"OBJ,             FN_PTR(Unsafe_AllocateInstance)},
+-    {CC"monitorEnter",       CC"("OBJ")V",               FN_PTR(Unsafe_MonitorEnter)},
+-    {CC"monitorExit",        CC"("OBJ")V",               FN_PTR(Unsafe_MonitorExit)},
+-    {CC"tryMonitorEnter",    CC"("OBJ")Z",               FN_PTR(Unsafe_TryMonitorEnter)},
+-    {CC"throwException",     CC"("THR")V",               FN_PTR(Unsafe_ThrowException)},
+-    {CC"compareAndSwapObject", CC"("OBJ"J"OBJ""OBJ")Z",  FN_PTR(Unsafe_CompareAndSwapObject)},
+-    {CC"compareAndSwapInt",  CC"("OBJ"J""I""I"")Z",      FN_PTR(Unsafe_CompareAndSwapInt)},
+-    {CC"compareAndSwapLong", CC"("OBJ"J""J""J"")Z",      FN_PTR(Unsafe_CompareAndSwapLong)},
+-    {CC"putOrderedObject",   CC"("OBJ"J"OBJ")V",         FN_PTR(Unsafe_SetOrderedObject)},
+-    {CC"putOrderedInt",      CC"("OBJ"JI)V",             FN_PTR(Unsafe_SetOrderedInt)},
+-    {CC"putOrderedLong",     CC"("OBJ"JJ)V",             FN_PTR(Unsafe_SetOrderedLong)},
++    {CC"defineClass",        CC"(" DC_Args ")" CLS,         FN_PTR(Unsafe_DefineClass)},
++    {CC"allocateInstance",   CC"(" CLS ")" OBJ,             FN_PTR(Unsafe_AllocateInstance)},
++    {CC"monitorEnter",       CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorEnter)},
++    {CC"monitorExit",        CC"(" OBJ ")V",               FN_PTR(Unsafe_MonitorExit)},
++    {CC"tryMonitorEnter",    CC"(" OBJ ")Z",               FN_PTR(Unsafe_TryMonitorEnter)},
++    {CC"throwException",     CC"(" THR ")V",               FN_PTR(Unsafe_ThrowException)},
++    {CC"compareAndSwapObject", CC"(" OBJ "J" OBJ "" OBJ ")Z",  FN_PTR(Unsafe_CompareAndSwapObject)},
++    {CC"compareAndSwapInt",  CC"(" OBJ "J""I""I"")Z",      FN_PTR(Unsafe_CompareAndSwapInt)},
++    {CC"compareAndSwapLong", CC"(" OBJ "J""J""J"")Z",      FN_PTR(Unsafe_CompareAndSwapLong)},
++    {CC"putOrderedObject",   CC"(" OBJ "J" OBJ ")V",         FN_PTR(Unsafe_SetOrderedObject)},
++    {CC"putOrderedInt",      CC"(" OBJ "JI)V",             FN_PTR(Unsafe_SetOrderedInt)},
++    {CC"putOrderedLong",     CC"(" OBJ "JJ)V",             FN_PTR(Unsafe_SetOrderedLong)},
+     {CC"park",               CC"(ZJ)V",                  FN_PTR(Unsafe_Park)},
+-    {CC"unpark",             CC"("OBJ")V",               FN_PTR(Unsafe_Unpark)}
++    {CC"unpark",             CC"(" OBJ ")V",               FN_PTR(Unsafe_Unpark)}
+ };
+
+ JNINativeMethod loadavg_method[] = {
+@@ -1639,28 +1639,28 @@
+ };
+
+ JNINativeMethod prefetch_methods[] = {
+-    {CC"prefetchRead",       CC"("OBJ"J)V",              FN_PTR(Unsafe_PrefetchRead)},
+-    {CC"prefetchWrite",      CC"("OBJ"J)V",              FN_PTR(Unsafe_PrefetchWrite)},
+-    {CC"prefetchReadStatic", CC"("OBJ"J)V",              FN_PTR(Unsafe_PrefetchRead)},
+-    {CC"prefetchWriteStatic",CC"("OBJ"J)V",              FN_PTR(Unsafe_PrefetchWrite)}
++    {CC"prefetchRead",       CC"(" OBJ "J)V",              FN_PTR(Unsafe_PrefetchRead)},
++    {CC"prefetchWrite",      CC"(" OBJ "J)V",              FN_PTR(Unsafe_PrefetchWrite)},
++    {CC"prefetchReadStatic", CC"(" OBJ "J)V",              FN_PTR(Unsafe_PrefetchRead)},
++    {CC"prefetchWriteStatic",CC"(" OBJ "J)V",              FN_PTR(Unsafe_PrefetchWrite)}
+ };
+
+ JNINativeMethod memcopy_methods_17[] = {
+-    {CC"copyMemory",         CC"("OBJ"J"OBJ"JJ)V",       FN_PTR(Unsafe_CopyMemory2)},
+-    {CC"setMemory",          CC"("OBJ"JJB)V",            FN_PTR(Unsafe_SetMemory2)}
++    {CC"copyMemory",         CC"(" OBJ "J" OBJ "JJ)V",       FN_PTR(Unsafe_CopyMemory2)},
++    {CC"setMemory",          CC"(" OBJ "JJB)V",            FN_PTR(Unsafe_SetMemory2)}
+ };
+
+ JNINativeMethod memcopy_methods_15[] = {
+-    {CC"setMemory",          CC"("ADR"JB)V",             FN_PTR(Unsafe_SetMemory)},
+-    {CC"copyMemory",         CC"("ADR ADR"J)V",          FN_PTR(Unsafe_CopyMemory)}
++    {CC"setMemory",          CC"(" ADR "JB)V",             FN_PTR(Unsafe_SetMemory)},
++    {CC"copyMemory",         CC"(" ADR ADR "J)V",          FN_PTR(Unsafe_CopyMemory)}
+ };
+
+ JNINativeMethod anonk_methods[] = {
+-    {CC"defineAnonymousClass", CC"("DAC_Args")"CLS,      FN_PTR(Unsafe_DefineAnonymousClass)},
++    {CC"defineAnonymousClass", CC"(" DAC_Args ")" CLS,      FN_PTR(Unsafe_DefineAnonymousClass)},
+ };
+
+ JNINativeMethod lform_methods[] = {
+-    {CC"shouldBeInitialized",CC"("CLS")Z",               FN_PTR(Unsafe_ShouldBeInitialized)},
++    {CC"shouldBeInitialized",CC"(" CLS ")Z",               FN_PTR(Unsafe_ShouldBeInitialized)},
+ };
+
+ JNINativeMethod fence_methods[] = {
+--- hotspot/src/share/vm/prims/whitebox.cpp.orig	2015-09-02 18:55:43.000000000 +0200
++++ hotspot/src/share/vm/prims/whitebox.cpp	2015-09-02 18:58:04.000000000 +0200
+@@ -157,8 +157,8 @@
+
+ WB_ENTRY(void, WB_PrintHeapSizes(JNIEnv* env, jobject o)) {
+   CollectorPolicy * p = Universe::heap()->collector_policy();
+-  gclog_or_tty->print_cr("Minimum heap "SIZE_FORMAT" Initial heap "
+-    SIZE_FORMAT" Maximum heap "SIZE_FORMAT" Min alignment "SIZE_FORMAT" Max alignment "SIZE_FORMAT,
++  gclog_or_tty->print_cr("Minimum heap " SIZE_FORMAT " Initial heap "
++    SIZE_FORMAT " Maximum heap " SIZE_FORMAT " Min alignment " SIZE_FORMAT " Max alignment " SIZE_FORMAT,
+     p->min_heap_byte_size(), p->initial_heap_byte_size(), p->max_heap_byte_size(),
+     p->space_alignment(), p->heap_alignment());
+ }
+@@ -193,8 +193,8 @@
+          Universe::narrow_oop_use_implicit_null_checks() )) {
+     tty->print_cr("WB_ReadFromNoaccessArea method is useless:\n "
+                   "\tUseCompressedOops is %d\n"
+-                  "\trhs.base() is "PTR_FORMAT"\n"
+-                  "\tUniverse::narrow_oop_base() is "PTR_FORMAT"\n"
++                  "\trhs.base() is " PTR_FORMAT "\n"
++                  "\tUniverse::narrow_oop_base() is " PTR_FORMAT "\n"
+                   "\tUniverse::narrow_oop_use_implicit_null_checks() is %d",
+                   UseCompressedOops,
+                   rhs.base(),
+@@ -247,8 +247,8 @@
+
+ WB_ENTRY(jint, WB_StressVirtualSpaceResize(JNIEnv* env, jobject o,
+         jlong reserved_space_size, jlong magnitude, jlong iterations))
+-  tty->print_cr("reservedSpaceSize="JLONG_FORMAT", magnitude="JLONG_FORMAT", "
+-                "iterations="JLONG_FORMAT"\n", reserved_space_size, magnitude,
++  tty->print_cr("reservedSpaceSize=" JLONG_FORMAT ", magnitude=" JLONG_FORMAT ", "
++                "iterations=" JLONG_FORMAT "\n", reserved_space_size, magnitude,
+                 iterations);
+   if (reserved_space_size < 0 || magnitude < 0 || iterations < 0) {
+     tty->print_cr("One of variables printed above is negative. Can't proceed.\n");
+--- hotspot/src/share/vm/oops/markOop.cpp.orig	2015-09-10 13:28:34.918039653 +0200
++++ hotspot/src/share/vm/oops/markOop.cpp	2015-09-10 13:29:26.890039849 +0200
+@@ -49,7 +49,7 @@
+         st->print("monitor=NULL");
+       else {
+         BasicLock * bl = (BasicLock *) mon->owner();
+-        st->print("monitor={count="INTPTR_FORMAT",waiters="INTPTR_FORMAT",recursions="INTPTR_FORMAT",owner="INTPTR_FORMAT"}",
++        st->print("monitor={count=" INTPTR_FORMAT ",waiters=" INTPTR_FORMAT ",recursions=" INTPTR_FORMAT ",owner=" INTPTR_FORMAT "}",
+                 mon->count(), mon->waiters(), mon->recursions(), p2i(bl));
+       }
+     } else {

@@ -1,0 +1,46 @@
+--- icedtea-2.6.1/acinclude.m4
++++ icedtea-2.6.1/acinclude.m4
+@@ -906,6 +906,22 @@
+   AC_SUBST(VERSION_SUFFIX, $version_suffix)
+ ])
+ 
++AC_DEFUN([AC_CHECK_WITH_CC_FOR_BUILD],
++[
++  AC_MSG_CHECKING(for compiler used for subsidiary programs)
++  AC_ARG_WITH([cc-for-build],
++              [AS_HELP_STRING(--with-cc-for-build,specify the compiler for subsidiary (helper) programs)],
++  [
++    CC_FOR_BUILD="${withval}"
++  ],
++  [
++    CC_FOR_BUILD="\$(CC)"
++  ])
++  AC_MSG_RESULT(${CC_FOR_BUILD})
++  AC_SUBST(CC_FOR_BUILD)
++])
++
++
+ AC_DEFUN_ONCE([IT_WITH_GCJ],
+ [
+   AC_MSG_CHECKING([whether to compile ecj natively])
+--- icedtea-2.6.1/configure.ac.orig	2015-07-24 09:08:33.866018127 +0200
++++ icedtea-2.6.1/configure.ac	2015-07-24 09:08:40.458018002 +0200
+@@ -22,6 +22,8 @@
+ AC_PROG_CC
+ AC_PROG_CXX
+ 
++AC_CHECK_WITH_CC_FOR_BUILD
++
+ IT_FIND_TOOLS([MAKE], [gmake make])
+ IT_FIND_TOOL([GZIP], [gzip])
+ IT_FIND_TOOL([ANT], [ant])
+--- icedtea-2.6.1/Makefile.am
++++ icedtea-2.6.1/Makefile.am
+@@ -605,6 +605,7 @@
+ 	FT2_LIBS="$(FREETYPE2_LIBS)" \
+ 	ALT_PARALLEL_COMPILE_JOBS="$(PARALLEL_JOBS)" \
+ 	HOTSPOT_BUILD_JOBS="$(PARALLEL_JOBS)" \
++	CC_FOR_BUILD="$(CC_FOR_BUILD)" \
+ 	OE_CFLAGS="$(OE_CFLAGS)" \
+ 	OE_CPPFLAGS="$(OE_CPPFLAGS)" \
+ 	OE_CXXFLAGS="$(OE_CXXFLAGS)" \

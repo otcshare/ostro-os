@@ -27,7 +27,13 @@ inherit native
 do_compile() {
   # Create the start script
   echo "#!/bin/sh" > ecj-bootstrap
-  echo "ECJ_JAR=${STAGING_DATADIR}/java/${JAR}" >> ecj-bootstrap
+
+  # get absolute path to parent directory, and use that as base path for the jar
+  echo "SH_DIR=\`dirname "\$0"\`" >> ecj-bootstrap
+  echo "CURRENT_DIR=\`cd "\${SH_DIR}" && pwd\`" >> ecj-bootstrap
+  echo "PARENT_DIR=\`dirname \${CURRENT_DIR}\`" >> ecj-bootstrap
+
+  echo "ECJ_JAR=\${PARENT_DIR}/share/java/${JAR}" >> ecj-bootstrap
   echo "RUNTIME=java" >> ecj-bootstrap
   cat ecj.in >> ecj-bootstrap
 }

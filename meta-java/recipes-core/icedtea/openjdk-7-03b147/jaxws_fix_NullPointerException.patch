@@ -1,0 +1,21 @@
+Upstream-Status: Backport [https://java.net/projects/jaxb/sources/v2/revision/1864898]
+
+Backport patch of jaxb to fix NullPointerException issue.
+
+Signed-off-by: Kai Kang <kai.kang@windriver.com>
+---
+diff --git a/openjdk/jaxws/sources/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/ClassBeanInfoImpl.java b/openjdk/jaxws/sources/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/ClassBeanInfoImpl.java
+index dc88d45..cc4f6e9 100644
+--- a/openjdk/jaxws/sources/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/ClassBeanInfoImpl.java
++++ b/openjdk/jaxws/sources/jaxws_src/src/com/sun/xml/internal/bind/v2/runtime/ClassBeanInfoImpl.java
+@@ -187,7 +187,9 @@ public final class ClassBeanInfoImpl<BeanT> extends JaxBeanInfo<BeanT> implement
+     private void checkOverrideProperties(Property p) {
+         ClassBeanInfoImpl bi = this;
+         while ((bi = bi.superClazz) != null) {
+-            for (Property superProperty : bi.properties) {
++            Property[] props = bi.properties;
++            if (props == null) break;
++            for (Property superProperty : props) {
+                 if (superProperty == null) break;
+                 String spName = superProperty.getFieldName();
+                 if ((spName != null) && (spName.equals(p.getFieldName()))) {
