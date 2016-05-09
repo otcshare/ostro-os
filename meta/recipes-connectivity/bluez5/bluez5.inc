@@ -23,6 +23,10 @@ SRC_URI = "\
     file://run-ptest \
     ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', '', 'file://0001-Allow-using-obexd-without-systemd-in-the-user-sessio.patch', d)} \
     file://0001-tests-add-a-target-for-building-tests-without-runnin.patch \
+    file://bluetooth.service \
+    file://bluez.conf \
+    file://bluetooth.conf \
+    file://org.bluez.service \
 "
 S = "${WORKDIR}/bluez-${PV}"
 
@@ -65,13 +69,28 @@ do_install_append() {
         for f in ${NOINST_TOOLS} ; do
 	    install -m 755 ${B}/$f ${D}/${bindir}
 	done
+
+    # Install updated systemd service file
+    install -d ${D}${systemd_unitdir}/system
+    install -m 0644 ${WORKDIR}/bluetooth.service ${D}${systemd_unitdir}/system/
+
+    # Install sysusers file
+    install -d ${D}${libdir}/sysusers.d
+    install -m 0644 ${WORKDIR}/bluez.conf ${D}${libdir}/sysusers.d/
+
+    # Install D-Bus policy file
+    install -d ${D}${sysconfdir}/dbus-1/system.d
+    install -m 0644 ${WORKDIR}/bluetooth.conf ${D}${sysconfdir}/dbus-1/system.d/
+
+    # replace the D-Bus activated service file
+    install -m 0644 ${WORKDIR}/org.bluez.service ${D}${datadir}/dbus-1/system-services/
 }
 
 ALLOW_EMPTY_libasound-module-bluez = "1"
 PACKAGES =+ "libasound-module-bluez ${PN}-testtools ${PN}-obex ${PN}-noinst-tools"
 
 FILES_libasound-module-bluez = "${libdir}/alsa-lib/lib*.so ${datadir}/alsa"
-FILES_${PN} += "${libdir}/bluetooth/plugins/*.so ${base_libdir}/udev/ ${nonarch_base_libdir}/udev/ ${systemd_unitdir}/ ${datadir}/dbus-1"
+FILES_${PN} += "${libdir}/bluetooth/plugins/*.so ${base_libdir}/udev/ ${nonarch_base_libdir}/udev/ ${systemd_unitdir}/ ${datadir}/dbus-1 ${libdir}/sysusers.d"
 FILES_${PN}-dev += "\
   ${libdir}/bluetooth/plugins/*.la \
   ${libdir}/alsa-lib/*.la \
