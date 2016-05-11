@@ -1,0 +1,17 @@
+[Unit]
+Description=WPA supplicant
+Before=network.target
+Wants=network.target
+
+[Service]
+Type=dbus
+BusName=fi.epitest.hostap.WPASupplicant
+ExecStart=/usr/sbin/wpa_supplicant -u
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+ProtectHome=true
+ProtectSystem=full
+User=wpa_supplicant
+SupplementaryGroups=rfkill
+
+[Install]
+WantedBy=multi-user.target
