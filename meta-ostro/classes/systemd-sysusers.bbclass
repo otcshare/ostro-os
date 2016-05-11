@@ -25,6 +25,11 @@ systemd_sysusers_create () {
                     home=$(echo "$remaining" | cut -d '"' -f 3 | sed -e 's/^ *//' -e 's/ *$//')
                     perform_useradd "${IMAGE_ROOTFS}" "$opts $uid --home-dir ${home:-/} --shell /sbin/nologin --comment \"$comment\" $name" 10
                     ;;
+                  m)
+                   perform_useradd "${IMAGE_ROOTFS}" "$opts --home-dir / --shell /sbin/nologin $name"
+                   perform_groupadd "${IMAGE_ROOTFS}" "$opts $id"
+                   perform_usermod "${IMAGE_ROOTFS}" "--root ${IMAGE_ROOTFS} --append --groups $id $name"
+                    ;;
                   "")
                     ;;
                   *)
