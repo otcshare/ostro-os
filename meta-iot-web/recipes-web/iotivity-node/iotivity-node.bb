@@ -8,7 +8,7 @@ DEPENDS = "nodejs-native glib-2.0 iotivity"
 RDEPENDS_${PN} += "bash iotivity-resource"
 
 SRC_URI = "git://github.com/otcshare/iotivity-node.git;protocol=https"
-SRCREV = "38f76790e2d0f4960b0f3360c7bbcdf5a69907f4"
+SRCREV = "4ebcfdfd11fe608392ed5ae37187decaec1c06b7"
 
 S = "${WORKDIR}/git"
 INSANE_SKIP_${PN} += "ldflags staticdev"

@@ -14,7 +14,7 @@ SRC_URI = "git://git@github.com/01org/iot-rest-api-server.git;protocol=https \
            file://${PN}-ipv4.conf \
            file://${PN}-ipv6.conf \
           "
-SRCREV = "c9fa97f8688de2a89cde0c0fa1aadcbbe58c9e08"
+SRCREV = "1e12e86ac1a29b875427dabe0cae0a685471d503"
 
 S = "${WORKDIR}/git"
 
