@@ -17,7 +17,7 @@ AmbientCapabilities=CAP_MAC_OVERRIDE CAP_KILL CAP_NET_ADMIN CAP_NET_BIND_SERVICE
 ProtectHome=true
 ProtectSystem=full
 User=connman
-SupplementaryGroups=bluetooth wlan
+SupplementaryGroups=bluetooth wlan rfkill
 
 [Install]
 WantedBy=multi-user.target
