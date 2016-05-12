@@ -501,3 +501,50 @@ ostro_image_disable_firstboot () {
     done
 }
 ROOTFS_POSTPROCESS_COMMAND += "ostro_image_disable_firstboot; "
+
+# Defining serial consoles via the "console" boot parameter only works
+# for at most one console. Documentation/serial-console.txt explicitly
+# says "Note that you can only define one console per device type
+# (serial, video)".
+#
+# So for images where we need more than one console, we have to
+# configure systemd explicitly. We cover all consoles, just to be
+# on the safe side (can't know for sure which of these are also
+# given via "console" boot parameter).
+#
+# For one console, we rely on the boot parameter.
+#
+# This mirrors what systemd-serialgetty.bb does in other distros.
+# In Ostro OS we are not using systemd-serialgetty.bb because it is
+# less flexible (has to be the same for all images, while here it
+# can be set differently for different images).
+ostro_image_system_serialgetty() {
+    if [ $(echo '${SERIAL_CONSOLES}' | wc -w) -gt 1 ]; then
+        # Make it possible to override the baud rate by moving
+        # 115200,38400,9600 into the BAUDRATE environment variable.
+        # Default is set here, but also overridden for each console
+        # actived below.
+        #
+        # ExecStart=-/sbin/agetty --autologin root --keep-baud 115200,38400,9600 %I $TERM
+        # ->
+        # Environment="BAUDRATE=115200,38400,9600"
+        # ExecStart=-/sbin/agetty --autologin root --keep-baud $BAUDRATE %I $TERM
+        sed -i -e 's/\(ExecStart=.* \)\([0-9,]*00\)/Environment="BAUDRATE=\2"\n\1$BAUDRATE/' '${IMAGE_ROOTFS}${systemd_system_unitdir}/serial-getty@.service'
+        tmp="${SERIAL_CONSOLES}"
+	for entry in $tmp; do
+            baudrate=`echo $entry | sed 's/\;.*//'`
+            ttydev=`echo $entry | sed -e 's/^[0-9]*\;//' -e 's/\;.*//'`
+            # enable the service
+            install -d ${IMAGE_ROOTFS}${systemd_system_unitdir}/getty.target.wants
+            lnr ${IMAGE_ROOTFS}${systemd_system_unitdir}/serial-getty@.service \
+                ${IMAGE_ROOTFS}${systemd_system_unitdir}/getty.target.wants/serial-getty@$ttydev.service
+            install -d ${IMAGE_ROOTFS}${systemd_system_unitdir}/serial-getty@$ttydev.service.d
+            cat >${IMAGE_ROOTFS}${systemd_system_unitdir}/serial-getty@$ttydev.service.d/baudrate.conf <<EOF
+[Service]
+Environment="BAUDRATE=$baudrate"
+EOF
+            chmod 0644 ${IMAGE_ROOTFS}${systemd_system_unitdir}/serial-getty@$ttydev.service.d/baudrate.conf
+	done
+    fi
+}
+ROOTFS_POSTPROCESS_COMMAND += "ostro_image_system_serialgetty; "

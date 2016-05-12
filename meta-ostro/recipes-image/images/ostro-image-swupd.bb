@@ -25,9 +25,19 @@ OSTRO_IMAGE_EXTRA_FEATURES += "swupd"
 # with the development tools and files.
 #
 # Keeping the number of bundles as low as possible is good for build
-# performance, too.
+# performance, too. On the other hand, more than one simplifies
+# testing of swupd operations. So here we define two bundles, one
+# that gets included in ostro-image-swupd-dev (whole world plus
+# development and debug files) and one bundle not included
+# in any image yet (whole world plus ptest packages).
+#
+# Beware that removing bundles (and thus renaming) is currently
+# not supported by swupd client. When the need arises, the old
+# bundle has to be kept with some minimal content (see also
+# https://bugzilla.yoctoproject.org/show_bug.cgi?id=9493).
 SWUPD_BUNDLES ?= " \
     world-dev \
+    world-ptest \
 "
 
 # os-core defined via additional image features maintained in ostro-image.bbclass.
@@ -56,18 +66,20 @@ BUNDLE_CONTENTS_WORLD ?= " \
     ${OSTRO_IMAGE_INSTALL_DEV} \
 "
 
-BUNDLE_CONTENTS[world] = " \
-    ${BUNDLE_CONTENTS_WORLD} \
-"
-
-# meta-swupd will switch from mapping "world-dev" to "world" +
-# ptest-pkgs. Instead it will expect us to provide the following
-# two variables. Already do that now to ease the transition:
+# Same content in both bundles, only the additional features
+# which choose additional packages are different.
 BUNDLE_CONTENTS[world-dev] = " \
     ${BUNDLE_CONTENTS_WORLD} \
 "
 BUNDLE_FEATURES[world-dev] = " \
     dev-pkgs \
+    dbg-pkgs \
+"
+BUNDLE_CONTENTS[world-ptest] = " \
+    ${BUNDLE_CONTENTS_WORLD} \
+"
+BUNDLE_FEATURES[world-ptest] = " \
+    ptest-pkgs \
 "
 
 # When swupd bundles are enabled, choose explicitly which images
@@ -95,10 +107,8 @@ SWUPD_IMAGES ?= " \
     all \
 "
 
-# In practice the same as "all" at the moment, but conceptually different
-# and thus defined separately.
 SWUPD_IMAGES[dev] = " \
-    ${SWUPD_BUNDLES} \
+    world-dev \
 "
 SWUPD_IMAGES[all] = " \
     ${SWUPD_BUNDLES} \
