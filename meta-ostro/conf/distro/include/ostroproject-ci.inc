@@ -31,6 +31,9 @@ SDKMACHINE ?= "x86_64"
 # Generate source mirror tarballs:
 BB_GENERATE_MIRROR_TARBALLS = "1"
 
+# Do not allow building of anything that hasn't been checked beforehand.
+SUPPORTED_RECIPES_CHECK = "fatal"
+
 # Configure images in "development mode".
 require conf/distro/include/ostro-os-development.inc
 
