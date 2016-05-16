@@ -24,6 +24,10 @@ SRC_URI = "http://w1.fi/releases/wpa_supplicant-${PV}.tar.gz  \
            file://wpa_supplicant.conf \
            file://wpa_supplicant.conf-sane \
            file://99_wpa_supplicant \
+           file://sysuser-wpa_supplicant.conf \
+           file://dbus-wpa_supplicant.conf \
+           file://wpa_supplicant.service \
+           file://fi.w1.wpa_supplicant1.service \
           "
 SRC_URI[md5sum] = "96ff75c3a514f1f324560a2376f13110"
 SRC_URI[sha256sum] = "cce55bae483b364eae55c35ba567c279be442ed8bab5b80a3c7fb0d057b9b316"
@@ -33,7 +37,6 @@ S = "${WORKDIR}/wpa_supplicant-${PV}"
 PACKAGES_prepend = "wpa-supplicant-passphrase wpa-supplicant-cli "
 FILES_wpa-supplicant-passphrase = "${bindir}/wpa_passphrase"
 FILES_wpa-supplicant-cli = "${sbindir}/wpa_cli"
-FILES_${PN} += "${datadir}/dbus-1/system-services/*"
 CONFFILES_${PN} += "${sysconfdir}/wpa_supplicant.conf"
 
 do_configure () {
@@ -76,7 +79,7 @@ do_install () {
 	install -m 644 wpa_supplicant/README ${WORKDIR}/wpa_supplicant.conf ${D}${docdir}/wpa_supplicant
 
 	install -d ${D}${sysconfdir}
-	install -m 600 ${WORKDIR}/wpa_supplicant.conf-sane ${D}${sysconfdir}/wpa_supplicant.conf
+	install -m 644 ${WORKDIR}/wpa_supplicant.conf-sane ${D}${sysconfdir}/wpa_supplicant.conf
 
 	install -d ${D}${sysconfdir}/network/if-pre-up.d/
 	install -d ${D}${sysconfdir}/network/if-post-down.d/
@@ -85,19 +88,28 @@ do_install () {
 	cd ${D}${sysconfdir}/network/ && \
 	ln -sf ../if-pre-up.d/wpa-supplicant if-post-down.d/wpa-supplicant
 
-	install -d ${D}/${sysconfdir}/dbus-1/system.d
-	install -m 644 ${S}/wpa_supplicant/dbus/dbus-wpa_supplicant.conf ${D}/${sysconfdir}/dbus-1/system.d
-	install -d ${D}/${datadir}/dbus-1/system-services
-	install -m 644 ${S}/wpa_supplicant/dbus/*.service ${D}/${datadir}/dbus-1/system-services
+	install -d ${D}${sysconfdir}/dbus-1/system.d
+	install -m 644 ${WORKDIR}/dbus-wpa_supplicant.conf ${D}${sysconfdir}/dbus-1/system.d
+
+	install -d ${D}${datadir}/dbus-1/system-services
+	install -m 644 ${WORKDIR}/fi.w1.wpa_supplicant1.service ${D}${datadir}/dbus-1/system-services
 
 	if ${@bb.utils.contains('DISTRO_FEATURES','systemd','true','false',d)}; then
-		install -d ${D}/${systemd_unitdir}/system
-		install -m 644 ${S}/wpa_supplicant/systemd/*.service ${D}/${systemd_unitdir}/system
+		install -d ${D}${systemd_unitdir}/system
+		install -m 644 ${S}/wpa_supplicant/systemd/*.service ${D}${systemd_unitdir}/system
+        install -m 644 ${WORKDIR}/wpa_supplicant.service ${D}${systemd_unitdir}/system
 	fi
 
 	install -d ${D}/etc/default/volatiles
 	install -m 0644 ${WORKDIR}/99_wpa_supplicant ${D}/etc/default/volatiles
+
+	install -d ${D}${libdir}/sysusers.d
+	install -m 0644 ${WORKDIR}/sysuser-wpa_supplicant.conf ${D}${libdir}/sysusers.d/wpa_supplicant.conf
 }
+
+SYSTEMD_SERVICE_${PN} = "wpa_supplicant.service"
+
+FILES_${PN} += "${libdir}/sysusers.d ${systemd_unitdir}/system ${datadir}/dbus-1/system-services"
 
 pkg_postinst_wpa-supplicant () {
 	# If we're offline, we don't need to do this.

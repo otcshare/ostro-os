@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=fi.w1.wpa_supplicant1
+Exec=/bin/false
+User=wpa_supplicant
+SystemdService=wpa_supplicant.service
