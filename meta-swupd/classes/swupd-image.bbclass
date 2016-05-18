@@ -13,7 +13,7 @@
 # * Ensure the OS_VERSION variable is assigned an integer value and increased
 #   before each image build which should generate swupd update artefacts.
 #
-# See HOWTO.md for more information.
+# See docs/Guide.md for more information.
 
 DEPLOY_DIR_SWUPDBASE = "${DEPLOY_DIR}/swupd/${MACHINE}"
 SWUPD_ROOTFS_MANIFEST_SUFFIX = "-files-in-image.txt"
@@ -58,7 +58,7 @@ python () {
     pn = d.getVar('PN', True)
 
     # We set the path to the rootfs folder of the mega image here so that
-    # it's simple to refer to later
+    # it's simple to refer to later.
     megarootfs = d.getVar('IMAGE_ROOTFS', True)
     if havebundles:
         megarootfs = megarootfs.replace('/' + pn +'/', '/bundle-%s-mega/' % (pn_base or pn))
@@ -81,26 +81,19 @@ python () {
         pseudo_state = d.expand('${TMPDIR}/work-shared/${PN_BASE}/pseudo')
         d.setVar('PSEUDO_LOCALSTATEDIR', pseudo_state)
 
-        # Non-base (bundle) images which aren't the mega image must depend on
-        # the base image having been built and its contents staged in
-        # DEPLOY_DIR_SWUPD so that those contents can be compared against in
-        # the do_prune_bundle task
-        bundle_name = d.getVar('BUNDLE_NAME', True) or ""
-        if bundle_name == 'mega':
+        # Non mega virtual images must depend on the mega image having been
+        # built, as they will copy contents from there
+        if d.getVar('BUNDLE_NAME', True) == 'mega':
             return
-        base_copy = (' %s:do_copy_bundle_contents' % pn_base)
-        d.appendVarFlag('do_prune_bundle', 'depends', base_copy)
-        # The bundle contents will be copied from the mega image rootfs, thus
-        # we need to ensure that the mega image is finished building before
-        # we try and perform any bundle contents copying for other images
-        mega_image = (' bundle-%s-mega:do_image_complete' % pn_base)
-        d.appendVarFlag('do_copy_bundle_contents', 'depends', mega_image)
+
+        mega_name = (' bundle-%s-mega:do_image_complete' % pn_base)
+        d.appendVarFlag('do_image', 'depends', mega_name)
 
         return
 
     # We use a shared Pseudo database in order to ensure that all tasks have
     # full awareness of the files created for the base image recipe and each
-    # of its virtual recipes.
+    # of its virtual recipes (primarily the mega image).
     # However, we must be careful with the pseudo database and managing
     # database lifecycles in order to avoid confusion should inode numbers be
     # reused when files are deleted outside of pseudo's awareness.
@@ -109,11 +102,15 @@ python () {
 
     deploy_dir = d.expand('${DEPLOY_DIR_SWUPDBASE}/${IMAGE_BASENAME}')
     d.setVar('DEPLOY_DIR_SWUPD', deploy_dir)
+    # do_stage_bundle_contents requires ${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}
+    varflags = '%s/image/%s' % (deploy_dir, ver)
+    d.setVarFlag('do_stage_bundle_contents', 'dirs', varflags)
+    # do_swupd_update requires the full swupd directory hierarchy
     varflags = '%s/image %s/empty %s/www %s' % (deploy_dir, deploy_dir, deploy_dir, deploy_dir)
     d.setVarFlag('do_swupd_update', 'dirs', varflags)
 
     # For the base image only, set the BUNDLE_NAME to os-core and generate the
-    # virtual images for each bundle and the mega image
+    # virtual image for the mega image
     d.setVar('BUNDLE_NAME', 'os-core')
 
     bundles = (d.getVar('SWUPD_BUNDLES', True) or "").split()
@@ -133,15 +130,6 @@ python () {
     for bndl in bundles:
         check_reserved_name(bndl)
 
-    # Generate virtual images for each of the bundles, the base image + the
-    # bundle contents. Add each virtual image's do_prune_bundle task as a
-    # dependency of the base image as we can't generate the update until all
-    # dependent images are done with their build, 'chroot' populate and pruning
-    for bndl in bundles:
-        extended.append('swupdbundle:%s' % bndl)
-        dep = ' bundle-%s-%s:do_prune_bundle' % (pn, bndl)
-        d.appendVarFlag ('do_swupd_update', 'depends', dep)
-
     if havebundles:
         extended.append('swupdbundle:mega')
 
@@ -159,7 +147,8 @@ python () {
     # the bundle images.
     if havebundles:
         mega_name = (' bundle-%s-mega:do_image_complete' % pn)
-        d.appendVarFlag('do_rootfs', 'depends', mega_name)
+        d.appendVarFlag('do_image', 'depends', mega_name)
+        d.appendVarFlag('do_stage_swupd_inputs', 'depends', mega_name)
 }
 
 def copyxattrtree(src, dst):
@@ -170,6 +159,28 @@ def copyxattrtree(src, dst):
     # See the comment on tar in meta/classes/image_types.bbclass
     cmd = "tar --xattrs --xattrs-include='*' -cf - -C %s -p . | tar -p --xattrs --xattrs-include='*' -xf - -C %s" % (src, dst)
     oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+
+def copyxattrfiles(d, filelist, src, dst):
+    import subprocess
+
+    def pathtostring(path):
+        return path.replace('/', '-')
+
+    bb.debug(4, 'Copying xattr files from %s to %s' % (src, dst))
+    bb.utils.mkdirhier(dst)
+    files = sorted(filelist)
+
+    copyfile = '%s/copyxattrfiles-%s-%s.txt' % (d.getVar('WORKDIR', True), pathtostring(src), pathtostring(dst))
+    if os.path.exists(copyfile):
+        os.remove(copyfile)
+    with open(copyfile, 'w') as fdest:
+        fdest.write('-C%s\n' % src)
+        for f in files:
+            fdest.write('%s\n' % f)
+
+    cmd = "tar --xattrs --xattrs-include='*' --no-recursion -cf - -T %s -p | tar -p --xattrs --xattrs-include='*' -xf - -C %s" % (copyfile, dst)
+    oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+    os.remove(copyfile)
 
 # swupd-client expects a bundle subscription to exist for each
 # installed bundle. This is simply an empty file named for the
@@ -212,7 +223,7 @@ def swupd_create_rootfs(d):
     imagebundles = d.getVarFlag('SWUPD_IMAGES', imageext, True).split() if imageext else []
     rootfs = d.getVar('IMAGE_ROOTFS', True)
     rootfs_contents = []
-    if not pn_base:
+    if not pn_base: # the base image
         import subprocess
 
         # For the base image only we need to remove all of the files that were
@@ -231,11 +242,13 @@ def swupd_create_rootfs(d):
             rootfs_contents.append(entry[1:])
         # clean up
         os.unlink(outfile)
-    else:
+    else: # non-base image, i.e. swupdimage
         manifest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${PN_BASE}${SWUPD_ROOTFS_MANIFEST_SUFFIX}")
         for entry in manifest_to_file_list(manifest):
             rootfs_contents.append(entry[1:])
 
+    bb.debug(3, 'rootfs_contents has %s entries' % (len(rootfs_contents)))
+    # TODO: replace with a call to copyxattrfiles()
     # Copy all files from the mega bundle...
     copyxattrtree(d.getVar('MEGA_IMAGE_ROOTFS', True), rootfs)
 
@@ -267,16 +280,10 @@ do_image_append () {
     swupd_create_rootfs(d)
 }
 
-# Stage the contents of the generated image rootfs, and a manifest listing all
-# of the files in the image, for further processing.
-fakeroot python do_copy_bundle_contents () {
+# Copy the os-core contents from the mega image to swupd's image directory
+def copy_core_contents(d):
     import subprocess
 
-    bndl = d.getVar('BUNDLE_NAME', True)
-    if not bndl or bndl == 'mega':
-        return
-
-    bb.debug(2, "Copying %s contents" % bndl)
     outfile = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${SWUPD_ROOTFS_MANIFEST}')
     bundledir = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${BUNDLE_NAME}/')
     rootfs = d.getVar('IMAGE_ROOTFS', True)
@@ -286,14 +293,140 @@ fakeroot python do_copy_bundle_contents () {
     manifest_cmd = 'cd %s && find . ! -path . > %s' % (rootfs, outfile)
     subprocess.call(manifest_cmd, shell=True, stderr=subprocess.STDOUT)
 
-    # Copy the entire mega image's contents, we'll prune this down to only
-    # the files in the manifest in do_prune_bundle
-    copyxattrtree(d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
+    manifest_files = manifest_to_file_list(outfile)
+    bundle_file_contents = []
+    # The manifest files have a leading . before the /
+    for f in manifest_files:
+        bundle_file_contents.append(f[2:])
+    bb.debug(1, 'os-core has %s unique contents' % len(bundle_file_contents))
+    bb.debug(1, "Copying from mega-image to os-core bundle dir (%s)" % (bundledir))
+    copyxattrfiles(d, bundle_file_contents, d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
 
-    create_bundle_manifest(d, bndl)
+# Instantiate an instance of the PM object for the image's package manager
+def get_package_manager(d, dest):
+    from oe.package_manager import RpmPM
+    from oe.package_manager import OpkgPM
+    from oe.package_manager import DpkgPM
+
+    ptype = d.getVar('IMAGE_PKGTYPE', True)
+    pm = None
+
+    if ptype == 'rpm':
+        pm = RpmPM(d, dest,
+                   d.getVar('TARGET_VENDOR', True))
+    elif ptype == 'ipk':
+        pm = OpkgPM(d, dest,
+                    d.getVar('IPKGCONF_TARGET', True),
+                    d.getVar('ALL_MULTILIB_PACKAGE_ARCHS', True))
+    elif ptype == 'deb':
+        pm = DpkgPM(d, dest,
+                    d.getVar('PACKAGE_ARCHS', True),
+                    d.getVar('DPKG_ARCH', True))
+
+    return pm
+
+def get_bundle_packages(d, bundle):
+    pkgs = (d.getVarFlag('BUNDLE_CONTENTS', bundle, True) or '').split()
+    return pkgs
+
+# For each bundle we have already included their contents in the mega-image,
+# thus we should be able to determine which packages were generated for that
+# bundles features and contents through the generated dependency data. Thus:
+# 1) determine the package manager and instantiate a PM object
+# 2) collect a list of package names for each bundle
+# 3) install the packages for the bundle into:
+#        ${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/$bndl
+def stage_bundle_contents(d):
+    from oe.package_manager import RpmPM
+    from oe.package_manager import OpkgPM
+    from oe.package_manager import DpkgPM
+    from oe.utils import format_pkg_list
+    from oe.rootfs import image_list_installed_packages
+    import subprocess
+
+    bb.debug(1, 'Staging bundle contents for %s' % d.getVar('PN', True))
+    basedest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/")
+    bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
+    for bndl in bundles:
+        bb.debug(1, 'Staging bundle contents for %s' % bndl)
+        dest = basedest + bndl
+        pm = get_package_manager(d, dest)
+
+        pm.update()
+        pkgs = get_bundle_packages(d, bndl)
+        pm.install(pkgs)
+
+        # Generate a manifest of files in the bundle
+        imagename = d.getVar('PN_BASE', True)
+        if not imagename:
+            imagename = d.getVar('IMAGE_BASENAME', True)
+        manfile = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/bundle-%s-%s${SWUPD_ROOTFS_MANIFEST_SUFFIX}") % (imagename, bndl)
+        bb.debug(3, 'Writing bundle file manifest %s' % manfile)
+        cmd = 'cd %s && find . ! -path . > %s' % (dest, manfile)
+        oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+
+        # Generate a manifest of packages in the bundle, we need this so that we
+        # can compose a complete list of packages installed in any bundle images
+        manfile = d.getVar('IMAGE_MANIFEST', True)
+        manfile = manfile.replace(imagename, 'bundle-%s-%s' % (imagename, bndl))
+        bb.debug(3, 'Writing bundle package manifest %s' % manfile)
+        installed = image_list_installed_packages(d, dest)
+        with open(manfile, 'w+') as manifest:
+            manifest.write(format_pkg_list(installed, "ver"))
+            manifest.write('\n')
+
+        # We don't want package manager artefacts left in the bundle 'chroot'
+        pm.remove_packaging_data()
+
+# Recopy the staged bundle contents from the mega-image rootfs to ensure that
+# any image postprocessing which modifies files is reflected in os-core bundle
+def recopy_bundle_contents(d):
+    import subprocess
+
+    bb.debug(1, 'Recopying contents of bundles for %s from mega image rootfs' % d.getVar('PN', True))
+    bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
+    for bndl in bundles:
+        bb.debug(2, 'Re-copying files for %s' % bndl)
+        bundlecontents = set()
+        bundlebase = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/')
+        bundledir = bundlebase + bndl
+        bb.debug(3, 'Scanning %s for bundle files' % bundledir)
+
+        def add_target_to_contents(root, file):
+            # Compose a full path to the file
+            tgt = os.path.join(root, file)
+            # then strip out the prefix so it's just the target path
+            tgt = tgt.replace(bundledir, '')
+            bundlecontents.add(tgt[1:])
+
+        for root, directories, files in os.walk(bundledir):
+            for file in files:
+                add_target_to_contents(root, file)
+            for dir in directories:
+                add_target_to_contents(root, dir)
+
+        # Also copy the bundles swupd bundle manifest and its parent hierarchy
+        bndlman = 'usr/share/clear/bundles/' + bndl
+        bundlecontents.add('usr/share/clear')
+        bundlecontents.add('usr/share/clear/bundles')
+        bundlecontents.add(bndlman)
+        # remove the current file contents of the bundle directory
+        bb.debug(2, 'About to rm %s' % bundledir)
+        oe.path.remove(bundledir)
+        # copy over the required files from the megarootfs
+        megarootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
+        copyxattrfiles(d, list(bundlecontents), megarootfs, bundledir)
+
+fakeroot python do_stage_swupd_inputs () {
+    if d.getVar('PN_BASE', True):
+        bb.debug(2, 'Skipping update input staging for non-base image %s' % d.getVar('PN', True))
+        return
+
+    copy_core_contents(d)
+    stage_bundle_contents(d)
+    recopy_bundle_contents(d)
 }
-# Needs to run after do_image_complete so that IMAGE_POSTPROCESS commands have run
-addtask copy_bundle_contents after do_image_complete before do_prune_bundle
+addtask stage_swupd_inputs after do_image before do_swupd_update
 
 # Generate a list of files which exist in the bundle image, but not the base
 # image.
@@ -380,43 +513,6 @@ def remove_unlisted_files_from_directory (file_list, directory, fullprune=False)
                 bb.debug(2, 'Not removing %s, reason: %s' % (dir, err.strerror))
         else:
             bb.debug(3, 'Not removing wanted empty directory %s' % d)
-
-fakeroot python do_prune_bundle () {
-    bundle = d.getVar('BUNDLE_NAME', True)
-    if not bundle:
-        return
-
-    if bundle == 'mega':
-        bb.debug(2, 'Skipping bundle pruning for %s image' % bundle)
-        return
-
-    # Get a list of files in the bundle which aren't in the base image
-    pn_base = d.getVar("PN_BASE", True)
-    bundle_file_contents = []
-    image_manifest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${SWUPD_ROOTFS_MANIFEST}")
-    fullprune = True
-    if not pn_base:
-        fullprune = False
-        manifest_files = manifest_to_file_list(image_manifest)
-        bundle_file_contents = []
-        # The manifest files have a leading . before the /
-        for f in manifest_files:
-            bundle_file_contents.append(f[1:])
-        bb.debug(1, 'os-core has %s unique contents' % len(bundle_file_contents))
-    else:
-        base_manifest = image_manifest.replace('-%s' % bundle, '').replace('/bundle-', '/')
-        bb.debug(3, "Comparing manifest %s to %s" % (base_manifest, image_manifest))
-        bundle_file_contents = unique_contents(base_manifest, image_manifest)
-        bb.debug(3, '%s has %s unique contents' % (d.getVar('PN', True), len(bundle_file_contents)))
-
-    # now we have a list of bundle files we can go ahead and delete files in
-    # the bundle directory which aren't in this list.
-    bundledir = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${BUNDLE_NAME}/')
-    bb.debug(1, "Creating and pruning %s bundle dir (%s)" % (bundle, bundledir))
-    remove_unlisted_files_from_directory (bundle_file_contents, bundledir, fullprune)
-    bb.debug(1, "Done pruning %s bundle dir (%s)" % (bundle, bundledir))
-}
-addtask prune_bundle after do_copy_bundle_contents before do_swupd_update
 
 SWUPD_FORMAT ??= "3"
 fakeroot do_swupd_update () {
@@ -520,7 +616,7 @@ SWUPDDEPENDS = "\
     bsdiff-native:do_populate_sysroot \
     swupd-server-native:do_populate_sysroot \
 "
-addtask swupd_update after do_image_complete after do_copy_bundle_contents after do_prune_bundle before do_build
+addtask swupd_update after do_image_complete do_recopy_bundle_contents before do_build
 do_swupd_update[depends] = "${SWUPDDEPENDS}"
 
 # pseudo does not handle xattrs correctly for hardlinks:
