@@ -160,15 +160,6 @@ python () {
         d.appendVarFlag('do_stage_swupd_inputs', 'depends', mega_name)
 }
 
-def copyxattrtree(src, dst):
-    import subprocess
-
-    bb.utils.mkdirhier(dst)
-    # tar does not properly copy xattrs when used like this.
-    # See the comment on tar in meta/classes/image_types.bbclass
-    cmd = "tar --xattrs --xattrs-include='*' -cf - -C %s -p . | tar -p --xattrs --xattrs-include='*' -xf - -C %s" % (src, dst)
-    oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
-
 def copyxattrfiles(d, filelist, src, dst):
     import subprocess
 
@@ -252,28 +243,21 @@ def swupd_create_rootfs(d):
         # Remove the current rootfs contents
         oe.path.remove('%s/*' % rootfs)
         for entry in manifest_to_file_list(outfile):
-            rootfs_contents.append(entry[1:])
+            rootfs_contents.append(entry[2:])
         # clean up
         os.unlink(outfile)
     else: # non-base image, i.e. swupdimage
         manifest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${PN_BASE}${SWUPD_ROOTFS_MANIFEST_SUFFIX}")
         for entry in manifest_to_file_list(manifest):
-            rootfs_contents.append(entry[1:])
+            rootfs_contents.append(entry[2:])
 
     bb.debug(3, 'rootfs_contents has %s entries' % (len(rootfs_contents)))
-    # TODO: replace with a call to copyxattrfiles()
-    # Copy all files from the mega bundle...
-    copyxattrtree(d.getVar('MEGA_IMAGE_ROOTFS', True), rootfs)
-
-    # ... and then remove files again which shouldn't have been copied.
     for bundle in imagebundles:
         manifest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/bundle-${PN_BASE}-%s${SWUPD_ROOTFS_MANIFEST_SUFFIX}") % bundle
         for entry in manifest_to_file_list(manifest):
-            rootfs_contents.append(entry[1:])
-
-    # Prune the items not in the manifest
-    bb.debug(3, 'Desired content of rootfs:\n' + '\n'.join(rootfs_contents))
-    remove_unlisted_files_from_directory(rootfs_contents, rootfs)
+            rootfs_contents.append(entry[2:])
+    bb.debug(2, 'Re-copying rootfs contents from mega image')
+    copyxattrfiles(d, rootfs_contents, d.getVar('MEGA_IMAGE_ROOTFS', True), rootfs)
 
     # Create .rootfs.manifest for bundle images as the union of all
     # contained bundles. Otherwise the image wouldn't have that file,
@@ -575,47 +559,6 @@ def unique_contents(base_manifest_fn, image_manifest_fn):
     delta = list(differ.compare(base_manifest_list, image_manifest_list))
 
     return delta_contents(delta)
-
-# Takes a list of files and a base directory, removes items from the base
-# directory which don't exist in the list
-def remove_unlisted_files_from_directory (file_list, directory, fullprune=False):
-    for root, dirs, files in os.walk(directory):
-        replace = '/'
-        if not directory.endswith('/'):
-            replace = ''
-        relroot = root.replace(directory, replace)
-        #bb.debug(1, 'Substituting "%s" for %s in root of %s to give %s' % (replace, directory, root, relroot))
-        # Beware that os.walk() treats symlinks to directories like directories.
-        # We need to treat them like files because they get removed with os.remove().
-        for f in files:
-            fpath = os.path.join(relroot, f)
-            if fpath not in file_list:
-                fpath_absolute = os.path.join(root, f)
-                bb.debug(3, 'Pruning %s from the bundle (%s)' % (fpath, fpath_absolute))
-                os.remove(fpath_absolute)
-        for d in dirs:
-            dpath = os.path.join(relroot, d)
-            dpath_absolute = os.path.join(root, d)
-            if os.path.islink(dpath_absolute) and dpath not in file_list:
-                bb.debug(3, 'Pruning %s from the bundle (%s)' % (dpath, dpath_absolute))
-                os.remove(dpath_absolute)
-
-    # Now need to clean up empty directories, unless they were listed in the
-    # the bundle's manifest
-    for dir, _, _ in os.walk(directory, topdown=False):
-        replace = '/'
-        if not directory.endswith('/'):
-            replace = ''
-        d = dir.replace(directory, replace)
-        bb.debug(3, 'Checking whether to delete %s (%s)' % (d, dir))
-        if fullprune or (d not in file_list):
-            try:
-                bb.debug(3, 'Attempting to remove unwanted directory %s (%s)' % (d, dir))
-                os.rmdir(dir)
-            except OSError as err:
-                bb.debug(2, 'Not removing %s, reason: %s' % (dir, err.strerror))
-        else:
-            bb.debug(3, 'Not removing wanted empty directory %s' % d)
 
 SWUPD_FORMAT ??= "3"
 fakeroot do_swupd_update () {
