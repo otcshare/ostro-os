@@ -50,7 +50,7 @@ python swupdimage_virtclass_handler () {
     e.data.setVar("do_image", "    swupd_create_rootfs(d)\n")
     e.data.setVar("do_rootfs", "")
     # Depend on complete bundle generation in the base image.
-    dep = ' %s:do_swupd_update' % pn_base
+    dep = ' %s:do_stage_swupd_inputs' % pn_base
     e.data.appendVarFlag('do_image', 'depends', dep)
 }
 
