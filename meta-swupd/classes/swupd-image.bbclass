@@ -280,12 +280,13 @@ do_image_append () {
     swupd_create_rootfs(d)
 }
 
+SWUPDIMAGEDIR = "${WORKDIR}/swupd-image"
 # Copy the os-core contents from the mega image to swupd's image directory
 def copy_core_contents(d):
     import subprocess
 
-    outfile = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${SWUPD_ROOTFS_MANIFEST}')
-    bundledir = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/${BUNDLE_NAME}/')
+    outfile = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/${SWUPD_ROOTFS_MANIFEST}')
+    bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/${BUNDLE_NAME}/')
     rootfs = d.getVar('IMAGE_ROOTFS', True)
 
     # Generate a manifest of the bundle contents for pruning
@@ -335,7 +336,7 @@ def get_bundle_packages(d, bundle):
 # 1) determine the package manager and instantiate a PM object
 # 2) collect a list of package names for each bundle
 # 3) install the packages for the bundle into:
-#        ${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/$bndl
+#        ${SWUPDIMAGEDIR}/${OS_VERSION}/$bndl
 def stage_bundle_contents(d):
     from oe.package_manager import RpmPM
     from oe.package_manager import OpkgPM
@@ -345,7 +346,7 @@ def stage_bundle_contents(d):
     import subprocess
 
     bb.debug(1, 'Staging bundle contents for %s' % d.getVar('PN', True))
-    basedest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/")
+    basedest = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/")
     bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
     for bndl in bundles:
         bb.debug(1, 'Staging bundle contents for %s' % bndl)
@@ -360,7 +361,7 @@ def stage_bundle_contents(d):
         imagename = d.getVar('PN_BASE', True)
         if not imagename:
             imagename = d.getVar('IMAGE_BASENAME', True)
-        manfile = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/bundle-%s-%s${SWUPD_ROOTFS_MANIFEST_SUFFIX}") % (imagename, bndl)
+        manfile = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/bundle-%s-%s${SWUPD_ROOTFS_MANIFEST_SUFFIX}") % (imagename, bndl)
         bb.debug(3, 'Writing bundle file manifest %s' % manfile)
         cmd = 'cd %s && find . ! -path . > %s' % (dest, manfile)
         oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
@@ -388,7 +389,7 @@ def recopy_bundle_contents(d):
     for bndl in bundles:
         bb.debug(2, 'Re-copying files for %s' % bndl)
         bundlecontents = set()
-        bundlebase = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/')
+        bundlebase = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/')
         bundledir = bundlebase + bndl
         bb.debug(3, 'Scanning %s for bundle files' % bundledir)
 
@@ -427,6 +428,16 @@ fakeroot python do_stage_swupd_inputs () {
     recopy_bundle_contents(d)
 }
 addtask stage_swupd_inputs after do_image before do_swupd_update
+
+SSTATETASKS += "do_stage_swupd_inputs"
+do_stage_swupd_inputs[sstate-inputdirs] = "${SWUPDIMAGEDIR}"
+do_stage_swupd_inputs[sstate-outputdirs] = "${DEPLOY_DIR_SWUPD}/image/"
+
+python do_stage_swupd_inputs_setscene () {
+    sstate_setscene(d)
+}
+addtask do_stage_swupd_inputs_setscene
+do_stage_swupd_inputs_setscene[dirs] = "${SWUPDIMAGEDIR} ${DEPLOY_DIR_SWUPD}/image/"
 
 # Generate a list of files which exist in the bundle image, but not the base
 # image.
