@@ -102,9 +102,6 @@ python () {
 
     deploy_dir = d.expand('${DEPLOY_DIR_SWUPDBASE}/${IMAGE_BASENAME}')
     d.setVar('DEPLOY_DIR_SWUPD', deploy_dir)
-    # do_stage_bundle_contents requires ${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}
-    varflags = '%s/image/%s' % (deploy_dir, ver)
-    d.setVarFlag('do_stage_bundle_contents', 'dirs', varflags)
     # do_swupd_update requires the full swupd directory hierarchy
     varflags = '%s/image %s/empty %s/www %s' % (deploy_dir, deploy_dir, deploy_dir, deploy_dir)
     d.setVarFlag('do_swupd_update', 'dirs', varflags)
@@ -129,6 +126,18 @@ python () {
 
     for bndl in bundles:
         check_reserved_name(bndl)
+
+    # Generate virtual images for each bundle which adds IMAGE_FEATURES as
+    # we can't easily determine which packages to install in order to satisfy
+    # the dependecies of an IMAGE_FEATURES
+    for bndl in bundles:
+        features = d.getVarFlag('BUNDLE_FEATURES', bndl, True)
+        if features:
+            extended.append('swupdbundle:%s' % bndl)
+            dep = ' bundle-%s-%s:do_image_complete' % (pn, bndl)
+            # do_stage_swupd_inputs will try and utilise artefacts of the bundle
+            # image build, so must depend on it having completed
+            d.appendVarFlag('do_stage_swupd_inputs', 'depends', dep)
 
     if havebundles:
         extended.append('swupdbundle:mega')
@@ -337,7 +346,7 @@ def get_bundle_packages(d, bundle):
 # 2) collect a list of package names for each bundle
 # 3) install the packages for the bundle into:
 #        ${SWUPDIMAGEDIR}/${OS_VERSION}/$bndl
-def stage_bundle_contents(d):
+def stage_package_bundle_contents(d, bundle):
     from oe.package_manager import RpmPM
     from oe.package_manager import OpkgPM
     from oe.package_manager import DpkgPM
@@ -345,78 +354,116 @@ def stage_bundle_contents(d):
     from oe.rootfs import image_list_installed_packages
     import subprocess
 
-    bb.debug(1, 'Staging bundle contents for %s' % d.getVar('PN', True))
-    basedest = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/")
-    bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
-    for bndl in bundles:
-        bb.debug(1, 'Staging bundle contents for %s' % bndl)
-        dest = basedest + bndl
-        pm = get_package_manager(d, dest)
+    bb.debug(1, 'Staging bundle contents for %s' % bundle)
+    dest = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/%s/" % bundle)
+    pm = get_package_manager(d, dest)
 
-        pm.update()
-        pkgs = get_bundle_packages(d, bndl)
-        pm.install(pkgs)
+    pm.update()
+    pkgs = get_bundle_packages(d, bundle)
+    pm.install(pkgs)
 
-        # Generate a manifest of files in the bundle
-        imagename = d.getVar('PN_BASE', True)
-        if not imagename:
-            imagename = d.getVar('IMAGE_BASENAME', True)
-        manfile = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/bundle-%s-%s${SWUPD_ROOTFS_MANIFEST_SUFFIX}") % (imagename, bndl)
-        bb.debug(3, 'Writing bundle file manifest %s' % manfile)
-        cmd = 'cd %s && find . ! -path . > %s' % (dest, manfile)
-        oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+    # Generate a manifest of files in the bundle
+    imagename = d.getVar('PN_BASE', True)
+    if not imagename:
+        imagename = d.getVar('IMAGE_BASENAME', True)
+    manfile = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/bundle-%s-%s${SWUPD_ROOTFS_MANIFEST_SUFFIX}") % (imagename, bundle)
+    bb.debug(3, 'Writing bundle file manifest %s' % manfile)
+    cmd = 'cd %s && find . ! -path . > %s' % (dest, manfile)
+    oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
 
-        # Generate a manifest of packages in the bundle, we need this so that we
-        # can compose a complete list of packages installed in any bundle images
-        manfile = d.getVar('IMAGE_MANIFEST', True)
-        manfile = manfile.replace(imagename, 'bundle-%s-%s' % (imagename, bndl))
-        bb.debug(3, 'Writing bundle package manifest %s' % manfile)
-        installed = image_list_installed_packages(d, dest)
-        with open(manfile, 'w+') as manifest:
-            manifest.write(format_pkg_list(installed, "ver"))
-            manifest.write('\n')
+    # Generate a manifest of packages in the bundle, we need this so that we
+    # can compose a complete list of packages installed in any bundle images
+    manfile = d.getVar('IMAGE_MANIFEST', True)
+    manfile = manfile.replace(imagename, 'bundle-%s-%s' % (imagename, bundle))
+    bb.debug(3, 'Writing bundle package manifest %s' % manfile)
+    installed = image_list_installed_packages(d, dest)
+    with open(manfile, 'w+') as manifest:
+        manifest.write(format_pkg_list(installed, "ver"))
+        manifest.write('\n')
 
-        # We don't want package manager artefacts left in the bundle 'chroot'
-        pm.remove_packaging_data()
+    # We don't want package manager artefacts left in the bundle 'chroot'
+    pm.remove_packaging_data()
 
-# Recopy the staged bundle contents from the mega-image rootfs to ensure that
+def recopy_package_bundle_contents(d, bundle):
+    bb.debug(2, 'Re-copying files for package based bundle %s' % bundle)
+    bundlecontents = set()
+    bundlebase = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/')
+    bundledir = bundlebase + bundle
+    bb.debug(3, 'Scanning %s for bundle files' % bundledir)
+
+    def add_target_to_contents(root, file):
+        # Compose a full path to the file
+        tgt = os.path.join(root, file)
+        # then strip out the prefix so it's just the target path
+        tgt = tgt.replace(bundledir, '')
+        bundlecontents.add(tgt[1:])
+
+    for root, directories, files in os.walk(bundledir):
+        for file in files:
+            add_target_to_contents(root, file)
+        for dir in directories:
+            add_target_to_contents(root, dir)
+
+    # Also copy the bundles swupd bundle manifest and its parent hierarchy
+    bndlman = 'usr/share/clear/bundles/' + bundle
+    bundlecontents.add('usr/share/clear')
+    bundlecontents.add('usr/share/clear/bundles')
+    bundlecontents.add(bndlman)
+    # remove the current file contents of the bundle directory
+    bb.debug(2, 'About to rm %s' % bundledir)
+    oe.path.remove(bundledir)
+    # copy over the required files from the megarootfs
+    megarootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
+    copyxattrfiles(d, list(bundlecontents), megarootfs, bundledir)
+
+# Copy bundle contents which aren't part of os-core from the mega-image rootfs
+def copy_image_bundle_contents(d, bundle):
+    import subprocess
+
+    bb.debug(2, 'Re-copying files for image based bundle %s' % bundle)
+
+    # Construct paths to manifest files and directories
+    pn = d.getVar('PN', True)
+    manifest_path = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/')
+    base_manifest_name = d.getVar('SWUPD_ROOTFS_MANIFEST', True)
+    image_manifest_name = base_manifest_name.replace(pn, 'bundle-%s-%s' % (pn, bundle))
+    base_manifest = manifest_path + base_manifest_name
+    image_manifest = manifest_path + image_manifest_name
+    megarootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
+    imagesrc = megarootfs.replace('mega', bundle)
+
+    # Generate the manifest of the bundle image's file contents
+    bb.debug(3, 'Writing bundle image file manifest %s' % image_manifest)
+    cmd = 'cd %s && find . ! -path . > %s' % (imagesrc, image_manifest)
+    oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+
+    # Get a list of files in the bundle image which aren't in the base (os-core)
+    bb.debug(3, 'Comparing manifest %s to %s' %(base_manifest, image_manifest))
+    bundle_file_contents = unique_contents(base_manifest, image_manifest)
+    bb.debug(3, '%s has %s unique contents' % (bundle, len(bundle_file_contents)))
+    # Clean up the file entries to a format tar will accept (no leading /)
+    bundle_files = []
+    for bf in bundle_file_contents:
+        bundle_files.append(bf[1:])
+
+    # Copy over the unique bundle contents
+    bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/%s/' % bundle)
+    copyxattrfiles(d, bundle_files, megarootfs, bundledir)
+
+# Copy the staged bundle contents from the mega-image rootfs to ensure that
 # any image postprocessing which modifies files is reflected in os-core bundle
-def recopy_bundle_contents(d):
+def copy_bundle_contents(d):
     import subprocess
 
     bb.debug(1, 'Recopying contents of bundles for %s from mega image rootfs' % d.getVar('PN', True))
     bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
     for bndl in bundles:
-        bb.debug(2, 'Re-copying files for %s' % bndl)
-        bundlecontents = set()
-        bundlebase = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/')
-        bundledir = bundlebase + bndl
-        bb.debug(3, 'Scanning %s for bundle files' % bundledir)
-
-        def add_target_to_contents(root, file):
-            # Compose a full path to the file
-            tgt = os.path.join(root, file)
-            # then strip out the prefix so it's just the target path
-            tgt = tgt.replace(bundledir, '')
-            bundlecontents.add(tgt[1:])
-
-        for root, directories, files in os.walk(bundledir):
-            for file in files:
-                add_target_to_contents(root, file)
-            for dir in directories:
-                add_target_to_contents(root, dir)
-
-        # Also copy the bundles swupd bundle manifest and its parent hierarchy
-        bndlman = 'usr/share/clear/bundles/' + bndl
-        bundlecontents.add('usr/share/clear')
-        bundlecontents.add('usr/share/clear/bundles')
-        bundlecontents.add(bndlman)
-        # remove the current file contents of the bundle directory
-        bb.debug(2, 'About to rm %s' % bundledir)
-        oe.path.remove(bundledir)
-        # copy over the required files from the megarootfs
-        megarootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
-        copyxattrfiles(d, list(bundlecontents), megarootfs, bundledir)
+        features = d.getVarFlag('BUNDLE_FEATURES', bndl, True)
+        if features:
+            copy_image_bundle_contents(d, bndl)
+        else:
+            stage_package_bundle_contents(d, bndl)
+            recopy_package_bundle_contents(d, bndl)
 
 fakeroot python do_stage_swupd_inputs () {
     if d.getVar('PN_BASE', True):
@@ -424,8 +471,7 @@ fakeroot python do_stage_swupd_inputs () {
         return
 
     copy_core_contents(d)
-    stage_bundle_contents(d)
-    recopy_bundle_contents(d)
+    copy_bundle_contents(d)
 }
 addtask stage_swupd_inputs after do_image before do_swupd_update
 
