@@ -95,7 +95,7 @@ python supported_recipes_eventhandler() {
     # import pprint
     # bb.note('depgraph: %s' % pprint.pformat(depgraph))
 
-    unsupported = set()
+    unsupported = {}
     for pn, pndata in depgraph['pn'].iteritems():
         # We only care about recipes compiled for the target.
         # Most native ones can be detected reliably because they inherit native.bbclass,
@@ -110,8 +110,12 @@ python supported_recipes_eventhandler() {
             # internal helpers.
             if isnative_exception.match(pn):
                 return True
-        if pn not in supported_recipes and not isnative():
-            unsupported.add(pn)
+        if not isnative():
+            filename = pndata['filename']
+            collection = bb.utils.get_file_layer(filename, d)
+            recipe = '%s@%s' % (pn, collection)
+            if recipe not in supported_recipes:
+                unsupported[pn] = collection
 
     if unsupported:
         # Walk the recipe dependency tree and add one line for each path that ends in
@@ -178,8 +182,12 @@ python supported_recipes_eventhandler() {
             truncated = True
 
         logger('The following unsupported recipes are required for the build:\n  ',
-               '\n  '.join(sorted(unsupported)),
+               '\n  '.join(sorted(['%s@%s' % (pn, collection) for pn, collection in unsupported.iteritems()])),
                '''
+
+Each unsupported recipe is identified by the recipe name and the collection
+in which it occurs and has to be marked as supported (see below) using that
+format. Typically each layer has exactly one collection.
 
 Here are the dependency chains (including DEPENDS and RDEPENDS)
 which include one or more of the unsupported recipes. -> means "depends on"
@@ -196,6 +204,8 @@ To avoid this message, several options exist:
 * Disable the check with SUPPORTED_RECIPES_CHECK = "" in local.conf.
 * Add the unsupported recipes to one of the following files:
   %s
+* If the recipe is supported in some other layer, disable the unsupported one
+  with BBMASK.
 * Create a new file which lists the unsupported recipes and extend SUPPORTED_RECIPES:
     SUPPORTED_RECIPES_append = " <path>/recipes-supported-by-me.txt"
   See meta-ostro/conf/layer.conf and ostro.conf for an example how the path can be
