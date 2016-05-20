@@ -72,6 +72,18 @@ class IOtvtWiFi(oeRuntimeTest):
         run_as("root", "/usr/sbin/iptables -w -A INPUT -p udp --dport 5683 -j ACCEPT", target=cls.tc.targets[1])
         run_as("root", "/usr/sbin/iptables -w -A INPUT -p udp --dport 5684 -j ACCEPT", target=cls.tc.targets[1])
 
+        # check if image contains iotivity example applications
+        (status, output) = run_as("root", "ls /opt/iotivity/examples/resource/", target=cls.tc.targets[0])
+        if "cpp" in output:
+            pass
+        else:
+            assert 1 == 0, 'There is no iotivity exmaple app installed in target0'
+        (status, output) = run_as("root", "ls /opt/iotivity/examples/resource/", target=cls.tc.targets[1])
+        if "cpp" in output:
+            pass
+        else:
+            assert 1 == 0, 'There is no iotivity exmaple app installed in target1'
+
         for i in range(3):
             # Do simpleclient test
             server_cmd = "/opt/iotivity/examples/resource/cpp/simpleserver > /tmp/srv_output &"

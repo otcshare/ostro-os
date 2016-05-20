@@ -75,6 +75,24 @@ class ZigBeeFunction(object):
         else:
             assert False, "Not initialize 802.15.4 module. see dmesg log:\n%s" % output 
 
+    def remove_atmel_mode(self):
+        ''' Remove atmel modules
+        @fn remove_atmel_mode
+        @param self
+        @return
+        '''
+        if self.platform == "Galileo":
+            self.target.run('rmmod at86rf230')
+            self.target.run('rmmod spi_quark_board')
+            self.target.run('rmmod spi_quark_at86rf230')
+        elif self.platform == "MinnowMax":
+            self.target.run('rmmod spi_minnow_board')
+            self.target.run('rmmod spi_minnow_at86rf230')           
+
+        (status, output) = self.target.run('lsmod')
+        if "spi_quark_at" in output or "spi_minnow_at" in output:
+            assert False, "Fail to remove atmel modules:\n%s" % output
+
     def insert_cc2520_mode(self):
         ''' Insert cc2520 modules 
         @fn insert_cc2520_mode
@@ -85,10 +103,22 @@ class ZigBeeFunction(object):
         assert status == 0, "Error messages: %s" % output 
         # Check dmesg log, to see if the 802.15.4 is registered
         (status, output) = self.target.run('lsmod')
-        if self.cc2520_mod_name in output:
+        if "spi_minnow_cc2520" in output:
             pass
         else:
             assert False, "Not initialize cc2520 module. see lsmod:\n%s" % output
+
+    def remove_cc2520_mode(self):
+        ''' Remove cc2520 modules
+        @fn remove_cc2520_mode
+        @param self
+        @return
+        '''
+        self.target.run('rmmod spi_minnow_cc2520')
+
+        (status, output) = self.target.run('lsmod')
+        if "cc2520" in output:
+            assert False, "Fail to remove cc2520 modules:\n%s" % output
 
     def atmel_enable_lowpan0(self, ip_number):
         ''' enable atmel chipset on target 

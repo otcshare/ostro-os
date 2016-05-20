@@ -32,6 +32,14 @@ class ZigBeeCC2520(oeRuntimeTest):
         '''
         self.zigbee = zigbee.ZigBeeFunction(self.target)
 
+    def tearDown(self):
+        ''' teardown cc2520 class 
+        @fn setUp
+        @param self
+        @return
+        '''
+        self.zigbee.remove_cc2520_mode()
+
     @tag(FeatureID="IOTOS-763")
     def test_insert_cc2520_module(self):
         '''Insert cc2520 module
@@ -39,6 +47,7 @@ class ZigBeeCC2520(oeRuntimeTest):
         @param self
         @return
         '''
+        self.zigbee.remove_atmel_mode()
         self.zigbee.insert_cc2520_mode()
 
 ##

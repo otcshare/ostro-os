@@ -1,0 +1,10 @@
+EntityType,CaseID,Component,Description,StepNumber,StepDescription,ExpectedResult,TestType,Status,FeatureID,PreCondition,PostCondition,TestScriptEntry,TestScriptExpectResult
+TestScript,rs_insert_uvcvideo,RealSense,Insert uvcvideo module,1,Plug realsense camera (R200) to the usb3.0 port of platform,,FVT,ready,IOTOS-1430,,,,
+TestStep,,,,2,Clean dmesg by 'dmesg -c',,,,,,,,
+TestStep,,,,3,"In a terminal, run 'modprobe uvcvideo'",,,,,,,,
+TestStep,,,,4,Check dmesg by 'dmesg',There is no error about R200 init failure,,,,,,,
+TestScript,rs_camera_preview,RealSense,Launch example cpp-capture to enable 4 camera preview streaming,1,Plug realsense camera (R200) to the usb3.0 port of platform,,FVT,ready,IOTOS-1430,,,,
+TestStep,,,,2,"In a terminal, run 'modprobe uvcvideo'",,,,,,,,
+TestStep,,,,3,Download librealsense code if cpp-capture example is not built in image. From github https://github.com/IntelRealSense/librealsense or internal link: http://otcqa.sh.intel.com/qa-auto/ostro/realsense.tar.gz,,,,,,,,
+TestStep,,,,4,Build the code by 'make BACKEND=LIBUVC' and 'make install',,,,,,,,
+TestStep,,,,5,Run ./bin/cpp-capture . Click mouse to make it launch on the desptop.,There are 4 camera shown in the windows with smooth video streaming.,,,,,,,

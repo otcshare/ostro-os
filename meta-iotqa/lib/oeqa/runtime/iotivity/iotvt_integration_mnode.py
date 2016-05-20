@@ -56,6 +56,17 @@ class IOtvtIntegrationMNode(oeRuntimeTest):
         run_as("root", "/usr/sbin/iptables -w -A INPUT -p udp --dport 5684 -j ACCEPT", target=cls.tc.targets[0])
         run_as("root", "/usr/sbin/iptables -w -A INPUT -p udp --dport 5683 -j ACCEPT", target=cls.tc.targets[1])
         run_as("root", "/usr/sbin/iptables -w -A INPUT -p udp --dport 5684 -j ACCEPT", target=cls.tc.targets[1])
+        # check if image contains iotivity example applications
+        (status, output) = run_as("root", "ls /opt/iotivity/examples/resource/", target=cls.tc.targets[0])
+        if "cpp" in output:
+            pass
+        else:
+            assert 1 == 0, 'There is no iotivity exmaple app installed in target0'
+        (status, output) = run_as("root", "ls /opt/iotivity/examples/resource/", target=cls.tc.targets[1])
+        if "cpp" in output:
+            pass
+        else:
+            assert 1 == 0, 'There is no iotivity exmaple app installed in target1'
 
     @classmethod
     def tearDownClass(cls):
@@ -185,7 +196,7 @@ class IOtvtIntegrationMNode(oeRuntimeTest):
         '''
         # start light server and group server
         lightserver_cmd = "/opt/iotivity/examples/resource/cpp/lightserver > /tmp/svr_output &"
-        (status, output) = self.target.run(lightserver_cmd, target=self.targets[1])
+        (status, output) = run_as("root", lightserver_cmd, target=self.targets[1])
         time.sleep(2)
         ssh_cmd = "ssh root@%s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR" % self.targets[1].ip
         groupserver_cmd = "/opt/iotivity/examples/resource/cpp/groupserver > /dev/null 2>&1"

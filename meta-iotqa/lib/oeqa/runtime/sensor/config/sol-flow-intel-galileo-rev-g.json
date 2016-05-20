@@ -188,7 +188,7 @@
   {
      "name": "MyHumiditySi7021",
      "options": {
-           "iio_device": "si7021 create,i2c,pci0000:00/0000:00:15.2/i2c_designware.0,0x40,si7021 0",
+           "iio_device": "si7020 create,i2c,pci0000:00/0000:00:15.2/i2c_designware.0,0x40,si7020 0",
            "buffer_size": "-1"
      },
      "type": "iio/humidity"
@@ -210,17 +210,9 @@
      "type": "iio/temperature"
   },
   {
-     "name": "MyPressureTmp006",
-     "options": {
-           "iio_device": "0-0040 create,i2c,pci0000:00/0000:00:15.2/i2c_designware.0,0x40,0-0040 0",
-           "buffer_size": "-1"
-     },
-     "type": "iio/pressure"
-  },
-  {
      "name": "MyTemperatureTmp006",
      "options": {
-           "iio_device": "0-0040 create,i2c,pci0000:00/0000:00:15.2/i2c_designware.0,0x40,0-0040 0",
+           "iio_device": "tmp006 create,i2c,pci0000:00/0000:00:15.2/i2c_designware.0,0x40,tmp006 0",
            "buffer_size": "-1"
      },
      "type": "iio/temperature"

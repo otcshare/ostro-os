@@ -1,0 +1,26 @@
+From 8161053ece9bdc846c5d206bac37492b39c1d7a7 Mon Sep 17 00:00:00 2001
+From: Andrei Vasiliu <andrei.vasiliu@intel.com>
+Date: Tue, 17 May 2016 22:33:05 +0300
+Subject: [PATCH] Release 0.4.2
+
+Signed-off-by: Andrei Vasiliu <andrei.vasiliu@intel.com>
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4afd10f..787885b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -24,7 +24,7 @@ git_describe (VERSION "--tags")
+ 
+ if ("x_${VERSION}" STREQUAL "x_GIT-NOTFOUND" OR "x_${VERSION}" STREQUAL "x_HEAD-HASH-NOTFOUND" OR "x_${VERSION}" STREQUAL "x_-128-NOTFOUND")
+   message (WARNING " - Install git to compile a production libtinyb!")
+-  set (VERSION "v0.4.0-dirty")
++  set (VERSION "v0.4.2-dirty")
+ endif ()
+ 
+ message (INFO " - libtinyb Version ${VERSION}")
+-- 
+1.9.1
+

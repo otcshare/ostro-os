@@ -54,6 +54,7 @@ def filterByTagExp(testsuite, tagexp):
 @LogResults
 class oeTest(unittest.TestCase):
 
+    pscmd = "ps"
     longMessage = True
 
     @classmethod
@@ -185,11 +186,19 @@ def custom_verbose(msg, *args, **kwargs):
         _buffer_logger = ""
 
 class TestContext(object):
-    def __init__(self, d):
+    def __init__(self, d, exported=False):
         self.d = d
 
         self.testsuites = self._get_test_suites()
-        self.testslist = self._get_tests_list(d.getVar("BBPATH", True).split(':'))
+
+        if exported:
+            path = [os.path.dirname(os.path.abspath(__file__))]
+            extrapath = ""
+        else:
+            path = d.getVar("BBPATH", True).split(':')
+            extrapath = "lib/oeqa"
+
+        self.testslist = self._get_tests_list(path, extrapath)
         self.testsrequired = self._get_test_suites_required()
 
         self.filesdir = os.path.join(os.path.dirname(os.path.abspath(
@@ -212,7 +221,7 @@ class TestContext(object):
         return " ".join(tcs)
 
     # return test list by type also filter if TEST_SUITES is specified
-    def _get_tests_list(self, bbpath):
+    def _get_tests_list(self, bbpath, extrapath):
         testslist = []
 
         type = self._get_test_namespace()
@@ -226,11 +235,11 @@ class TestContext(object):
                     continue
                 found = False
                 for p in bbpath:
-                    if os.path.exists(os.path.join(p, 'lib', 'oeqa', type, testname + '.py')):
+                    if os.path.exists(os.path.join(p, extrapath, type, testname + ".py")):
                         testslist.append("oeqa." + type + "." + testname)
                         found = True
                         break
-                    elif os.path.exists(os.path.join(p, 'lib', 'oeqa', type, testname.split(".")[0] + '.py')):
+                    elif os.path.exists(os.path.join(p, extrapath, type, testname.split(".")[0] + ".py")):
                         testslist.append("oeqa." + type + "." + testname)
                         found = True
                         break
@@ -331,14 +340,13 @@ class TestContext(object):
 
         return runner.run(self.suite)
 
-class ImageTestContext(TestContext):
-    def __init__(self, d, target, host_dumper):
-        super(ImageTestContext, self).__init__(d)
+class RuntimeTestContext(TestContext):
+    def __init__(self, d, target, exported=False):
+        super(RuntimeTestContext, self).__init__(d, exported)
 
         self.tagexp =  d.getVar("TEST_SUITES_TAGS", True)
 
         self.target = target
-        self.host_dumper = host_dumper
 
         manifest = os.path.join(d.getVar("DEPLOY_DIR_IMAGE", True),
                 d.getVar("IMAGE_LINK_NAME", True) + ".manifest")
@@ -351,15 +359,6 @@ class ImageTestContext(TestContext):
                 bb.fatal("No package manifest file found. Did you build the image?\n%s" % e)
         else:
             self.pkgmanifest = ""
-
-        self.sigterm = False
-        self.origsigtermhandler = signal.getsignal(signal.SIGTERM)
-        signal.signal(signal.SIGTERM, self._sigterm_exception)
-
-    def _sigterm_exception(self, signum, stackframe):
-        bb.warn("TestImage received SIGTERM, shutting down...")
-        self.sigterm = True
-        self.target.stop()
 
     def _get_test_namespace(self):
         return "runtime"
@@ -382,8 +381,29 @@ class ImageTestContext(TestContext):
         return [t for t in self.d.getVar("TEST_SUITES", True).split() if t != "auto"]
 
     def loadTests(self):
-        super(ImageTestContext, self).loadTests()
-        setattr(oeRuntimeTest, "pscmd", "ps -ef" if oeTest.hasPackage("procps") else "ps")
+        super(RuntimeTestContext, self).loadTests()
+        if oeTest.hasPackage("procps"):
+            oeRuntimeTest.pscmd = "ps -ef"
+
+class ImageTestContext(RuntimeTestContext):
+    def __init__(self, d, target, host_dumper):
+        super(ImageTestContext, self).__init__(d, target)
+
+        self.host_dumper = host_dumper
+
+        self.sigterm = False
+        self.origsigtermhandler = signal.getsignal(signal.SIGTERM)
+        signal.signal(signal.SIGTERM, self._sigterm_exception)
+
+    def _sigterm_exception(self, signum, stackframe):
+        bb.warn("TestImage received SIGTERM, shutting down...")
+        self.sigterm = True
+        self.target.stop()
+
+class ExportTestContext(RuntimeTestContext):
+    def __init__(self, d, target, exported=False):
+        super(ExportTestContext, self).__init__(d, target, exported)
+        self.sigterm = None
 
 class SDKTestContext(TestContext):
     def __init__(self, d, sdktestdir, sdkenv, tcname, *args):

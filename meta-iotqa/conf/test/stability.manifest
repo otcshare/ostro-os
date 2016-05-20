@@ -6,5 +6,5 @@ oeqa.runtime.bluetooth.comm_bt_stability
 oeqa.runtime.appfw.test_appfw_stability
 oeqa.runtime.sensor.test_light_tsl2561_4_hrs
 oeqa.runtime.sensor.test_gyro_mpu6050_4_hrs
-test_sensor_with_high_cpu_consumption
+oeqa.runtime.sensor.test_sensor_with_high_cpu_consumption
 oeqa.runtime.soletta.soletta_stability

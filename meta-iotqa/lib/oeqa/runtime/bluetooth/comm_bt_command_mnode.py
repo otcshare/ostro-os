@@ -57,7 +57,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt2.target_hciconfig_init()
             self.bt2.set_leadv()
             (status, output) = self.bt1.gatt_basic_check(self.bt2.get_bt_mac(), 'primary')
@@ -73,7 +73,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt2.target_hciconfig_init()
             self.bt2.set_leadv()
             (status, output) = self.bt1.gatt_basic_check(self.bt2.get_bt_mac(), 'characteristics')
@@ -89,7 +89,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt2.target_hciconfig_init()
             self.bt2.set_leadv()
             (status, output) = self.bt1.gatt_basic_check(self.bt2.get_bt_mac(), 'handle')
@@ -105,7 +105,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt2.target_hciconfig_init()
             self.bt2.set_leadv()
             (status, output) = self.bt1.gatt_basic_check(self.bt2.get_bt_mac(), 'connect')
@@ -121,7 +121,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt1.target_hciconfig_init()
             self.bt1.set_leadv()
             (status, output) = self.bt2.gatt_basic_check(self.bt1.get_bt_mac(), 'primary')
@@ -137,7 +137,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt1.target_hciconfig_init()
             self.bt1.set_leadv()
             (status, output) = self.bt2.gatt_basic_check(self.bt1.get_bt_mac(), 'characteristics')
@@ -153,7 +153,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt1.target_hciconfig_init()
             self.bt1.set_leadv()
             (status, output) = self.bt2.gatt_basic_check(self.bt1.get_bt_mac(), 'handle')
@@ -169,7 +169,7 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        for i in range(1, 4):
+        for i in range(3):
             self.bt1.target_hciconfig_init()
             self.bt1.set_leadv()
             (status, output) = self.bt2.gatt_basic_check(self.bt1.get_bt_mac(), 'connect')
@@ -186,10 +186,13 @@ class CommBTTestMNode(oeRuntimeTest):
         @return
         '''
         self.bt1.target.run('hciconfig hci0 noleadv')
-        # For init function already set visible status, directly be scanned.  
-        exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
-        cmd = "expect %s %s %s" % (exp, self.bt2.target.ip, self.bt1.get_bt_mac())
-        status, output = shell_cmd_timeout(cmd, timeout=100)
+        for i in range(3):
+            # For init function already set visible status, directly be scanned.  
+            exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
+            cmd = "expect %s %s %s" % (exp, self.bt2.target.ip, self.bt1.get_bt_mac())
+            status, output = shell_cmd_timeout(cmd, timeout=100)
+            if status == 2:
+                break
         self.assertEqual(status, 2, msg="Scan remote device fails: %s" % output) 
 
     @tag(FeatureID="IOTOS-456")
@@ -200,10 +203,13 @@ class CommBTTestMNode(oeRuntimeTest):
         @return
         '''
         self.bt2.target.run('hciconfig hci0 noleadv')
-        # For init function already set visible status, directly be scanned.  
-        exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
-        cmd = "expect %s %s %s" % (exp, self.bt1.target.ip, self.bt2.get_bt_mac())
-        status, output = shell_cmd_timeout(cmd, timeout=100)
+        for i in range(3):
+            # For init function already set visible status, directly be scanned.  
+            exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
+            cmd = "expect %s %s %s" % (exp, self.bt1.target.ip, self.bt2.get_bt_mac())
+            status, output = shell_cmd_timeout(cmd, timeout=100)
+            if status == 2:
+                break
         self.assertEqual(status, 2, msg="Scan remote device fails: %s" % output) 
 
     @tag(FeatureID="IOTOS-759")
@@ -213,15 +219,21 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        # close legacy iscan mode
-        self.bt1.target.run('hciconfig hci0 noscan')
-        # begin low-energy scan
-        self.bt1.target.run('hciconfig hci0 leadv')
-        time.sleep(1)
-        # Another device starts bluetoothctl to scan target 
-        exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
-        cmd = "expect %s %s %s" % (exp, self.bt2.target.ip, self.bt1.get_bt_mac())
-        status, output = shell_cmd_timeout(cmd, timeout=100)
+        for i in range(3):
+            # close legacy iscan mode
+            self.bt1.target.run('hciconfig hci0 noscan')
+            # begin low-energy scan
+            self.bt1.target.run('hciconfig hci0 leadv')
+            time.sleep(1)
+            # Another device starts bluetoothctl to scan target 
+            exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
+            cmd = "expect %s %s %s" % (exp, self.bt2.target.ip, self.bt1.get_bt_mac())
+            status, output = shell_cmd_timeout(cmd, timeout=100)
+            if status == 2:
+                break
+            else:
+                self.bt1.target.run('hciconfig hci0 reset')
+                time.sleep(3)
         self.assertEqual(status, 2, msg="Be LE-scanned fails: %s" % output) 
 
     @tag(FeatureID="IOTOS-770")
@@ -231,16 +243,21 @@ class CommBTTestMNode(oeRuntimeTest):
         @param self
         @return
         '''
-        # close legacy iscan mode
-        self.bt2.target.run('hciconfig hci0 noscan')
-        # begin low-energy scan
-        self.bt2.target.run('hciconfig hci0 leadv')
-        time.sleep(1)
-
-        # Device starts bluetoothctl to scan others 
-        exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
-        cmd = "expect %s %s %s" % (exp, self.bt1.target.ip, self.bt2.get_bt_mac())
-        status, output = shell_cmd_timeout(cmd, timeout=100)
+        for i in range(3):
+            # close legacy iscan mode
+            self.bt2.target.run('hciconfig hci0 noscan')
+            # begin low-energy scan
+            self.bt2.target.run('hciconfig hci0 leadv')
+            time.sleep(1)
+            # Device starts bluetoothctl to scan others 
+            exp = os.path.join(os.path.dirname(__file__), "files/bt_scan.exp")
+            cmd = "expect %s %s %s" % (exp, self.bt1.target.ip, self.bt2.get_bt_mac())
+            status, output = shell_cmd_timeout(cmd, timeout=100)
+            if status == 2:
+                break
+            else:
+                self.bt2.target.run('hciconfig hci0 reset')
+                time.sleep(3)
         self.assertEqual(status, 2, msg="LE Scan other fails: %s" % output) 
 
     @tag(FeatureID="IOTOS-453")
@@ -258,7 +275,10 @@ class CommBTTestMNode(oeRuntimeTest):
         # On target, perform pair_master
         master_exp = os.path.join(os.path.dirname(__file__), "files/bt_pair_master.exp")
         cmd = "expect %s %s %s" % (master_exp, self.bt1.target.ip, self.bt2.get_bt_mac())
-        (status, output) = shell_cmd_timeout(cmd, timeout=200)
+        for i in range(3):
+            (status, output) = shell_cmd_timeout(cmd, timeout=200)
+            if status == 2:
+                break
         self.assertEqual(status, 2, msg="expect excution fail: %s" % output)
 
         # On target, check paired devices to see if IoT is in
