@@ -194,8 +194,12 @@ def copyxattrfiles(d, filelist, src, dst):
 # swupd-client expects a bundle subscription to exist for each
 # installed bundle. This is simply an empty file named for the
 # bundle in /usr/share/clear/bundles
-def create_bundle_manifest(d, bundlename):
-    bundledir = d.expand('${IMAGE_ROOTFS}/usr/share/clear/bundles')
+def create_bundle_manifest(d, bundlename, dest=None):
+    tgtpath = '/usr/share/clear/bundles'
+    if dest:
+        bundledir = dest + tgtpath
+    else:
+        bundledir = d.expand('${IMAGE_ROOTFS}%s' % tgtpath)
     bb.utils.mkdirhier(bundledir)
     open(os.path.join(bundledir, bundlename), 'w+b').close()
 
@@ -377,6 +381,9 @@ def stage_package_bundle_contents(d, bundle):
     # to pollute the 'chroot'
     remove_empty_directories(dest)
 
+    # Create the swupd bundle manifest
+    create_bundle_manifest(d, bundle, dest)
+
     # Generate a manifest of files in the bundle
     imagename = d.getVar('PN_BASE', True)
     if not imagename:
@@ -398,7 +405,7 @@ def stage_package_bundle_contents(d, bundle):
 
 def recopy_package_bundle_contents(d, bundle):
     bb.debug(2, 'Re-copying files for package based bundle %s' % bundle)
-    bundlecontents = set()
+    bundlecontents = []
     bundlebase = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/')
     bundledir = bundlebase + bundle
     bb.debug(3, 'Scanning %s for bundle files' % bundledir)
@@ -408,7 +415,7 @@ def recopy_package_bundle_contents(d, bundle):
         tgt = os.path.join(root, file)
         # then strip out the prefix so it's just the target path
         tgt = tgt.replace(bundledir, '')
-        bundlecontents.add(tgt[1:])
+        bundlecontents.append(tgt)
 
     for root, directories, files in os.walk(bundledir):
         for file in files:
@@ -416,17 +423,45 @@ def recopy_package_bundle_contents(d, bundle):
         for dir in directories:
             add_target_to_contents(root, dir)
 
-    # Also copy the bundles swupd bundle manifest and its parent hierarchy
-    bndlman = 'usr/share/clear/bundles/' + bundle
-    bundlecontents.add('usr/share/clear')
-    bundlecontents.add('usr/share/clear/bundles')
-    bundlecontents.add(bndlman)
+    bundle_files = sanitise_file_list(bundlecontents)
+
     # remove the current file contents of the bundle directory
     bb.debug(2, 'About to rm %s' % bundledir)
     oe.path.remove(bundledir)
     # copy over the required files from the megarootfs
     megarootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
-    copyxattrfiles(d, list(bundlecontents), megarootfs, bundledir)
+    copyxattrfiles(d, bundle_files, megarootfs, bundledir)
+
+# We need to ensure that each component of every file path to be copied is
+# present in the list.
+# This is because when copying the file contents using copyxattrfiles() any
+# intermediate path components which aren't explicitly specified will be
+# automatically created (instead of being copied) and thus end up with the
+# default permissions for newly created directories -- this will likely lead
+# to hash mismatches in the swupd Manifests and verification failures.
+# We also take the step of removing a leading / from the path, as required
+# by copyxattrfiles()
+def sanitise_file_list(filelist):
+    sanitised = set()
+    rootrepr = ['', '.', '/']
+
+    def addpathcomponents(path):
+        dirname = os.path.dirname(path)
+        while dirname:
+            # If the directory is a representation of / then we're done
+            if dirname in rootrepr:
+                break
+            sanitised.add(dirname[1:])
+            # Process the next component of the path
+            dirname = os.path.dirname(dirname)
+
+    for f in filelist:
+        # Ensure every component of the path is included in the file list
+        addpathcomponents(f)
+        # Remove / prefix for passing to tar
+        sanitised.add(f[1:])
+
+    return sorted(sanitised)
 
 # Copy bundle contents which aren't part of os-core from the mega-image rootfs
 def copy_image_bundle_contents(d, bundle):
@@ -453,12 +488,11 @@ def copy_image_bundle_contents(d, bundle):
     bb.debug(3, 'Comparing manifest %s to %s' %(base_manifest, image_manifest))
     bundle_file_contents = unique_contents(base_manifest, image_manifest)
     bb.debug(3, '%s has %s unique contents' % (bundle, len(bundle_file_contents)))
-    # Clean up the file entries to a format tar will accept (no leading /)
-    bundle_files = []
-    for bf in bundle_file_contents:
-        bundle_files.append(bf[1:])
 
-    # Copy over the unique bundle contents
+    bundle_files = sanitise_file_list(bundle_file_contents)
+    bb.debug(3, 'Sanitised file list for %s has %s contents' % (bundle, len(bundle_files)))
+
+    # Finally, copy over the unique bundle contents
     bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/%s/' % bundle)
     copyxattrfiles(d, bundle_files, megarootfs, bundledir)
 
