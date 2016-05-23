@@ -343,6 +343,13 @@ def get_bundle_packages(d, bundle):
     pkgs = (d.getVarFlag('BUNDLE_CONTENTS', bundle, True) or '').split()
     return pkgs
 
+def remove_empty_directories(tree):
+    for dir, _, _ in os.walk(tree, topdown=False):
+        try:
+            os.rmdir(dir)
+        except OSError as err:
+            bb.debug(4, 'Not removing %s (it is probably not empty): %s' % (dir, err.strerror))
+
 # For each bundle we have already included their contents in the mega-image,
 # thus we should be able to determine which packages were generated for that
 # bundles features and contents through the generated dependency data. Thus:
@@ -364,6 +371,11 @@ def stage_package_bundle_contents(d, bundle):
 
     pkgs = get_bundle_packages(d, bundle)
     pm.install(pkgs)
+    # We don't want package manager artefacts left in the bundle 'chroot'
+    pm.remove_packaging_data()
+    # Remove any empty directories installed by the package manager, so as not
+    # to pollute the 'chroot'
+    remove_empty_directories(dest)
 
     # Generate a manifest of files in the bundle
     imagename = d.getVar('PN_BASE', True)
@@ -383,9 +395,6 @@ def stage_package_bundle_contents(d, bundle):
     with open(manfile, 'w+') as manifest:
         manifest.write(format_pkg_list(installed, "ver"))
         manifest.write('\n')
-
-    # We don't want package manager artefacts left in the bundle 'chroot'
-    pm.remove_packaging_data()
 
 def recopy_package_bundle_contents(d, bundle):
     bb.debug(2, 'Re-copying files for package based bundle %s' % bundle)
