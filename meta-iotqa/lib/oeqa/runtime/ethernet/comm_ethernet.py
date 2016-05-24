@@ -61,9 +61,13 @@ class CommEthernet(oeRuntimeTest):
         @param self
         @return
         """
-        # Get target ip address prefix of LAN, for example, 192.168.8.100 is 192.168.8
-        ipv4 = self.get_ipv4().split('.')
-        prefix = "%s.%s.%s" % (ipv4[0], ipv4[1], ipv4[2])
+        # if user takes -s option, it is host's IP, directly use it
+        if '192.168.7.1' == self.target.server_ip:
+            # Get target ip address prefix of LAN, for example, 192.168.8.100 is 192.168.8
+            ipv4 = self.get_ipv4().split('.')
+            prefix = "%s.%s.%s" % (ipv4[0], ipv4[1], ipv4[2])
+        else:
+            prefix = self.target.server_ip
         # Use this prefix to get corresponding interface of the host
         (status, ifconfig) = shell_cmd_timeout('ifconfig')
         for line in ifconfig.splitlines():
@@ -72,7 +76,7 @@ class CommEthernet(oeRuntimeTest):
                 return ifconfig.splitlines()[index - 1].split()[0]
 
         # if above return is not OK, there might be error, return Blank
-        self.assertEqual(1, 0, msg="Target with address %s is not connectable" % ipv4)
+        self.assertEqual(1, 0, msg="Host interface with %s is not found" % prefix)
 
     @tag(FeatureID="IOTOS-489")
     def test_ethernet_ipv6_ping(self):

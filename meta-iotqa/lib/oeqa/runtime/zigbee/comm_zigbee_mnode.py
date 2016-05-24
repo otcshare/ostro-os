@@ -33,8 +33,10 @@ class ZigBeeMNode(oeRuntimeTest):
         '''
         self.zigbee1 = zigbee.ZigBeeFunction(self.targets[0])
         self.zigbee1.clean_up()
+        self.zigbee1.remove_cc2520_mode()        
         self.zigbee2 = zigbee.ZigBeeFunction(self.targets[1])
         self.zigbee2.clean_up()
+        self.zigbee2.remove_cc2520_mode()        
 
     def tearDown(self):
         ''' tearDown zigbee case
@@ -44,6 +46,8 @@ class ZigBeeMNode(oeRuntimeTest):
         '''
         self.zigbee1.clean_up()
         self.zigbee2.clean_up()
+        self.zigbee1.remove_atmel_mode()
+        self.zigbee2.remove_atmel_mode()
 
     @tag(FeatureID="IOTOS-1220")
     def test_zigbee_atmel_ping6_out(self):

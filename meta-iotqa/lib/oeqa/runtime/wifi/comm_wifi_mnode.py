@@ -106,7 +106,7 @@ class CommWiFiMNode(oeRuntimeTest):
         @return
         '''
         # clean files on both sides
-        self.wifi2.target.run('rm -f /tmp/*')
+        self.wifi2.target.run('rm -f /home/root/*')
         self.wifi1.ipv4_ssh_to(self.wifi2.get_wifi_ipv4())
         # create 1000 files under /tmp/1000/ on target1
         script = os.path.join(os.path.dirname(__file__), "files/create_1000_files.sh")
@@ -114,12 +114,12 @@ class CommWiFiMNode(oeRuntimeTest):
         self.wifi1.target.run('sh /tmp/create_1000_files.sh')
 
         # scp them to target2 /tmp/ folder
-        (status, file_number_old) = self.wifi2.target.run('ls /tmp/ | wc -l')
+        (status, file_number_old) = self.wifi2.target.run('ls /home/root/ | wc -l')
         file_path = '/tmp/1000/*'
         self.wifi1.scp_to(file_path, self.wifi2.get_wifi_ipv4())
 
         # check if /tmp/ files number increase 1000 on target2
-        (status, file_number_new) = self.wifi2.target.run('ls /tmp/ | wc -l')
+        (status, file_number_new) = self.wifi2.target.run('ls /home/root/ | wc -l')
         if int(file_number_new) - int(file_number_old) == 1000:
             pass
         else:
@@ -135,15 +135,16 @@ class CommWiFiMNode(oeRuntimeTest):
         self.wifi1.ipv4_ssh_to(self.wifi2.get_wifi_ipv4())
         file_path = '/home/root/big_file'
         # create a big file, size is 500M
-        (status, patition) = self.wifi1.target.run('df | grep " /$"')
+        (status, patition) = self.wifi1.target.run('mount | grep " \/ "')
         self.wifi1.target.run('dd if=%s of=%s bs=1M count=500' % (patition.split()[0], file_path))
 
-        # scp it to target2 /tmp/ folder
+        # scp it to target2 /home/root/ folder
+        self.wifi2.target.run('rm -f /home/root/*')
         self.wifi1.scp_to(file_path, self.wifi2.get_wifi_ipv4())
 
         # check if md5sume is consistent
         (status, md5sum1) = self.wifi1.target.run('md5sum %s' % file_path)
-        (status, md5sum2) = self.wifi2.target.run('md5sum /tmp/%s' % file_path.split('/')[-1])
+        (status, md5sum2) = self.wifi2.target.run('md5sum /home/root/%s' % file_path.split('/')[-1])
         if md5sum1.split()[0] == md5sum2.split()[0]:
             pass
         else:

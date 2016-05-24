@@ -134,9 +134,10 @@ class CommWiFiConect(oeRuntimeTest):
         ap_type = "broadcast"
         ssid = ssid_config.get("Connect","ssid_broadcast")
         pwd = ssid_config.get("Connect","passwd_broadcast")
+        url = ssid_config.get("Internet","url")
 
         self.wifi.execute_connection(ap_type, ssid, pwd)
-        self.wifi.check_internet_connection()
+        self.wifi.check_internet_connection(url)
 
     @tag(FeatureID="IOTOS-458")
     def test_connect_wep(self):

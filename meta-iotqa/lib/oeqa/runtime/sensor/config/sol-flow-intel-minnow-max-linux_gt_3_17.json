@@ -218,17 +218,9 @@
      "type": "iio/temperature"
   },
   {
-     "name": "MyPressureTmp006",
-     "options": {
-           "iio_device": "tmp006 create,i2c,platform/80860F41:05,0x40,tmp006 0",
-           "buffer_size": "-1"
-     },
-     "type": "iio/pressure"
-  },
-  {
      "name": "MyTemperatureTmp006",
      "options": {
-           "iio_device": "0-0040 create,i2c,platform/80860F41:05,0x40,0-0040 0",
+           "iio_device": "tmp006 create,i2c,platform/80860F41:05,0x40,tmp006 0",
            "buffer_size": "-1"
      },
      "type": "iio/temperature"

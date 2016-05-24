@@ -1,5 +1,5 @@
 #!/usr/bin/expect
-set timeout 10
+set timeout 30
 set ip      [lindex $argv 0] 
 spawn ssh root@$ip -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o LogLevel=ERROR /opt/iotivity/examples/resource/cpp/groupclient
  expect {

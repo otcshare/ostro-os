@@ -97,19 +97,22 @@ class WiFiFunction(object):
         @param self
         @return
         '''
-        target_ip = self.target.ip 
-        service = self.scan_wifi(ap_type, ssid)
-        # Do connection
-        if (ap_type == "broadcast"):
-            exp = os.path.join(os.path.dirname(__file__), "files/wifi_connect.exp")
-            cmd = "expect %s %s %s %s %s" % (exp, target_ip, "connmanctl", service, pwd)
-        elif "hidden" in ap_type:
-            exp = os.path.join(os.path.dirname(__file__), "files/wifi_hidden_connect.exp")
-            cmd = "expect %s %s %s %s %s %s" % (exp, target_ip, "connmanctl", service, ssid, pwd)
-        else:
-            assert False, "ap_type must be broadcast or hidden, check config"
-        # execute connection expect script
-        status, output = shell_cmd_timeout(cmd, timeout=60)
+        target_ip = self.target.ip
+        for i in range(3):
+            service = self.scan_wifi(ap_type, ssid)
+            # Do connection
+            if (ap_type == "broadcast"):
+                exp = os.path.join(os.path.dirname(__file__), "files/wifi_connect.exp")
+                cmd = "expect %s %s %s %s %s" % (exp, target_ip, "connmanctl", service, pwd)
+            elif "hidden" in ap_type:
+                exp = os.path.join(os.path.dirname(__file__), "files/wifi_hidden_connect.exp")
+                cmd = "expect %s %s %s %s %s %s" % (exp, target_ip, "connmanctl", service, ssid, pwd)
+            else:
+                assert False, "ap_type must be broadcast or hidden, check config"
+            # execute connection expect script
+            status, output = shell_cmd_timeout(cmd, timeout=60)
+            if status == 2:
+                break        
         assert status == 2, "Error messages: %s" % output 
 
     def get_wifi_ipv4(self):
@@ -162,7 +165,7 @@ class WiFiFunction(object):
         time.sleep(10)
         self.wifi_ip_check()
 
-    def check_internet_connection(self):
+    def check_internet_connection(self, url):
         ''' Check if the target is able to connect to internet by wget
         @fn check_internet_connection
         @param self
@@ -171,7 +174,11 @@ class WiFiFunction(object):
         # wget internet content
         self.target.run("rm -f index.html")
         time.sleep(1)
-        (status, output) = self.target.run("wget http://www.baidu.com/")
+        for i in range(3):
+            (status, output) = self.target.run("wget %s" % url, timeout=100)
+            if status == 0:
+                break
+            time.sleep(3)
         self.target_collect_info("route")
         assert status == 0, "Error messages: %s" % self.log
 
@@ -215,7 +222,7 @@ class WiFiFunction(object):
         @return
         '''
         # This function assumes two devices already get ssh-key exchanged.
-        scp_cmd = 'scp -i /tmp/ostro_qa_rsa %s root@%s:/tmp/' % (file_path, ipv4)
+        scp_cmd = 'scp -i /tmp/ostro_qa_rsa %s root@%s:/home/root/' % (file_path, ipv4)
         (status, output) = self.target.run(scp_cmd, timeout=2000)
         assert status == 0, "Scp fails: %s" % output
 

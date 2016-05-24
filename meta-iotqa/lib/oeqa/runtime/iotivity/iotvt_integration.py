@@ -39,6 +39,12 @@ class IOtvtIntegration(oeRuntimeTest):
         cls.tc.target.run("killall simpleclientserver threadingsample")
         cls.tc.target.run("rm -f /tmp/svr_output")
         cls.tc.target.run("rm -f /tmp/output")
+        # check if image contains iotivity example applications
+        (status, output) = cls.tc.target.run("ls /opt/iotivity/examples/resource/")
+        if "cpp" in output:
+            pass
+        else:
+            assert 1 == 0, 'There is no iotivity exmaple app installed'
         # add group and non-root user
         add_group("tester")
         add_user("iotivity-tester", "tester")

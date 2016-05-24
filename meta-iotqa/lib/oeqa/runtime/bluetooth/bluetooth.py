@@ -255,21 +255,25 @@ class BTFunction(object):
         '''
         self.enable_6lowpan_ble()
         second.enable_6lowpan_ble()
-        # Second target does advertising
-        second_mac = second.get_bt_mac()
-        (status, output) = second.target.run('hciconfig hci0 leadv')
-        time.sleep(1)
-        # Self connects to second
-
-        (status, output) = self.target.run('echo "connect %s 1" > /sys/kernel/debug/bluetooth/6lowpan_control' % second_mac)
-        time.sleep(10)
-        self.target_collect_info('hcitool con')
-        assert status == 0, "BLE 6lowpan connection fails: %s\n%s" % (output, self.log)
-        (status, output) = self.target.run('ifconfig')
-        if 'bt0' in output:
-            pass
-        else:
-            assert False, "No bt0 generated: %s\n%s" % (output, self.log)    
+        success = 1
+        for i in range(3):
+            # Second target does advertising
+            second_mac = second.get_bt_mac()
+            (status, output) = second.target.run('hciconfig hci0 leadv')
+            time.sleep(1)
+            # Self connects to second
+            (status, output) = self.target.run('echo "connect %s 1" > /sys/kernel/debug/bluetooth/6lowpan_control' % second_mac)
+            time.sleep(10)
+            self.target_collect_info('hcitool con')
+            assert status == 0, "BLE 6lowpan connection fails: %s\n%s" % (output, self.log)
+            (status, output) = self.target.run('ifconfig')
+            if 'bt0' in output:
+                success = 0
+                break
+            else:
+                second.target.run('hciconfig hci0 reset')
+                time.sleep(3)         
+        assert success == 0, "No bt0 generated: %s\n%s" % (output, self.log)    
 
     def gatt_basic_check(self, btmac, point):
         '''Do basic gatt tool check points.

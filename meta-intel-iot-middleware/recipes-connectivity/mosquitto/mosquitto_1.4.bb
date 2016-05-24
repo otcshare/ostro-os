@@ -14,6 +14,8 @@ SRC_URI = "http://mosquitto.org/files/source/mosquitto-${PV}.tar.gz \
            file://mosquitto.service \
 "
 
+export LIB_SUFFIX="${@d.getVar('baselib', True).replace('lib', '')}"
+
 SRC_URI[md5sum] = "cd879f5964311501ba8e2275add71484"
 SRC_URI[sha256sum] = "591f3adcb6ed92c01f7ace1c878af728b797fe836892535620aa6106f42dbcc6"
 
@@ -23,7 +25,7 @@ do_compile() {
 
 do_install() {
     oe_runmake install DESTDIR=${D}
-    install -d ${D}${libbir}
+    install -d ${D}${libdir}
     install -m 0644 lib/libmosquitto.a ${D}${libdir}/
 
     install -d ${D}${systemd_unitdir}/system/
