@@ -42,6 +42,7 @@ FILES_${PN}-dev = " \
                 ${includedir}/soletta/* \
                 ${libdir}/pkgconfig/soletta.pc \
                 ${libdir}/soletta/modules/flow/* \
+                ${libdir}/soletta/modules/update/* \
                 ${libdir}/soletta/modules/pin-mux/* \
                 ${libdir}/soletta/modules/linux-micro/* \
                 ${libdir}/soletta/modules/flow-metatype/* \
