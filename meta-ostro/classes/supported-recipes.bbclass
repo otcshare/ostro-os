@@ -30,22 +30,73 @@ SUPPORTED_RECIPES_CHECK_DEPENDENCY_LINES ??= "50"
 
 def load_supported_recipes(d):
     import os
+    import re
+
+    class SupportedRecipe:
+        def __init__(self, pattern, filename, linenumber):
+            self.filename = filename
+            self.pattern = pattern
+            self.linenumber = linenumber
+            parts = pattern.split('@')
+            if len(parts) != 2:
+                raise RuntimeException("%s.%d: entry must have format <recipe name regex>@<collection name regex>, splitting by @ found %d parts instead: %s" % (
+                    filename,
+                    linenumber,
+                    len(parts),
+                    pattern))
+            def parse_regex(regex):
+                try:
+                    # must match entire string, hence the '$'
+                    return (re.compile(regex + '$'), regex)
+                except Exception, ex:
+                    raise RuntimeError("%s.%d: parsing '%s' as regular expression failed: %s" % (
+                        filename,
+                        linenumber,
+                        regex,
+                        str(ex)))
+            self.pn_re = parse_regex(parts[0])
+            self.collection_re = parse_regex(parts[1])
+
+        def supported(self, pn, collection):
+            supported = bool((pn is None or self.pn_re[0].match(pn)) and (collection is None or self.collection_re[0].match(collection)))
+            return supported
+
+    class SupportedRecipes:
+        def __init__(self):
+            self.supported = []
+
+        def append(self, recipe):
+            self.supported.append(recipe)
+
+        def current_recipe_supported(self, d):
+            pn = d.getVar('PN', True)
+            filename = d.getVar('FILE', True)
+            collection = bb.utils.get_file_layer(filename, d)
+            return self.recipe_supported(pn, collection)
+
+        def recipe_supported(self, pn, collection):
+            for supported_recipe in self.supported:
+                if supported_recipe.supported(pn, collection):
+                    return True
+            return False
 
     files = []
     supported_files = d.getVar('SUPPORTED_RECIPES', True)
     if not supported_files:
         bb.fatal('SUPPORTED_RECIPES is not set')
-    supported_recipes = set()
+    supported_recipes = SupportedRecipes()
     for file in supported_files.split():
         try:
             with open(file) as f:
+                linenumber = 1
                 for line in f.readlines():
                     if line.startswith('#'):
                         continue
                     # TODO (?): sanity check the content to catch obsolete entries or typos.
                     pn = line.strip()
                     if pn:
-                        supported_recipes.add(line.strip())
+                        supported_recipes.append(SupportedRecipe(line.strip(), file, linenumber))
+                    linenumber += 1
             files.append(file)
         except OSError, ex:
             bb.fatal('Could not read SUPPORTED_RECIPES = %s: %s' % (supported_file, str(ex)))
@@ -59,7 +110,7 @@ python () {
     # or removing entries does not trigger re-parsing and re-building.
     for file in files:
         bb.parse.mark_dependency(d, file)
-    if d.getVar('PN', True) not in supported_recipes:
+    if not supported_recipes.current_recipe_supported(d):
         d.setVar('EXCLUDE_FROM_WORLD', '1')
 }
 
@@ -114,7 +165,7 @@ python supported_recipes_eventhandler() {
             filename = pndata['filename']
             collection = bb.utils.get_file_layer(filename, d)
             recipe = '%s@%s' % (pn, collection)
-            if recipe not in supported_recipes:
+            if not supported_recipes.recipe_supported(pn, collection):
                 unsupported[pn] = collection
 
     if unsupported:
@@ -204,6 +255,7 @@ To avoid this message, several options exist:
 * Disable the check with SUPPORTED_RECIPES_CHECK = "" in local.conf.
 * Add the unsupported recipes to one of the following files:
   %s
+  Regular expressions are supported on both sides of the @ separator.
 * If the recipe is supported in some other layer, disable the unsupported one
   with BBMASK.
 * Create a new file which lists the unsupported recipes and extend SUPPORTED_RECIPES:
