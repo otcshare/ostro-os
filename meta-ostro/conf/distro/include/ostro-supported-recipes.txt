@@ -7,7 +7,11 @@
 # are unsupported.
 #
 # Each recipe is identified by recipe name and the collection in which
-# it appears. Typically each layer defines one collection, but the name
+# it appears. Both parts are treated as a regular expression that
+# must fully match the actual names (no explicit $ at the end needed
+# for that).
+#
+# Typically each layer defines one collection, but the name
 # is not always the same. Examples:
 #   core = meta = openembedded-core
 #   openembedded-layer = meta-openembedded/meta-oe
@@ -22,8 +26,13 @@
 # To extend this list, submit a feature request or a pull request. The
 # Ostro OS team will then decide whether it can support the additional
 # recipes.
-#
-# List is sorted alphabetically.
+
+# Special entry for all recipes that a developer maintains in his
+# personal workspace with "devtool".
+
+.*@workspacelayer
+
+# List of real recipes, sorted alphabetically.
 
 acl@core
 appfw-test-app@iotqa
