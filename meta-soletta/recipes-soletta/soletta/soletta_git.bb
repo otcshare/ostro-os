@@ -77,6 +77,7 @@ RDEPENDS_${PN} = " \
 # do_package_qa tells soletta rdepends on soletta-dev
 # maybe an non-obvious implicit rule implied by yocto
 INSANE_SKIP_${PN} += "dev-deps file-rdeps"
+INSANE_SKIP_${PN}-dev += "dev-elf"
 INHIBIT_PACKAGE_STRIP = "1"
 INHIBIT_DEFAULT_DEPS = "1"
 
