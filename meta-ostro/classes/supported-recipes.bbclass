@@ -80,6 +80,13 @@ def load_supported_recipes(d):
                     return True
             return False
 
+        def find_collections(self, pn):
+            collections = set()
+            for supported_recipe in self.supported:
+                if supported_recipe.supported(pn, None):
+                   collections.add(supported_recipe.collection_re[1])
+            return collections
+
     files = []
     supported_files = d.getVar('SUPPORTED_RECIPES', True)
     if not supported_files:
@@ -232,8 +239,13 @@ python supported_recipes_eventhandler() {
         except TruncatedError:
             truncated = True
 
+        def collection_hint(pn):
+            '''Determines whether the recipe would be supported in some other collection.'''
+            collections = supported_recipes.find_collections(pn)
+            return ' (only supported in %s)' % ' '.join(collections) if collections else ''
+
         logger('The following unsupported recipes are required for the build:\n  ',
-               '\n  '.join(sorted(['%s@%s' % (pn, collection) for pn, collection in unsupported.iteritems()])),
+               '\n  '.join(sorted(['%s@%s%s' % (pn, collection, collection_hint(pn)) for pn, collection in unsupported.iteritems()])),
                '''
 
 Each unsupported recipe is identified by the recipe name and the collection
