@@ -313,6 +313,7 @@ def copy_core_contents(d):
     copyxattrfiles(d, bundle_file_contents, d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
 
 # Instantiate an instance of the PM object for the image's package manager
+# FIXME: Mariano proposed a similar method to OE-Core for package_manager
 def get_package_manager(d, dest):
     from oe.package_manager import RpmPM
     from oe.package_manager import OpkgPM
@@ -332,6 +333,9 @@ def get_package_manager(d, dest):
         pm = DpkgPM(d, dest,
                     d.getVar('PACKAGE_ARCHS', True),
                     d.getVar('DPKG_ARCH', True))
+
+    pm.write_index()
+    pm.update()
 
     return pm
 
@@ -358,7 +362,6 @@ def stage_package_bundle_contents(d, bundle):
     dest = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/%s/" % bundle)
     pm = get_package_manager(d, dest)
 
-    pm.update()
     pkgs = get_bundle_packages(d, bundle)
     pm.install(pkgs)
 
