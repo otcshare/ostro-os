@@ -88,6 +88,12 @@ do_configure_prepend() {
    export TARGETAR="${AR}"
 }
 
+do_configure_append() {
+   # The RPATH should not be set otherwise it will set the path of the host
+   # becoming invalid
+   # Also, yocto has a toolchain that will treat RPATH for Soletta
+   sed -i "s/^RPATH=y/# RPATH is not set/g" ${S}/.config
+}
 
 do_compile() {
    # changing the home directory to the working directory, the .npmrc will be created in this directory
