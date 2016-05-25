@@ -250,12 +250,13 @@ python supported_recipes_eventhandler() {
 
 Each unsupported recipe is identified by the recipe name and the collection
 in which it occurs and has to be marked as supported (see below) using that
-format. Typically each layer has exactly one collection.
+format. Typically each layer has exactly one collection.''',
+'''
 
 Here are the dependency chains (including DEPENDS and RDEPENDS)
 which include one or more of the unsupported recipes. -> means "depends on"
 and * marks unsupported recipes:
-  ''',
+  ''' if lines else '',
                '\n  '.join([' -> '.join([('*' if pn in unsupported else '') + pn for pn in line]) for line in lines]),
                ('''
   ...
