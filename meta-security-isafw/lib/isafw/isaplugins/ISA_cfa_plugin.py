@@ -42,7 +42,6 @@ except ImportError:
 
 CFChecker = None
 
-
 class ISA_CFChecker():
     initialized = False
     no_relro = []
@@ -62,44 +61,49 @@ class ISA_CFChecker():
         self.problems_report_name = ISA_config.reportdir + \
             "/cfa_problems_report_" + ISA_config.machine + "_" + ISA_config.timestamp
         self.full_reports = ISA_config.full_reports
-        # check that checksec is installed
-        DEVNULL = open(os.devnull, 'wb')
-        rc = subprocess.call(["which", "checksec.sh"], stdout=DEVNULL, stderr=DEVNULL)
-        if rc == 0:
-            # check that execstack is installed
-            rc = subprocess.call(["which", "execstack"], stdout=DEVNULL, stderr=DEVNULL)
-            if rc == 0:
-                # check that execstack is installed
-                rc = subprocess.call(["which", "readelf"], stdout=DEVNULL, stderr=DEVNULL)
-                if rc == 0:
-                    self.initialized = True
-                    with open(self.logfile, 'w') as flog:
-                        flog.write("\nPlugin ISA_CFChecker initialized!\n")
-                        DEVNULL.close()
-                    return
+        self.ISA_filesystem = ""
+        # check that checksec and other tools are installed
+        checksec = False
+        execstack = False
+        readelf = False
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            if os.path.isfile(os.path.join(path, "checksec.sh")) and os.access(os.path.join(path, "checksec.sh"), os.X_OK):
+                checksec = True
+            if os.path.isfile(os.path.join(path, "execstack")) and os.access(os.path.join(path, "execstack"), os.X_OK):
+                execstack = True
+            if os.path.isfile(os.path.join(path, "readelf")) and os.access(os.path.join(path, "readelf"), os.X_OK):
+                readelf = True
+        if (not checksec) or (not execstack) or (not readelf):
+            with open(self.logfile, 'w') as flog:
+                flog.write("checksec, execstack or readelf tools are missing!\n")
+                flog.write("Please install checksec from http://www.trapkit.de/tools/checksec.html\n")
+                flog.write("Please install execstack from prelink package\n")
+            return
+        self.initialized = True
         with open(self.logfile, 'w') as flog:
-            flog.write("checksec, execstack or readelf tools are missing!\n")
-            flog.write("Please install checksec from http://www.trapkit.de/tools/checksec.html\n")
-            flog.write("Please install execstack from prelink package\n")
-        DEVNULL.close()
+            flog.write("\nPlugin ISA_CFChecker initialized!\n")
+        return
+
 
     def process_filesystem(self, ISA_filesystem):
+        self.ISA_filesystem = ISA_filesystem
+        fs_path = self.ISA_filesystem.path_to_fs
+        img_name = self.ISA_filesystem.img_name
         if (self.initialized):
-            if (ISA_filesystem.img_name and ISA_filesystem.path_to_fs):
+            if (img_name and fs_path):
                 with open(self.logfile, 'a') as flog:
-                    flog.write("\n\nFilesystem path is: " + ISA_filesystem.path_to_fs)
+                    flog.write("\n\nFilesystem path is: " + fs_path)
                 if self.full_reports:
-                    with open(self.full_report_name + "_" + ISA_filesystem.img_name, 'w') as ffull_report:
+                    with open(self.full_report_name + "_" + img_name, 'w') as ffull_report:
                         ffull_report.write(
-                            "Security-relevant flags for executables for image: " + ISA_filesystem.img_name + '\n')
-                        ffull_report.write("With rootfs location at " +
-                                           ISA_filesystem.path_to_fs + "\n\n")
-                self.files = self.find_files(ISA_filesystem.path_to_fs)
-                with open(self.logfile, 'a') as flog:
-                    flog.write("\n\nFile list is: " + str(self.files))
-                self.process_files(ISA_filesystem.img_name, ISA_filesystem.path_to_fs)
-                self.write_report(ISA_filesystem)
-                self.write_report_xml(ISA_filesystem)
+                            "Security-relevant flags for executables for image: " + img_name + '\n')
+                        ffull_report.write("With rootfs location at " + fs_path + "\n\n")
+                files = self.find_files(fs_path)
+                import multiprocessing
+                pool = multiprocessing.Pool()
+                results = pool.map(process_file, files)
+                self.process_results(results)
             else:
                 with open(self.logfile, 'a') as flog:
                     flog.write(
@@ -109,21 +113,71 @@ class ISA_CFChecker():
             with open(self.logfile, 'a') as flog:
                 flog.write("Plugin hasn't initialized! Not performing the call.\n")
 
-    def write_report(self, ISA_filesystem):
-        with open(self.problems_report_name + "_" + ISA_filesystem.img_name, 'w') as fproblems_report:
-            fproblems_report.write("Report for image: " + ISA_filesystem.img_name + '\n')
-            fproblems_report.write("With rootfs location at " + ISA_filesystem.path_to_fs + "\n\n")
+    def process_results(self, results):
+        fs_path = self.ISA_filesystem.path_to_fs
+        for result in results:
+            if not result:
+                with open(self.logfile, 'a') as flog:
+                    flog.write("\nError in returned result")
+                continue
+            with open(self.logfile, 'a') as flog:
+                flog.write("\n\nFor file: " + str(result[0]) + "\nlog is: " + str(result[5]))
+            if result[1]:
+                with open(self.logfile, 'a') as flog:
+                    flog.write("\n\nsec_field: " + str(result[1]))
+                if "No RELRO" in result[1]:
+                    self.no_relro.append(result[0].replace(fs_path, ""))
+                elif "Partial RELRO" in result[1]:
+                    self.partial_relro.append(result[0].replace(fs_path, ""))
+                if "No canary found" in result[1]:
+                    self.no_canary.append(result[0].replace(fs_path, ""))
+                if "No PIE" in result[1]:
+                    self.no_pie.append(result[0].replace(fs_path, ""))
+            if result[2]:
+                if result[2].startswith("X "):
+                    self.execstack.append(result[0].replace(fs_path, ""))
+                elif result[2].startswith("? "):
+                    self.execstack_not_defined.append(result[0].replace(fs_path, ""))
+            if result[3]:
+                if ("setgid@GLIBC" in result[3]) or ("setegid@GLIBC" in result[3]) or ("setresgid@GLIBC" in result[3]):
+                    if ("setuid@GLIBC" in result[3]) or ("seteuid@GLIBC" in result[3]) or ("setresuid@GLIBC" in result[3]):
+                        if ("setgroups@GLIBC" not in result[3]) and ("initgroups@GLIBC" not in result[3]):
+                            self.nodrop_groups.append(result[0].replace(fs_path, ""))
+            if result[4]:
+                if ("bndcu" not in result[4]) and ("bndcl" not in result[4]) and ("bndmov" not in result[4]):
+                    self.no_mpx.append(result[0].replace(fs_path, ""))
+            self.write_full_report(result)
+        self.write_report()
+        self.write_report_xml()
+
+    def write_full_report(self, result):
+        if not self.full_reports:
+            return
+        fs_path = self.ISA_filesystem.path_to_fs
+        img_name = self.ISA_filesystem.img_name
+        with open(self.full_report_name + "_" + img_name, 'a') as ffull_report:
+            ffull_report.write('\nFile: ' + result[0].replace(fs_path, ""))
+            ffull_report.write('\nsecurity flags: ' + str(result[1]))
+            ffull_report.write('\nexecstack: ' + result[2])
+            ffull_report.write('\nnodrop_groups: ' + result[3])
+            ffull_report.write('\nno mpx: ' + result[4])
+            ffull_report.write('\n')
+
+    def write_report(self):
+        fs_path = self.ISA_filesystem.path_to_fs
+        img_name = self.ISA_filesystem.img_name
+        with open(self.problems_report_name + "_" + img_name, 'w') as fproblems_report:
+            fproblems_report.write("Report for image: " + img_name + '\n')
+            fproblems_report.write("With rootfs location at " + fs_path + "\n\n")
             fproblems_report.write("Relocation Read-Only\n")
             fproblems_report.write("More information about RELRO and how to enable it:")
             fproblems_report.write(
                 " http://tk-blog.blogspot.de/2009/02/relro-not-so-well-known-memory.html\n")
             fproblems_report.write("Files with no RELRO:\n")
             for item in self.no_relro:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("Files with partial RELRO:\n")
             for item in self.partial_relro:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("\n\nStack protection\n")
             fproblems_report.write(
@@ -131,7 +185,6 @@ class ISA_CFChecker():
             fproblems_report.write("https://lwn.net/Articles/584225/ \n")
             fproblems_report.write("Files with no canary:\n")
             for item in self.no_canary:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("\n\nPosition Independent Executable\n")
             fproblems_report.write("More information about PIE protection and how to enable it:")
@@ -139,16 +192,13 @@ class ISA_CFChecker():
                 "https://securityblog.redhat.com/2012/11/28/position-independent-executables-pie/\n")
             fproblems_report.write("Files with no PIE:\n")
             for item in self.no_pie:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("\n\nNon-executable stack\n")
             fproblems_report.write("Files with executable stack enabled:\n")
             for item in self.execstack:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("\n\nFiles with no ability to fetch executable stack status:\n")
             for item in self.execstack_not_defined:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("\n\nGrop initialization:\n")
             fproblems_report.write(
@@ -156,7 +206,6 @@ class ISA_CFChecker():
             fproblems_report.write(
                 "Files that don't initialize groups while using setuid/setgid:\n")
             for item in self.nodrop_groups:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
             fproblems_report.write("\n\nMemory Protection Extensions\n")
             fproblems_report.write("More information about MPX protection and how to enable it:")
@@ -164,64 +213,55 @@ class ISA_CFChecker():
                 "https://software.intel.com/sites/default/files/managed/9d/f6/Intel_MPX_EnablingGuide.pdf\n")
             fproblems_report.write("Files that don't have MPX protection enabled:\n")
             for item in self.no_mpx:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 fproblems_report.write(item + '\n')
 
-    def write_report_xml(self, ISA_filesystem):
+    def write_report_xml(self):
         numTests = len(self.no_relro) + len(self.partial_relro) + len(self.no_canary) + len(self.no_pie) + \
             len(self.execstack) + len(self.execstack_not_defined) + \
             len(self.nodrop_groups) + len(self.no_mpx)
         root = etree.Element('testsuite', name='ISA_CFChecker', tests=str(numTests))
         if self.no_relro:
             for item in self.no_relro:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase1 = etree.SubElement(
                     root, 'testcase', classname='files_with_no_RELRO', name=item)
                 etree.SubElement(tcase1, 'failure', message=item, type='violation')
         if self.partial_relro:
             for item in self.partial_relro:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase1 = etree.SubElement(
                     root, 'testcase', classname='files_with_partial_RELRO', name=item)
                 etree.SubElement(tcase1, 'failure', message=item, type='violation')
         if self.no_canary:
             for item in self.no_canary:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase2 = etree.SubElement(
                     root, 'testcase', classname='files_with_no_canary', name=item)
                 etree.SubElement(tcase2, 'failure', message=item, type='violation')
         if self.no_pie:
             for item in self.no_pie:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase3 = etree.SubElement(
                     root, 'testcase', classname='files_with_no_PIE', name=item)
                 etree.SubElement(tcase3, 'failure', message=item, type='violation')
         if self.execstack:
             for item in self.execstack:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase5 = etree.SubElement(
                     root, 'testcase', classname='files_with_execstack', name=item)
                 etree.SubElement(tcase5, 'failure', message=item, type='violation')
         if self.execstack_not_defined:
             for item in self.execstack_not_defined:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase6 = etree.SubElement(
                     root, 'testcase', classname='files_with_execstack_not_defined', name=item)
                 etree.SubElement(tcase6, 'failure', message=item, type='violation')
         if self.nodrop_groups:
             for item in self.nodrop_groups:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase7 = etree.SubElement(
                     root, 'testcase', classname='files_with_nodrop_groups', name=item)
                 etree.SubElement(tcase7, 'failure', message=item, type='violation')
         if self.no_mpx:
             for item in self.no_mpx:
-                item = item.replace(ISA_filesystem.path_to_fs, "")
                 tcase8 = etree.SubElement(
                     root, 'testcase', classname='files_with_no_mpx', name=item)
                 etree.SubElement(tcase8, 'failure', message=item, type='violation')
         tree = etree.ElementTree(root)
-        output = self.problems_report_name + "_" + ISA_filesystem.img_name + '.xml'
+        output = self.problems_report_name + "_" + self.ISA_filesystem.img_name + '.xml'
         try:
             tree.write(output, encoding='UTF-8', pretty_print=True, xml_declaration=True)
         except TypeError:
@@ -234,152 +274,88 @@ class ISA_CFChecker():
                 list_of_files.append(str(dirpath + "/" + f)[:])
         return list_of_files
 
-    def get_execstack(self, file_name):
-        DEVNULL = open(os.devnull, 'wb')
-        cmd = ['execstack', '-q', file_name]
+def get_execstack(file_name):
+    cmd = ['execstack', '-q', file_name]
+    with open(os.devnull, 'wb') as DEVNULL:
         try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL).decode("utf-8")
+            result = subprocess.check_output(cmd, stderr=DEVNULL)
         except:
-            DEVNULL.close()
-            return "Not able to fetch execstack status"
+            return ""
         else:
-            if result.startswith("X "):
-                self.execstack.append(file_name[:])
-            if result.startswith("? "):
-                self.execstack_not_defined.append(file_name[:])
-            DEVNULL.close()
             return result
 
-    def get_nodrop_groups(self, file_name):
-        DEVNULL = open(os.devnull, 'wb')
-        cmd = ['readelf', '-s', file_name]
+def get_nodrop_groups(file_name):
+    cmd = ['readelf', '-s', file_name]
+    with open(os.devnull, 'wb') as DEVNULL:
         try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL).decode("utf-8")
+            result = subprocess.check_output(cmd, stderr=DEVNULL)
         except:
-            DEVNULL.close()
-            return "Not able to fetch nodrop groups status"
+            return ""
         else:
-            if ("setgid@GLIBC" in result) or ("setegid@GLIBC" in result) or ("setresgid@GLIBC" in result):
-                if ("setuid@GLIBC" in result) or ("seteuid@GLIBC" in result) or ("setresuid@GLIBC" in result):
-                    if ("setgroups@GLIBC" not in result) and ("initgroups@GLIBC" not in result):
-                        self.nodrop_groups.append(file_name[:])
-            DEVNULL.close()
             return result
 
-    def get_mpx(self, file_name):
-        DEVNULL = open(os.devnull, 'wb')
-        cmd = ['objdump', '-d', file_name]
+def get_mpx(file_name):
+    cmd = ['objdump', '-d', file_name]
+    with open(os.devnull, 'wb') as DEVNULL:
         try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL).decode("utf-8")
+            result = subprocess.check_output(cmd, stderr=DEVNULL)
         except:
-            DEVNULL.close()
-            return "Not able to fetch mpx status"
+            return ""
         else:
-            if ("bndcu" not in result) and ("bndcl" not in result) and ("bndmov" not in result):
-                self.no_mpx.append(file_name[:])
-            DEVNULL.close()
             return result
 
-    def get_security_flags(self, file_name):
-        SF = {
-            'No RELRO': 0,
-            'Full RELRO': 2,
-            'Partial RELRO': 1,
-            'Canary found': 1,
-            'No canary found': 0,
-            'NX disabled': 0,
-            'NX enabled': 1,
-            'No PIE': 0,
-            'PIE enabled': 3,
-            'DSO': 2,
-            'RPATH': 0,
-            'Not an ELF file': 1,
-            'No RPATH': 1,
-            'RUNPATH': 0,
-            'No RUNPATH': 1
-        }
-        cmd = ['checksec.sh', '--file', file_name]
-        try:
-            result = subprocess.check_output(cmd).decode("utf-8").split('\n')[1]
-        except:
-            return "Not able to fetch flags"
-        else:
-            ansi_escape = compile(r'\x1b[^m]*m')
-            text = ansi_escape.sub('', result)
-            text2 = sub(r'\ \ \ *', ',', text).split(',')[:-1]
-            text = []
-            for t2 in text2:
-                if t2 == "No RELRO":
-                    self.no_relro.append(file_name[:])
-                if t2 == "Partial RELRO":
-                    self.partial_relro.append(file_name[:])
-                elif t2 == "No canary found":
-                    self.no_canary.append(file_name[:])
-                elif t2 == "No PIE":
-                    self.no_pie.append(file_name[:])
-                text.append((t2, SF[t2]))
-            return text
+def get_security_flags(file_name):
+    cmd = ['checksec.sh', '--file', file_name]
+    try:
+        result = subprocess.check_output(cmd).split('\n')[1]
+    except:
+        return "Not able to fetch flags"
+    else:
+        ansi_escape = compile(r'\x1b[^m]*m')
+        text = ansi_escape.sub('', result)
+        text2 = sub(r'\ \ \ *', ',', text).split(',')[:-1]
+        return text2
 
-    def process_files(self, img_name, path_to_fs):
-        for i in self.files:
-            real_file = i
-            if os.path.isfile(i):
-                # getting file type
-                cmd = ['file', '--mime-type', i]
-                try:
-                    result = subprocess.check_output(cmd).decode("utf-8")
-                except:
-                    print("Not able to decode mime type", sys.exc_info())
-                    with open(self.logfile, 'a') as flog:
-                        flog.write("Not able to decode mime type" + sys.exc_info())
-                    continue
-                type = result.split()[-1]
-                # looking for links
-                if type.find("symlink") != -1:
-                    real_file = os.path.realpath(i)
-                    cmd = ['file', '--mime-type', real_file]
-                    try:
-                        result = subprocess.check_output(cmd).decode("utf-8")
-                    except:
-                        print("Not able to decode mime type", sys.exc_info())
-                        with open(self.logfile, 'a') as flog:
-                            flog.write("Not able to decode mime type" + sys.exc_info())
-                        continue
-                    type = result.split()[-1]
-                # checking security flags if applies
-                if type.find("application") != -1:
-                    if type.find("octet-stream") != -1:
-                        sec_field = "File is octect-stream, can not be analyzed with checksec.sh"
-                    elif type.find("dosexec") != -1:
-                        sec_field = "File MS Windows binary"
-                    elif type.find("archive") != -1:
-                        sec_field = "File is an archive"
-                    elif type.find("xml") != -1:
-                        sec_field = "File is xml"
-                    elif type.find("gzip") != -1:
-                        sec_field = "File is gzip"
-                    elif type.find("postscript") != -1:
-                        sec_field = "File is postscript"
-                    elif type.find("pdf") != -1:
-                        sec_field = "File is pdf"
-                    else:
-                        sec_field = self.get_security_flags(real_file)
-                        execstack = self.get_execstack(real_file)
-                        nodrop_groups = self.get_nodrop_groups(real_file)
-                        no_mpx = self.get_mpx(real_file)
-                        if self.full_reports:
-                            with open(self.full_report_name + "_" + img_name, 'a') as ffull_report:
-                                real_file = real_file.replace(path_to_fs, "")
-                                ffull_report.write(real_file + ": ")
-                                for s in sec_field:
-                                    line = ' '.join(str(x) for x in s)
-                                    ffull_report.write(line + ' ')
-                                ffull_report.write('\nexecstack: ' + execstack + ' ')
-                                ffull_report.write('\nnodrop_groups: ' + nodrop_groups + ' ')
-                                ffull_report.write('\nno mpx: ' + no_mpx + ' ')
-                                ffull_report.write('\n')
-                else:
-                    continue
+def process_file(file):
+    log = "File from map " + file
+    fun_results = (file, [], "", "", "", log)
+    if not os.path.isfile(file):
+        return fun_results
+    # getting file type
+    cmd = ['file', '--mime-type', file]
+    try:
+        result = subprocess.check_output(cmd)
+    except:
+        log += "\nNot able to decode mime type " + sys.exc_info()
+        fun_results = (file, [], "", "", "", log)
+        return fun_results
+    file_type = result.split()[-1]
+    # looking for links
+    if "symlink" in file_type:
+        file = os.path.realpath(file)
+        cmd = ['file', '--mime-type', file]
+        try:
+            result = subprocess.check_output(cmd)
+        except:
+            log += "\nNot able to decode mime type " + sys.exc_info()
+            fun_results = (file, [], "", "", "", log)
+            return fun_results
+        file_type = result.split()[-1]
+    # checking security flags if applies
+    if "application" not in file_type:
+        fun_results = (file, [], "", "", "", log)
+        return fun_results
+    log += "\nFile type: " + file_type
+    if (("octet-stream" in file_type) or ("dosexec" in file_type) or ("archive" in file_type)
+        or ("xml" in file_type) or ("gzip" in file_type) or ("postscript" in file_type) or ("pdf" in file_type)):
+        fun_results = (file, [], "", "", "", log)
+        return fun_results
+    sec_field = get_security_flags(file)
+    execstack = get_execstack(file)
+    nodrop_groups = get_nodrop_groups(file)
+    no_mpx = get_mpx(file)
+    fun_results = (file, sec_field, execstack, nodrop_groups, no_mpx, log)
+    return fun_results
 
 # ======== supported callbacks from ISA ============ #
 
