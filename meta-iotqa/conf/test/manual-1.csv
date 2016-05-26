@@ -87,3 +87,36 @@ TestStep,,,,3,Check in the .config file for CONFIG_TCG_TIS,configure is set to y
 TestScript,check_opencl_integration,Benchmark,Check opencl integrated in image,1,check if opencl included in image manifest file,there opencl and opencl-dev package information listed in the manifest,FVT,ready,IOTOS-1504,,,,
 TestStep,,,,2,Check opencl libraries in the image, /usr/lib/libOpenCL.so and /usr/lib/libOpenCL.la exist,,,,,,,
 TestStep,,,,3,Check Beignet libaries in the image, /usr/lib/beignet/libcl.so and /usr/lib/beignet/libgbeinterp.so exist,,,,,,,
+TestScript,ros_rViz_tool_launch,ROS,Check if ROS rViz application works,1,"Launch the realsense nodelet using the launch file: 
+roslaunch realsense_camera realsense_r200_nodelet_standalone_preset.launch",RealSense nodelet connects to camera and runs,FVT,design,IOTOS-1554,,,,
+TestStep,,,,2,"Launch rViz: 
+roscd realsense_camera; 
+rosrun rviz rviz -d rviz/realsenseRvizConfiguration1.rviz",rViz running,,,,,,,
+TestStep,,,,3,Select both IR streams from the left panel in rViz,Both IR stream windows appear,,,,,,,
+TestStep,,,,4,View both IR streams in rViz,IR streams are visible and contain no artifacts,,,,,,,
+TestScript,ros_roslaunch_realsense_camera,ROS,Check ROS command roslaunch to launch camera,1,"Modify realsense_r200_nodelet_standalone_manual.launch with support fps params:
+""depth_fps"" = ""60""
+Launch the realsense nodelet using the launch file: 
+roslaunch realsense_camera realsense_r200_nodelet_standalone_manual.launch",RealSense nodelet connects to camera and runs with no error,FVT,design,IOTOS-1554,,,,
+TestStep,,,,2,"Launch image_view:
+rosrun image_view image_view image:=/camera/depth/image_raw",Video window opens with depth stream,,,,,,,
+TestStep,,,,3,View depth stream,depth stream is visible and shows changes as objects move closer and farther away,,,,,,,
+TestStep,,,,4,"Stop above steps, Modify realsense_r200_nodelet_standalone_manual.launch with unsupport fps params:
+""depth_fps"" = ""72""
+Re-launch the realsense nodelet using the launch file: 
+roslaunch realsense_camera realsense_r200_nodelet_standalone_manual.launch","RealSense nodelet should exit with following error message:
+uvc subdevice 1 cannot provide 640x480:Z16@72Hz DEPTH",,,,,,,
+TestScript,ros_rosrun_imageview,ROS,Check ROS command rosrun image_view ,1,"Modify realsense_r200_nodelet_standalone_manual.launch with support resolution params:
+""color_height"" = ""1080""
+""color_width"" = ""1920""
+Launch the realsense nodelet using the launch file: 
+roslaunch realsense_camera realsense_r200_nodelet_standalone_manual.launch",RealSense nodelet connects to camera and runs with no error,FVT,design,IOTOS-1554,,,,
+TestStep,,,,2,"Launch image_view:
+rosrun image_view image_view image:=/camera/color/image_raw",Video window opens with color stream,,,,,,,
+TestStep,,,,3,View color stream in rViz,Color stream is visible without artifacts,,,,,,,
+TestStep,,,,4,"Stop above steps, Modify realsense_r200_nodelet_standalone_manual.launch with unsupport resolution params --
+""color_height"" = ""720""
+""color_width"" = ""1280""
+Re-launch the realsense nodelet using the launch file: 
+roslaunch realsense_camera realsense_r200_nodelet_standalone_manual.launch","RealSense nodelet should exit with following error message:
+uvc subdevice 2 cannot provide 1280x720:RGB8@60Hz COLOR",,,,,,,
