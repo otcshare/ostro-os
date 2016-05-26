@@ -29,8 +29,7 @@
 
 import subprocess
 import os
-from re import compile
-from re import sub
+import re
 try:
     from lxml import etree
 except ImportError:
@@ -41,6 +40,7 @@ except ImportError:
 
 
 CFChecker = None
+
 
 class ISA_CFChecker():
     initialized = False
@@ -63,28 +63,15 @@ class ISA_CFChecker():
         self.full_reports = ISA_config.full_reports
         self.ISA_filesystem = ""
         # check that checksec and other tools are installed
-        checksec = False
-        execstack = False
-        readelf = False
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            if os.path.isfile(os.path.join(path, "checksec.sh")) and os.access(os.path.join(path, "checksec.sh"), os.X_OK):
-                checksec = True
-            if os.path.isfile(os.path.join(path, "execstack")) and os.access(os.path.join(path, "execstack"), os.X_OK):
-                execstack = True
-            if os.path.isfile(os.path.join(path, "readelf")) and os.access(os.path.join(path, "readelf"), os.X_OK):
-                readelf = True
-        if (not checksec) or (not execstack) or (not readelf):
+        tools_errors = _check_tools()
+        if tools_errors:
             with open(self.logfile, 'w') as flog:
-                flog.write("checksec, execstack or readelf tools are missing!\n")
-                flog.write("Please install checksec from http://www.trapkit.de/tools/checksec.html\n")
-                flog.write("Please install execstack from prelink package\n")
-            return
+                flog.write(tools_errors)
+                return
         self.initialized = True
         with open(self.logfile, 'w') as flog:
             flog.write("\nPlugin ISA_CFChecker initialized!\n")
         return
-
 
     def process_filesystem(self, ISA_filesystem):
         self.ISA_filesystem = ISA_filesystem
@@ -274,6 +261,31 @@ class ISA_CFChecker():
                 list_of_files.append(str(dirpath + "/" + f)[:])
         return list_of_files
 
+
+def _check_tools(self):
+
+    def _is_in_path(executable):
+        "Check for presense of executable in PATH"
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            if os.path.isfile(os.path.join(path, executable)) and
+                    os.access(os.path.join(path, executable), os.X_OK):
+                return True
+        return False
+
+    tools = {
+        "checksec.sh": "Please install checksec from http://www.trapkit.de/tools/checksec.html\n",
+        "execstack": "Please install execstack from prelink package\n",
+        "readelf": "Please install binutils\n",
+        "objdump": "Please install binutils\n",
+    }
+    output = ""
+    for tool in tools:
+        if not _is_in_path(tool):
+            output += tools[tool]
+    return output
+
+
 def get_execstack(file_name):
     cmd = ['execstack', '-q', file_name]
     with open(os.devnull, 'wb') as DEVNULL:
@@ -283,6 +295,7 @@ def get_execstack(file_name):
             return ""
         else:
             return result
+
 
 def get_nodrop_groups(file_name):
     cmd = ['readelf', '-s', file_name]
@@ -294,6 +307,7 @@ def get_nodrop_groups(file_name):
         else:
             return result
 
+
 def get_mpx(file_name):
     cmd = ['objdump', '-d', file_name]
     with open(os.devnull, 'wb') as DEVNULL:
@@ -304,21 +318,22 @@ def get_mpx(file_name):
         else:
             return result
 
+
 def get_security_flags(file_name):
     cmd = ['checksec.sh', '--file', file_name]
     try:
-        result = subprocess.check_output(cmd).split('\n')[1]
+        result = subprocess.check_output(cmd).splitlines()[1]
     except:
         return "Not able to fetch flags"
     else:
-        ansi_escape = compile(r'\x1b[^m]*m')
-        text = ansi_escape.sub('', result)
-        text2 = sub(r'\ \ \ *', ',', text).split(',')[:-1]
-        return text2
+        # remove ansi escape color sequences
+        result = re.sub(r'\x1b[^m]*m', '', result)
+        return re.split(r' {2,}', result)[:-1]
+
 
 def process_file(file):
     log = "File from map " + file
-    fun_results = (file, [], "", "", "", log)
+    fun_results = [file, [], "", "", "", log]
     if not os.path.isfile(file):
         return fun_results
     # getting file type
@@ -326,8 +341,7 @@ def process_file(file):
     try:
         result = subprocess.check_output(cmd)
     except:
-        log += "\nNot able to decode mime type " + sys.exc_info()
-        fun_results = (file, [], "", "", "", log)
+        fun_results[-1] += "\nNot able to decode mime type " + sys.exc_info()
         return fun_results
     file_type = result.split()[-1]
     # looking for links
@@ -337,24 +351,22 @@ def process_file(file):
         try:
             result = subprocess.check_output(cmd)
         except:
-            log += "\nNot able to decode mime type " + sys.exc_info()
-            fun_results = (file, [], "", "", "", log)
+            fun_results[-1] += "\nNot able to decode mime type " + sys.exc_info()
             return fun_results
         file_type = result.split()[-1]
     # checking security flags if applies
     if "application" not in file_type:
-        fun_results = (file, [], "", "", "", log)
         return fun_results
-    log += "\nFile type: " + file_type
-    if (("octet-stream" in file_type) or ("dosexec" in file_type) or ("archive" in file_type)
-        or ("xml" in file_type) or ("gzip" in file_type) or ("postscript" in file_type) or ("pdf" in file_type)):
-        fun_results = (file, [], "", "", "", log)
+    fun_results[-1] += "\nFile type: " + file_type
+    if (("octet-stream" in file_type) or ("dosexec" in file_type) or
+            ("archive" in file_type) or ("xml" in file_type) or
+            ("gzip" in file_type) or ("postscript" in file_type) or
+            ("pdf" in file_type)):
         return fun_results
-    sec_field = get_security_flags(file)
-    execstack = get_execstack(file)
-    nodrop_groups = get_nodrop_groups(file)
-    no_mpx = get_mpx(file)
-    fun_results = (file, sec_field, execstack, nodrop_groups, no_mpx, log)
+    fun_results[1] = get_security_flags(file)
+    fun_results[2] = get_execstack(file)
+    fun_results[3] = get_nodrop_groups(file)
+    fun_results[4] = get_mpx(file)
     return fun_results
 
 # ======== supported callbacks from ISA ============ #
