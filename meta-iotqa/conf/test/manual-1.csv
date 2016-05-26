@@ -84,3 +84,6 @@ TestStep,,,,3,"Play H264 video in terminal by command ""gst-launch-1.0 playbin u
 TestScript,test_tpm,TPM,Check if TPM is enabled in kernel,1,run command 'bitbake -c menuconfig linux-yocto' and save the config,No error happens,FVT,ready,IOTOS-1551,,,,
 TestStep,,,,2,Check in the .config file for CONFIG_TCG_TPM,configure is set to yes (y),,,,,,,
 TestStep,,,,3,Check in the .config file for CONFIG_TCG_TIS,configure is set to yes (y),,,,,,,
+TestScript,check_opencl_integration,Benchmark,Check opencl integrated in image,1,check if opencl included in image manifest file,there opencl and opencl-dev package information listed in the manifest,FVT,ready,IOTOS-1504,,,,
+TestStep,,,,2,Check opencl libraries in the image, /usr/lib/libOpenCL.so and /usr/lib/libOpenCL.la exist,,,,,,,
+TestStep,,,,3,Check Beignet libaries in the image, /usr/lib/beignet/libcl.so and /usr/lib/beignet/libgbeinterp.so exist,,,,,,,
