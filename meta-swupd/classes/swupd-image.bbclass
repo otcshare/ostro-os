@@ -191,8 +191,18 @@ do_image_append () {
     swupd.rootfs.create_rootfs(d)
 }
 
-SWUPDIMAGEDIR = "${WORKDIR}/swupd-image"
+# Some files should not be included in swupd manifests and therefore never be
+# updated on the target (i.e. certain per-device or machine-generated files in
+# /etc when building for a statefule OS). Add the target paths to this list to
+# prevent the specified files being copied to the swupd staging directory.
+# i.e.
+# SWUPD_FILE_BLACKLIST = "\
+#     /etc/mtab \
+#     /etc/machine-id \
+#"
+SWUPD_FILE_BLACKLIST ??= ""
 
+SWUPDIMAGEDIR = "${WORKDIR}/swupd-image"
 fakeroot python do_stage_swupd_inputs () {
     import swupd.bundles
 

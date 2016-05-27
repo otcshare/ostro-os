@@ -40,10 +40,13 @@ def copy_core_contents(d):
 
     manifest_files = swupd.utils.manifest_to_file_list(outfile)
     bundle_file_contents = []
+    # Don't copy files which should not be included in the swupd manifests
+    unwanted_files = (d.getVar('SWUPD_FILE_BLACKLIST', True) or '').split()
     # The manifest files have a leading . before the /
     for f in manifest_files:
-        bundle_file_contents.append(f[2:])
-    bb.debug(1, 'os-core has %s unique contents' % len(bundle_file_contents))
+        if f[1:] not in unwanted_files:
+            bundle_file_contents.append(f[2:])
+    bb.debug(1, 'os-core contains %s items' % len(bundle_file_contents))
     bb.debug(1, "Copying from mega-image to os-core bundle dir (%s)" % (bundledir))
     swupd.path.copyxattrfiles(d, bundle_file_contents, d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
 
@@ -98,12 +101,15 @@ def recopy_package_bundle_contents(d, bundle):
     bundledir = bundlebase + bundle
     bb.debug(3, 'Scanning %s for bundle files' % bundledir)
 
+    # Don't copy files which should not be included in the swupd manifests
+    unwanted_files = (d.getVar('SWUPD_FILE_BLACKLIST', True) or '').split()
     def add_target_to_contents(root, file):
         # Compose a full path to the file
         tgt = os.path.join(root, file)
         # then strip out the prefix so it's just the target path
         tgt = tgt.replace(bundledir, '')
-        bundlecontents.append(tgt)
+        if tgt not in unwanted_files:
+            bundlecontents.append(tgt)
 
     for root, directories, files in os.walk(bundledir):
         for file in files:
