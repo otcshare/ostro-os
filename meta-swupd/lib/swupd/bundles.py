@@ -153,6 +153,12 @@ def copy_image_bundle_contents(d, bundle):
     swupd.path.copyxattrfiles(d, bundle_files, megarootfs, bundledir)
 
 
+def stage_empty_bundle(d, bundle):
+    bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/%s' % bundle)
+    bb.utils.mkdirhier(bundledir)
+    create_bundle_manifest(d, bundle, bundledir)
+
+
 # Copy the staged bundle contents from the mega-image rootfs to ensure that
 # any image postprocessing which modifies files is reflected in os-core bundle
 def copy_bundle_contents(d):
@@ -165,3 +171,6 @@ def copy_bundle_contents(d):
         else:
             stage_package_bundle_contents(d, bndl)
             recopy_package_bundle_contents(d, bndl)
+    bundles = (d.getVar('SWUPD_EMPTY_BUNDLES', True) or '').split()
+    for bndl in bundles:
+        stage_empty_bundle(d, bndl)

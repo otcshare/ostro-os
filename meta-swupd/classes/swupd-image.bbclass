@@ -270,7 +270,7 @@ END
        rm ${DEPLOY_DIR_SWUPD}/groups.ini
     fi
     touch ${GROUPS_INI}
-    ALL_BUNDLES="os-core ${SWUPD_BUNDLES}"
+    ALL_BUNDLES="os-core ${SWUPD_BUNDLES} ${SWUPD_EMPTY_BUNDLES}"
     for bndl in ${ALL_BUNDLES}; do
         echo "[$bndl]" >> ${GROUPS_INI}
         echo "group=$bndl" >> ${GROUPS_INI}
