@@ -43,9 +43,6 @@ inherit distro_features_check
 REQUIRED_DISTRO_FEATURES = "systemd"
 
 python () {
-    if d.getVar('VIRTUAL-RUNTIME_init_manager', True) != 'systemd':
-        bb.error('swupd integration requires the systemd init manager')
-
     ver = d.getVar('OS_VERSION', True) or 'invalid'
     try:
         int(ver)
