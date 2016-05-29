@@ -242,7 +242,7 @@ python supported_recipes_eventhandler() {
         def collection_hint(pn):
             '''Determines whether the recipe would be supported in some other collection.'''
             collections = supported_recipes.find_collections(pn)
-            return ' (only supported in %s)' % ' '.join(collections) if collections else ''
+            return ' (would be supported in %s)' % ' '.join(collections) if collections else ''
 
         logger('The following unsupported recipes are required for the build:\n  ',
                '\n  '.join(sorted(['%s@%s%s' % (pn, collection, collection_hint(pn)) for pn, collection in unsupported.iteritems()])),
