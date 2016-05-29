@@ -250,7 +250,7 @@ SSTATE_MIRRORS ?= "file://.* http://download.ostroproject.org/sstate/ostro-os/PA
 # CONF_VERSION is increased each time build/conf/ changes incompatibly and is used to
 # track the version of this file when it was generated. This can safely be ignored if
 # this doesn't mean anything to you.
-CONF_VERSION = "2"
+CONF_VERSION = "3"
 
 #
 # ISAFW: https://github.com/01org/isafw
@@ -262,6 +262,17 @@ CONF_VERSION = "2"
 # require special network configurations (e.g. proxy setup)
 #
 #INHERIT += "isafw"
+
+# By default, only recipes explicitly declared to be okay for building Ostro OS
+# are allowed to be built. Adding or depending on anything else triggers a
+# message saying "The following unsupported recipes are required for the build"
+# and aborts. See building-images.rst for more information.
+#
+# Uncomment the following line to disable the check:
+#SUPPORTED_RECIPES_CHECK = ""
+#
+# Alternatively, uncomment the following line to make it a non-fatal warning:
+#SUPPORTED_RECIPES_CHECK = "warn"
 
 # An explicit choice must be made between building Ostro OS
 # development images and production images. See
