@@ -174,6 +174,7 @@ nettle@core
 nodejs@iotweb
 oe-swupd-helpers@meta-swupd
 openjdk-8@meta-java
+openjre-8@meta-java
 openssh@core
 openssl@core
 opkg-utils@core
