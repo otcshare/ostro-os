@@ -75,9 +75,9 @@ class RuntestTestContext(OETestContext):
         self.distrofeatures = tc.distrofeatures
     def _get_test_suites(self):
         return self.d.getVar("testslist", True)
-    def _get_tests_list(self, bbpath):
+    def _get_tests_list(self, *args, **kwargs):
         return self.testsuites
-    def _get_test_suites_required(self):
+    def _get_test_suites_required(self, *args, **kwargs):
         return self.testsuites
     def loadTests(self):
         super(RuntestTestContext, self).loadTests()

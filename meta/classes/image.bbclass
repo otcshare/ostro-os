@@ -297,7 +297,15 @@ python setup_debugfs () {
 
 python () {
     vardeps = set()
-    ctypes = d.getVar('COMPRESSIONTYPES', True).split()
+    # We allow COMPRESSIONTYPES to have duplicates. That avoids breaking
+    # derived distros when OE-core or some other layer independently adds
+    # the same type. There is still only one command for each type, but
+    # presumably the commands will do the same when the type is the same,
+    # even when added in different places.
+    #
+    # Without de-duplication, gen_conversion_cmds() below
+    # would create the same compression command multiple times.
+    ctypes = set(d.getVar('COMPRESSIONTYPES', True).split())
     old_overrides = d.getVar('OVERRIDES', 0)
 
     def _image_base_type(type):
@@ -515,9 +523,9 @@ python create_symlinks() {
     if not link_name:
         return
     for type in subimages:
-        if os.path.exists(img_name + imgsuffix + type):
-            dst = deploy_dir + "/" + link_name + "." + type
-            src = img_name + imgsuffix + type
+        dst = deploy_dir + "/" + link_name + "." + type
+        src = img_name + imgsuffix + type
+        if os.path.exists(src):
             bb.note("Creating symlink: %s -> %s" % (dst, src))
             if os.path.islink(dst):
                 if d.getVar('RM_OLD_IMAGE', True) == "1" and \
@@ -525,6 +533,8 @@ python create_symlinks() {
                     os.remove(os.path.realpath(dst))
                 os.remove(dst)
             os.symlink(src, dst)
+        else:
+            bb.note("Skipping symlink, source does not exist: %s -> %s" % (dst, src))
 }
 
 MULTILIBRE_ALLOW_REP =. "${base_bindir}|${base_sbindir}|${bindir}|${sbindir}|${libexecdir}|${sysconfdir}|${nonarch_base_libdir}/udev|/lib/modules/[^/]*/modules.*|"

@@ -12,8 +12,20 @@
 # Generate summary statistics
 INHERIT += "buildstats-summary"
 
-# Enable CVE and other secutiry checks
+# Enable CVE and other security checks.
 INHERIT += "isafw"
+
+# Most of the images are expected to contain GPLv3
+# components. Therefore we only enable the license check for those
+# which must not have them (whitelisting), instead of excluding images
+# from the check (blacklisting).
+ISAFW_LA_PLUGIN_IMAGE_WHITELIST = "ostro-image-minimal ostro-initramfs"
+
+# ostro-image-minimal is only getting built below as proof that an Ostro OS root
+# filesystem is possible without depending on GPLv3 components. The actual
+# image files are not needed for that.
+IMAGE_FSTYPES_pn-ostro-image-minimal = ""
+OSTRO_VM_IMAGE_TYPES_pn-ostro-image-minimal = ""
 
 # Enable extended buildhistory:
 INHERIT += "buildhistory"
@@ -45,7 +57,7 @@ OSTRO_VM_IMAGE_TYPES = "dsk.xz dsk.zip dsk.ova dsk.bmap dsk.xz.sha256sum"
 # Any other symbols would be skipped in parser.
 #
 # Following targets would be used to perform default build task:
-OSTROPROJECT_CI_BUILD_TARGETS="ostro-image-noswupd ostro-image-swupd ostro-image-swupd-dev"
+OSTROPROJECT_CI_BUILD_TARGETS="ostro-image-noswupd ostro-image-swupd ostro-image-swupd-dev ostro-image-minimal"
 # Following targets would be executed with do_populate_sdk task
 OSTROPROJECT_CI_SDK_TARGETS=""
 # Following targets would be executed with do_populate_sdk_ext task.

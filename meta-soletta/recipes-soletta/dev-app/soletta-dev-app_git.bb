@@ -5,8 +5,8 @@ LICENSE = "Apache-2.0"
 PV = "1_beta9"
 
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=93888867ace35ffec2c845ea90b2e16b"
-SRC_URI[md5sum] = "33f2eba375ec72f8eb7a39d32e3acb1a"
-SRC_URI[sha256sum] = "f225d43265a474a97c22c237c30237fb3a4e01a272538a32379b2fc4e62413f0"
+SRC_URI[md5sum] = "d6a08e58d14d4dd46fd7d5c27811132f"
+SRC_URI[sha256sum] = "13f9829758e500d6de9215cc459be4f3953153a486dc8ce8c0aba8e3ee161e64"
 SRC_URI = "https://github.com/solettaproject/soletta-dev-app/releases/download/v${PV}/soletta-dev-app_standalone_v${PV}.tar.gz;protocol=archive \
            file://soletta-dev-app.service \
            file://soletta-dev-app-mac.sh \

@@ -1,0 +1,4 @@
+# Special entry for all recipes that a developer maintains in his
+# personal workspace with "devtool".
+
+.*@workspacelayer
