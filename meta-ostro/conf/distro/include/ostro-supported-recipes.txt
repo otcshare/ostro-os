@@ -26,13 +26,8 @@
 # To extend this list, submit a feature request or a pull request. The
 # Ostro OS team will then decide whether it can support the additional
 # recipes.
-
-# Special entry for all recipes that a developer maintains in his
-# personal workspace with "devtool".
-
-.*@workspacelayer
-
-# List of real recipes, sorted alphabetically.
+#
+# List is sorted alphabetically.
 
 acl@core
 appfw-test-app@iotqa
