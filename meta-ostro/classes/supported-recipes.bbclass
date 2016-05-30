@@ -58,7 +58,8 @@ def load_supported_recipes(d):
             self.collection_re = parse_regex(parts[1])
 
         def supported(self, pn, collection):
-            supported = bool((pn is None or self.pn_re[0].match(pn)) and (collection is None or self.collection_re[0].match(collection)))
+            supported = bool((pn is None or self.pn_re[0].match(pn)) and
+                (collection is None or self.collection_re[0].match(collection)))
             return supported
 
     class SupportedRecipes:
