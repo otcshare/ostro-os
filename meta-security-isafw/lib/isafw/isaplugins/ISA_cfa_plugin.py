@@ -89,7 +89,9 @@ class ISA_CFChecker():
                 files = self.find_files(fs_path)
                 import multiprocessing
                 pool = multiprocessing.Pool()
-                results = pool.map(process_file, files)
+                results = pool.imap(process_file, files)
+                pool.close()
+                pool.join()
                 self.process_results(results)
             else:
                 with open(self.logfile, 'a') as flog:
@@ -262,14 +264,14 @@ class ISA_CFChecker():
         return list_of_files
 
 
-def _check_tools(self):
+def _check_tools():
 
     def _is_in_path(executable):
-        "Check for presense of executable in PATH"
+        "Check for presence of executable in PATH"
         for path in os.environ["PATH"].split(os.pathsep):
             path = path.strip('"')
-            if os.path.isfile(os.path.join(path, executable)) and
-                    os.access(os.path.join(path, executable), os.X_OK):
+            if (os.path.isfile(os.path.join(path, executable)) and
+                    os.access(os.path.join(path, executable), os.X_OK)):
                 return True
         return False
 
@@ -286,8 +288,8 @@ def _check_tools(self):
     return output
 
 
-def get_execstack(file_name):
-    cmd = ['execstack', '-q', file_name]
+def get_info(tool, args, file_name):
+    cmd = [tool, args, file_name]
     with open(os.devnull, 'wb') as DEVNULL:
         try:
             result = subprocess.check_output(cmd, stderr=DEVNULL)
@@ -295,29 +297,6 @@ def get_execstack(file_name):
             return ""
         else:
             return result
-
-
-def get_nodrop_groups(file_name):
-    cmd = ['readelf', '-s', file_name]
-    with open(os.devnull, 'wb') as DEVNULL:
-        try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL)
-        except:
-            return ""
-        else:
-            return result
-
-
-def get_mpx(file_name):
-    cmd = ['objdump', '-d', file_name]
-    with open(os.devnull, 'wb') as DEVNULL:
-        try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL)
-        except:
-            return ""
-        else:
-            return result
-
 
 def get_security_flags(file_name):
     cmd = ['checksec.sh', '--file', file_name]
@@ -364,9 +343,9 @@ def process_file(file):
             ("pdf" in file_type)):
         return fun_results
     fun_results[1] = get_security_flags(file)
-    fun_results[2] = get_execstack(file)
-    fun_results[3] = get_nodrop_groups(file)
-    fun_results[4] = get_mpx(file)
+    fun_results[2] = get_info("execstack", '-q', file)
+    fun_results[3] = get_info("readelf", '-s', file)
+    fun_results[4] = get_info("objdump", '-d', file)
     return fun_results
 
 # ======== supported callbacks from ISA ============ #
