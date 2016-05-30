@@ -42,6 +42,7 @@ SUPPORTED_RECIPES_NATIVE_BASECLASSES ??= " \
     native.bbclass \
     nativesdk.bbclass \
     packagegroup.bbclass \
+    populate_sdk.bbclass \
 "
 
 # However, not all recipes use these special base classes, so there
