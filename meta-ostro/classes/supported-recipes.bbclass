@@ -28,6 +28,39 @@ SUPPORTED_RECIPES_CHECK ??= ""
 # this here acts as safeguard.
 SUPPORTED_RECIPES_CHECK_DEPENDENCY_LINES ??= "50"
 
+# This class is written so that it only checks for binaries compiled for
+# use on the target device. Helper recipes and toolchain are
+# currently excluded from the checking, detected based on certain base
+# classes.
+#
+# The intention is to maintain this as part of this .bbclass, but just
+# in case it is done so that users of the class can extend or override
+# this logic.
+SUPPORTED_RECIPES_NATIVE_BASECLASSES ??= " \
+    cross.bbclass \
+    image.bbclass \
+    native.bbclass \
+    nativesdk.bbclass \
+"
+
+# However, not all recipes use these special base classes, so there
+# is also this list of space-separated regular expressions which identify
+# additional recipes which do not need to be checked.
+SUPPORTED_RECIPES_NATIVE_RECIPES ??= " \
+    buildtools-tarball \
+    depmodwrapper-cross \
+    gcc-source-.* \
+    glibc-initial \
+    libgcc-initial \
+    libtool-cross \
+    meta-environment-extsdk-.* \
+    meta-world-pkgdata \
+    nativesdk-buildtools-perl-dummy \
+    qemuwrapper-cross \
+    shadow-sysroot \
+    uninative-tarball \
+"
+
 def load_supported_recipes(d):
     import os
     import re
@@ -129,20 +162,9 @@ python supported_recipes_eventhandler() {
         return
 
     import re
-    isnative_exception = re.compile('|'.join((
-          'buildtools-tarball',
-          'depmodwrapper-cross',
-          'gcc-source-.*',
-          'glibc-initial',
-          'libgcc-initial',
-          'libtool-cross',
-          'meta-environment-extsdk-.*',
-          'meta-world-pkgdata',
-          'nativesdk-buildtools-perl-dummy',
-          'qemuwrapper-cross',
-          'shadow-sysroot',
-          'uninative-tarball',
-          )))
+    # Always add a trailing $ to ensure a full match.
+    isnative_exception = re.compile('(' + '|'.join(d.getVar('SUPPORTED_RECIPES_NATIVE_RECIPES', True).split()) + ')$')
+    isnative_baseclasses = d.getVar('SUPPORTED_RECIPES_NATIVE_BASECLASSES', True).split()
     valid = ('note', 'warn', 'error', 'fatal')
     if supported_recipes_check not in valid:
         bb.fatal('SUPPORTED_RECIPES_CHECK must be set to one of %s, currently is: %s' % ('/'.join(valid), supported_recipes_check))
@@ -162,7 +184,7 @@ python supported_recipes_eventhandler() {
         # Image recipes also do not matter.
         def isnative():
             for inherited in pndata['inherits']:
-                if os.path.basename(inherited) in ('native.bbclass', 'nativesdk.bbclass', 'cross.bbclass', 'image.bbclass'):
+                if os.path.basename(inherited) in isnative_baseclasses:
                     return True
             # Some build recipes do not inherit cross.bbclass and must be skipped explicitly.
             # The "real" recipes (in cases like glibc) still get checked. Other recipes are OE-core
