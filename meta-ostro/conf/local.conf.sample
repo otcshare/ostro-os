@@ -267,7 +267,8 @@ CONF_VERSION = "3"
 # are allowed to be built. Adding or depending on anything else triggers a
 # message saying "The following unsupported recipes are required for the build"
 # and aborts. See building-images.rst for more information.
-#
+SUPPORTED_RECIPES_CHECK = "fatal"
+
 # Uncomment the following line to disable the check:
 #SUPPORTED_RECIPES_CHECK = ""
 #
