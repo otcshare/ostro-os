@@ -1,14 +1,23 @@
-KBRANCH ?= "standard/preempt-rt"
+KBRANCH ?= "standard/preempt-rt/base"
 
 require recipes-kernel/linux/linux-yocto.inc
 
-SRCREV_machine ?= "7ef3fe56827bd9c20021e3a52bc36ebd4c6b2ce3"
-SRCREV_meta ?= "d6ee402d461048cf1afd10375fee5769c06d21d6"
+# Skip processing of this recipe if it is not explicitly specified as the
+# PREFERRED_PROVIDER for virtual/kernel. This avoids errors when trying
+# to build multiple virtual/kernel providers, e.g. as dependency of
+# core-image-rt-sdk, core-image-rt.
+python () {
+    if d.getVar("PREFERRED_PROVIDER_virtual/kernel", True) != "linux-yocto-rt":
+        raise bb.parse.SkipPackage("Set PREFERRED_PROVIDER_virtual/kernel to linux-yocto-rt to enable it")
+}
+
+SRCREV_machine ?= "3bdc347cc2087a0217e3acddccda5bb775cd570b"
+SRCREV_meta ?= "3a5f494784591e01f0ae7ab748e8190582c16e8c"
 
 SRC_URI = "git://git.yoctoproject.org/linux-yocto-4.4.git;branch=${KBRANCH};name=machine \
            git://git.yoctoproject.org/yocto-kernel-cache;type=kmeta;name=meta;branch=yocto-4.4;destsuffix=${KMETA}"
 
-LINUX_VERSION ?= "4.4.10"
+LINUX_VERSION ?= "4.4.11"
 
 PV = "${LINUX_VERSION}+git${SRCPV}"
 

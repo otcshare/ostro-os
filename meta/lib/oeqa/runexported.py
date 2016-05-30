@@ -30,7 +30,7 @@ except ImportError:
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "oeqa")))
 
-from oeqa.oetest import TestContext
+from oeqa.oetest import ExportTestContext
 from oeqa.utils.sshcontrol import SSHControl
 from oeqa.utils.dump import get_host_dumper
 
@@ -68,10 +68,6 @@ class FakeTarget(object):
 class MyDataDict(dict):
     def getVar(self, key, unused = None):
         return self.get(key, "")
-
-class ExportTestContext(TestContext):
-    def __init__(self, d):
-        self.d = d
 
 def main():
 
@@ -111,25 +107,12 @@ def main():
         if not os.path.isdir(d["DEPLOY_DIR"]):
             print("WARNING: The path to DEPLOY_DIR does not exist: %s" % d["DEPLOY_DIR"])
 
-
     target = FakeTarget(d)
     for key in loaded["target"].keys():
         setattr(target, key, loaded["target"][key])
 
-    host_dumper = get_host_dumper(d)
-    host_dumper.parent_dir = loaded["host_dumper"]["parent_dir"]
-    host_dumper.cmds = loaded["host_dumper"]["cmds"]
-
     target.exportStart()
-    tc = ExportTestContext(d)
-
-    setattr(tc, "d", d)
-    setattr(tc, "target", target)
-    setattr(tc, "host_dumper", host_dumper)
-    for key in loaded.keys():
-        if key != "d" and key != "target" and key != "host_dumper":
-            setattr(tc, key, loaded[key])
-
+    tc = ExportTestContext(d, target, True)
     tc.loadTests()
     tc.runTests()
 

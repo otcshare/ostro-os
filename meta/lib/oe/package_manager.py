@@ -734,7 +734,7 @@ class RpmPM(PackageManager):
         for uri in feed_uris:
             if arch_list:
                 for arch in arch_list:
-                    bb.note('Note: adding Smart channel url%d%s (%s)' %
+                    bb.note('Adding Smart channel url%d%s (%s)' %
                             (uri_iterator, arch, channel_priority))
                     self._invoke_smart('channel --add url%d-%s type=rpm-md baseurl=%s/%s -y'
                                        % (uri_iterator, arch, uri, arch))
@@ -742,7 +742,7 @@ class RpmPM(PackageManager):
                                        (uri_iterator, arch, channel_priority))
                     channel_priority -= 5
             else:
-                bb.note('Note: adding Smart channel url%d (%s)' %
+                bb.note('Adding Smart channel url%d (%s)' %
                         (uri_iterator, channel_priority))
                 self._invoke_smart('channel --add url%d type=rpm-md baseurl=%s -y'
                                    % (uri_iterator, uri))
@@ -1018,7 +1018,7 @@ class RpmPM(PackageManager):
             arch = canonical_arch.split('-')[0]
             arch_channel = os.path.join(self.deploy_dir, arch)
             if os.path.exists(arch_channel) and not arch in ch_already_added:
-                bb.note('Note: adding Smart channel %s (%s)' %
+                bb.note('Adding Smart channel %s (%s)' %
                         (arch, channel_priority))
                 self._invoke_smart('channel --add %s type=rpm-md baseurl=%s -y'
                                    % (arch, arch_channel))
@@ -1090,7 +1090,7 @@ class RpmPM(PackageManager):
                                                 native_root)
         open(self.scriptlet_wrapper, 'w+').write(scriptlet_content)
 
-        bb.note("Note: configuring RPM cross-install scriptlet_wrapper")
+        bb.note("Configuring RPM cross-install scriptlet_wrapper")
         os.chmod(self.scriptlet_wrapper, 0755)
         cmd = 'config --set rpm-extra-macros._cross_scriptlet_wrapper=%s' % \
               self.scriptlet_wrapper
@@ -1444,8 +1444,10 @@ class RpmPM(PackageManager):
                 break
 
         # To have the same data type than other package_info methods
+        filepath = os.path.join(self.deploy_dir, arch, filename)
         pkg_dict = {}
-        pkg_dict[pkg] = {"arch":arch, "ver":ver, "filename":filename}
+        pkg_dict[pkg] = {"arch":arch, "ver":ver, "filename":filename,
+                         "filepath": filepath}
 
         return pkg_dict
 
@@ -1461,9 +1463,7 @@ class RpmPM(PackageManager):
             bb.fatal("Unable to get information for package '%s' while "
                      "trying to extract the package."  % pkg)
 
-        pkg_arch = pkg_info[pkg]["arch"]
-        pkg_filename = pkg_info[pkg]["filename"]
-        pkg_path = os.path.join(self.deploy_dir, pkg_arch, pkg_filename)
+        pkg_path = pkg_info[pkg]["filepath"]
 
         cpio_cmd = bb.utils.which(os.getenv("PATH"), "cpio")
         rpm2cpio_cmd = bb.utils.which(os.getenv("PATH"), "rpm2cpio")
@@ -1522,10 +1522,11 @@ class OpkgDpkgPM(PackageManager):
 
     This method extracts the common parts for Opkg and Dpkg
     """
-    def extract(self, pkg, pkg_path):
+    def extract(self, pkg, pkg_info):
 
         ar_cmd = bb.utils.which(os.getenv("PATH"), "ar")
         tar_cmd = bb.utils.which(os.getenv("PATH"), "tar")
+        pkg_path = pkg_info[pkg]["filepath"]
 
         if not os.path.isfile(pkg_path):
             bb.fatal("Unable to extract package for '%s'."
@@ -1710,12 +1711,12 @@ class OpkgPM(OpkgDpkgPM):
                     for arch in archs:
                         if (self.feed_archs is None) and (not os.path.exists(os.path.join(self.deploy_dir, arch))):
                             continue
-                        bb.note('Note: adding opkg feed url-%s-%d (%s)' %
+                        bb.note('Adding opkg feed url-%s-%d (%s)' %
                             (arch, uri_iterator, uri))
                         config_file.write("src/gz uri-%s-%d %s/%s\n" %
                                           (arch, uri_iterator, uri, arch))
                 else:
-                    bb.note('Note: adding opkg feed url-%d (%s)' %
+                    bb.note('Adding opkg feed url-%d (%s)' %
                         (uri_iterator, uri))
                     config_file.write("src/gz uri-%d %s\n" %
                                       (uri_iterator, uri))
@@ -1897,7 +1898,14 @@ class OpkgPM(OpkgDpkgPM):
     """
     def package_info(self, pkg):
         cmd = "%s %s info %s" % (self.opkg_cmd, self.opkg_args, pkg)
-        return super(OpkgPM, self).package_info(pkg, cmd)
+        pkg_info = super(OpkgPM, self).package_info(pkg, cmd)
+
+        pkg_arch = pkg_info[pkg]["arch"]
+        pkg_filename = pkg_info[pkg]["filename"]
+        pkg_info[pkg]["filepath"] = \
+                os.path.join(self.deploy_dir, pkg_arch, pkg_filename)
+
+        return pkg_info
 
     """
     Returns the path to a tmpdir where resides the contents of a package.
@@ -1910,11 +1918,7 @@ class OpkgPM(OpkgDpkgPM):
             bb.fatal("Unable to get information for package '%s' while "
                      "trying to extract the package."  % pkg)
 
-        pkg_arch = pkg_info[pkg]["arch"]
-        pkg_filename = pkg_info[pkg]["filename"]
-        pkg_path = os.path.join(self.deploy_dir, pkg_arch, pkg_filename)
-
-        tmp_dir = super(OpkgPM, self).extract(pkg, pkg_path)
+        tmp_dir = super(OpkgPM, self).extract(pkg, pkg_info)
         bb.utils.remove(os.path.join(tmp_dir, "data.tar.gz"))
 
         return tmp_dir
@@ -2110,11 +2114,11 @@ class DpkgPM(OpkgDpkgPM):
             for uri in feed_uris:
                 if arch_list:
                     for arch in arch_list:
-                        bb.note('Note: adding dpkg channel at (%s)' % uri)
+                        bb.note('Adding dpkg channel at (%s)' % uri)
                         sources_file.write("deb %s/%s ./\n" %
                                            (uri, arch))
                 else:
-                    bb.note('Note: adding dpkg channel at (%s)' % uri)
+                    bb.note('Adding dpkg channel at (%s)' % uri)
                     sources_file.write("deb %s ./\n" % uri)
 
     def _create_configs(self, archs, base_archs):
@@ -2219,7 +2223,14 @@ class DpkgPM(OpkgDpkgPM):
     """
     def package_info(self, pkg):
         cmd = "%s show %s" % (self.apt_cache_cmd, pkg)
-        return super(DpkgPM, self).package_info(pkg, cmd)
+        pkg_info = super(DpkgPM, self).package_info(pkg, cmd)
+
+        pkg_arch = pkg_info[pkg]["pkgarch"]
+        pkg_filename = pkg_info[pkg]["filename"]
+        pkg_info[pkg]["filepath"] = \
+                os.path.join(self.deploy_dir, pkg_arch, pkg_filename)
+
+        return pkg_info
 
     """
     Returns the path to a tmpdir where resides the contents of a package.
@@ -2232,11 +2243,7 @@ class DpkgPM(OpkgDpkgPM):
             bb.fatal("Unable to get information for package '%s' while "
                      "trying to extract the package."  % pkg)
 
-        pkg_arch = pkg_info[pkg]["pkgarch"]
-        pkg_filename = pkg_info[pkg]["filename"]
-        pkg_path = os.path.join(self.deploy_dir, pkg_arch, pkg_filename)
-
-        tmp_dir = super(DpkgPM, self).extract(pkg, pkg_path)
+        tmp_dir = super(DpkgPM, self).extract(pkg, pkg_info)
         bb.utils.remove(os.path.join(tmp_dir, "data.tar.xz"))
 
         return tmp_dir

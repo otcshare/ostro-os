@@ -264,8 +264,8 @@ class ThreadedWorker(Thread):
 
             try:
                 func(self, *args, **kargs)
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
             finally:
                 self.tasks.task_done()
 

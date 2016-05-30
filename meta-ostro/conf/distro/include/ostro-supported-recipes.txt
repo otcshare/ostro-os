@@ -1,0 +1,232 @@
+# Alphabetically sorted list of recipes support by the Ostro OS
+# project for compilation for the target platforms. This is used to
+# determine what gets built when doing a "bitbake world", what gets
+# pre-compiled for the eSDK, and which recipes trigger a warning or
+# error (this is configurable, see SUPPORTED_RECIPES_CHECK in
+# supported-recipes.bbclass) when included in a build although they
+# are unsupported.
+#
+# Each recipe is identified by recipe name and the collection in which
+# it appears. Both parts are treated as a regular expression that
+# must fully match the actual names (no explicit $ at the end needed
+# for that).
+#
+# Typically each layer defines one collection, but the name
+# is not always the same. Examples:
+#   core = meta = openembedded-core
+#   openembedded-layer = meta-openembedded/meta-oe
+#   edison = meta-ostro-bsp/meta-edison-bsp
+#   quark-bsp = meta-ostro-bsp
+#
+# The error message about unsupported recipes will mention the
+# collection, so typically this can be just copied. When looking
+# for the layer that has a certain collection, search for
+# BBFILE_COLLECTIONS in the layer.conf files.
+#
+# To extend this list, submit a feature request or a pull request. The
+# Ostro OS team will then decide whether it can support the additional
+# recipes.
+#
+# List is sorted alphabetically.
+
+acl@core
+appfw-test-app@iotqa
+atop@openembedded-layer
+attr@core
+autoconf@core
+automake@core
+bad-groups-app@iotqa
+base-files@core
+base-passwd@core
+bash-completion@core
+bash@core
+bc@core
+bcm43340-bt@edison
+bcm43340-fw@edison
+bcm43340-mod@edison
+binutils@core
+bison@core
+bluetooth-rfkill-event@edison
+bluez5@core
+boost@core
+busybox@core
+bzip2@core
+ca-certificates@core
+can-init-scripts@ostro
+can-utils@openembedded-layer
+chrpath@core
+connman-conf@core
+connman@core
+coreutils@core
+cracklib@core
+cryptodev-linux@core
+curl@core
+dash@openembedded-layer
+db@core
+dbus-glib@core
+dbus-test@core
+dbus@core
+diffutils@core
+e2fsprogs@core
+elfutils@core
+example-app-c@appfw
+example-app-node@appfw
+example-app-python@appfw
+expat@core
+file@core
+findutils@core
+flashall@edison
+flex@core
+fontconfig@core
+freetype@core
+gawk@core
+gcc-runtime@core
+gcc@core
+gdb@core
+gdbm@core
+gettext@core
+git@core
+glib-2.0@core
+glibc-locale@core
+glibc-mtrace@core
+glibc@core
+gmp@core
+gnome-desktop-testing@core
+gnu-config@core
+gnu-efi@core
+gnutls@core
+gobject-introspection@core
+gptfdisk@core
+grep@core
+gzip@core
+htop@openembedded-layer
+i2c-edison-board@quark-bsp
+i2c-minnowmax-board@quark-bsp
+i2c-quark-board@quark-bsp
+icu@core
+iftop@networking-layer
+ifwi@edison
+ima-evm-utils@integrity
+initramfs-framework-ima@integrity
+initramfs-framework@core
+initscripts@core
+intel-microcode@intel
+iot-app-fw@appfw
+iot-rest-api-server@iotweb
+iotivity-node@iotweb
+iotivity-simple-client@oic
+iotivity@oic
+iotop@openembedded-layer
+iproute2@core
+iptables-settings-default@ostro
+iptables@core
+iputils@core
+json-c@core
+kbd@core
+keymaps@core
+keyutils@security-framework
+kmod@core
+krb5@openembedded-layer
+libarchive@core
+libcap@core
+libcgroup@core
+libcheck@core
+libffi@core
+libgcc@core
+libgcrypt@core
+libgpg-error@core
+libical@core
+libidn@core
+libjpeg-turbo@core
+libmicrohttpd@soletta
+libmpc@core
+libnl@core
+libpam@core
+libpcap@core
+libpcre@core
+libpng@core
+libsocketcan@openembedded-layer
+libtool@core
+liburcu@core
+libusb-compat@core
+libusb1@core
+libxml2@core
+libxslt@core
+linux-firmware@core
+linux-libc-headers@core
+linux-yocto-edison@edison
+linux-yocto@core
+linuxptp@intel-iot-mw
+lowpan-tools@networking-layer
+lttng-ust@core
+m4@core
+make@core
+mcu-fw-bin@edison
+mcu-fw-load@edison
+mmap-smack-test@security-smack
+mosquitto@intel-iot-mw
+mpfr@core
+mraa-test@iotqa
+mraa@intel-iot-mw
+ncurses@core
+netbase@core
+nettle@core
+nodejs@iotweb
+oe-swupd-helpers@meta-swupd
+openjdk-8@meta-java
+openjre-8@meta-java
+openssh@core
+openssl@core
+opkg-utils@core
+os-release@core
+ostro-6lowpan@ostro
+pciutils@core
+perl@core
+pkgconfig@core
+popt@core
+ppp@core
+procps@core
+ptest-runner@core
+python-dbus@core
+python-pygobject@core
+python-setuptools@core
+python@core
+read-map@iotqa
+readline@core
+rsync@core
+run-postinsts@core
+sed@core
+shadow-securetty@core
+shadow@core
+shared-mime-info@core
+shm-util@iotqa
+smack-userspace@security-smack
+soletta@soletta
+spi-minnowmax-board@quark-bsp
+spi-quark-board@quark-bsp
+sqlite3@core
+sst-fw@edison
+strace@core
+swupd-client@meta-swupd
+systemd-compat-units@core
+systemd-watchdog@quark-bsp
+systemd@core
+tcp-smack-test@security-smack
+tzdata@core
+u-boot-edison@edison
+u-boot-fw-utils-edison@edison
+u-boot@core
+udp-smack-test@security-smack
+update-rc.d@core
+upm@intel-iot-mw
+usbutils@core
+util-linux@core
+v86d@core
+valgrind@core
+vim@openembedded-layer
+volatile-binds@core
+wget@core
+wpa-supplicant@core
+xz@core
+zip@core
+zlib@core

@@ -273,6 +273,10 @@ but are available for your use. You can see these by using the commands::
    $ bitbake-layers show-recipes
    $ bitbake-layers show-layers
 
+Not all of the available recipes are supported directly by the Ostro
+Project, though, and there is a check in place that no unsupported
+recipes gets built accidentally. See :ref:`supported_recipes`.
+
 ``ostro-image.bbclass`` defines several image features which can be enabled
 to install additional sets of pre-defined components. For example, to install debugging
 tools, compilers and development files for all components in the image, add::
@@ -337,6 +341,8 @@ The Yocto Project documentation explains the steps you'd follow for `Creating Yo
 If errors occur during the build, refer to the `Yocto Project Errors and Warnings`_ documentation to help 
 resolve the issues, and repeat the ``bitbake -k ostro-image-noswupd`` command to continue.
 
+.. _supported_recipes:
+
 Whitelisting a Recipe
 ---------------------
 
@@ -347,19 +353,75 @@ of other layers it depends on.
 Only specific recipes from the layers in meta-openembedded are
 supported in combination with Ostro OS, even though all of
 meta-openembedded gets imported into the ``ostro-os`` combined repository. 
-Ostro OS maintains a list of approved (white-listed) and unapproved (black-listed) recipes.
+Ostro OS maintains a list of these supported recipes in the
+`meta-ostro/conf/distro/include/ostro-supported-recipes.txt` file.
 
-To use recipes from meta-openembedded, they must be added to the
-respective ``PNWHITELIST`` variables, in ``meta-ostro/conf/ostro/ostro.conf`` for officially supported ones
-or in a ``local.conf`` for unofficial ones in a personal build.  
-You can refer to ``meta-ostro/conf/ostro/ostro.conf`` for more information about white- and black-listing.
+To use recipes from meta-openembedded or any other layer, they must be
+added to that file for officially supported ones or in some
+additional, personal file(s).  See the
+`meta-ostro/classes/supported-recipes.bbclass` for detailed
+information about this mechanism.
 
 For example, you can add the ``tcpdump`` recipe to your default image (from the ``meta-networking`` layer) 
 by adding these lines to your ``local.conf`` file::
 
-   PNWHITELIST += "tcpdump"
+   SUPPORTED_RECIPES_append = " ${TOPDIR}/conf/my-supported-recipes.txt"
    OSTRO_IMAGE_EXTRA_INSTALL += "tcpdump"
-   
+
+`conf/my-supported-recipes.txt` must get created such that it
+specifies the recipe and from which "collection" (collections are named
+slightly differently than layers and have to be used here because
+layer names are not available internally) it is expected to come::
+
+  echo tcpdump@networking-layer >>conf/my-supported-recipes.txt
+
+Here `networking-layer` is the collection defined by the
+`meta-networking` layer. However, in practice for local, private
+builds it is easier to disable the check and only create such
+additional files when working on a custom distro derived from Ostro OS
+(see below).
+
+Builds which depend on recipes that were not declared as supported in
+some file get aborted directly at the start with a message that
+assists in adding such entries, so there is no need to look up
+collection names manually.
+
+Here is the message for this example, quoted completely because it
+includes the instructions for dealing with the situation::
+
+  ERROR: The following unsupported recipes are required for the build:
+    tcpdump@networking-layer (would be supported in workspacelayer)
+  
+  Each unsupported recipe is identified by the recipe name and the collection
+  in which it occurs and has to be marked as supported (see below) using that
+  format. Typically each layer has exactly one collection.
+  
+  Here are the dependency chains (including DEPENDS and RDEPENDS)
+  which include one or more of the unsupported recipes. -> means "depends on"
+  and * marks unsupported recipes:
+    ostro-image-noswupd -> *tcpdump
+  
+  To avoid this message, several options exist:
+  * Check the dependency chain(s) to see why a recipe gets pulled in and perhaps
+    change recipe configurations or image content to avoid pulling in undesired
+    components.
+    'bitbake -g <build target>' produces .dot files showing these dependencies.
+  * If the recipe is supported in some other layer, disable the unsupported one
+    with BBMASK.
+  * Add the unsupported recipes to one of the following files:
+    /work/meta-ostro/meta-ostro/conf/distro/include/ostro-supported-recipes.txt
+    Regular expressions are supported on both sides of the @ separator.
+  * Create a new file which lists the unsupported recipes and extend SUPPORTED_RECIPES:
+      SUPPORTED_RECIPES_append = " <path>/recipes-supported-by-me.txt"
+    See meta-ostro/conf/layer.conf and ostro.conf for an example how the path can be
+    derived automatically. The expectation is that SUPPORTED_RECIPES gets set in
+    distro configuration files, depending on the support provided by the distro
+    creator.
+  * Disable the check with SUPPORTED_RECIPES_CHECK = "" in local.conf.
+
+Creating a "tcpdump" recipe in the local workspace with ``devtool``
+would be okay because there is an entry in `supported-recipes.bbclass`
+which already allows such recipes in a build.
 
 Accelerating Build Time Using Shared-State Files Cache
 ------------------------------------------------------
