@@ -402,22 +402,22 @@ includes the instructions for dealing with the situation::
     ostro-image-noswupd -> *tcpdump
   
   To avoid this message, several options exist:
-  * Disable the check with SUPPORTED_RECIPES_CHECK = "" in local.conf.
+  * Check the dependency chain(s) to see why a recipe gets pulled in and perhaps
+    change recipe configurations or image content to avoid pulling in undesired
+    components.
+    'bitbake -g <build target>' produces .dot files showing these dependencies.
+  * If the recipe is supported in some other layer, disable the unsupported one
+    with BBMASK.
   * Add the unsupported recipes to one of the following files:
     /work/meta-ostro/meta-ostro/conf/distro/include/ostro-supported-recipes.txt
     Regular expressions are supported on both sides of the @ separator.
-  * If the recipe is supported in some other layer, disable the unsupported one
-    with BBMASK.
   * Create a new file which lists the unsupported recipes and extend SUPPORTED_RECIPES:
       SUPPORTED_RECIPES_append = " <path>/recipes-supported-by-me.txt"
     See meta-ostro/conf/layer.conf and ostro.conf for an example how the path can be
     derived automatically. The expectation is that SUPPORTED_RECIPES gets set in
     distro configuration files, depending on the support provided by the distro
     creator.
-  * Check the dependency chain(s) to see why a recipe gets pulled in and perhaps
-    change recipe configurations or image content to avoid pulling in undesired
-    components.
-    'bitbake -g <build target>' produces .dot files showing these dependencies.
+  * Disable the check with SUPPORTED_RECIPES_CHECK = "" in local.conf.
 
 Creating a "tcpdump" recipe in the local workspace with ``devtool``
 would be okay because there is an entry in `supported-recipes.bbclass`
