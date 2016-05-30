@@ -38,6 +38,7 @@ SUPPORTED_RECIPES_CHECK_DEPENDENCY_LINES ??= "50"
 # this logic.
 SUPPORTED_RECIPES_NATIVE_BASECLASSES ??= " \
     cross.bbclass \
+    cross-canadian.bbclass \
     image.bbclass \
     native.bbclass \
     nativesdk.bbclass \
