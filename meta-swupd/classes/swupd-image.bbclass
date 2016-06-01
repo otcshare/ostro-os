@@ -473,7 +473,8 @@ END
        rm ${DEPLOY_DIR_SWUPD}/groups.ini
     fi
     touch ${GROUPS_INI}
-    for bndl in ${SWUPD_BUNDLES}; do
+    ALL_BUNDLES="os-core ${SWUPD_BUNDLES}"
+    for bndl in ${ALL_BUNDLES}; do
         echo "[$bndl]" >> ${GROUPS_INI}
         echo "group=$bndl" >> ${GROUPS_INI}
         echo "" >> ${GROUPS_INI}
@@ -486,8 +487,7 @@ END
     ${STAGING_BINDIR_NATIVE}/swupd_make_fullfiles -S ${DEPLOY_DIR_SWUPD} ${OS_VERSION}
 
     ${SWUPD_LOG_FN} "Generating zero packs, this can take some time."
-    bundles="os-core ${SWUPD_BUNDLES}"
-    for bndl in $bundles; do
+    for bndl in ${ALL_BUNDLES}; do
         ${SWUPD_LOG_FN} "Generating zero pack for $bndl"
         ${STAGING_BINDIR_NATIVE}/swupd_make_pack -S ${DEPLOY_DIR_SWUPD} 0 ${OS_VERSION} $bndl
     done
