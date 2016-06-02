@@ -66,6 +66,9 @@ def create_rootfs(d):
         manifest = d.getVar('IMAGE_MANIFEST', True)
         for bundle in imagebundles:
             bundlemanifest = manifest.replace(pn, 'bundle-%s-%s' % (pn_base, bundle))
+            if not os.path.exists(bundlemanifest):
+                dt = d.expand('-${DATETIME}.rootfs')
+                bundlemanifest = bundlemanifest.replace(dt, '')
             with open(bundlemanifest) as f:
                  packages.update(f.readlines())
         with open(manifest, 'w') as f:
