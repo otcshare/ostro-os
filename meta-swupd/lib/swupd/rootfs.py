@@ -73,3 +73,14 @@ def create_rootfs(d):
                  packages.update(f.readlines())
         with open(manifest, 'w') as f:
             f.writelines(sorted(packages))
+        # Also write a manifest symlink
+        if os.path.exists(manifest):
+            dt = d.expand('-${DATETIME}.rootfs')
+            manifest_link = manifest.replace(dt, '')
+            if os.path.lexists(manifest_link):
+                if d.getVar('RM_OLD_IMAGE', True) == "1" and \
+                        os.path.exists(os.path.realpath(manifest_link)):
+                    os.remove(os.path.realpath(manifest_link))
+                os.remove(manifest_link)
+            bb.debug(3, 'Linking composed rootfs manifest from %s to %s' % (manifest, manifest_link))
+            os.symlink(os.path.basename(manifest), manifest_link)
