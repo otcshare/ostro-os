@@ -52,6 +52,9 @@ python swupdimage_virtclass_handler () {
     # Depend on complete bundle generation in the base image.
     dep = ' %s:do_stage_swupd_inputs' % pn_base
     e.data.appendVarFlag('do_image', 'depends', dep)
+    # Ensure update stream is generated when only building virt image
+    dep = ' %s:do_swupd_update' % pn_base
+    e.data.appendVarFlag('do_swupd_update', 'depends', dep)
 }
 
 addhandler swupdimage_virtclass_handler
