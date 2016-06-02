@@ -93,6 +93,18 @@ def stage_package_bundle_contents(d, bundle):
         manifest.write(format_pkg_list(installed, "ver"))
         manifest.write('\n')
 
+    # Also write the manifest symlink
+    if os.path.exists(manfile):
+        dt = d.expand('-${DATETIME}.rootfs')
+        manifest_link = manfile.replace(dt, '')
+        if os.path.lexists(manifest_link):
+            if d.getVar('RM_OLD_IMAGE', True) == "1" and \
+                    os.path.exists(os.path.realpath(manifest_link)):
+                os.remove(os.path.realpath(manifest_link))
+            os.remove(manifest_link)
+        bb.debug(3, 'Linking bundle package manifest from %s to %s' % (manfile, manifest_link))
+        os.symlink(os.path.basename(manfile), manifest_link)
+
 
 def recopy_package_bundle_contents(d, bundle):
     bb.debug(2, 'Re-copying files for package based bundle %s' % bundle)
