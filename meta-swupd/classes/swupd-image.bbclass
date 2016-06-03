@@ -392,7 +392,7 @@ python swupd_replace_hardlinks () {
             if stat.S_ISREG(s.st_mode):
                 inodes.setdefault(s.st_ino, []).append(path)
 
-    for inode, paths in inodes.iteritems():
+    for inode, paths in inodes.items():
         if len(paths) > 1:
             paths.sort()
             bb.debug(3, 'Removing hardlinks: %s' % ' = '.join(paths))
