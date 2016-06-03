@@ -203,6 +203,7 @@ do_image_append () {
 SWUPD_FILE_BLACKLIST ??= ""
 
 SWUPDIMAGEDIR = "${WORKDIR}/swupd-image"
+SWUPDMANIFESTDIR = "${WORKDIR}/swupd-manifests"
 fakeroot python do_stage_swupd_inputs () {
     import swupd.bundles
 
@@ -214,16 +215,57 @@ fakeroot python do_stage_swupd_inputs () {
     swupd.bundles.copy_bundle_contents(d)
 }
 addtask stage_swupd_inputs after do_image before do_swupd_update
+do_stage_swupd_inputs[dirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR}"
 
 SSTATETASKS += "do_stage_swupd_inputs"
-do_stage_swupd_inputs[sstate-inputdirs] = "${SWUPDIMAGEDIR}"
-do_stage_swupd_inputs[sstate-outputdirs] = "${DEPLOY_DIR_SWUPD}/image/"
+do_stage_swupd_inputs[sstate-inputdirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR}"
+do_stage_swupd_inputs[sstate-outputdirs] = "${DEPLOY_DIR_SWUPD}/image/ ${DEPLOY_DIR_IMAGE}"
+
+python swupd_fix_manifest_link() {
+    """
+    Ensure the manifest symlink points to the latest version of the manifest,
+    not the most recently staged.
+    """
+    import glob
+
+    sourcedir = d.getVar('SWUPDMANIFESTDIR', True)
+    destdir = d.getVar('DEPLOY_DIR_IMAGE', True)
+    links = []
+    # Find symlinks in SWUPDMANIFESTDIR
+    for f in os.listdir(sourcedir):
+        if os.path.islink(os.path.join(sourcedir, f)):
+            links.append(f)
+
+    for link in links:
+        target = None
+        latest = None
+        # Extract a pattern for glob:
+        #   core-image-minimal-qemux86.manifest ->
+        #       core-image-minimal-qemux86-20160602082427.rootfs.manifest
+        components = link.split('.')
+        prefix = components[0]
+        suffix = components[1]
+        pattern = prefix + '-*.' + suffix
+        # Find files matching the pattern in DEPLOY_DIR_IMAGE
+        for f in glob.glob(destdir+'/'+pattern):
+            # Find the most recent file matching that pattern
+            fname = os.path.basename(f)
+            date = f.split('-')[-1].split('.')[0]
+            if not latest or latest < date:
+                target = f
+        # Update the symlink
+        lnk = os.path.join(destdir, link)
+        os.remove(lnk)
+        bb.debug(3, 'Updating link %s to %s' % (lnk, target))
+        os.symlink(target, lnk)
+}
 
 python do_stage_swupd_inputs_setscene () {
     sstate_setscene(d)
 }
 addtask do_stage_swupd_inputs_setscene
-do_stage_swupd_inputs_setscene[dirs] = "${SWUPDIMAGEDIR} ${DEPLOY_DIR_SWUPD}/image/"
+do_stage_swupd_inputs_setscene[dirs] = "${SWUPDIMAGEDIR} ${DEPLOY_DIR_SWUPD}/image/ ${SWUPDMANIFESTDIR} ${DEPLOY_DIR_IMAGE}"
+do_stage_swupd_inputs_setscene[postfuncs] += "swupd_fix_manifest_link "
 
 SWUPD_FORMAT ??= "3"
 fakeroot do_swupd_update () {

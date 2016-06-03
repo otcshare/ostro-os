@@ -85,8 +85,10 @@ def stage_package_bundle_contents(d, bundle):
 
     # Generate a manifest of packages in the bundle, we need this so that we
     # can compose a complete list of packages installed in any bundle images
-    manfile = d.getVar('IMAGE_MANIFEST', True)
-    manfile = manfile.replace(imagename, 'bundle-%s-%s' % (imagename, bundle))
+    mandir = d.getVar('SWUPDMANIFESTDIR', True)
+    manf = d.expand('${IMAGE_NAME}.rootfs.manifest')
+    manf = manf.replace(imagename, 'bundle-%s-%s' % (imagename, bundle))
+    manfile = mandir + '/' + manf
     bb.debug(3, 'Writing bundle package manifest %s' % manfile)
     installed = image_list_installed_packages(d, dest)
     with open(manfile, 'w+') as manifest:

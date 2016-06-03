@@ -63,7 +63,7 @@ def create_rootfs(d):
     # and utility classes (like isafw.bbclass).
     if imageext:
         packages = set()
-        manifest = d.getVar('IMAGE_MANIFEST', True)
+        manifest = d.expand('${SWUPDMANIFESTDIR}/${IMAGE_NAME}.rootfs.manifest')
         for bundle in imagebundles:
             bundlemanifest = manifest.replace(pn, 'bundle-%s-%s' % (pn_base, bundle))
             if not os.path.exists(bundlemanifest):
