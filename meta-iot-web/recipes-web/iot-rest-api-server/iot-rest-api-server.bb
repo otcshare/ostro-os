@@ -14,7 +14,7 @@ SRC_URI = "git://git@github.com/01org/iot-rest-api-server.git;protocol=https \
            file://${PN}-ipv4.conf \
            file://${PN}-ipv6.conf \
           "
-SRCREV = "1e12e86ac1a29b875427dabe0cae0a685471d503"
+SRCREV = "190bf15015f3025575a9a47a6ec2ff14d9437b2c"
 
 S = "${WORKDIR}/git"
 
@@ -98,7 +98,6 @@ do_install () {
     cp -r ${S}/config/ ${D}${libdir}/node_modules/iot-rest-api-server/
     cp -r ${S}/handlers/ ${D}${libdir}/node_modules/iot-rest-api-server/
     cp -r ${S}/oic/ ${D}${libdir}/node_modules/iot-rest-api-server/
-    cp -r ${S}/routes/ ${D}${libdir}/node_modules/iot-rest-api-server/
 
     # Install iot-rest-api-server service script
     install -d ${D}/${systemd_unitdir}/system
