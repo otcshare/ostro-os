@@ -265,7 +265,7 @@ CONF_VERSION = "3"
 # By default, only recipes explicitly declared to be okay for building Ostro OS
 # are allowed to be built. Adding or depending on anything else triggers a
 # message saying "The following unsupported recipes are required for the build"
-# and aborts. See building-images.rst for more information.
+# and aborts. See doc/howtows/building-images.rst for more information.
 SUPPORTED_RECIPES_CHECK = "fatal"
 
 # Uncomment the following line to disable the check:
@@ -289,6 +289,21 @@ SUPPORTED_RECIPES_CHECK = "fatal"
 # and uncomment the following line.
 #
 #require conf/distro/include/ostro-os-production.inc
+
+# systemd-bootchart is a useful tool to analyze and optimize a system
+# boot time. The tool is available in Ostro and needs to be activated
+# by a kernel command-line parameter which requires to build a new
+# image. This tool also requires some kernel configurations to be active,
+# specifically CONFIG_DEBUG_KERNEL and CONFIG_SCHEDSTATS.
+#
+# To use systemd-bootchart with the intel-corei7-64 or intel-quark machine
+# uncomment the two lines below. Other MACHINEs that use u-boot (such as
+# edison and beaglebone) use a different mechanism to modify the kernel
+# command-line parameter, this is not covered here. The bootchart graphs
+# will be available in /run/log/.
+#
+#APPEND_append = " init=/lib/systemd/systemd-bootchart"
+#SRC_URI_append_pn-linux-yocto = " file://bootchart.cfg"
 
 #
 # Misc configuration
