@@ -9,10 +9,19 @@ import swupd.path
 import swupd.utils
 
 
-# swupd-client expects a bundle subscription to exist for each
-# installed bundle. This is simply an empty file named for the
-# bundle in /usr/share/clear/bundles
 def create_bundle_manifest(d, bundlename, dest=None):
+    """
+    create a bundle subscription receipt
+
+    swupd-client expects a bundle subscription to exist for each
+    installed bundle. This is simply an empty file named for the
+    bundle in /usr/share/clear/bundles
+
+    d -- the bitbake datastore
+    bundlename -- the name of the bundle [and the receipt file name]
+    dest -- the effective root location in which to create the receipt
+        (default IMAGE_ROOTFS)
+    """
     tgtpath = '/usr/share/clear/bundles'
     if dest:
         bundledir = dest + tgtpath
@@ -23,12 +32,22 @@ def create_bundle_manifest(d, bundlename, dest=None):
 
 
 def get_bundle_packages(d, bundle):
+    """
+    Return a list of packages included in a bundle
+
+    d -- the bitbake datastore
+    bundle -- the name of the bundle for which we return a package list
+    """
     pkgs = (d.getVarFlag('BUNDLE_CONTENTS', bundle, True) or '').split()
     return pkgs
 
 
-# Copy the os-core contents from the mega image to swupd's image directory
 def copy_core_contents(d):
+    """
+    Copy the os-core contents from the mega image to swupd's image directory
+
+    d -- the bitbake datastore
+    """
     outfile = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/${SWUPD_ROOTFS_MANIFEST}')
     bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/${BUNDLE_NAME}/')
     rootfs = d.getVar('IMAGE_ROOTFS', True)
@@ -51,14 +70,21 @@ def copy_core_contents(d):
     swupd.path.copyxattrfiles(d, bundle_file_contents, d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
 
 
-# For each bundle we have already included their contents in the mega-image,
-# thus we should be able to determine which packages were generated for that
-# bundles features and contents through the generated dependency data. Thus:
-# 1) determine the package manager and instantiate a PM object
-# 2) collect a list of package names for each bundle
-# 3) install the packages for the bundle into:
-#        ${SWUPDIMAGEDIR}/${OS_VERSION}/$bndl
 def stage_package_bundle_contents(d, bundle):
+    """
+    stage the contents of a bundle using the package manager
+
+    For each bundle we have already included their contents in the mega-image,
+    thus we should be able to determine which packages were generated for that
+    bundles features and contents through the generated dependency data. Thus:
+    1) determine the package manager and instantiate a PM object
+    2) collect a list of package names for each bundle
+    3) install the packages for the bundle into:
+           ${SWUPDIMAGEDIR}/${OS_VERSION}/$bndl
+
+    d -- the bitbake datastore
+    bundle -- the name of the bundle to be staged
+    """
     bb.debug(1, 'Staging bundle contents for %s' % bundle)
     dest = d.expand("${SWUPDIMAGEDIR}/${OS_VERSION}/%s/" % bundle)
     pm = swupd.utils.get_package_manager(d, dest)
@@ -109,6 +135,12 @@ def stage_package_bundle_contents(d, bundle):
 
 
 def recopy_package_bundle_contents(d, bundle):
+    """
+    recopy the contents of a bundle from the mega image rootfs
+
+    d -- the bitbake datastore
+    bundle -- the name of the bundle to be staged
+    """
     bb.debug(2, 'Re-copying files for package based bundle %s' % bundle)
     bundlecontents = []
     bundlebase = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/')
@@ -141,8 +173,17 @@ def recopy_package_bundle_contents(d, bundle):
     swupd.path.copyxattrfiles(d, bundle_files, megarootfs, bundledir)
 
 
-# Copy bundle contents which aren't part of os-core from the mega-image rootfs
 def copy_image_bundle_contents(d, bundle):
+    """
+    Copy bundle contents which aren't part of os-core from the mega-image rootfs
+
+    For an image-based bundle, generate a list of files which exist in the
+    bundle but not os-core and stage those files from the mega image rootfs to
+    the swupd inputs directory
+
+    d -- the bitbake datastore
+    bundle -- the name of the bundle to be staged
+    """
     bb.debug(2, 'Re-copying files for image based bundle %s' % bundle)
 
     # Construct paths to manifest files and directories
@@ -174,15 +215,28 @@ def copy_image_bundle_contents(d, bundle):
 
 
 def stage_empty_bundle(d, bundle):
+    """
+    stage an empty bundle
+
+    d -- the bitbake datastore
+    bundle -- the name of the bundle to be staged
+    """
     bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/%s' % bundle)
     bb.utils.mkdirhier(bundledir)
     create_bundle_manifest(d, bundle, bundledir)
 
 
-# Copy the staged bundle contents from the mega-image rootfs to ensure that
-# any image postprocessing which modifies files is reflected in os-core bundle
 def copy_bundle_contents(d):
-    bb.debug(1, 'Recopying contents of bundles for %s from mega image rootfs' % d.getVar('PN', True))
+    """
+    Stage bundle contents
+
+    Copy the contents of all bundles from the mega image rootfs to the swupd
+    inputs directory to ensure that any image postprocessing which modifies
+    files is reflected in os-core bundle
+
+    d -- the bitbake datastore
+    """
+    bb.debug(1, 'Vopying contents of bundles for %s from mega image rootfs' % d.getVar('PN', True))
     bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
     for bndl in bundles:
         features = d.getVarFlag('BUNDLE_FEATURES', bndl, True)

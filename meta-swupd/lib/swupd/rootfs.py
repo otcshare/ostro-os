@@ -6,11 +6,17 @@ from swupd.path import copyxattrfiles
 
 
 def create_rootfs(d):
-    # Create or replace the do_image rootfs output with the corresponding
-    # subset from the mega rootfs. Done even if there is no actual image
-    # getting produced, because there may be QA tests defined for
-    # do_image which depend on seeing the actual rootfs that would be
-    # used for images.
+    """
+    create/replace rootfs with equivalent files from mega image rootfs
+
+    Create or replace the do_image rootfs output with the corresponding
+    subset from the mega rootfs. Done even if there is no actual image
+    getting produced, because there may be QA tests defined for
+    do_image which depend on seeing the actual rootfs that would be
+    used for images.
+
+    d -- the bitbake data store
+    """
     bndl = d.getVar('BUNDLE_NAME', True)
     pn = d.getVar('PN', True)
     pn_base = d.getVar('PN_BASE', True)

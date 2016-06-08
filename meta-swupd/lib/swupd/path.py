@@ -2,6 +2,14 @@ import oe.path
 
 
 def copyxattrfiles(d, filelist, src, dst):
+    """
+    copy files preserving extended attributes
+
+    d -- the bitbake data store
+    filelist -- a list of file paths
+    src -- where to copy the files from
+    dst -- where to copy the files to
+    """
     import subprocess
 
     def pathtostring(path):
@@ -24,6 +32,11 @@ def copyxattrfiles(d, filelist, src, dst):
 
 
 def remove_empty_directories(tree):
+    """
+    remove any empty sub-directories of the passed path
+
+    tree -- the root of the tree whose empty children should be deleted
+    """
     for dir, _, _ in os.walk(tree, topdown=False):
         try:
             os.rmdir(dir)
