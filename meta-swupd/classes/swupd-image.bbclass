@@ -431,8 +431,7 @@ END
 
     # Generate delta-packs going back SWUPD_N_DELTAPACK versions
     if [ ${SWUPD_DELTAPACKS} -eq 1 -a ${SWUPD_N_DELTAPACK} -gt 0 -a $PREVREL -gt 0 ]; then
-        bundles="os-core ${SWUPD_BUNDLES}"
-        for bndl in $bundles; do
+        for bndl in ${ALL_BUNDLES}; do
             bndlcnt=0
             # Build list of previous versions and pick the last n ones to build
             # deltas against. Ignore the latest one, which is the one we build
