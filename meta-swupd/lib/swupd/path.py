@@ -1,6 +1,18 @@
 import oe.path
 
 
+def copyxattrtree(src, dst):
+    """
+    Copy all of the files in src to dst preserving extended attributes
+
+    src -- the source to copy from
+    dst -- the destination to copy to
+    """
+    import subprocess
+    cmd = "tar --xattrs --xattrs-include='*' -cf - -C %s -p . | tar -p --xattrs --xattrs-include='*' -xf - -C %s" % (src, dst)
+    oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+
+
 def copyxattrfiles(d, filelist, src, dst):
     """
     copy files preserving extended attributes
