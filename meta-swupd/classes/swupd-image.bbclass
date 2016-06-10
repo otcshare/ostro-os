@@ -155,6 +155,12 @@ python () {
         mega_name = (' bundle-%s-mega:do_image_complete' % pn)
         d.appendVarFlag('do_image', 'depends', mega_name)
         d.appendVarFlag('do_stage_swupd_inputs', 'depends', mega_name)
+
+    # We need to use a custom manifest filename for stage_swupd_inputs so that
+    # the generated sstate can be used to fetch inputs for multiple "releases"
+    manfileprefix = d.getVar('SSTATE_MANFILEPREFIX', True)
+    manfileprefix = manfileprefix + '-' + ver
+    d.setVar('SSTATE_MANFILEPREFIX', manfileprefix)
 }
 
 # swupd-client expects a bundle subscription to exist for each
@@ -191,6 +197,16 @@ do_image_append () {
     swupd.rootfs.create_rootfs(d)
 }
 
+SWUPD_SSTATE_MAP = "${DEPLOY_DIR_SWUPD}/maps/${OS_VERSION}-${PN}.map"
+python swupd_input_sstate_map () {
+    sstatepkg = d.getVar('SSTATE_PKGNAME', True) + '_stage_swupd_inputs.tgz'
+    osv = d.getVar('OS_VERSION', True)
+    mapfile = d.getVar('SWUPD_SSTATE_MAP', True)
+    bb.debug(3, 'Storing map %s=%s in %s' % (osv, sstatepkg, mapfile))
+    with open(mapfile, 'w') as map:
+        map.write('%s=%s' % (osv, sstatepkg))
+}
+
 # Some files should not be included in swupd manifests and therefore never be
 # updated on the target (i.e. certain per-device or machine-generated files in
 # /etc when building for a statefule OS). Add the target paths to this list to
@@ -215,11 +231,12 @@ fakeroot python do_stage_swupd_inputs () {
     swupd.bundles.copy_bundle_contents(d)
 }
 addtask stage_swupd_inputs after do_image before do_swupd_update
-do_stage_swupd_inputs[dirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR}"
+do_stage_swupd_inputs[dirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR} ${DEPLOY_DIR_SWUPD}/maps/"
 
 SSTATETASKS += "do_stage_swupd_inputs"
-do_stage_swupd_inputs[sstate-inputdirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR}"
-do_stage_swupd_inputs[sstate-outputdirs] = "${DEPLOY_DIR_SWUPD}/image/ ${DEPLOY_DIR_IMAGE}"
+do_stage_swupd_inputs[sstate-inputdirs] = "${SWUPDIMAGEDIR}/${OS_VERSION} ${SWUPDMANIFESTDIR}"
+do_stage_swupd_inputs[sstate-outputdirs] = "${DEPLOY_DIR_SWUPD}/image/${OS_VERSION} ${DEPLOY_DIR_IMAGE}"
+do_stage_swupd_inputs[postfuncs] += "swupd_input_sstate_map"
 
 python swupd_fix_manifest_link() {
     """
@@ -266,6 +283,77 @@ python do_stage_swupd_inputs_setscene () {
 addtask do_stage_swupd_inputs_setscene
 do_stage_swupd_inputs_setscene[dirs] = "${SWUPDIMAGEDIR} ${DEPLOY_DIR_SWUPD}/image/ ${SWUPDMANIFESTDIR} ${DEPLOY_DIR_IMAGE}"
 do_stage_swupd_inputs_setscene[postfuncs] += "swupd_fix_manifest_link "
+
+fakeroot python do_fetch_swupd_inputs () {
+    import subprocess
+    import swupd.path
+
+    if d.getVar('PN_BASE', True):
+        bb.debug(2, 'Skipping update input fetching for non-base image %s' % d.getVar('PN', True))
+        return
+
+    fetchlist = {}
+    currv = d.getVar('OS_VERSION', True)
+    # read the OS_VERSION->SSTATE_PKGNAME maps
+    mapdir = d.expand('${DEPLOY_DIR_SWUPD}/maps')
+    for map in os.listdir(mapdir):
+        osv = None
+        pkg = None
+        with open(os.path.join(mapdir, map), 'r') as f:
+            osv, pkg = f.readline().split('=')
+        if osv and pkg:
+            if osv == currv:
+                continue
+            fetchlist[osv] = pkg
+        else:
+            bb.warn('Malformed map file at %s', map)
+        # TODO: we should likely introduce a method to limit the number
+        # of maps which result in fetched sstate.
+
+    workdir = d.expand('${WORKDIR}/fetched-inputs')
+    bb.utils.mkdirhier(workdir)
+
+    deploydirswupd = d.getVar('DEPLOY_DIR_SWUPD', True)
+    deploydirimage = d.getVar('DEPLOY_DIR_IMAGE', True)
+    sstatedir = d.getVar('SSTATE_DIR', True)
+    # For each identified input sstate object, try and ensure we have the
+    # object file available
+    for osv, pkg in fetchlist.items():
+        # Don't try and fetch & unpack the sstate for a version directory
+        # which already exists
+        imgdst = os.path.join(deploydirswupd, 'image', osv)
+        if os.path.exists(imgdst):
+            continue
+
+        sstatefetch = pkg
+        sstatepkg = '%s/%s' % (sstatedir, pkg)
+
+        bb.debug(1, 'Preparing sstate package %s' % sstatepkg)
+
+        if not os.path.exists(sstatepkg):
+            bb.debug(2, 'Fetching object %s from mirror' % sstatepkg)
+            pstaging_fetch(sstatefetch, sstatepkg, d)
+
+        if not os.path.isfile(sstatepkg):
+            bb.debug(2, "Shared state package %s is not available" % sstatepkg)
+            continue
+
+        # We now have a copy of the sstate  for a do_stage_swupd_inputs
+        # version let's "install" it. We have two directories:
+        # $osv: should be extracted to ${DEPLOY_DIR_SWUPD}/image/$osv
+        # swupd-manifests: should be extracted to ${DEPLOY_DIR_IMAGE}
+        src = os.path.join(workdir, osv)
+        bb.utils.mkdirhier(src)
+
+        bb.debug(2, 'Unpacking sstate object %s in %s' % (sstatepkg, src))
+        cmd = 'cd %s && tar -xvzf %s' % (src, sstatepkg)
+        oe.path.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+        bb.utils.mkdirhier(imgdst)
+        swupd.path.copyxattrtree('%s/%s/' % (src, osv), imgdst)
+        swupd.path.copyxattrtree('%s/swupd-manifests/' % src, deploydirimage)
+}
+addtask fetch_swupd_inputs before do_swupd_update
+do_fetch_swupd_inputs[dirs] = "${DEPLOY_DIR_SWUPD}/maps ${DEPLOY_DIR_SWUPD}/image"
 
 SWUPD_FORMAT ??= "3"
 fakeroot do_swupd_update () {
