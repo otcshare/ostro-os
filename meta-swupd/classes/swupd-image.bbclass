@@ -358,7 +358,7 @@ do_fetch_swupd_inputs[dirs] = "${DEPLOY_DIR_SWUPD}/maps ${DEPLOY_DIR_SWUPD}/imag
 SWUPD_FORMAT ??= "3"
 fakeroot do_swupd_update () {
     if [ -z "${BUNDLE_NAME}" ] || [ ! -z "${PN_BASE}" ] ; then
-        bbwarn 'We only generate swupd updates for the base image, skipping ${PN}:do_swupd_update'
+        bbdebug 1 'We only generate swupd updates for the base image, skipping ${PN}:do_swupd_update'
         exit
     fi
 
