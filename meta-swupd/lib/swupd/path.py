@@ -23,16 +23,14 @@ def copyxattrfiles(d, filelist, src, dst):
     dst -- where to copy the files to
     """
     import subprocess
-
-    def pathtostring(path):
-        return path.replace('/', '-')
+    import tempfile
 
     bb.utils.mkdirhier(dst)
     files = sorted(filelist)
 
-    copyfile = '%s/copyxattrfiles-%s-%s.txt' % (d.getVar('WORKDIR', True), pathtostring(src), pathtostring(dst))
-    if os.path.exists(copyfile):
-        os.remove(copyfile)
+    workdir = d.getVar('WORKDIR', True)
+    fd, copyfile = tempfile.mkstemp(dir=workdir)
+    os.close(fd)
     with open(copyfile, 'w') as fdest:
         fdest.write('-C%s\n' % src)
         for f in files:
