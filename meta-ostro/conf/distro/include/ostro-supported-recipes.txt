@@ -176,7 +176,6 @@ nettle@core
 nodejs@iotweb
 oe-swupd-helpers@meta-swupd
 openjdk-8@meta-java
-openjre-8@meta-java
 openssh@core
 openssl@core
 opkg-utils@core
@@ -192,6 +191,10 @@ ptest-runner@core
 python-dbus@core
 python-pygobject@core
 python-setuptools@core
+python3-dbus@core
+python3-pygobject@core
+python3-setuptools@core
+python3@core
 python@core
 read-map@iotqa
 readline@core

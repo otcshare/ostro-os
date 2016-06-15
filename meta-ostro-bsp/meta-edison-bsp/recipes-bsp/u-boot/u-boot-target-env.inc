@@ -55,7 +55,7 @@ python do_environment_mkimage() {
     try:
         os.unlink(env_image)
     except OSError: pass
-    print 'Building binary environments in : %s' % env_bin_dir
+    bb.debug(1, 'Building binary environments in : %s' % env_bin_dir)
     # iterate targets list to build binary environment files
     for target_env in env_files :
         # get only filename without path and extension
@@ -68,15 +68,15 @@ python do_environment_mkimage() {
                 ' ./tools/mkenvimage -s %s -r -o %s -' \
                 % ( d.getVar('ENV_BASE_FILE',True),target_env,
                 d.getVar("ENV_SIZE",True), target_bin)
-        print 'Building binary for %s target:' % (target_filename)
-        print '%s' % cmd_mkimg
+        bb.debug(1, 'Building binary for %s target:' % (target_filename))
+        bb.debug(1, '%s' % cmd_mkimg)
         # execute shell command
         ret = subprocess.call(cmd_mkimg, shell=True)
         if ret: return ret
         if d.getVar('ENV_IFWI_TARGET_NAME',True) in target_bin :
             # create a symbolic link on default binary file env file to
             # avoid modifying to much osip part
-            print 'Create for IFWI stitching symlink %s to %s' % (env_image, target_bin)
+            bb.debug(1, 'Create for IFWI stitching symlink %s to %s' % (env_image, target_bin))
             os.symlink(target_bin, env_image)
     return 0
 }

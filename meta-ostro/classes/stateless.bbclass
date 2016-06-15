@@ -157,7 +157,7 @@ python stateless_check() {
     whitelist = (d.getVar('STATELESS_ETC_WHITELIST', True) or '').split()
     import os
     sane = True
-    for pkg, files in pkgfiles.iteritems():
+    for pkg, files in pkgfiles.items():
         pkgdir = os.path.join(d.getVar('PKGDEST', True), pkg)
         for file in files:
             targetfile = file[len(pkgdir):]

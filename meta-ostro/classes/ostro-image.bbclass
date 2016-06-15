@@ -238,7 +238,7 @@ COMPRESS_DEPENDS_zip = "zip-native"
 
 # Replace the default "live" (aka HDDIMG) images with whole-disk images
 # XXX Drop the VM hack after taking care also of the non UEFI devices (those using U-Boot: edison and beaglebone)
-OSTRO_VM_IMAGE_TYPES ?= "dsk dsk.ova"
+OSTRO_VM_IMAGE_TYPES ?= "dsk dsk.bmap dsk.ova"
 IMAGE_FSTYPES_remove_intel-core2-32 = "live"
 IMAGE_FSTYPES_append_intel-core2-32 = " ${OSTRO_VM_IMAGE_TYPES}"
 IMAGE_FSTYPES_remove_intel-corei7-64 = "live"

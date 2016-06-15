@@ -175,8 +175,8 @@ that in any device. You make it available and have an option to be installed or 
 Put another way, the purpose of using a bundle is to allow a feature to be installed 
 or removed *per device* or
 an application that one user may want while another may not. 
-For example, a security system device may optionally install the upnp/dlna media provider to access 
-the recorded files, whle a drone device could have a "camera" bundle installed containing the kernel module (v4l), 
+For example, a security system device may optionally install the UPnP/DLNA media provider to access
+the recorded files, while a drone device could have a "camera" bundle installed containing the kernel module (v4l),
 media pipeline (gstreamer) and a server to stream it.
 
 Compared to the approach taken in Step 0, 
@@ -218,28 +218,28 @@ Example (Continuing from Step 2)::
   $ bitbake ostro-image-swupd-pre_installed_content
 
 Assuming that the chosen architecture defined in ``local.conf`` was ``intel-corei7-64``, 
-the yield from the command in the Example is:
+the yield from the command in the example is:
 
-- The image with the chosen pre-installed bundles::
+* The image with the chosen pre-installed bundles::
 
     tmp-glibc/deploy/images/intel-corei7-64/ostro-image-swupd-pre_installed_content-intel-corei7-64.dsk
 
-- The base image::
+* The base image::
 
     tmp-glibc/deploy/images/intel-corei7-64/ostro-image-swupd-intel-corei7-64.dsk
 
-- The work directory for generating SW Update repository::
+* The work directory for generating SW Update repository::
 
     tmp-glibc/deploy/swupd/intel-corei7-64/ostro-image-swupd/
 
-  This folder contains both data from intermediate steps and the actual
+*  This folder contains both data from intermediate steps and the actual
   SW Update stream located here::
 
     tmp-glibc/deploy/swupd/intel-corei7-64/ostro-image-swupd/www/
 
-  This folder will also contain data related to subsequent builds and
-  must be exposed through a web server (e.g., ``nginx`` or ``apache``) 
-  to the device running the SW update client for getting its maintentance.
+This folder will also contain data related to subsequent builds and
+must be exposed through a web server (e.g., ``nginx`` or ``apache``)
+to the device running the SW update client for getting its maintenance.
 
 
 Step 4: Create an update from the previous step

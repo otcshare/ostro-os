@@ -176,21 +176,24 @@ The simpler way is to follow these steps:
 
 Removing Ostro OS from internal media
 =====================================
-   Ostro OS uses GID for identifying the rootfs and the GID is kept consistent across all the
-   images produced. This means that trying to boot a system with 2 Ostro OS images available at the
-   same time will likely produce unwanted/undetermined results.
-   Before trying again to boot from a removable media, the internal media should be wiped.
-   To achieve this:
+
+Ostro OS uses GID for identifying the rootfs and the GID is kept consistent across all the
+images produced. This means that trying to boot a system with 2 Ostro OS images available at the
+same time will likely produce unwanted/undetermined results.
+Before trying again to boot from a removable media, the internal media should be wiped.
+To achieve this:
+
 #. Boot from the internal media.
 #. Identify the root block device containing the rootfs partition.
 #. Wipe a sufficient part of that block device to make it unbootable.
+
    In practice it means wiping the primary GPT and at least the beginning of both partitions that
    might be EFI-bootable. In an unmodified Ostro disk layout, this means the first 2 partitions,
    which are 15MB each. 20 MB would be sufficient to cover the beginning of the disk, the first
    partition and the beginning of the second. 30MB will wipe even the beginning of the rootfs.
    Example with rootfs on ``/dev/sda3``::
 
-      # dd if=/dev/zero of=/dev/sda bs=5M count=6 && sync
+   # dd if=/dev/zero of=/dev/sda bs=5M count=6 && sync
 
 #. Poweroff the device (ignore possible ext4 error messages).
 #. Insert the removable media with the new Ostro OS image and power on.
@@ -276,7 +279,8 @@ Flashing an Intel Edison requires use of a breakout board and two micro-USB cabl
 
    $ sudo ./flashall.sh
 
-   `NOTE:` If the script is unable to find the image, use the ``-i <imagename>`` option to the flashall script.
+   .. note:: If the script is unable to find the image, use the ``-i <imagename>`` option to the flashall script.
+
 #. Plug in the second micro-USB cable to the J16 connector as instructed by the running flashall script.
 #. Wait for all the images to flash. You will see the progress on the flasher.
 #. Once flashing is done, the image will automatically boot up and auto-login as ``root``, no password is required.
@@ -393,9 +397,10 @@ In our setup steps below, we're using an 8GB microSD card in an SD adapter that'
 #. Remove the SD card from your host computer, remove the microSD card from its adapter,
    insert the microSD card into the BeagleBone Black (slot is on the bottom of the board) and power up the device.
 
-Note:  The normal boot sequence is to use the on-board flash first (eMMC), then the microSD card,
-then the USB port, and finally the serial port. You may need to use the **S2** alternate boot button,
-by holding it down at power up, to change the boot order to use the microSD card first instead of eMMC first.
+.. note::
+   The normal boot sequence is to use the on-board flash first (eMMC), then the microSD card,
+   then the USB port, and finally the serial port. You may need to use the **S2** alternate boot button,
+   by holding it down at power up, to change the boot order to use the microSD card first instead of eMMC first.
 
 Once booted from the microSD card, you can prevent boot from eMMC by using (on the BeagleBone Black)::
 
@@ -405,7 +410,11 @@ Once booted from the microSD card, you can prevent boot from eMMC by using (on t
 Converting from GPT to MBR Partitions
 -------------------------------------
 
-On a linux system run the ``gdisk`` utility *(Note: your microSD card device name may be different than in this example)*::
+On a linux system run the ``gdisk`` utility:
+
+.. note:: your microSD card device name may be different than in this example
+
+::
 
    $ sudo umount /dev/mmcblk0*
    $ sudo gdisk /dev/mmcblk0

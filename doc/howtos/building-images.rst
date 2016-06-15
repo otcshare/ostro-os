@@ -207,6 +207,15 @@ Example::
 
 will create both the raw and the VirtualBox appliance images, both compressed.
 
+The :command:`bmaptool` tool works best creating your bootable media (see :ref:`booting-and-installation`)
+when the corresponding block map :file:`bmap` file is also generated for the image. This ``.bmap``
+file contains empty block and checksum information about the image that lets :command:`bmaptool`
+optimize copying the image to your bootable media and verify what was copied. To do this, add
+``dsk.bmap`` to the ``OSTRO_VM_IMAGE_TYPES`` variable in your :file:`local.conf` file. As an example,
+the following line will create an xz-compressed image and the corresponding :file:`bmap` file::
+
+   OSTRO_VM_IMAGE_TYPES = "dsk.xz dsk.bmap"
+
 Non-EFI platforms (``edison`` and ``beaglebone`` MACHINEs) have their image types set
 by their corresponding BSP; use of ``OSTRO_VM_IMAGE_TYPES`` will be ignored for these platforms.
 
@@ -270,8 +279,9 @@ to the image. In the case you build an Ostro image with ``swupd`` enabled
 (e.g.:``ostro-image-swupd``) these additional packages get added by default to the
 ``os-core`` bundle. For more information on how to define, add and modify bundles,
 please refer to these documents:
-- :ref:`software-update`
-- :ref:`software-update-server`
+
+* :ref:`software-update`
+* :ref:`software-update-server`
 
 The ``ostro-os`` repo contains many layers and recipes that are not enabled
 but are available for your use. You can see these by using the commands::

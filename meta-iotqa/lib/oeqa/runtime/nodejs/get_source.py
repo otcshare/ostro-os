@@ -21,6 +21,7 @@ def get_test_module_repo(url, module):
             sys.exit(1)
         else:
             shutil.rmtree(repo_path)
+    ori_path = os.getcwd()
     os.chdir(repo_target_path)
     if module == 'iotivity-node':
         git_cmd = ''.join([
@@ -39,6 +40,7 @@ def get_test_module_repo(url, module):
         print '\nClone into %s failed! %s' % (module, git_status[1])
         sys.exit(1)
     inst_node_modules(url, module)
+    os.chdir(ori_path)
 
 def inst_node_modules(url, module):
     if module == 'iotivity-node':

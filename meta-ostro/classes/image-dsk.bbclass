@@ -194,12 +194,8 @@ inherit deploy
 #   either 32 or 64 bit.
 python do_uefiapp() {
     import random, string, json, uuid, shutil, glob, re
+    import shutil
     from subprocess import check_call
-
-    def copy(src, dst):
-        with open(dst, 'w') as destination:
-            with open(src) as source:
-                destination.write(source.read())
 
     layout = d.getVar('DSK_IMAGE_LAYOUT', True)
     bb.note("Parsing disk image JSON %s" % layout)
@@ -208,7 +204,7 @@ python do_uefiapp() {
     full_image_size_mb = partition_table["gpt_initial_offset_mb"] + \
                          partition_table["gpt_tail_padding_mb"]
 
-    for key in sorted(partition_table.iterkeys()):
+    for key in sorted(partition_table.keys()):
         if not isinstance(partition_table[key], dict):
             continue
         full_image_size_mb += partition_table[key]["size_mb"]
@@ -226,7 +222,7 @@ python do_uefiapp() {
         os.remove(d.expand('${B}/initrd'))
     # initrd is a concatenation of compressed cpio archives
     # (initramfs, microcode, etc.)
-    with open(d.expand('${B}/initrd'), 'w') as dst:
+    with open(d.expand('${B}/initrd'), 'wb') as dst:
         for cpio in d.getVar('INITRD_LIVE', True).split():
             with open(cpio, 'rb') as src:
                 dst.write(src.read())
@@ -254,12 +250,12 @@ python do_uefiapp() {
         f.write('Signature Placeholder.')
     with open(d.expand('${B}/' + executable + '_tmp'), 'rb') as combo:
         with open(d.expand('${B}/signature.txt'), 'rb') as signature:
-            with open(d.expand('${B}/' + executable), 'w') as signed_combo:
+            with open(d.expand('${B}/' + executable), 'wb') as signed_combo:
                 signed_combo.write(combo.read())
                 signed_combo.write(signature.read())
     if not os.path.exists(d.expand('${DEPLOYDIR}/EFI/BOOT')):
         os.makedirs(d.expand('${DEPLOYDIR}/EFI/BOOT'))
-    copy(d.expand('${B}/' + executable), d.expand('${DEPLOYDIR}/EFI/BOOT/' + executable))
+    shutil.copyfile(d.expand('${B}/' + executable), d.expand('${DEPLOYDIR}/EFI/BOOT/' + executable))
 }
 
 DEPLOYDIR = "${WORKDIR}/uefiapp-${PN}"

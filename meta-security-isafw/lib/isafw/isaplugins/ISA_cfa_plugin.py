@@ -30,6 +30,7 @@
 import subprocess
 import os
 import re
+import copy
 try:
     from lxml import etree
 except ImportError:
@@ -289,19 +290,23 @@ def _check_tools():
 
 
 def get_info(tool, args, file_name):
+    env = copy.deepcopy(os.environ)
+    env['PSEUDO_UNLOAD'] = 1
     cmd = [tool, args, file_name]
     with open(os.devnull, 'wb') as DEVNULL:
         try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL)
+            result = subprocess.check_output(cmd, stderr=DEVNULL, env=env)
         except:
             return ""
         else:
             return result
 
 def get_security_flags(file_name):
+    env = copy.deepcopy(os.environ)
+    env['PSEUDO_UNLOAD'] = 1
     cmd = ['checksec.sh', '--file', file_name]
     try:
-        result = subprocess.check_output(cmd).splitlines()[1]
+        result = subprocess.check_output(cmd, env=env).splitlines()[1]
     except:
         return "Not able to fetch flags"
     else:
@@ -315,10 +320,12 @@ def process_file(file):
     fun_results = [file, [], "", "", "", log]
     if not os.path.isfile(file):
         return fun_results
+    env = copy.deepcopy(os.environ)
+    env['PSEUDO_UNLOAD'] = 1
     # getting file type
     cmd = ['file', '--mime-type', file]
     try:
-        result = subprocess.check_output(cmd)
+        result = subprocess.check_output(cmd, env=env)
     except:
         fun_results[-1] += "\nNot able to decode mime type " + sys.exc_info()
         return fun_results
@@ -328,7 +335,7 @@ def process_file(file):
         file = os.path.realpath(file)
         cmd = ['file', '--mime-type', file]
         try:
-            result = subprocess.check_output(cmd)
+            result = subprocess.check_output(cmd, env=env)
         except:
             fun_results[-1] += "\nNot able to decode mime type " + sys.exc_info()
             return fun_results

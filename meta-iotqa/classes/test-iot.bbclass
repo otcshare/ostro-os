@@ -108,7 +108,7 @@ def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+
     else:
         try:
             shutil.copy2(src, dest)
-        except IOError, e :
+        except IOError as e:
             bb.warn(str(e))
    
 #export test asset

@@ -41,52 +41,67 @@ python xattr_images_fix_transmute () {
     import os
     import errno
 
-    # Cannot use the 'xattr' module, it is not part of a standard Python
-    # installation. Instead re-implement using ctypes. Only has to be good
-    # enough for xattrs that are strings. Always operates on the symlinks themselves,
-    # not what they point to.
-    import ctypes
-
-    # We cannot look up the xattr functions inside libc. That bypasses
-    # pseudo, which overrides these functions via LD_PRELOAD. Instead we have to
-    # find the function address and then create a ctypes function from it.
-    libdl = ctypes.CDLL("libdl.so.2")
-    _dlsym = libdl.dlsym
-    _dlsym.restype = ctypes.c_void_p
-    RTLD_DEFAULT = ctypes.c_void_p(0)
-    _lgetxattr = ctypes.CFUNCTYPE(ctypes.c_ssize_t, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t,
-                use_errno=True)(_dlsym(RTLD_DEFAULT, 'lgetxattr'))
-    _lsetxattr = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
-                use_errno=True)(_dlsym(RTLD_DEFAULT, 'lsetxattr'))
-
-    def lgetxattr(f, attr, default=None):
-        len = 32
-        while True:
-            buffer = ctypes.create_string_buffer('\000' * len)
-            res = _lgetxattr(f, attr, buffer, ctypes.c_size_t(len))
-            if res >= 0:
-                return buffer.value
-            else:
-                error = ctypes.get_errno()
-                if ctypes.get_errno() == errno.ERANGE:
-                    len *= 2
-                elif error == errno.ENODATA:
+    if getattr(os, 'getxattr', None):
+        # Python 3: os has xattr support.
+        def lgetxattr(f, attr):
+            try:
+                value = os.getxattr(f, attr, follow_symlinks=False)
+                return value.decode('utf8')
+            except OSError as ex:
+                if ex.errno == errno.ENODATA:
                     return None
-                else:
-                    raise IOError(error, 'lgetxattr(%s, %s): %d = %s = %s' %
-                                         (f, attr, error, errno.errorcode[error], os.strerror(error)))
 
-    def lsetxattr(f, attr, value):
-        res = _lsetxattr(f, attr, value, ctypes.c_size_t(len(value)), ctypes.c_int(0))
-        if res != 0:
-            error = ctypes.get_errno()
-            raise IOError(error, 'lsetxattr(%s, %s, %s): %d = %s = %s' %
-                                 (f, attr, value, error, errno.errorcode[error], os.strerror(error)))
+        def lsetxattr(f, attr, value):
+            os.setxattr(f, attr.encode('utf8'), value.encode('utf8'), follow_symlinks=False)
+    else:
+        # Python 2: xattr support only in xattr module.
+        #
+        # Cannot use the 'xattr' module, it is not part of a standard Python
+        # installation. Instead re-implement using ctypes. Only has to be good
+        # enough for xattrs that are strings. Always operates on the symlinks themselves,
+        # not what they point to.
+        import ctypes
+
+        # We cannot look up the xattr functions inside libc. That bypasses
+        # pseudo, which overrides these functions via LD_PRELOAD. Instead we have to
+        # find the function address and then create a ctypes function from it.
+        libdl = ctypes.CDLL("libdl.so.2")
+        _dlsym = libdl.dlsym
+        _dlsym.restype = ctypes.c_void_p
+        RTLD_DEFAULT = ctypes.c_void_p(0)
+        _lgetxattr = ctypes.CFUNCTYPE(ctypes.c_ssize_t, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t,
+                    use_errno=True)(_dlsym(RTLD_DEFAULT, 'lgetxattr'))
+        _lsetxattr = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int,
+                    use_errno=True)(_dlsym(RTLD_DEFAULT, 'lsetxattr'))
+
+        def lgetxattr(f, attr):
+            len = 32
+            while True:
+                buffer = ctypes.create_string_buffer('\000' * len)
+                res = _lgetxattr(f, attr, buffer, ctypes.c_size_t(len))
+                if res >= 0:
+                    return buffer.value
+                else:
+                    error = ctypes.get_errno()
+                    if ctypes.get_errno() == errno.ERANGE:
+                        len *= 2
+                    elif error == errno.ENODATA:
+                        return None
+                    else:
+                        raise IOError(error, 'lgetxattr(%s, %s): %d = %s = %s' %
+                                             (f, attr, error, errno.errorcode[error], os.strerror(error)))
+
+        def lsetxattr(f, attr, value):
+            res = _lsetxattr(f, attr, value, ctypes.c_size_t(len(value)), ctypes.c_int(0))
+            if res != 0:
+                error = ctypes.get_errno()
+                raise IOError(error, 'lsetxattr(%s, %s, %s): %d = %s = %s' %
+                                     (f, attr, value, error, errno.errorcode[error], os.strerror(error)))
 
     def visit(path, deflabel, deftransmute):
         isrealdir = os.path.isdir(path) and not os.path.islink(path)
-        curlabel = lgetxattr(path, 'security.SMACK64', '')
-        transmute = lgetxattr(path, 'security.SMACK64TRANSMUTE', '') == 'TRUE'
+        curlabel = lgetxattr(path, 'security.SMACK64')
+        transmute = lgetxattr(path, 'security.SMACK64TRANSMUTE') == 'TRUE'
 
         if not curlabel:
             # Since swupd doesn't remove the label from an updated file assigned by

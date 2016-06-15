@@ -902,7 +902,7 @@ class IotivityJSAPITest(oeRuntimeTest):
             "/tmp/nodeunit-master/bin/nodeunit"
             )
         self.target.run("kill -9 `ps | grep '%s' | grep -v 'grep' | awk '{print $1}'`" %
-            "node_modules"
+            "iotivityjsapis"
             )
 
     @classmethod

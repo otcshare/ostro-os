@@ -24,24 +24,16 @@ inherit cml1 python3native
 PACKAGECONFIG ??= "${@bb.utils.contains('DISTRO_FEATURES','x11', 'x11', '', d)}"
 PACKAGECONFIG[x11] = ",,cairo atk gtk+3 gdk-pixbuf pango,"
 
-PACKAGES = " \
-         ${PN}-staticdev \
+PACKAGES_prepend = " \
          ${PN}-nodejs \
          ${PN}-flow-gtk \
-         ${PN}-dev \
-         ${PN}-dbg \
-         ${PN} \
 "
 
-FILES_${PN}-staticdev = " \
-                      ${libdir}/libsoletta.a \
+FILES_${PN}-dbg_append = " \
+                  ${datadir}/gdb \
 "
 
-FILES_${PN}-dbg = " \
-                 ${datadir}/gdb \
-"
-
-FILES_${PN}-dev = " \
+FILES_${PN}-dev_append = " \
                 ${datadir}/soletta/* \
                 ${includedir}/soletta/* \
                 ${libdir}/pkgconfig/soletta.pc \
@@ -58,6 +50,7 @@ FILES_${PN}-flow-gtk = " \
                 ${libdir}/soletta/modules/flow/gtk.so \
                 ${datadir}/soletta/flow/descriptions/gtk.json \
 "
+INSANE_SKIP_${PN}-flow-gtk += "dev-deps"
 
 FILES_${PN} = " \
             ${bindir}/sol* \
@@ -68,6 +61,7 @@ FILES_${PN} = " \
 FILES_${PN}-nodejs = " \
                    ${libdir}/node_modules/soletta \
 "
+INSANE_SKIP_${PN}-nodejs += "dev-deps"
 
 # Setup what PACKAGES should be installed by default.
 # If a package should not being installed, use BAD_RECOMMENDS.
@@ -88,8 +82,6 @@ RDEPENDS_${PN} = " \
 # maybe an non-obvious implicit rule implied by yocto
 INSANE_SKIP_${PN} += "dev-deps file-rdeps"
 INSANE_SKIP_${PN}-dev += "dev-elf"
-INHIBIT_PACKAGE_STRIP = "1"
-INHIBIT_DEFAULT_DEPS = "1"
 
 B = "${WORKDIR}/git"
 
@@ -197,3 +189,5 @@ do_install_ptest () {
         cp -f ${S}/tools/run-fbp-tests ${D}/${PTEST_PATH}
 
 }
+
+INSANE_SKIP_${PN}-ptest += "dev-deps"
