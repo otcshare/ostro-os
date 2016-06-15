@@ -170,7 +170,7 @@ class ISA_CVEChecker:
                            sys.exc_info())
         else:
             report = self.report_name + "." + rtype
-            with open(report, 'w') as freport:
+            with open(report, 'wb') as freport:
                 freport.write(stdout_value)
 
     def process_patch_list(self, patch_files):
