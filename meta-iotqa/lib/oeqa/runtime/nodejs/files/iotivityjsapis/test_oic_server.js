@@ -9,14 +9,14 @@ module.exports = {
 		callback();
 	},
 
-	testOicServerHasRegisterResourcePromise: function(test) {
-		test.ok('registerResource' in OicServer);
-		test.strictEqual(typeof(OicServer.registerResource), 'function');
+	testOicServerHasRegisterPromise: function(test) {
+		test.ok('register' in OicServer);
+		test.strictEqual(typeof(OicServer.register), 'function');
 		test.done();
 	},
-	testOicServerHasUnregisterResourcePromise: function(test) {
-		test.ok('unregisterResource' in OicServer);
-		test.strictEqual(typeof(OicServer.unregisterResource), 'function');
+	testOicServerHasUnregisterPromise: function(test) {
+		test.ok('unregister' in OicServer);
+		test.strictEqual(typeof(OicServer.unregister), 'function');
 		test.done();
 	},
 	testOicServerHasEnablePresencePromise: function(test) {
