@@ -16,6 +16,7 @@ SRC_URI = "http://linuxtv.org/downloads/v4l-utils/v4l-utils-${PV}.tar.bz2 \
            file://0001-Revert-media-ctl-Don-t-install-libmediactl-and-libv4.patch \
            file://mediactl-pkgconfig.patch \
            file://export-mediactl-headers.patch \
+           file://jpeg_memsrcdest-extend-feature-check.patch \
           "
 SRC_URI[md5sum] = "936c9c58343840e91294e4dcec7dc05f"
 SRC_URI[sha256sum] = "6147ccc29fe7dd3c5c3994d613c4f2a099bac8b44694a96e5cf4d7caca8336c0"
