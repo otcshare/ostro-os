@@ -26,10 +26,16 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import absolute_import, print_function
 
 import sys
-import isaplugins
+import traceback
+import isafw.isaplugins as isaplugins
 
+try:
+    from bb import error
+except ImportError:
+    error = print
 
 __all__ = [
     'ISA_package',
@@ -103,121 +109,44 @@ class ISA_config:
     la_plugin_image_blacklist = ""# blacklist of images for violating license checks
 
 class ISA:
+    def call_plugins(self, methodname, *parameters, **keywords):
+        for name in isaplugins.__all__:
+            plugin = getattr(isaplugins, name)
+            method = getattr(plugin, methodname, None)
+            if not method:
+                # Not having init() is an error, everything else is optional.
+                if methodname == "init":
+                    error("No init() defined for plugin %s.\n"
+                          "Skipping this plugin." %
+                          (methodname, plugin.getPluginName()))
+                continue
+            if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
+                continue
+            if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
+                continue
+            try:
+                method(*parameters, **keywords)
+            except:
+                error("Exception in plugin %s %s():\n%s" %
+                      (plugin.getPluginName(),
+                       methodname,
+                       traceback.format_exc()))
 
     def __init__(self, ISA_config):
         self.ISA_config = ISA_config
-        for name in isaplugins.__all__:
-            plugin = getattr(isaplugins, name)
-            try:
-                # see if the plugin has a 'init' attribute
-                register_plugin = plugin.init
-            except:
-                print("Error in calling init() for plugin " +
-                      plugin.getPluginName())
-                print("Error info: ", sys.exc_info())
-                print("Skipping this plugin")
-                continue
-            else:
-                if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
-                    continue
-                if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
-                    continue
-                try:
-                    register_plugin(ISA_config)
-                except:
-                    print("Exception in plugin init: ", sys.exc_info())
+        self.call_plugins("init", ISA_config)
 
     def process_package(self, ISA_package):
-        for name in isaplugins.__all__:
-            plugin = getattr(isaplugins, name)
-            try:
-                # see if the plugin has a 'process_package' attribute
-                process_package = plugin.process_package
-            except AttributeError:
-                # if it doesn't, it is ok, won't call this plugin
-                pass
-            else:
-                if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
-                    continue
-                if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
-                    continue
-                try:
-                    process_package(ISA_package)
-                except:
-                    print("Exception in plugin: ", sys.exc_info())
+        self.call_plugins("process_package", ISA_package)
 
     def process_pkg_list(self, ISA_pkg_list):
-        for name in isaplugins.__all__:
-            plugin = getattr(isaplugins, name)
-            try:
-                # see if the plugin has a 'process_pkg_list' attribute
-                process_pkg_list = plugin.process_pkg_list
-            except AttributeError:
-                # if it doesn't, it is ok, won't call this plugin
-                pass
-            else:
-                if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
-                    continue
-                if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
-                    continue
-                try:
-                    process_pkg_list(ISA_pkg_list)
-                except:
-                    print("Exception in plugin: ", sys.exc_info())
+        self.call_plugins("process_pkg_list", ISA_pkg_list)
 
     def process_kernel(self, ISA_kernel):
-        for name in isaplugins.__all__:
-            plugin = getattr(isaplugins, name)
-            try:
-                # see if the plugin has a 'process_kernel' attribute
-                process_kernel = plugin.process_kernel
-            except AttributeError:
-                # if it doesn't, it is ok, won't call this plugin
-                pass
-            else:
-                if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
-                    continue
-                if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
-                    continue
-                try:
-                    process_kernel(ISA_kernel)
-                except:
-                    print("Exception in plugin: ", sys.exc_info())
+        self.call_plugins("process_kernel", ISA_kernel)
 
     def process_filesystem(self, ISA_filesystem):
-        for name in isaplugins.__all__:
-            plugin = getattr(isaplugins, name)
-            try:
-                # see if the plugin has a 'process_filesystem' attribute
-                process_filesystem = plugin.process_filesystem
-            except AttributeError:
-                # if it doesn't, it is ok, won't call this plugin
-                pass
-            else:
-                if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
-                    continue
-                if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
-                    continue
-                try:
-                    process_filesystem(ISA_filesystem)
-                except:
-                    print("Exception in plugin: ", sys.exc_info())
+        self.call_plugins("process_filesystem", ISA_filesystem)
 
     def process_report(self):
-        for name in isaplugins.__all__:
-            plugin = getattr(isaplugins, name)
-            try:
-                # see if the plugin has a 'process_report' attribute
-                process_report = plugin.process_report
-            except AttributeError:
-                # if it doesn't, it is ok, won't call this plugin
-                pass
-            else:
-                if self.ISA_config.plugin_whitelist and plugin.getPluginName() not in self.ISA_config.plugin_whitelist:
-                    continue
-                if self.ISA_config.plugin_blacklist and plugin.getPluginName() in self.ISA_config.plugin_blacklist:
-                    continue
-                try:
-                    process_report()
-                except:
-                    print("Exception in plugin: ", sys.exc_info())
+        self.call_plugins("process_report")

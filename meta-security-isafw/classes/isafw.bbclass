@@ -30,8 +30,7 @@ do_analysesource[nostamp] = "1"
 do_analysesource[cleandirs] = "${ISAFW_WORKDIR}"
 
 python do_analysesource() {
-
-    from isafw import *
+    from isafw import isafw
 
     imageSecurityAnalyser = isafw_init(isafw, d)
 
@@ -91,7 +90,6 @@ addhandler process_reports_handler
 process_reports_handler[eventmask] = "bb.event.BuildCompleted"
 
 python process_reports_handler() {
-
     from isafw import isafw
 
     savedenv = os.environ.copy()
@@ -138,7 +136,7 @@ python() {
 
 python analyse_image() {
 
-    from isafw import *
+    from isafw import isafw
 
     imageSecurityAnalyser = isafw_init(isafw, d)
 
