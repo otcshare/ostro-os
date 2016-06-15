@@ -308,15 +308,15 @@ class IotivityJSAPITest(oeRuntimeTest):
 
 
 # OicServer
-    def test_oic_server_has_registerResource_promise(self):
+    def test_oic_server_has_register_promise(self):
         '''
-        Test if OicClient has registerResource promise function.
-        @fn test_oic_server_has_registerResource_promise
+        Test if OicClient has register promise function.
+        @fn test_oic_server_has_register_promise
         @param self
         @return
         '''
         (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testOicServerHasRegisterResourcePromise' % (
+                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testOicServerHasRegisterPromise' % (
                     self.target_iotivity_js_apis_dir,
                     self.target_iotivity_js_apis_dir,
                     self.iotivity_js_apis_files['oic_server']
@@ -325,15 +325,15 @@ class IotivityJSAPITest(oeRuntimeTest):
         self.assertTrue('OK:' in api_output.strip().splitlines()[-3])
 
 
-    def test_oic_server_has_unregisterResource_promise(self):
+    def test_oic_server_has_unregister_promise(self):
         '''
-        Test if OicClient has unregisterResource promise function.
-        @fn test_oic_server_has_unregisterResource_promise
+        Test if OicClient has unregister promise function.
+        @fn test_oic_server_has_unregister_promise
         @param self
         @return
         '''
         (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testOicServerHasUnregisterResourcePromise' % (
+                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testOicServerHasUnregisterPromise' % (
                     self.target_iotivity_js_apis_dir,
                     self.target_iotivity_js_apis_dir,
                     self.iotivity_js_apis_files['oic_server']
