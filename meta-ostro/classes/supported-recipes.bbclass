@@ -19,6 +19,12 @@
 # Empty lines and lines starting with a hash are ignored.
 SUPPORTED_RECIPES ??= ""
 
+# For each file, the base name is listed in the SUPPORTED_RECIPES_SOURCES
+# report under "supported" if the file lists a recipe. This name can
+# be substituded with a short and/or nicer name with variable flags.
+# The replacement should be a single word with no spaces, as in:
+# SUPPORTED_RECIPES[foo-bar-recipe-list.txt] = "foobar".
+
 # Empty skips check, "note/warn/error/fatal" increases the logging level,
 # with "fatal" aborting the build.
 SUPPORTED_RECIPES_CHECK ??= ""
