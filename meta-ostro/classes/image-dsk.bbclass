@@ -42,7 +42,7 @@ IMAGE_NAME_SUFFIX = ""
 create_ova() {
 
   if [ "x${MACHINE}x" != "xintel-corei7-64x" ]; then
-    exit 0
+    return
   fi
 
   # 64 bit linux with sata bus
