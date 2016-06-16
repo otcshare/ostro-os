@@ -15,6 +15,7 @@ SRC_URI = "https://mirrors.kernel.org/iotivity/1.1.0/iotivity-1.1.0.tar.gz;name=
            file://yocto_paths.patch;patch=1 \
            file://hippomocks_mips_patch \
            file://gcc5.patch \
+           file://gcc6.patch \
           "
 SRC_URI[iotivity.md5sum] = "98f8d5b0304c357520c4343d983491e2"
 SRC_URI[iotivity.sha256sum] = "1ec4ae706d1acebfc267802ce1a4855bb2041875d0ae391429d5129dfaa7a216"
