@@ -91,7 +91,7 @@ class ISA_CFChecker():
                 files = self.find_files(fs_path)
                 import multiprocessing
                 pool = multiprocessing.Pool()
-                results = pool.imap(process_file, files)
+                results = pool.imap(process_file_wrapper, files)
                 pool.close()
                 pool.join()
                 self.process_results(results)
@@ -355,6 +355,18 @@ def process_file(file):
     fun_results[3] = get_info("readelf", '-s', file)
     fun_results[4] = get_info("objdump", '-d', file)
     return fun_results
+
+def process_file_wrapper(file):
+    # Ensures that exceptions get logged with the original backtrace.
+    # Without this, they appear with a backtrace rooted in
+    # the code which transfers back the result to process_results().
+    try:
+        return process_file(file)
+    except:
+        from isafw import isafw
+        import traceback
+        isafw.error('Internal error:\n%s' % traceback.format_exc())
+        raise
 
 # ======== supported callbacks from ISA ============ #
 
