@@ -115,6 +115,7 @@ python do_osip_mkimage() {
     import sys
     import argparse
     import struct
+    import binascii
 
     # As only a small portion of the OSIP header needs to be changed
     # we simply store a full binary copy and we'll change just the
@@ -151,7 +152,7 @@ python do_osip_mkimage() {
         out_file = open(output_file, 'wb')
 
         # Write OSIP header data
-        osip_header_data = bytearray(OSIP_HEADER_HEX_DATA.decode('hex'))
+        osip_header_data = bytearray(binascii.unhexlify(OSIP_HEADER_HEX_DATA))
 
         # Override some values
 
@@ -170,7 +171,10 @@ python do_osip_mkimage() {
         # The file needs to be padded to be multiple of 512 bytes
 
         # Overrides passed image size (in unit of 512 bytes blocks)
-        padding_len_packed_block = struct.pack("I", ( (6*1024*1024) / 512))
+        # (6*1024*1024) / 512) = 6*1024*2 used here to avoid
+        # ambiguities around division: in Python2 it is the intended
+        # integer division, in Python3 the result is a float.
+        padding_len_packed_block = struct.pack("I", 6*1024*2)
         osip_header_data[0x30:0x33+1]=padding_len_packed_block
 
         # Compute XOR checksum
