@@ -148,13 +148,14 @@ python analyse_image() {
     imagebasename = d.getVar('IMAGE_BASENAME', True)
 
     kernelconf = d.getVar('STAGING_KERNEL_BUILDDIR', True) + "/.config"
-
-    kernel = isafw.ISA_kernel()
-    kernel.img_name = imagebasename
-    kernel.path_to_config = kernelconf
-
-    bb.debug(1, 'do kernel conf analysis on %s' % kernelconf)
-    imageSecurityAnalyser.process_kernel(kernel)
+    if os.path.exists(kernelconf):
+        kernel = isafw.ISA_kernel()
+        kernel.img_name = imagebasename
+        kernel.path_to_config = kernelconf
+        bb.debug(1, 'do kernel conf analysis on %s' % kernelconf)
+        imageSecurityAnalyser.process_kernel(kernel)
+    else:
+        bb.debug(1, 'Kernel configuration file is missing. Not performing analysis on %s' % kernelconf)
 
     pkglist = manifest2pkglist(d)
     imagebasename = d.getVar('IMAGE_BASENAME', True)
