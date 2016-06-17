@@ -296,7 +296,7 @@ def get_info(tool, args, file_name):
     cmd = [tool, args, file_name]
     with open(os.devnull, 'wb') as DEVNULL:
         try:
-            result = subprocess.check_output(cmd, stderr=DEVNULL, env=env)
+            result = subprocess.check_output(cmd, stderr=DEVNULL, env=env).decode('utf-8')
         except:
             return ""
         else:
@@ -307,7 +307,7 @@ def get_security_flags(file_name):
     env['PSEUDO_UNLOAD'] = "1"
     cmd = ['checksec.sh', '--file', file_name]
     try:
-        result = subprocess.check_output(cmd, env=env).splitlines()[1]
+        result = subprocess.check_output(cmd, env=env).decode('utf-8').splitlines()[1]
     except:
         return "Not able to fetch flags"
     else:
@@ -326,7 +326,7 @@ def process_file(file):
     # getting file type
     cmd = ['file', '--mime-type', file]
     try:
-        result = subprocess.check_output(cmd, env=env)
+        result = subprocess.check_output(cmd, env=env).decode('utf-8')
     except:
         fun_results[-1] += "\nNot able to decode mime type " + str(sys.exc_info())
         return fun_results
@@ -336,7 +336,7 @@ def process_file(file):
         file = os.path.realpath(file)
         cmd = ['file', '--mime-type', file]
         try:
-            result = subprocess.check_output(cmd, env=env)
+            result = subprocess.check_output(cmd, env=env).decode('utf-8')
         except:
             fun_results[-1] += "\nNot able to decode mime type " + str(sys.exc_info())
             return fun_results
