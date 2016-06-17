@@ -38,7 +38,6 @@ class IotivityJSAPITest(oeRuntimeTest):
         'oic_client': 'test_oic_client.js',
         'oic_server': 'test_oic_server.js',
         'oic_resource': 'test_oic_resource.js',
-        'storage_handler': 'test_storage_handler.js',
         'oic_discovery': 'test_oic_discovery.js',
         'oic_platform': 'test_oic_platform.js'
     }
@@ -546,91 +545,6 @@ class IotivityJSAPITest(oeRuntimeTest):
                    )
         )
         self.assertTrue('OK:' in api_output.strip().splitlines()[-1])
-
-# StorageHandler
-    def test_storage_handler_has_open(self):
-        '''
-        Test if StorageHandler has open member.
-        @fn test_storage_handler_has_open
-        @param self
-        @return
-        '''
-        (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testStorageHandleropen' % (
-                    self.target_iotivity_js_apis_dir,
-                    self.target_iotivity_js_apis_dir,
-                    self.iotivity_js_apis_files['storage_handler']
-                   )
-        )
-        self.assertTrue('OK:' in api_output.strip().splitlines()[-1])
-
-
-    def test_storage_handler_has_close(self):
-        '''
-        Test if StorageHandler has close member.
-        @fn test_storage_handler_has_close
-        @param self
-        @return
-        '''
-        (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testStorageHandlerHasclose' % (
-                    self.target_iotivity_js_apis_dir,
-                    self.target_iotivity_js_apis_dir,
-                    self.iotivity_js_apis_files['storage_handler']
-                   )
-        )
-        self.assertTrue('OK:' in api_output.strip().splitlines()[-1])
-
-
-    def test_storage_handler_has_read(self):
-        '''
-        Test if StorageHandler has read member.
-        @fn test_storage_handler_has_read
-        @param self
-        @return
-        '''
-        (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testStorageHandlerHasread' % (
-                    self.target_iotivity_js_apis_dir,
-                    self.target_iotivity_js_apis_dir,
-                    self.iotivity_js_apis_files['storage_handler']
-                   )
-        )
-        self.assertTrue('OK:' in api_output.strip().splitlines()[-1])
-
-
-    def test_storage_handler_has_write(self):
-        '''
-        Test if StorageHandler has write member.
-        @fn test_storage_handler_has_write
-        @param self
-        @return
-        '''
-        (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testStorageHandlerHaswrite' % (
-                    self.target_iotivity_js_apis_dir,
-                    self.target_iotivity_js_apis_dir,
-                    self.iotivity_js_apis_files['storage_handler']
-                   )
-        )
-        self.assertTrue('OK:' in api_output.strip().splitlines()[-1])
-
-    def test_storage_handler_has_unlink(self):
-        '''
-        Test if StorageHandler has unlink member.
-        @fn test_storage_handler_has_unlink
-        @param self
-        @return
-        '''
-        (api_status, api_output) = self.target.run(
-                'export NODE_PATH="/usr/lib/node_modules/"; cd %s/; /tmp/nodeunit-master/bin/nodeunit %s/%s -t testStorageHandlerHasunlink' % (
-                    self.target_iotivity_js_apis_dir,
-                    self.target_iotivity_js_apis_dir,
-                    self.iotivity_js_apis_files['storage_handler']
-                   )
-        )
-        self.assertTrue('OK:' in api_output.strip().splitlines()[-1])
-
 
 #oicDiscovery
     def test_oic_discovery_findResources(self):
