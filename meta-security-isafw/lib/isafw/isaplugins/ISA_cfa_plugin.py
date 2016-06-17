@@ -328,7 +328,7 @@ def process_file(file):
     try:
         result = subprocess.check_output(cmd, env=env)
     except:
-        fun_results[-1] += "\nNot able to decode mime type " + sys.exc_info()
+        fun_results[-1] += "\nNot able to decode mime type " + str(sys.exc_info())
         return fun_results
     file_type = result.split()[-1]
     # looking for links
@@ -338,7 +338,7 @@ def process_file(file):
         try:
             result = subprocess.check_output(cmd, env=env)
         except:
-            fun_results[-1] += "\nNot able to decode mime type " + sys.exc_info()
+            fun_results[-1] += "\nNot able to decode mime type " + str(sys.exc_info())
             return fun_results
         file_type = result.split()[-1]
     # checking security flags if applies
