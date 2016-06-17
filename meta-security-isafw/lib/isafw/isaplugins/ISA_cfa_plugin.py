@@ -292,7 +292,7 @@ def _check_tools():
 
 def get_info(tool, args, file_name):
     env = copy.deepcopy(os.environ)
-    env['PSEUDO_UNLOAD'] = 1
+    env['PSEUDO_UNLOAD'] = "1"
     cmd = [tool, args, file_name]
     with open(os.devnull, 'wb') as DEVNULL:
         try:
@@ -304,7 +304,7 @@ def get_info(tool, args, file_name):
 
 def get_security_flags(file_name):
     env = copy.deepcopy(os.environ)
-    env['PSEUDO_UNLOAD'] = 1
+    env['PSEUDO_UNLOAD'] = "1"
     cmd = ['checksec.sh', '--file', file_name]
     try:
         result = subprocess.check_output(cmd, env=env).splitlines()[1]
@@ -322,7 +322,7 @@ def process_file(file):
     if not os.path.isfile(file):
         return fun_results
     env = copy.deepcopy(os.environ)
-    env['PSEUDO_UNLOAD'] = 1
+    env['PSEUDO_UNLOAD'] = "1"
     # getting file type
     cmd = ['file', '--mime-type', file]
     try:
