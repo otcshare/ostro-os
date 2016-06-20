@@ -112,7 +112,7 @@ def stage_package_bundle_contents(d, bundle):
     # Generate a manifest of packages in the bundle, we need this so that we
     # can compose a complete list of packages installed in any bundle images
     mandir = d.getVar('SWUPDMANIFESTDIR', True)
-    manf = d.expand('${IMAGE_NAME}.rootfs.manifest')
+    manf = d.expand('${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.manifest')
     manf = manf.replace(imagename, 'bundle-%s-%s' % (imagename, bundle))
     manfile = mandir + '/' + manf
     bb.debug(3, 'Writing bundle package manifest %s' % manfile)
@@ -123,7 +123,7 @@ def stage_package_bundle_contents(d, bundle):
 
     # Also write the manifest symlink
     if os.path.exists(manfile):
-        dt = d.expand('-${DATETIME}.rootfs')
+        dt = d.expand('-${DATETIME}${IMAGE_NAME_SUFFIX}')
         manifest_link = manfile.replace(dt, '')
         if os.path.lexists(manifest_link):
             if d.getVar('RM_OLD_IMAGE', True) == "1" and \
