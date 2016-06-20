@@ -14,8 +14,8 @@ DEPENDS = "virtual/javac-native virtual/java-native classpath-native \
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[x11] = ",--disable-headful,libx11-native xproto-native libxt-native libxext-native libxrender-native"
 
-OEMAKE_BUILD_HEADLESS_ONLY = "${@base_contains('PACKAGECONFIG', 'x11', '', 'BUILD_HEADLESS_ONLY=1', d)}"
-CFLAGS_append = "${@base_contains('PACKAGECONFIG', 'x11', '', ' -DHEADLESS=true', d)}"
+OEMAKE_BUILD_HEADLESS_ONLY = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', 'BUILD_HEADLESS_ONLY=1', d)}"
+CFLAGS_append = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', ' -DHEADLESS=true', d)}"
 
 inherit native java autotools pkgconfig
 
@@ -136,7 +136,7 @@ do_configure_prepend() {
 	done
 }
 
-POST_CONFIGURE_CLEAN_X11 = "${@base_contains('PACKAGECONFIG', 'x11', '', 'rm openjdk*/jdk/src/solaris/classes/sun/awt/X11/*.java', d)}"
+POST_CONFIGURE_CLEAN_X11 = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', 'rm openjdk*/jdk/src/solaris/classes/sun/awt/X11/*.java', d)}"
 
 do_configure_append() {
 	oe_runmake patch-fsg

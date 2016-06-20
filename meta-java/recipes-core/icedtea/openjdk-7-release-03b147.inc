@@ -96,7 +96,7 @@ OPENJDK_HEADLESS_PATCHES = " \
 	patches/icedtea-disable-sun.applet-for-tools-in-headless.patch \
 	"
 
-CLEAN_X11_DISTRIBUTION_PATCH = "${@base_contains('PACKAGECONFIG', 'x11', '', '${OPENJDK_HEADLESS_PATCHES}', d)}"
+CLEAN_X11_DISTRIBUTION_PATCH = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', '${OPENJDK_HEADLESS_PATCHES}', d)}"
 
 export DISTRIBUTION_PATCHES = " \
         patches/icedtea-ecj-disable-compilation.patch \

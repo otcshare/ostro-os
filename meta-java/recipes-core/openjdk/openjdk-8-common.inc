@@ -150,7 +150,7 @@ def jdk_configure_options(d):
 
 do_unpack[postfuncs] += "do_unpack_extract_submodules"
 
-POST_CONFIGURE_CLEAN_X11 = "${@base_contains('PACKAGECONFIG', 'x11', '', 'rm -f jdk/src/solaris/classes/sun/awt/X11/*.java', d)}"
+POST_CONFIGURE_CLEAN_X11 = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', 'rm -f jdk/src/solaris/classes/sun/awt/X11/*.java', d)}"
 
 do_patch_openjdk8() {
         olddir=`pwd`
