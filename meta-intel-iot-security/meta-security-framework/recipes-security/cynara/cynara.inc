@@ -31,6 +31,10 @@ ${@bb.utils.contains('PACKAGECONFIG', 'debug', '-Wp,-U_FORTIFY_SOURCE', '', d)} 
 EXTRA_OECMAKE += " \
 -DCMAKE_VERBOSE_MAKEFILE=ON \
 -DSYSTEMD_SYSTEM_UNITDIR=${systemd_unitdir}/system \
+-DLIB_INSTALL_DIR=${libdir} \
+-DBIN_INSTALL_DIR=${bindir} \
+-DSBIN_INSTALL_DIR=${sbindir} \
+-DINCLUDE_INSTALL_DIR=${includedir} \
 "
 
 # Explicitly package empty directory. Otherwise Cynara prints warnings
