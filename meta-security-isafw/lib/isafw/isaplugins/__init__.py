@@ -31,8 +31,6 @@ import keyword
 import os
 import sys
 
-import bb
-
 basedir = os.path.dirname(__file__)
 
 __all__ = []

@@ -30,8 +30,12 @@ from __future__ import absolute_import, print_function
 
 import sys
 import traceback
-import isafw.isaplugins as isaplugins
-
+try:
+    # absolute import
+    import isafw.isaplugins as isaplugins
+except ImportError:
+    # relative import when installing as separate modules
+    import isaplugins
 try:
     from bb import error
 except ImportError:
@@ -42,6 +46,7 @@ __all__ = [
     'ISA_pkg_list',
     'ISA_kernel',
     'ISA_filesystem',
+    'ISA_config',
     'ISA',
 ]
 
