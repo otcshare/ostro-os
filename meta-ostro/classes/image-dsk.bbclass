@@ -45,10 +45,11 @@ create_ova() {
     return
   fi
 
-  # 64 bit linux with sata bus
+  # 64 bit linux with sata bus (1 port)
   OS_TYPE="Linux_64"
   STORAGE_NAME="SATA"
   STORAGE_BUS_TYPE="sata"
+  STORAGE_BUS_PORT_COUNT="1"
 
   VM_NAME="${IMAGE_NAME}"
   # 512 should be large enough value to run Ostro (Galileo has 256MB RAM for example)
@@ -87,8 +88,11 @@ create_ova() {
   #set core count, memory, firmware and ioapic
   ${VIRTUALBOX_EXECUTABLE} modifyvm ${VM_NAME} --memory ${RAM} --vram ${VRAM} --cpus ${CPU_CORE_COUNT} --firmware ${FIRMWARE} --ioapic ${IOAPIC}
 
+  #set boot order (only trying to boot from Hard Disk)
+  ${VIRTUALBOX_EXECUTABLE} modifyvm ${VM_NAME} --boot1 disk --boot2 none --boot3 none --boot4 none
+
   # add bus for hard drives
-  ${VIRTUALBOX_EXECUTABLE} storagectl ${VM_NAME} --name ${STORAGE_NAME} --add ${STORAGE_BUS_TYPE}
+  ${VIRTUALBOX_EXECUTABLE} storagectl ${VM_NAME} --name ${STORAGE_NAME} --add ${STORAGE_BUS_TYPE} --portcount ${STORAGE_BUS_PORT_COUNT}
 
   # create virtual hard drive from the raw .dsk image
   ${VIRTUALBOX_EXECUTABLE} internalcommands createrawvmdk -filename ${VIRTUALBOX_IMAGE} -rawdisk ${RAW_IMAGE}
