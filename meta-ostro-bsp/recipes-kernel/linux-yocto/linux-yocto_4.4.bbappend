@@ -77,8 +77,8 @@ SRC_URI_append_intel-corei7-64 = " file://nfc-i2c.cfg"
 # USB-serial interface support and drivers
 SRC_URI_append = " file://usb-serial.cfg"
 
-# USB-ethernet support and drivers for Edison
-SRC_URI_append_edison = " file://edison-usb-ethernet.cfg"
+# USB-ethernet support and drivers
+SRC_URI_append = " file://usb-ethernet.cfg"
 
 # CAN-bus support and drivers
 SRC_URI_append = " file://can.cfg"
