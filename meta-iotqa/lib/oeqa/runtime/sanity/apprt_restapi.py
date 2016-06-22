@@ -40,16 +40,20 @@ class SanityTestRestApi(oeRuntimeTest):
         '''
         Send a HTTP request to the REST API server and see if 200 is returned.
         '''
-        enable_port_cmd = 'iptables -A INPUT -p tcp -dport 8000 -j ACCEPT'
-        start_server_cmd = 'systemctl start iot-rest-api-server'
-        self.target.run(enable_port_cmd)
-        self.target.run(start_server_cmd)
-        check_process_cmd = 'ps | grep "iot-rest-api-server" | grep -v grep | awk "{print $1}"'
+        self.target.run('systemctl stop iot-rest-api-server.socket; systemctl stop iot-rest-api-server.service')
+        check_process_cmd = 'ps | grep "/usr/lib/node_modules/iot-rest-api" | grep -v grep | awk "{print $4}"'
         (status, output) = self.target.run(check_process_cmd)
-        self.assertNotEqual(output, ' ', 'Can not start the iot-rest-api-server')
+        if '/usr/lib/node_modules/iot-rest-api' not in output:
+            self.target.run('systemctl start iot-rest-api-server.socket')
+            (returncode, output) = self._run_curl_cmd()
+            (status, output) = self.target.run(check_process_cmd)
+            self.assertTrue('/usr/lib/node_modules/iot-rest-api' in output)
         (returncode, output) = self._run_curl_cmd()
         self.assertEqual(output.strip(), '200')
-        stop_server_cmd = 'systemctl stop iot-rest-api-server'
+
+
+    def tearDown(self):
+        stop_server_cmd = 'systemctl stop iot-rest-api-server.socket; systemctl stop iot-rest-api-server.service'
         self.target.run(stop_server_cmd)
 
 ##
