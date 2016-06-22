@@ -112,9 +112,6 @@ SRC_URI_append_intel-corei7-64 = " file://0001-iio-si7020-Set-correct-iio-name.p
 SRC_URI_append_intel-core2-32 = " file://0001-iio-si7020-Set-correct-iio-name.patch"
 SRC_URI_append_intel-quark = " file://0001-iio-si7020-Set-correct-iio-name.patch"
 
-# Backport AK8975 iio device name support
-SRC_URI_append_edison = " file://0001-iio-ak8975-Add-device-name.patch"
-
 KERNEL_MODULE_AUTOLOAD_append_intel-quark = " g_acm_ms"
 KERNEL_MODULE_PROBECONF_append_intel-quark = " g_acm_ms"
 

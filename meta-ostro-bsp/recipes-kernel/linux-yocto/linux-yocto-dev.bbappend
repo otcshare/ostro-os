@@ -121,6 +121,3 @@ SRC_URI_append = " file://ecryptfs.cfg"
 # Backport ambient capabilities support
 SRC_URI_append_edison = " file://0001-edison-capabilities-ambient-capabilities.patch"
 SRC_URI_append_edison = " file://0002-edison-capabilities-add-a-securebit-to-disable-PR_CAP_AMBIE.patch"
-
-# Backport AK8975 iio device name support
-SRC_URI_append_edison = " file://0001-iio-ak8975-Add-device-name.patch"
