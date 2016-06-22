@@ -278,6 +278,10 @@ python swupd_fix_manifest_link() {
 }
 
 python do_stage_swupd_inputs_setscene () {
+    if d.getVar('PN_BASE', True):
+        bb.debug(2, 'Skipping update input staging from sstate for non-base image %s' % d.getVar('PN', True))
+        return
+
     sstate_setscene(d)
 }
 addtask do_stage_swupd_inputs_setscene
