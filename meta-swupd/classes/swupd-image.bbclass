@@ -61,6 +61,12 @@ python () {
         megarootfs = megarootfs.replace('/' + pn +'/', '/bundle-%s-mega/' % (pn_base or pn))
         d.setVar('MEGA_IMAGE_ROOTFS', megarootfs)
 
+    # We need to use a custom manifest filename for stage_swupd_inputs so that
+    # the generated sstate can be used to fetch inputs for multiple "releases"
+    manfileprefix = d.getVar('SSTATE_MANFILEPREFIX', True)
+    manfileprefix = manfileprefix + '-' + ver
+    d.setVar('SSTATE_MANFILEPREFIX', manfileprefix)
+
     if pn_base is not None:
         # We want all virtual images from this recipe to deploy to the same
         # directory
@@ -155,12 +161,6 @@ python () {
         mega_name = (' bundle-%s-mega:do_image_complete' % pn)
         d.appendVarFlag('do_image', 'depends', mega_name)
         d.appendVarFlag('do_stage_swupd_inputs', 'depends', mega_name)
-
-    # We need to use a custom manifest filename for stage_swupd_inputs so that
-    # the generated sstate can be used to fetch inputs for multiple "releases"
-    manfileprefix = d.getVar('SSTATE_MANFILEPREFIX', True)
-    manfileprefix = manfileprefix + '-' + ver
-    d.setVar('SSTATE_MANFILEPREFIX', manfileprefix)
 }
 
 # swupd-client expects a bundle subscription to exist for each
