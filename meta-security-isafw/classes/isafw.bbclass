@@ -233,11 +233,13 @@ def binary2source(dirpath, filepath):
 
 manifest2pkglist[vardepsexclude] = "DATETIME"
 def manifest2pkglist(d):
+    import glob
 
     manifest_file = d.getVar('IMAGE_MANIFEST', True)
     imagebasename = d.getVar('IMAGE_BASENAME', True)
     reportdir = d.getVar('ISAFW_REPORTDIR', True) + "_" + d.getVar('DATETIME', True)
     pkgdata_dir = d.getVar("PKGDATA_DIR", True)
+    rr_dir = "%s/runtime-reverse/" % pkgdata_dir
     pkglist = reportdir + "/pkglist"
 
     with open(pkglist, 'a') as foutput:
@@ -246,8 +248,10 @@ def manifest2pkglist(d):
             for line in finput:
                 items = line.split()
                 if items and (len(items) >= 3):
-                    originPkg = binary2source("%s/runtime-reverse/" % pkgdata_dir, items[0])
-                    foutput.write(items[0] + " " + items[2] + " " + originPkg + "\n")
+                    pkgnames = map(os.path.basename, glob.glob(os.path.join(rr_dir, items[0])))
+                    for pkgname in pkgnames:
+                        originPkg = binary2source(rr_dir, pkgname)
+                        foutput.write(pkgname + " " + items[2] + " " + originPkg + "\n")
 
     return pkglist
 
