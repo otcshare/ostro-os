@@ -17,7 +17,7 @@ index 0679ea9..1c8e1c9 100644
    "author": "Sakari Poussa",
    "license": "Apache-2.0",
 -  "dependencies": {
--    "iotivity-node": "^1.1.0-3"
+-    "iotivity-node": "^1.1.0-4"
 -  },
    "devDependencies": {
      "gulp": "^3.8.11",

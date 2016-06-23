@@ -14,13 +14,15 @@ SRC_URI = "git://git@github.com/01org/iot-rest-api-server.git;protocol=https \
            file://${PN}-ipv4.conf \
            file://${PN}-ipv6.conf \
           "
-SRCREV = "190bf15015f3025575a9a47a6ec2ff14d9437b2c"
+SRCREV = "67d0c07f4f7d2258a63b0d1f6cf7a92e12b5a30c"
 
 S = "${WORKDIR}/git"
 
 inherit systemd useradd
 
 SYSTEMD_SERVICE_${PN} = "iot-rest-api-server.socket"
+# Do not start the systemd service by default on boot
+SYSTEMD_AUTO_ENABLE_${PN} = "disable"
 
 USERADD_PACKAGES = "${PN}"
 GROUPADD_PARAM_${PN} = "-r restful"

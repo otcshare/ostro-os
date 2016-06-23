@@ -40,8 +40,25 @@ class SanityTestRestApi(oeRuntimeTest):
         '''
         Send a HTTP request to the REST API server and see if 200 is returned.
         '''
+        self.target.run('systemctl stop iot-rest-api-server.socket; systemctl stop iot-rest-api-server.service')
+        check_process_cmd = 'ps | grep "/usr/lib/node_modules/iot-rest-api" | grep -v grep | awk "{print $4}"'
+        (status, output) = self.target.run(check_process_cmd)
+        if 'iot-rest-api-server' not in output:
+            enable_server_cmd = 'systemctl start iot-rest-api-server.socket'
+            self.target.run(enable_server_cmd)
+            (returncode, output) = self._run_curl_cmd()
+            (status, output) = self.target.run(check_process_cmd)
+            self.assertTrue('/usr/lib/node_modules/iot-rest-api' in output)
         (returncode, output) = self._run_curl_cmd()
         self.assertEqual(output.strip(), '200')
+
+
+    def tearDown(self):
+        stop_server_cmd = 'systemctl stop iot-rest-api-server.socket; systemctl stop iot-rest-api-server.service'
+        self.target.run(stop_server_cmd)
+        check_process_cmd = 'ps | grep "/usr/lib/node_modules/iot-rest-api" | grep -v grep | awk "{print $4}"'
+        (status, output) = self.target.run(check_process_cmd)
+        self.assertFalse('/usr/lib/node_modules/iot-rest-api' in output)
 
 ##
 # @}
