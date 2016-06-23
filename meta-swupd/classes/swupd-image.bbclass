@@ -460,7 +460,7 @@ SWUPDDEPENDS = "\
     bsdiff-native:do_populate_sysroot \
     swupd-server-native:do_populate_sysroot \
 "
-addtask swupd_update after do_image_complete do_recopy_bundle_contents before do_build
+addtask swupd_update after do_image_complete before do_build
 do_swupd_update[depends] = "${SWUPDDEPENDS}"
 
 # pseudo does not handle xattrs correctly for hardlinks:
