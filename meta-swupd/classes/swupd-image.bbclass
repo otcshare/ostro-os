@@ -197,16 +197,6 @@ do_image_append () {
     swupd.rootfs.create_rootfs(d)
 }
 
-SWUPD_SSTATE_MAP = "${DEPLOY_DIR_SWUPD}/maps/${OS_VERSION}-${PN}.map"
-python swupd_input_sstate_map () {
-    sstatepkg = d.getVar('SSTATE_PKGNAME', True) + '_stage_swupd_inputs.tgz'
-    osv = d.getVar('OS_VERSION', True)
-    mapfile = d.getVar('SWUPD_SSTATE_MAP', True)
-    bb.debug(3, 'Storing map %s=%s in %s' % (osv, sstatepkg, mapfile))
-    with open(mapfile, 'w') as map:
-        map.write('%s=%s' % (osv, sstatepkg))
-}
-
 # Some files should not be included in swupd manifests and therefore never be
 # updated on the target (i.e. certain per-device or machine-generated files in
 # /etc when building for a statefule OS). Add the target paths to this list to
@@ -220,6 +210,7 @@ SWUPD_FILE_BLACKLIST ??= ""
 
 SWUPDIMAGEDIR = "${WORKDIR}/swupd-image"
 SWUPDMANIFESTDIR = "${WORKDIR}/swupd-manifests"
+SWUPD_SSTATE_MAP = "${DEPLOY_DIR_SWUPD}/${PN}-map.inc"
 fakeroot python do_stage_swupd_inputs () {
     import swupd.bundles
 
@@ -229,6 +220,26 @@ fakeroot python do_stage_swupd_inputs () {
 
     swupd.bundles.copy_core_contents(d)
     swupd.bundles.copy_bundle_contents(d)
+
+    # Write information about all known OSV->sstate obj mappings
+    mapfile = d.getVar('SWUPD_SSTATE_MAP', True)
+    pn = d.getVar('PN', True)
+    sstatepkg = d.getVar('SSTATE_PKGNAME', True) + '_stage_swupd_inputs.tgz'
+    osv = d.getVar('OS_VERSION', True)
+    verdict = {}
+    versions = (d.getVar('OS_VERSION_SSTATE_MAP_%s' % pn, True) or '').split()
+    for version in versions:
+        ver, pkg = version.split('=')
+        verdict[ver] = pkg
+    verdict[osv] = sstatepkg
+
+    with open(mapfile, 'w') as f:
+        f.write('OS_VERSION_SSTATE_MAP_%s = "\\\n' % pn)
+        for ver, pkg in verdict.items():
+            f.write('    %s=%s \\\n' % (ver, pkg))
+        f.write('    "\n')
+
+    bb.debug(3, 'Writing mapfile to %s' % mapfile)
 }
 addtask stage_swupd_inputs after do_image before do_swupd_update
 do_stage_swupd_inputs[dirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR} ${DEPLOY_DIR_SWUPD}/maps/"
@@ -236,7 +247,6 @@ do_stage_swupd_inputs[dirs] = "${SWUPDIMAGEDIR} ${SWUPDMANIFESTDIR} ${DEPLOY_DIR
 SSTATETASKS += "do_stage_swupd_inputs"
 do_stage_swupd_inputs[sstate-inputdirs] = "${SWUPDIMAGEDIR}/${OS_VERSION} ${SWUPDMANIFESTDIR}"
 do_stage_swupd_inputs[sstate-outputdirs] = "${DEPLOY_DIR_SWUPD}/image/${OS_VERSION} ${DEPLOY_DIR_IMAGE}"
-do_stage_swupd_inputs[postfuncs] += "swupd_input_sstate_map"
 
 python swupd_fix_manifest_link() {
     """
@@ -297,22 +307,14 @@ fakeroot python do_fetch_swupd_inputs () {
         return
 
     fetchlist = {}
+    pn = d.getVar('PN', True)
     currv = d.getVar('OS_VERSION', True)
-    # read the OS_VERSION->SSTATE_PKGNAME maps
-    mapdir = d.expand('${DEPLOY_DIR_SWUPD}/maps')
-    for map in os.listdir(mapdir):
-        osv = None
-        pkg = None
-        with open(os.path.join(mapdir, map), 'r') as f:
-            osv, pkg = f.readline().split('=')
-        if osv and pkg:
-            if osv == currv:
-                continue
-            fetchlist[osv] = pkg
-        else:
-            bb.warn('Malformed map file at %s', map)
-        # TODO: we should likely introduce a method to limit the number
-        # of maps which result in fetched sstate.
+    maplist = (d.getVar('OS_VERSION_SSTATE_MAP_%s' % pn, True) or '').split()
+    for map in maplist:
+        osv, pkg = map.split('=')
+        if osv == currv:
+            continue
+        fetchlist[osv] = pkg
 
     workdir = d.expand('${WORKDIR}/fetched-inputs')
     bb.utils.mkdirhier(workdir)
