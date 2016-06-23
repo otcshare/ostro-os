@@ -63,6 +63,8 @@ def create_rootfs(d):
     bb.debug(2, 'Re-copying rootfs contents from mega image')
     copyxattrfiles(d, rootfs_contents, d.getVar('MEGA_IMAGE_ROOTFS', True), rootfs)
 
+    deploy_dir = d.getVar('DEPLOY_DIR_IMAGE', True)
+    link_name = d.getVar('IMAGE_LINK_NAME', True)
     # Create .rootfs.manifest for bundle images as the union of all
     # contained bundles. Otherwise the image wouldn't have that file,
     # which breaks certain image types ("toflash" in the Edison BSP)
@@ -73,16 +75,15 @@ def create_rootfs(d):
         for bundle in imagebundles:
             bundlemanifest = manifest.replace(pn, 'bundle-%s-%s' % (pn_base, bundle))
             if not os.path.exists(bundlemanifest):
-                dt = d.expand('-${DATETIME}.rootfs')
-                bundlemanifest = bundlemanifest.replace(dt, '')
+                bundlemanifest = deploy_dir + '/' + link_name + '.manifest'
+                bundlemanifest = bundlemanifest.replace(pn, 'bundle-%s-%s' % (pn_base, bundle))
             with open(bundlemanifest) as f:
                  packages.update(f.readlines())
         with open(manifest, 'w') as f:
             f.writelines(sorted(packages))
         # Also write a manifest symlink
         if os.path.exists(manifest):
-            dt = d.expand('-${DATETIME}.rootfs')
-            manifest_link = manifest.replace(dt, '')
+            manifest_link = deploy_dir + '/' + link_name + '.manifest'
             if os.path.lexists(manifest_link):
                 if d.getVar('RM_OLD_IMAGE', True) == "1" and \
                         os.path.exists(os.path.realpath(manifest_link)):

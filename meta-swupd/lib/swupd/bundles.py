@@ -123,8 +123,9 @@ def stage_package_bundle_contents(d, bundle):
 
     # Also write the manifest symlink
     if os.path.exists(manfile):
-        dt = d.expand('-${DATETIME}.rootfs')
-        manifest_link = manfile.replace(dt, '')
+        deploy_dir = d.getVar('DEPLOY_DIR_IMAGE', True)
+        link_name = d.getVar('IMAGE_LINK_NAME', True)
+        manifest_link = deploy_dir + '/' + link_name + '.manifest'
         if os.path.lexists(manifest_link):
             if d.getVar('RM_OLD_IMAGE', True) == "1" and \
                     os.path.exists(os.path.realpath(manifest_link)):
