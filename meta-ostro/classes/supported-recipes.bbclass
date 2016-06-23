@@ -108,7 +108,7 @@ python () {
     # or removing entries does not trigger re-parsing and re-building.
     for file in files:
         bb.parse.mark_dependency(d, file)
-    if not supported_recipes.current_recipe_supported(d):
+    if not supported_recipes.current_recipe_supportedby(d):
         d.setVar('EXCLUDE_FROM_WORLD', '1')
     if d.getVar('SUPPORTED_RECIPES_SOURCES', True):
         supportedrecipes.dump_sources(d)

@@ -76,7 +76,7 @@ class SupportedRecipe:
         self.pn_re = parse_regex(parts[0], filename, linenumber)
         self.collection_re = parse_regex(parts[1], filename, linenumber)
 
-    def supported(self, pn, collection):
+    def is_supportedby(self, pn, collection):
         # Returns string identifying the team supporting the recipe or
         # empty string if unsupported.
         supported = bool((pn is None or self.pn_re[0].match(pn)) and
@@ -90,18 +90,18 @@ class SupportedRecipes:
     def append(self, recipe):
         self.supported.append(recipe)
 
-    def current_recipe_supported(self, d):
+    def current_recipe_supportedby(self, d):
         pn = d.getVar('PN', True)
         filename = d.getVar('FILE', True)
         collection = bb.utils.get_file_layer(filename, d)
-        return self.recipe_supported(pn, collection)
+        return self.recipe_supportedby(pn, collection)
 
-    def recipe_supported(self, pn, collection):
+    def recipe_supportedby(self, pn, collection):
         # Returns list of of teams supporting the recipe (could be
         # more than one or none).
         result = set()
         for recipe in self.supported:
-            supportedby = recipe.supported(pn, collection)
+            supportedby = recipe.is_supportedby(pn, collection)
             if supportedby:
                 result.add(supportedby)
         return sorted(result)
@@ -267,7 +267,7 @@ def collection_hint(pn, supported_recipes):
     collections = set([supported_recipe.collection_re[1]
                        for supported_recipe
                        in supported_recipes.supported
-                       if supported_recipe.supported(pn, None)])
+                       if supported_recipe.is_supportedby(pn, None)])
     return ' (would be supported in %s)' % ' '.join(collections) if collections else ''
 
 def dump_unsupported(unsupported, supported_recipes):
@@ -319,7 +319,7 @@ def check_build(d, event):
         if not isnative(pn, pndata):
             filename = pndata['filename']
             collection = bb.utils.get_file_layer(filename, d)
-            supportedby = supported_recipes.recipe_supported(pn, collection)
+            supportedby = supported_recipes.recipe_supportedby(pn, collection)
             if not supportedby:
                 unsupported[pn] = collection
             if report_sources:
