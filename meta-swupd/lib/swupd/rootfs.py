@@ -69,11 +69,11 @@ def create_rootfs(d):
     # and utility classes (like isafw.bbclass).
     if imageext:
         packages = set()
-        manifest = d.expand('${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}${IMAGE_NAME_SUFFIX}.manifest')
+        manifest = d.expand('${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.manifest')
         for bundle in imagebundles:
             bundlemanifest = manifest.replace(pn, 'bundle-%s-%s' % (pn_base, bundle))
             if not os.path.exists(bundlemanifest):
-                dt = d.expand('-${DATETIME}${IMAGE_NAME_SUFFIX}')
+                dt = d.expand('-${DATETIME}.rootfs')
                 bundlemanifest = bundlemanifest.replace(dt, '')
             with open(bundlemanifest) as f:
                  packages.update(f.readlines())
@@ -81,7 +81,7 @@ def create_rootfs(d):
             f.writelines(sorted(packages))
         # Also write a manifest symlink
         if os.path.exists(manifest):
-            dt = d.expand('-${DATETIME}${IMAGE_NAME_SUFFIX}')
+            dt = d.expand('-${DATETIME}.rootfs')
             manifest_link = manifest.replace(dt, '')
             if os.path.lexists(manifest_link):
                 if d.getVar('RM_OLD_IMAGE', True) == "1" and \
