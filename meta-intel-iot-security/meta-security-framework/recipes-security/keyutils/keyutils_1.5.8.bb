@@ -20,8 +20,6 @@ SRC_URI_append_x86-64 = " file://keyutils_fix_x86-64_cflags.patch"
 
 S = "${WORKDIR}/git"
 
-inherit autotools
-
 INSTALL_FLAGS = " \
 BINDIR=${bindir} \
 SBINDIR=${sbindir} \
