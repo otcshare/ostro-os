@@ -21,7 +21,7 @@ index b18d1bb..412e618 100644
  StandardOutput=null
 +ExecStartPre=/usr/sbin/iptables -w -A INPUT -p tcp --dport 80 -j ACCEPT
 +ExecStartPre=/usr/sbin/ip6tables -w -A INPUT -p tcp --dport 80 -j ACCEPT
- ExecStart=/usr/bin/NODE_BIN_NAME PATH/server/app.js 1> /dev/null 2>&1
+ ExecStart=/usr/bin/NODE_BIN_NAME PATH/server/app.js
 +ExecStopPost=/usr/sbin/iptables -w -D INPUT -p tcp --dport 80 -j ACCEPT
 +ExecStopPost=/usr/sbin/ip6tables -w -D INPUT -p tcp --dport 80 -j ACCEPT
  Environment="NODE_ENV=production"
