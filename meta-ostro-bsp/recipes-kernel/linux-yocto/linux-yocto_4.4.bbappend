@@ -30,16 +30,6 @@ SRC_URI_append_beaglebone = " file://sensors.cfg"
 SRC_URI_append_intel-corei7-64 = " file://sensors.cfg"
 SRC_URI_append_intel-core2-32 = " file://sensors.cfg"
 
-# backport MMA7455 Accel sensor driver
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-accel-add-Freescale-MMA7455L-MMA7456L-3-axis-acc.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-accel-add-Freescale-MMA7455L-MMA7456L-3-axis-acc.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-accel-add-Freescale-MMA7455L-MMA7456L-3-axis-acc.patch"
-
-# backport lis2dh12 Accel sensor driver
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-st-accel-add-support-for-lis2dh12.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-st-accel-add-support-for-lis2dh12.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-st-accel-add-support-for-lis2dh12.patch"
-
 # Add patch to fix incorrect device name of IIO device TMP006
 SRC_URI_append_intel-corei7-64 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
 SRC_URI_append_intel-core2-32 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"

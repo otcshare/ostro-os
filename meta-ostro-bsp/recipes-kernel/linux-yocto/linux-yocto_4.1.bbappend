@@ -97,11 +97,6 @@ SRC_URI_append_intel-corei7-64 = " file://no-gfx.cfg"
 # enable usb gadget
 SRC_URI_append_intel-quark = " file://usb-gadget.cfg"
 
-# backport MMA7455 Accel sensor driver
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-accel-add-Freescale-MMA7455L-MMA7456L-3-axis-acc.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-accel-add-Freescale-MMA7455L-MMA7456L-3-axis-acc.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-accel-add-Freescale-MMA7455L-MMA7456L-3-axis-acc.patch"
-
 # Add patch to fix incorrect device name of IIO device TMP006
 SRC_URI_append_intel-corei7-64 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
 SRC_URI_append_intel-core2-32 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
