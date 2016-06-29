@@ -92,8 +92,8 @@ do_test_iot[lockfiles] += "${TESTIMAGELOCK}"
 #overwrite copy src dir to dest
 def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+\.pyc"]):
     import shutil, re
-    notOverWrite = map(re.compile, notOverWrite)
-    ignores = map(re.compile, ignores)
+    notOverWrite = list(map(re.compile, notOverWrite))
+    ignores = list(map(re.compile, ignores))
     if os.path.isdir(src):
         if not os.path.isdir(dest):
             os.makedirs(dest)
@@ -101,8 +101,8 @@ def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+
         for f in files:
             fsrc = os.path.join(src, f)
             fdest = os.path.join(dest, f)
-            if filter(lambda x:x.match(f), notOverWrite) and os.path.exists(fdest) or\
-               filter(lambda x:x.match(f), ignores):
+            if any(map(lambda x:x.match(f), notOverWrite)) and os.path.exists(fdest) or \
+               any(map(lambda x:x.match(f), ignores)):
                 continue
             recursive_overwrite(fsrc, fdest)
     else:
@@ -116,9 +116,11 @@ def export_testsuite(d, exportdir):
     import pkgutil
     import shutil
 
-    oeqadir = pkgutil.get_loader("oeqa").filename
-    recursive_overwrite(oeqadir, os.path.join(exportdir, "oeqa"))
-    
+    oeqadir = d.expand('${COREBASE}/meta/lib/oeqa')
+    dest = os.path.join(exportdir, "oeqa")
+    recursive_overwrite(oeqadir, dest)
+    bb.plain("Exported test infrastructure from %s to: %s" % (oeqadir, dest))
+
     bbpath = d.getVar("BBPATH", True).split(':')
     for p in bbpath:
         if os.path.exists(os.path.join(p, "lib", "oeqa")):
