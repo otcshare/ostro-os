@@ -1,0 +1,62 @@
+From c40f7873d89fd88b0485fd94f45c139be41e1899 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Wed, 15 Jun 2016 10:33:24 +0200
+Subject: [PATCH] jpeg_memsrcdest: extend feature check
+
+libjpeg.h in OpenEmbedded master (from libjpeg-turbo 1.5.0) provides
+these methods if "JPEG_LIB_VERSION >= 80 ||
+defined(MEM_SRCDST_SUPPORTED)".
+
+The support for the jpeg_mem functions was added even when not
+emulating the libjpeg8 API, controlled via the MEM_SRCDST_SUPPORTED
+define, so checking for the version alone is not enough anymore.
+
+See https://github.com/libjpeg-turbo/libjpeg-turbo/commit/ab70623eb29e09e67222be5b9e1ea320fe5aa0e9
+
+This fixes errors about conflicting declarations (signed vs. unsigned
+char).
+
+Upstream-Status: Submitted [http://article.gmane.org/gmane.linux.drivers.video-input-infrastructure/102965]
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ lib/libv4lconvert/jpeg_memsrcdest.c | 4 ++--
+ lib/libv4lconvert/jpeg_memsrcdest.h | 4 ++++
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/lib/libv4lconvert/jpeg_memsrcdest.c b/lib/libv4lconvert/jpeg_memsrcdest.c
+index b70af8e..8ada421 100644
+--- a/lib/libv4lconvert/jpeg_memsrcdest.c
++++ b/lib/libv4lconvert/jpeg_memsrcdest.c
+@@ -26,8 +26,8 @@
+ #include "jpeg_memsrcdest.h"
+ 
+ /* libjpeg8 and later come with their own (API compatible) memory source
+-   and dest */
+-#if JPEG_LIB_VERSION < 80
++   and dest, and older versions may have it backported */
++#if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
+ 
+ /* Expanded data source object for memory input */
+ 
+diff --git a/lib/libv4lconvert/jpeg_memsrcdest.h b/lib/libv4lconvert/jpeg_memsrcdest.h
+index e971182..b13bf3f 100644
+--- a/lib/libv4lconvert/jpeg_memsrcdest.h
++++ b/lib/libv4lconvert/jpeg_memsrcdest.h
+@@ -1,5 +1,7 @@
+ #include <jpeglib.h>
+ 
++#if JPEG_LIB_VERSION < 80 && !defined(MEM_SRCDST_SUPPORTED)
++
+ void
+ jpeg_mem_src (j_decompress_ptr cinfo, unsigned char * buffer,
+ 	unsigned long bufsize);
+@@ -7,3 +9,5 @@ jpeg_mem_src (j_decompress_ptr cinfo, unsigned char * buffer,
+ void
+ jpeg_mem_dest (j_compress_ptr cinfo, unsigned char ** outbuffer,
+ 	unsigned long * outsize);
++
++#endif
+-- 
+2.1.4
+

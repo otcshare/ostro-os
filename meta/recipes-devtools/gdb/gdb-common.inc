@@ -39,6 +39,8 @@ SRC_URI = "git://sourceware.org/git/binutils-gdb.git;branch=gdb-7.11-branch \
            file://0011-avx_mpx.patch \
 "
 
+UPSTREAM_CHECK_GITTAGREGEX = "gdb\-(?P<pver>.+)\-release"
+
 S = "${WORKDIR}/git"
 
 B = "${WORKDIR}/build-${TARGET_SYS}"
@@ -61,7 +63,7 @@ EXTRA_OECONF = "--disable-gdbtk --disable-tui --disable-x --disable-werror \
 PACKAGECONFIG ??= "readline"
 # Use --without-system-readline to compile with readline 5.
 PACKAGECONFIG[readline] = "--with-system-readline,--without-system-readline,readline"
-PACKAGECONFIG[python] = "--with-python=${WORKDIR}/python,--without-python,python,python python-codecs"
+PACKAGECONFIG[python] = "--with-python=${WORKDIR}/python,--without-python,python3,python3 python3-codecs"
 PACKAGECONFIG[babeltrace] = "--with-babeltrace,--without-babeltrace,babeltrace"
 
 GDBPROPREFIX = "--program-prefix=''"

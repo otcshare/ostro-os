@@ -16,11 +16,21 @@
 
 TEST_LOG_DIR ?= "${WORKDIR}/testexport"
 TEST_EXPORT_DIR ?= "${TMPDIR}/testexport/${PN}"
+TEST_EXPORT_PACKAGED_DIR ?= "packages/packaged"
+TEST_EXPORT_EXTRACTED_DIR ?= "packages/extracted"
+
 TEST_TARGET ?= "simpleremote"
 TEST_TARGET_IP ?= ""
 TEST_SERVER_IP ?= ""
 
+TEST_EXPORT_SDK_PACKAGES ?= ""
+TEST_EXPORT_SDK_ENABLED ?= "0"
+TEST_EXPORT_SDK_NAME ?= "testexport-tools-nativesdk"
+TEST_EXPORT_SDK_DIR ?= "sdk"
+
 TEST_EXPORT_DEPENDS = ""
+TEST_EXPORT_DEPENDS += "${@bb.utils.contains('IMAGE_PKGTYPE', 'rpm', 'cpio-native:do_populate_sysroot', '', d)}"
+TEST_EXPORT_DEPENDS += "${@bb.utils.contains('TEST_EXPORT_SDK_ENABLED', '1', 'testexport-tarball:do_populate_sdk', '', d)}"
 TEST_EXPORT_LOCK = "${TMPDIR}/testimage.lock"
 
 python do_testexport() {
@@ -28,9 +38,9 @@ python do_testexport() {
 }
 
 addtask testexport
-do_testimage[nostamp] = "1"
-do_testimage[depends] += "${TEST_EXPORT_DEPENDS}"
-do_testimage[lockfiles] += "${TEST_EXPORT_LOCK}"
+do_testexport[nostamp] = "1"
+do_testexport[depends] += "${TEST_EXPORT_DEPENDS} ${TESTIMAGEDEPENDS}"
+do_testexport[lockfiles] += "${TEST_EXPORT_LOCK}"
 
 def exportTests(d,tc):
     import json
@@ -95,12 +105,17 @@ def exportTests(d,tc):
                     if not os.path.exists(target_folder):
                         shutil.copytree(foldername, target_folder)
         if not isfolder:
-            shutil.copy2(mod.filename, os.path.join(exportpath, "oeqa/runtime"))
-    # copy __init__.py files
-    oeqadir = pkgutil.get_loader("oeqa").filename
-    shutil.copy2(os.path.join(oeqadir, "__init__.py"), os.path.join(exportpath, "oeqa"))
-    shutil.copy2(os.path.join(oeqadir, "runtime/__init__.py"), os.path.join(exportpath, "oeqa/runtime"))
+            shutil.copy2(mod.path, os.path.join(exportpath, "oeqa/runtime"))
+            json_file = "%s.json" % mod.path.rsplit(".", 1)[0]
+            if os.path.isfile(json_file):
+                shutil.copy2(json_file, os.path.join(exportpath, "oeqa/runtime"))
+    # Get meta layer
+    for layer in d.getVar("BBLAYERS", True).split():
+        if os.path.basename(layer) == "meta":
+            meta_layer = layer
+            break
     # copy oeqa/oetest.py and oeqa/runexported.py
+    oeqadir = os.path.join(meta_layer, "lib/oeqa")
     shutil.copy2(os.path.join(oeqadir, "oetest.py"), os.path.join(exportpath, "oeqa"))
     shutil.copy2(os.path.join(oeqadir, "runexported.py"), exportpath)
     # copy oeqa/utils/*.py
@@ -113,6 +128,45 @@ def exportTests(d,tc):
         for f in files:
             shutil.copy2(os.path.join(root, f), os.path.join(exportpath, "oeqa/runtime/files"))
 
+    # Create tar file for common parts of testexport
+    create_tarball(d, "testexport.tar.gz", d.getVar("TEST_EXPORT_DIR", True))
+
+    # Copy packages needed for runtime testing
+    export_pkg_dir = os.path.join(d.getVar("TEST_EXPORT_DIR", True), "packages")
+    test_pkg_dir = d.getVar("TEST_NEEDED_PACKAGES_DIR", True)
+    need_pkg_dir = False
+    for root, subdirs, files in os.walk(test_pkg_dir):
+        for subdir in subdirs:
+            tmp_dir = os.path.join(root.replace(test_pkg_dir, "").lstrip("/"), subdir)
+            new_dir = os.path.join(export_pkg_dir, tmp_dir)
+            bb.utils.mkdirhier(new_dir)
+
+        for f in files:
+            need_pkg_dir = True
+            src_f = os.path.join(root, f)
+            dst_f = os.path.join(export_pkg_dir, root.replace(test_pkg_dir, "").lstrip("/"), f)
+            shutil.copy2(src_f, dst_f)
+
+    if need_pkg_dir:
+        # Create tar file for packages needed by the DUT
+        create_tarball(d, "testexport_packages_%s.tar.gz" % d.getVar("MACHINE", True), export_pkg_dir)
+    else:
+        # Remov packages dir from exported test
+        bb.utils.remove(export_pkg_dir, True)
+
+    # Copy SDK
+    if d.getVar("TEST_EXPORT_SDK_ENABLED", True) == "1":
+        sdk_deploy = d.getVar("SDK_DEPLOY", True)
+        tarball_name = "%s.sh" % d.getVar("TEST_EXPORT_SDK_NAME", True)
+        tarball_path = os.path.join(sdk_deploy, tarball_name)
+        export_sdk_dir = os.path.join(d.getVar("TEST_EXPORT_DIR", True),
+                                      d.getVar("TEST_EXPORT_SDK_DIR", True))
+        bb.utils.mkdirhier(export_sdk_dir)
+        shutil.copy2(tarball_path, export_sdk_dir)
+
+        # Create tar file for the sdk
+        create_tarball(d, "testexport_sdk_%s.tar.gz" % d.getVar("SDK_ARCH", True), export_sdk_dir)
+
     bb.plain("Exported tests to: %s" % exportpath)
 
 def testexport_main(d):
@@ -120,9 +174,11 @@ def testexport_main(d):
     from oeqa.targetcontrol import get_target_controller
     from oeqa.utils.dump import get_host_dumper
 
+    test_create_extract_dirs(d)
+    export_dir = d.getVar("TEST_EXPORT_DIR", True)
     bb.utils.mkdirhier(d.getVar("TEST_LOG_DIR", True))
-    bb.utils.remove(d.getVar("TEST_EXPORT_DIR", True), recurse=True)
-    bb.utils.mkdirhier(d.getVar("TEST_EXPORT_DIR", True))
+    bb.utils.remove(export_dir, recurse=True)
+    bb.utils.mkdirhier(export_dir)
 
     # the robot dance
     target = get_target_controller(d)
@@ -139,7 +195,25 @@ def testexport_main(d):
         import traceback
         bb.fatal("Loading tests failed:\n%s" % traceback.format_exc())
 
+    tc.extract_packages()
     exportTests(d,tc)
+
+def create_tarball(d, tar_name, src_dir):
+
+    import tarfile
+
+    tar_path = os.path.join(d.getVar("TEST_EXPORT_DIR", True), tar_name)
+    current_dir = os.getcwd()
+    src_dir = src_dir.rstrip('/')
+    dir_name = os.path.dirname(src_dir)
+    base_name = os.path.basename(src_dir)
+
+    os.chdir(dir_name)
+    tar = tarfile.open(tar_path, "w:gz")
+    tar.add(base_name)
+    tar.close()
+    os.chdir(current_dir)
+
 
 testexport_main[vardepsexclude] =+ "BB_ORIGENV"
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
@@ -26,13 +26,14 @@ import optparse
 import logging
 import subprocess
 import tempfile
-import ConfigParser
+import configparser
 import re
 import copy
 import pipes
 import shutil
 from collections import OrderedDict
 from string import Template
+from functools import reduce
 
 __version__ = "0.2.1"
 
@@ -87,7 +88,7 @@ class Configuration(object):
                     self.commit_msg_template = value
 
         logger.debug("Loading config file %s" % self.conffile)
-        self.parser = ConfigParser.ConfigParser()
+        self.parser = configparser.ConfigParser()
         with open(self.conffile) as f:
             self.parser.readfp(f)
 
@@ -116,7 +117,7 @@ class Configuration(object):
 
                 self.localconffile = lcfile
                 logger.debug("Loading local config file %s" % self.localconffile)
-                self.localparser = ConfigParser.ConfigParser()
+                self.localparser = configparser.ConfigParser()
                 with open(self.localconffile) as f:
                     self.localparser.readfp(f)
 
@@ -184,20 +185,20 @@ def runcmd(cmd,destdir=None,printerr=True,out=None,env=None):
     """
     logger.debug("run cmd '%s' in %s" % (cmd, os.getcwd() if destdir is None else destdir))
     if not out:
-        out = os.tmpfile()
+        out = tempfile.TemporaryFile()
         err = out
     else:
-        err = os.tmpfile()
+        err = tempfile.TemporaryFile()
     try:
         subprocess.check_call(cmd, stdout=out, stderr=err, cwd=destdir, shell=isinstance(cmd, str), env=env or os.environ)
-    except subprocess.CalledProcessError,e:
+    except subprocess.CalledProcessError as e:
         err.seek(0)
         if printerr:
             logger.error("%s" % err.read())
         raise e
 
     err.seek(0)
-    output = err.read()
+    output = err.read().decode('utf-8')
     logger.debug("output: %s" % output.replace(chr(0), '\\0'))
     return output
 
@@ -429,7 +430,7 @@ file_exclude = %s''' % (name, file_filter or '<empty>', repo.get('file_exclude',
                     runcmd('git replace --graft %s %s' % (start, startrev))
             try:
                 runcmd(merge)
-            except Exception, error:
+            except Exception as error:
                 logger.info('''Merging component repository history failed, perhaps because of merge conflicts.
 It may be possible to commit anyway after resolving these conflicts.
 
@@ -519,7 +520,7 @@ def check_patch(patchfile):
 
 def drop_to_shell(workdir=None):
     if not sys.stdin.isatty():
-        print "Not a TTY so can't drop to shell for resolution, exiting."
+        print("Not a TTY so can't drop to shell for resolution, exiting.")
         return False
 
     shell = os.environ.get('SHELL', 'bash')
@@ -529,7 +530,7 @@ def drop_to_shell(workdir=None):
           '       exit 1  -- abort\n' % shell);
     ret = subprocess.call([shell], cwd=workdir)
     if ret != 0:
-        print "Aborting"
+        print("Aborting")
         return False
     else:
         return True
@@ -1178,7 +1179,7 @@ def update_with_history(conf, components, revisions, repos):
     # components imported head revision.
     if additional_heads:
         runcmd("git reset --hard", **wargs)
-        for rev, base in additional_heads.iteritems():
+        for rev, base in additional_heads.items():
             apply_commit(base, rev, wargs, wargs, None)
 
         # Commit with all component branches as parents as well as the previous head.
@@ -1186,7 +1187,7 @@ def update_with_history(conf, components, revisions, repos):
         msg = conf_commit_msg(conf, components)
         new_tree = runcmd("git write-tree", **wargs).strip()
         new_rev = runcmd("git commit-tree".split() +
-                         add_p([head] + additional_heads.keys()) +
+                         add_p([head] + list(additional_heads.keys())) +
                          ["-m", msg, new_tree],
                          **wargs).strip()
         # And done! This is the first time we change the HEAD in the actual work tree.
