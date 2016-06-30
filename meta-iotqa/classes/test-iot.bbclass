@@ -119,6 +119,13 @@ def export_testsuite(d, exportdir):
     oeqadir = d.expand('${COREBASE}/meta/lib/oeqa')
     dest = os.path.join(exportdir, "oeqa")
     recursive_overwrite(oeqadir, dest)
+    # Python3 no longer needs the empty oeqa/__init__.py to import
+    # oeqa/oetest, but Python2 still does, and lib/runtest.py
+    # is still using Python2. Therefore create the empty file if none
+    # was copied.
+    initpy = os.path.join(dest, '__init__.py')
+    with open(initpy, 'a') as f:
+        pass
     bb.plain("Exported test infrastructure from %s to: %s" % (oeqadir, dest))
 
     bbpath = d.getVar("BBPATH", True).split(':')
