@@ -15,15 +15,16 @@ PACKAGECONFIG[cups] = "--with-cups,,cups"
 PACKAGECONFIG[alsa] = "--with-alsa,,alsa-lib-native"
 PACKAGECONFIG[jce] = "--enable-unlimited-crypto,,"
 
-# do not use --wth-extra-cflags, it breaks building demos for jdk
-# maybe disabling demos is more reasonable than avoiding --wth-extra-cflags
-# needs discussion
 EXTRA_OECONF_append = "\
     --with-jobs=${@get_jdk8_native_jobs(d)} \
     \
     --with-sys-root=${STAGING_DIR_NATIVE} \
     --with-tools-dir=${STAGING_DIR_NATIVE} \
     --with-boot-jdk=${STAGING_LIBDIR_NATIVE}/jvm/icedtea7-native \
+    --with-extra-cflags='${CFLAGS}' \
+    --with-extra-cxxflags='${CXXFLAGS}' \
+    --with-extra-ldflags='${LDFLAGS}' \
+    --with-stdc++lib=dynamic \
     ${@jdk_configure_options(d)} \
 "
 # --with-boot-jdk=${WORKDIR}/fake-jdk
@@ -32,18 +33,14 @@ inherit native
 
 require openjdk-8-common.inc
 
-CFLAGS_append = "${@jdk_cpp_options(d)}"
+CFLAGS_append = " ${@jdk_cpp_options(d)}"
 CPPFLAGS_append = "${@jdk_cpp_options(d)}"
-CXXFLAGS_append = "${@jdk_cpp_options(d)}"
+CXXFLAGS_append = " ${@jdk_cpp_options(d)}"
 
 export MAKE_VERBOSE = "y"
 export MFLAGS="${@jdk_make_options(d)} MAKE_VERBOSE=y QUIETLY= VERBOSE=-s LOG_LEVEL=trace"
 
 EXTRA_OEMAKE_append = ' \
-    OE_CFLAGS="${CFLAGS}" \
-    OE_CPPFLAGS="${CPPFLAGS}" \
-    OE_CXXFLAGS="${CXXFLAGS}" \
-    OE_LDFLAGS="${LDFLAGS}" \
     ${@jdk_make_options(d)} \
     MAKE_VERBOSE=y VERBOSE=-s LOG_LEVEL=trace \
     QUIETLY= \

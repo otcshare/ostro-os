@@ -16,19 +16,11 @@ Guidelines for submitting patches
 =================================
 
 Please submit pull requests on the github mirror here: 
-https://github.com/tripzero/meta-intel-iot-middleware
+https://github.com/ostroproject/meta-intel-iot-middleware
 
-Alternatively patches can be submitted to the meta-intel mailing list
-(meta-intel@yoctoproject.org) and cc the most appropriate maintainer in the
-MAINTAINERS file. Prefix your email with [meta-intel-iot-middleware]. Also, if
-your patches are available via a public git repository, please also include a
-URL to the repo and branch containing your patches as that makes it easier for
-maintainers to grab and test your patches.
-
-Regardless of how you submit a patch or patchset, the patches should
-at minimum follow the suggestions outlined in the 'How to Submit a
-Change' secion in the Yocto Project Development Manual.  Specifically,
-they should:
+Patches should at minimum follow the suggestions outlined in the 'How to 
+Submit a Change' secion in the Yocto Project Development Manual.  
+Specifically, they should:
 
   - Include a 'Signed-off-by:' line.  A commit can't legally be pulled
     in without this.
