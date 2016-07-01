@@ -1,4 +1,4 @@
-obj-m := i2c-minnow-mpu6050.o
+obj-m := i2c-minnow-mpu6050.o i2c-minnow-apds9960.o
 SRC := $(shell pwd)
 
 all:
