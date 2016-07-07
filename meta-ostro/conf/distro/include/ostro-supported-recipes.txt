@@ -79,6 +79,7 @@ flashall@edison
 flex@core
 fontconfig@core
 freetype@core
+galileo-io@iotweb
 gawk@core
 gcc-runtime@core
 gcc@core
@@ -123,6 +124,7 @@ iproute2@core
 iptables-settings-default@ostro
 iptables@core
 iputils@core
+johnny-five@iotweb
 json-c@core
 kbd@core
 keymaps@core
