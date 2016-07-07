@@ -186,6 +186,8 @@ def get_jdk8_native_jobs(d):
     # Whatever found in PARALLEL_MAKE was not suitable.
     return "1"
 
+get_jdk8_native_jobs[vardepsexclude] += "OPENJDK8_PARALLEL_MAKE"
+
 # A function that is needed in the Shark builds.
 def get_llvm_configure_arch(d):
     import bb;
