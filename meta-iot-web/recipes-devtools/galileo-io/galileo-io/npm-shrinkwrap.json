@@ -1,0 +1,23 @@
+{
+  "name": "galileo-io",
+  "version": "0.9.4",
+  "dependencies": {
+    "es6-promise": {
+      "version": "3.2.1"
+    },
+    "es6-shim": {
+      "version": "0.35.1"
+    },
+    "remapped": {
+      "version": "0.2.1",
+      "dependencies": {
+        "getobject": {
+          "version": "0.1.0"
+        },
+        "traverse": {
+          "version": "0.6.6"
+        }
+      }
+    }
+  }
+}

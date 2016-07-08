@@ -8,4 +8,6 @@ RDEPENDS_${PN} = " \
     iot-rest-api-server \
     nodejs \
     soletta-nodejs \
+    johnny-five \
+    galileo-io \
 "
