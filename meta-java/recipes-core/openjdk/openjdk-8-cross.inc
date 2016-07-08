@@ -39,9 +39,6 @@ SRC_URI_append = "\
     file://jvm.cfg \
 "
 
-# do not use --wth-extra-cflags, it breaks building demos for jdk
-# maybe disabling demos is more reasonable than avoiding --wth-extra-cflags
-# needs discussion
 EXTRA_OECONF_append = "\
     --with-jobs=${@get_jdk8_native_jobs(d)} \
     \
@@ -52,6 +49,7 @@ EXTRA_OECONF_append = "\
     \
     --disable-precompiled-headers \
     --disable-zip-debug-info \
+    \
     \
     ${@jdk_configure_options(d)} \
 "
