@@ -10,7 +10,7 @@ inherit utility-tasks
 inherit metadata_scm
 inherit logging
 
-OE_IMPORTS += "os sys time oe.path oe.utils oe.data oe.package oe.packagegroup oe.sstatesig oe.lsb oe.cachedpath"
+OE_IMPORTS += "os sys time oe.path oe.utils oe.types oe.package oe.packagegroup oe.sstatesig oe.lsb oe.cachedpath"
 OE_IMPORTS[type] = "list"
 
 def oe_import(d):
@@ -568,6 +568,10 @@ python () {
         elif scheme == "hg":
             needsrcrev = True
             d.appendVarFlag('do_fetch', 'depends', ' mercurial-native:do_populate_sysroot')
+
+        # Perforce packages support SRCREV = "${AUTOREV}"
+        elif scheme == "p4":
+            needsrcrev = True
 
         # OSC packages should DEPEND on osc-native
         elif scheme == "osc":

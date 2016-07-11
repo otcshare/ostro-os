@@ -40,10 +40,6 @@ inherit linux-kernel-base kernel-arch pythonnative
 
 # needed for building the tools/perf Python bindings
 inherit python-dir
-export STAGING_INCDIR
-export STAGING_LIBDIR
-export BUILD_SYS
-export HOST_SYS
 export PYTHON_SITEPACKAGES_DIR
 
 #kernel 3.1+ supports WERROR to disable warnings as errors

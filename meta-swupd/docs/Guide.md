@@ -229,6 +229,10 @@ BUNDLE_CONTENTS[feature_one] = "package_one package_three package_six"
 ```
 **NOTE**: beware of reserved bundle names, both '*full*' and '*mega*' have
 special meaning and cannot be used for bundle names.
+**EXTRA**: it's also possible to define extra features for inclusion in a bundle
+via the `BUNDLE_FEATURES` variable, however this **must** be used with caution
+as the os-core is immutable any `BUNDLE_FEATURES` must only introduce additional
+files into the system and not somehow alter the core image's contents.
 7. (optional) Define extra images, consisting of the os-core with any number of
 additional bundles installed, which can be built. Do this by setting the
 `SWUPD_IMAGES` variable to a list of additional image name suffixes and

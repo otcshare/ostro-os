@@ -22,7 +22,7 @@ from __future__ import division
 
 import os
 import sys
-import xmlrpclib
+import xmlrpc.client as xmlrpclib
 import logging
 import progressbar
 import signal
@@ -40,10 +40,13 @@ logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
-    def __init__(self, msg, maxval):
+    def __init__(self, msg, maxval, widgets=None):
         self.msg = msg
-        widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
-           progressbar.ETA()]
+        self.extrapos = -1
+        if not widgets:
+            widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
+            progressbar.ETA()]
+            self.extrapos = 4
 
         try:
             self._resize_default = signal.getsignal(signal.SIGWINCH)
@@ -51,14 +54,34 @@ class BBProgress(progressbar.ProgressBar):
             self._resize_default = None
         progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets, fd=sys.stdout)
 
-    def _handle_resize(self, signum, frame):
+    def _handle_resize(self, signum=None, frame=None):
         progressbar.ProgressBar._handle_resize(self, signum, frame)
         if self._resize_default:
             self._resize_default(signum, frame)
+
     def finish(self):
         progressbar.ProgressBar.finish(self)
         if self._resize_default:
             signal.signal(signal.SIGWINCH, self._resize_default)
+
+    def setmessage(self, msg):
+        self.msg = msg
+        self.widgets[0] = msg
+
+    def setextra(self, extra):
+        if extra:
+            extrastr = str(extra)
+            if extrastr[0] != ' ':
+                extrastr = ' ' + extrastr
+            if extrastr[-1] != ' ':
+                extrastr += ' '
+        else:
+            extrastr = ' '
+        self.widgets[self.extrapos] = extrastr
+
+    def _need_update(self):
+        # We always want the bar to print when update() is called
+        return True
 
 class NonInteractiveProgress(object):
     fobj = sys.stdout
@@ -66,8 +89,9 @@ class NonInteractiveProgress(object):
     def __init__(self, msg, maxval):
         self.msg = msg
         self.maxval = maxval
+        self.finished = False
 
-    def start(self):
+    def start(self, update=True):
         self.fobj.write("%s..." % self.msg)
         self.fobj.flush()
         return self
@@ -76,8 +100,11 @@ class NonInteractiveProgress(object):
         pass
 
     def finish(self):
+        if self.finished:
+            return
         self.fobj.write("done.\n")
         self.fobj.flush()
+        self.finished = True
 
 def new_progress(msg, maxval):
     if interactive:
@@ -134,7 +161,7 @@ class TerminalFilter(object):
                 cr = (25, 80)
         return cr
 
-    def __init__(self, main, helper, console, errconsole, format):
+    def __init__(self, main, helper, console, errconsole, format, quiet):
         self.main = main
         self.helper = helper
         self.cuu = None
@@ -142,6 +169,7 @@ class TerminalFilter(object):
         self.interactive = sys.stdout.isatty()
         self.footer_present = False
         self.lastpids = []
+        self.quiet = quiet
 
         if not self.interactive:
             return
@@ -181,11 +209,13 @@ class TerminalFilter(object):
         console.addFilter(InteractConsoleLogFilter(self, format))
         errconsole.addFilter(InteractConsoleLogFilter(self, format))
 
+        self.main_progress = None
+
     def clearFooter(self):
         if self.footer_present:
             lines = self.footer_present
-            sys.stdout.write(self.curses.tparm(self.cuu, lines))
-            sys.stdout.write(self.curses.tparm(self.ed))
+            sys.stdout.buffer.write(self.curses.tparm(self.cuu, lines))
+            sys.stdout.buffer.write(self.curses.tparm(self.ed))
             sys.stdout.flush()
         self.footer_present = False
 
@@ -195,28 +225,69 @@ class TerminalFilter(object):
         activetasks = self.helper.running_tasks
         failedtasks = self.helper.failed_tasks
         runningpids = self.helper.running_pids
-        if self.footer_present and (self.lastcount == self.helper.tasknumber_current) and (self.lastpids == runningpids):
+        if self.footer_present and not self.helper.needUpdate:
             return
+        self.helper.needUpdate = False
         if self.footer_present:
             self.clearFooter()
         if (not self.helper.tasknumber_total or self.helper.tasknumber_current == self.helper.tasknumber_total) and not len(activetasks):
             return
         tasks = []
         for t in runningpids:
-            tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
+            progress = activetasks[t].get("progress", None)
+            if progress is not None:
+                pbar = activetasks[t].get("progressbar", None)
+                rate = activetasks[t].get("rate", None)
+                start_time = activetasks[t].get("starttime", None)
+                if not pbar or pbar.bouncing != (progress < 0):
+                    if progress < 0:
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider()])
+                        pbar.bouncing = True
+                    else:
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100)
+                        pbar.bouncing = False
+                    activetasks[t]["progressbar"] = pbar
+                tasks.append((pbar, progress, rate, start_time))
+            else:
+                tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
 
         if self.main.shutdown:
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
-        elif not len(activetasks):
-            content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
-        else:
-            content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
-        print(content)
-        lines = 1 + int(len(content) / (self.columns + 1))
-        for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
-            content = "%s: %s" % (tasknum, task)
             print(content)
-            lines = lines + 1 + int(len(content) / (self.columns + 1))
+        else:
+            if not len(activetasks):
+                content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
+            else:
+                content = "Currently %2s running tasks (%s of %s)" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
+            maxtask = self.helper.tasknumber_total + 1
+            if not self.main_progress or self.main_progress.maxval != maxtask:
+                widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
+                self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets)
+                self.main_progress.start(False)
+            self.main_progress.setmessage(content)
+            self.main_progress.update(self.helper.tasknumber_current)
+            print('')
+        lines = 1 + int(len(content) / (self.columns + 1))
+        if not self.quiet:
+            for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
+                if isinstance(task, tuple):
+                    pbar, progress, rate, start_time = task
+                    if not pbar.start_time:
+                        pbar.start(False)
+                        if start_time:
+                            pbar.start_time = start_time
+                    pbar.setmessage('%s:%s' % (tasknum, pbar.msg.split(':', 1)[1]))
+                    if progress > -1:
+                        pbar.setextra(rate)
+                        output = pbar.update(progress)
+                    else:
+                        output = pbar.update(1)
+                    if not output or (len(output) <= pbar.term_width):
+                        print('')
+                else:
+                    content = "%s: %s" % (tasknum, task)
+                    print(content)
+                lines = lines + 1 + int(len(content) / (self.columns + 1))
         self.footer_present = lines
         self.lastpids = runningpids[:]
         self.lastcount = self.helper.tasknumber_current
@@ -249,7 +320,8 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
               "bb.command.CommandExit", "bb.command.CommandCompleted",  "bb.cooker.CookerExit",
               "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
               "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
-              "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent"]
+              "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
+              "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished"]
 
 def main(server, eventHandler, params, tf = TerminalFilter):
 
@@ -266,7 +338,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     errconsole = logging.StreamHandler(sys.stderr)
     format_str = "%(levelname)s: %(message)s"
     format = bb.msg.BBLogFormatter(format_str)
-    bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut)
+    if params.options.quiet:
+        bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut, bb.msg.BBLogFormatter.WARNING)
+    else:
+        bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut)
     bb.msg.addDefaultlogFilter(errconsole, bb.msg.BBLogFilterStdErr)
     console.setFormatter(format)
     errconsole.setFormatter(format)
@@ -287,6 +362,12 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         bb.msg.addDefaultlogFilter(consolelog)
         consolelog.setFormatter(conlogformat)
         logger.addHandler(consolelog)
+        loglink = os.path.join(os.path.dirname(consolelogfile), 'console-latest.log')
+        bb.utils.remove(loglink)
+        try:
+           os.symlink(os.path.basename(consolelogfile), loglink)
+        except OSError:
+           pass
 
     llevel, debug_domains = bb.msg.constructLogOptions()
     server.runCommand(["setEventMask", server.getEventHandle(), llevel, debug_domains, _evt_list])
@@ -323,7 +404,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     warnings = 0
     taskfailures = []
 
-    termfilter = tf(main, helper, console, errconsole, format)
+    termfilter = tf(main, helper, console, errconsole, format, params.options.quiet)
     atexit.register(termfilter.finish)
 
     while True:
@@ -415,15 +496,19 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 parseprogress = new_progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
-                parseprogress.update(event.current)
+                if parseprogress:
+                    parseprogress.update(event.current)
+                else:
+                    bb.warn("Got ParseProgress event for parsing that never started?")
                 continue
             if isinstance(event, bb.event.ParseCompleted):
                 if not parseprogress:
                     continue
-
                 parseprogress.finish()
-                print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
-                    % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
+                pasreprogress = None
+                if not params.options.quiet:
+                    print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
+                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
             if isinstance(event, bb.event.CacheLoadStarted):
@@ -434,7 +519,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
             if isinstance(event, bb.event.CacheLoadCompleted):
                 cacheprogress.finish()
-                print("Loaded %d entries from dependency cache." % event.num_entries)
+                if not params.options.quiet:
+                    print("Loaded %d entries from dependency cache." % event.num_entries)
                 continue
 
             if isinstance(event, bb.command.CommandFailed):
@@ -518,6 +604,22 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if isinstance(event, bb.event.DepTreeGenerated):
                 continue
 
+            if isinstance(event, bb.event.ProcessStarted):
+                parseprogress = new_progress(event.processname, event.total)
+                parseprogress.start(False)
+                continue
+            if isinstance(event, bb.event.ProcessProgress):
+                if parseprogress:
+                    parseprogress.update(event.progress)
+                else:
+                    bb.warn("Got ProcessProgress event for someting that never started?")
+                continue
+            if isinstance(event, bb.event.ProcessFinished):
+                if parseprogress:
+                    parseprogress.finish()
+                parseprogress = None
+                continue
+
             # ignore
             if isinstance(event, (bb.event.BuildBase,
                                   bb.event.MetadataEvent,
@@ -529,7 +631,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                                   bb.event.OperationStarted,
                                   bb.event.OperationCompleted,
                                   bb.event.OperationProgress,
-                                  bb.event.DiskFull)):
+                                  bb.event.DiskFull,
+                                  bb.build.TaskProgress)):
                 continue
 
             logger.error("Unknown event: %s", event)
@@ -582,7 +685,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         if return_value and errors:
             summary += pluralise("\nSummary: There was %s ERROR message shown, returning a non-zero exit code.",
                                  "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
-        if summary:
+        if summary and not params.options.quiet:
             print(summary)
 
         if interrupted:

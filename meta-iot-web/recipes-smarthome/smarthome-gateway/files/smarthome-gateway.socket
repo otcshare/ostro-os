@@ -1,0 +1,9 @@
+[Unit]
+Description=SmartHome Gateway socket
+
+[Socket]
+ListenStream=8080
+Accept=false
+
+[Install]
+WantedBy=sockets.target

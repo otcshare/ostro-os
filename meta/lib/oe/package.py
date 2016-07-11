@@ -8,7 +8,7 @@ def runstrip(arg):
     # 8 - shared library
     # 16 - kernel module
 
-    import commands, stat, subprocess
+    import stat, subprocess
 
     (file, elftype, strip) = arg
 
@@ -64,8 +64,8 @@ def filedeprunner(arg):
 
     def process_deps(pipe, pkg, pkgdest, provides, requires):
         for line in pipe:
-            f = line.split(" ", 1)[0].strip()
-            line = line.split(" ", 1)[1].strip()
+            f = line.decode("utf-8").split(" ", 1)[0].strip()
+            line = line.decode("utf-8").split(" ", 1)[1].strip()
 
             if line.startswith("Requires:"):
                 i = requires

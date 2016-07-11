@@ -58,11 +58,29 @@ function projectPageInit(ctx) {
         case 'layer-imported':
           layerImportedNotification();
           break;
+        case 'layer-deleted':
+          layerDeletedNotification();
         default:
           break;
       }
     }
   })();
+
+  /* Layer deleted notification */
+  function layerDeletedNotification(){
+    var layer = $.cookie("layer-deleted");
+
+    if (!layer)
+      return;
+
+    var message = "You have deleted <strong>1</strong> layer from your ";
+    message += "project: <strong>" + layer + "</strong>";
+
+    libtoaster.showChangeNotification(message);
+
+    $.removeCookie("layer-deleted", { path: "/"});
+  }
+
 
   /* Layer imported notification */
   function layerImportedNotification(){
@@ -75,7 +93,7 @@ function projectPageInit(ctx) {
       imported = JSON.parse(imported);
 
     if (imported.deps_added.length === 0) {
-      message = "You have imported <strong><a href=\""+imported.imported_layer.layerdetailurl+"\">"+imported.imported_layer.name+"</a></strong> and added it to your project.";
+      message = "You have imported <strong><a class=\"alert-link\" href=\""+imported.imported_layer.layerdetailurl+"\">"+imported.imported_layer.name+"</a></strong> and added it to your project.";
     } else {
 
       var links = "<a href=\""+imported.imported_layer.layerdetailurl+"\">"+imported.imported_layer.name+"</a>, ";
@@ -145,7 +163,7 @@ function projectPageInit(ctx) {
     for (var i in layers){
       var layerObj = layers[i];
 
-      var projectLayer = $("<li><a></a><span class=\"icon-trash\" data-toggle=\"tooltip\" title=\"Remove\"></span></li>");
+      var projectLayer = $("<li><a></a><span class=\"glyphicon glyphicon-trash\" data-toggle=\"tooltip\" title=\"Remove\"></span></li>");
 
       projectLayer.data('layer', layerObj);
       projectLayer.children("span").tooltip();
@@ -208,7 +226,7 @@ function projectPageInit(ctx) {
     }
 
     for (var i in recipes){
-      var freqTargetCheck = $('<li><label class="checkbox"><input type="checkbox" /><span class="freq-target-name"></span></label></li>');
+      var freqTargetCheck = $('<li><div class="checkbox"><label><input type="checkbox" /><span class="freq-target-name"></span></label></li>');
       freqTargetCheck.find(".freq-target-name").text(recipes[i]);
       freqTargetCheck.find("input").val(recipes[i]);
       freqTargetCheck.click(function(){
@@ -285,7 +303,7 @@ function projectPageInit(ctx) {
         machineChangeCancel.click();
 
         /* Show the alert message */
-        var message = $('<span class="lead">You have changed the machine to: <strong><span id="notify-machine-name"></span></strong></span>');
+        var message = $('<span>You have changed the machine to: <strong><span id="notify-machine-name"></span></strong></span>');
         message.find("#notify-machine-name").text(currentMachineAddSelection);
         libtoaster.showChangeNotification(message);
     },

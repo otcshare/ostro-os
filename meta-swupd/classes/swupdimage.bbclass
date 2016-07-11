@@ -47,11 +47,14 @@ python swupdimage_virtclass_handler () {
     # Needed by do_image_append() in swupd-image.bbclass.
     e.data.setVar("IMAGE_BUNDLE_NAME", imageext)
     # We override the default methods such that they only copy from the mega rootfs.
-    e.data.setVar("do_image", "    swupd_create_rootfs(d)\n")
+    e.data.setVar("do_image", "    import swupd.rootfs\n    swupd.rootfs.create_rootfs(d)\n")
     e.data.setVar("do_rootfs", "")
     # Depend on complete bundle generation in the base image.
-    dep = ' %s:do_swupd_update' % pn_base
+    dep = ' %s:do_stage_swupd_inputs' % pn_base
     e.data.appendVarFlag('do_image', 'depends', dep)
+    # Ensure update stream is generated when only building virt image
+    dep = ' %s:do_swupd_update' % pn_base
+    e.data.appendVarFlag('do_swupd_update', 'depends', dep)
 }
 
 addhandler swupdimage_virtclass_handler

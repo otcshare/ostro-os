@@ -264,7 +264,7 @@ SDKMACHINE = "i686"
         files2 = get_files(topdir + "/tmp-sstatesamehash2/stamps/")
         files2 = [x.replace("tmp-sstatesamehash2", "tmp-sstatesamehash").replace("i686-linux", "x86_64-linux").replace("i686" + targetvendor + "-linux", "x86_64" + targetvendor + "-linux", ) for x in files2]
         self.maxDiff = None
-        self.assertItemsEqual(files1, files2)
+        self.assertCountEqual(files1, files2)
 
 
     @testcase(1271)
@@ -298,7 +298,7 @@ NATIVELSBSTRING = \"DistroB\"
         files2 = get_files(topdir + "/tmp-sstatesamehash2/stamps/")
         files2 = [x.replace("tmp-sstatesamehash2", "tmp-sstatesamehash") for x in files2]
         self.maxDiff = None
-        self.assertItemsEqual(files1, files2)
+        self.assertCountEqual(files1, files2)
 
     @testcase(1368)
     def test_sstate_allarch_samesigs(self):
@@ -393,7 +393,7 @@ DEFAULTTUNE_virtclass-multilib-lib32 = "x86"
         files2 = get_files(topdir + "/tmp-sstatesamehash2/stamps")
         files2 = [x.replace("tmp-sstatesamehash2", "tmp-sstatesamehash") for x in files2]
         self.maxDiff = None
-        self.assertItemsEqual(files1, files2)
+        self.assertCountEqual(files1, files2)
 
 
     def test_sstate_noop_samesigs(self):
@@ -445,14 +445,14 @@ http_proxy = "http://example.com/"
         files1 = get_files(topdir + "/tmp-sstatesamehash/stamps/")
         files2 = get_files(topdir + "/tmp-sstatesamehash2/stamps/")
         # Remove items that are identical in both sets
-        for k,v in files1.viewitems() & files2.viewitems():
+        for k,v in files1.items() & files2.items():
             del files1[k]
             del files2[k]
         if not files1 and not files2:
             # No changes, so we're done
             return
 
-        for k in files1.viewkeys() | files2.viewkeys():
+        for k in files1.keys() | files2.keys():
             if k in files1 and k in files2:
                 print("%s differs:" % k)
                 print(subprocess.check_output(("bitbake-diffsigs",
