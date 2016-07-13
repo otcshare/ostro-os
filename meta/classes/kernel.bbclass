@@ -232,8 +232,7 @@ do_bundle_initramfs () {
 			if [ -n "$realpath" ]; then
 				mv -f $realpath $realpath.initramfs
 				mv -f $realpath.bak $realpath
-				cd ${B}/${KERNEL_OUTPUT_DIR}
-				ln -sf $linkpath.initramfs
+				ln -sf $linkpath.initramfs ${B}/${KERNEL_OUTPUT_DIR}/$type.initramfs
 			else
 				mv -f ${KERNEL_OUTPUT_DIR}/$type ${KERNEL_OUTPUT_DIR}/$type.initramfs
 				mv -f ${KERNEL_OUTPUT_DIR}/$type.bak ${KERNEL_OUTPUT_DIR}/$type
@@ -291,7 +290,7 @@ do_compile_kernelmodules() {
 		# external kernel modules has a dependency on
 		# other kernel modules and will look at this
 		# file to do symbol lookups
-		cp Module.symvers ${STAGING_KERNEL_BUILDDIR}/
+		cp ${B}/Module.symvers ${STAGING_KERNEL_BUILDDIR}/
 	else
 		bbnote "no modules to compile"
 	fi
@@ -586,8 +585,7 @@ kernel_do_deploy() {
 			initramfs_base_name=${type}-${INITRAMFS_BASE_NAME}
 			initramfs_symlink_name=${type}-initramfs-${MACHINE}
 			install -m 0644 ${KERNEL_OUTPUT_DIR}/${type}.initramfs ${DEPLOYDIR}/${initramfs_base_name}.bin
-			cd ${DEPLOYDIR}
-			ln -sf ${initramfs_base_name}.bin ${initramfs_symlink_name}.bin
+			ln -sf ${initramfs_base_name}.bin ${DEPLOYDIR}/${initramfs_symlink_name}.bin
 		fi
 	done
 }
@@ -598,4 +596,3 @@ do_deploy[prefuncs] += "package_get_auto_pr"
 addtask deploy after do_populate_sysroot
 
 EXPORT_FUNCTIONS do_deploy
-

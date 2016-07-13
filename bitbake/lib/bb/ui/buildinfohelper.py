@@ -125,7 +125,7 @@ class ORMWrapper(object):
         """
         Convert timestamp in seconds to Python datetime
         """
-        return datetime(1970, 1, 1) + timedelta(seconds=secs)
+        return timezone.make_aware(datetime(1970, 1, 1) + timedelta(seconds=secs))
 
     # pylint: disable=no-self-use
     # we disable detection of no self use in functions because the methods actually work on the object
@@ -494,7 +494,7 @@ class ORMWrapper(object):
             parent_obj = self._cached_get(Target_File, target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
             tf_obj = Target_File.objects.create(
                         target = target_obj,
-                        path = unicode(path, 'utf-8'),
+                        path = path,
                         size = size,
                         inodetype = Target_File.ITYPE_DIRECTORY,
                         permission = permission,
@@ -519,7 +519,7 @@ class ORMWrapper(object):
 
             tf_obj = Target_File.objects.create(
                         target = target_obj,
-                        path = unicode(path, 'utf-8'),
+                        path = path,
                         size = size,
                         inodetype = inodetype,
                         permission = permission,
@@ -550,9 +550,7 @@ class ORMWrapper(object):
                 filetarget_path = "/".join(fcpl)
 
             try:
-                filetarget_obj = Target_File.objects.get(
-                                     target = target_obj,
-                                     path = unicode(filetarget_path, 'utf-8'))
+                filetarget_obj = Target_File.objects.get(target = target_obj, path = filetarget_path)
             except Target_File.DoesNotExist:
                 # we might have an invalid link; no way to detect this. just set it to None
                 filetarget_obj = None
@@ -561,7 +559,7 @@ class ORMWrapper(object):
 
             tf_obj = Target_File.objects.create(
                         target = target_obj,
-                        path = unicode(path, 'utf-8'),
+                        path = path,
                         size = size,
                         inodetype = Target_File.ITYPE_SYMLINK,
                         permission = permission,
@@ -1069,7 +1067,7 @@ class BuildInfoHelper(object):
 
         for t in self.internal_state['targets']:
             if t.is_image == True:
-                output_files = list(evdata.viewkeys())
+                output_files = list(evdata.keys())
                 for output in output_files:
                     if t.target in output and 'rootfs' in output and not output.endswith(".manifest"):
                         self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])

@@ -108,6 +108,11 @@ do_compile() {
    export HOME=${WORKDIR}
    export LIBDIR="${libdir}/"
 
+   # Exported by python3native.bbclass as of OE-core c1e0eb62f2 and
+   # breaks compilation of node-gyp because gyp only works with
+   # Python2 (https://codereview.chromium.org/1454433002).
+   unset PYTHON
+
    # does not build dev packages
    npm config set dev false
 

@@ -24,8 +24,8 @@
 __version__ = "1.31.0"
 
 import sys
-if sys.version_info < (2, 7, 3):
-    raise RuntimeError("Sorry, python 2.7.3 or later is required for this version of bitbake")
+if sys.version_info < (3, 4, 0):
+    raise RuntimeError("Sorry, python 3.4.0 or later is required for this version of bitbake")
 
 
 class BBHandledException(Exception):
@@ -84,7 +84,7 @@ def plain(*args):
     mainlogger.plain(''.join(args))
 
 def debug(lvl, *args):
-    if isinstance(lvl, basestring):
+    if isinstance(lvl, str):
         mainlogger.warning("Passed invalid debug level '%s' to bb.debug", lvl)
         args = (lvl,) + args
         lvl = 1

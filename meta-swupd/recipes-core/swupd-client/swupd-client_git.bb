@@ -5,13 +5,13 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=f8d90fb802930e30e49c39c8126a959e"
 
 DEPENDS = "glib-2.0 curl openssl libarchive bsdiff"
 
-PV = "3.5.3+git${SRCPV}"
+PV = "3.6.0+git${SRCPV}"
 SRC_URI = "\
     git://github.com/clearlinux/swupd-client.git;protocol=https \
     file://Change-systemctl-path-to-OE-systemctl-path.patch \
     file://0001-Add-configure-option-to-re-enable-updating-of-config.patch \
 "
-SRCREV = "42c02c5f4a91f3ef2cdb9f80fa7ca79dfbab1ac0"
+SRCREV = "f4000c5b22be47ec1af2f8748fd71a36148b5dc4"
 
 S = "${WORKDIR}/git"
 

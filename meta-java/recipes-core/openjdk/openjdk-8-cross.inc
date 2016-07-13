@@ -39,9 +39,6 @@ SRC_URI_append = "\
     file://jvm.cfg \
 "
 
-# do not use --wth-extra-cflags, it breaks building demos for jdk
-# maybe disabling demos is more reasonable than avoiding --wth-extra-cflags
-# needs discussion
 EXTRA_OECONF_append = "\
     --with-jobs=${@get_jdk8_native_jobs(d)} \
     \
@@ -52,6 +49,10 @@ EXTRA_OECONF_append = "\
     \
     --disable-precompiled-headers \
     --disable-zip-debug-info \
+    \
+    --with-extra-cflags='${CFLAGS}' \
+    --with-extra-cxxflags='${CXXFLAGS}' \
+    --with-extra-ldflags='${LDFLAGS}' \
     \
     ${@jdk_configure_options(d)} \
 "
@@ -83,10 +84,6 @@ export MFLAGS="${@jdk_make_options(d)} MAKE_VERBOSE=y QUIETLY= VERBOSE=-s LOG_LE
 BUILD_LD="${BUILD_CCLD}"
 
 EXTRA_OEMAKE_append = '\
-    OE_CFLAGS="${CFLAGS}" \
-    OE_CPPFLAGS="${CPPFLAGS}" \
-    OE_CXXFLAGS="${CXXFLAGS}" \
-    OE_LDFLAGS="${LDFLAGS}" \
     ${@jdk_make_options(d)} \
     ALT_SDT_H="${STAGING_INCDIR}" \
     ALT_CUPS_HEADERS_PATH="${STAGING_INCDIR}" \

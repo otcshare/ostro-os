@@ -229,3 +229,14 @@ JDK_ARCH = "${@get_jdk_arch(d)}"
 export DEBUG_BINARIES = "true"
 
 ALTERNATIVE_PRIORITY = "50"
+
+OPENJDK_UPDATE_VERSION = "${@bb.data.getVar('PV', d, 1).split('b')[0]}"
+OPENJDK_BUILD_NUMBER = "b${@bb.data.getVar('PV', d, 1).split('b')[1]}"
+EXTRA_OECONF_append = "\
+        --with-build-number=${OPENJDK_BUILD_NUMBER} \
+        --with-update-version=${OPENJDK_UPDATE_VERSION} \
+"
+
+CFLAGS_append = " -fno-lifetime-dse -fno-delete-null-pointer-checks"
+CXXFLAGS_append = " -fno-lifetime-dse -fno-delete-null-pointer-checks"
+CXX_append = " -std=gnu++98"

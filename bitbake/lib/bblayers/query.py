@@ -128,7 +128,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
         # Ensure we list skipped recipes
         # We are largely guessing about PN, PV and the preferred version here,
         # but we have no choice since skipped recipes are not fully parsed
-        skiplist = self.tinfoil.cooker.skiplist.keys()
+        skiplist = list(self.tinfoil.cooker.skiplist.keys())
         skiplist.sort( key=lambda fileitem: self.tinfoil.cooker.collection.calc_bbfile_priority(fileitem) )
         skiplist.reverse()
         for fn in skiplist:
@@ -275,7 +275,7 @@ Lists recipes with the bbappends that apply to them as subitems.
 
     def show_appends_for_skipped(self):
         filenames = [os.path.basename(f)
-                    for f in self.tinfoil.cooker.skiplist.iterkeys()]
+                    for f in self.tinfoil.cooker.skiplist.keys()]
         return self.show_appends_output(filenames, None, " (skipped)")
 
     def show_appends_output(self, filenames, best_filename, name_suffix = ''):
@@ -481,7 +481,7 @@ NOTE: .bbappend files can impact the dependencies.
             logger.plain("%s %s %s" % (f, keyword, best_realfn))
 
     def register_commands(self, sp):
-        self.add_command(sp, 'show-layers', self.do_show_layers)
+        self.add_command(sp, 'show-layers', self.do_show_layers, parserecipes=False)
 
         parser_show_overlayed = self.add_command(sp, 'show-overlayed', self.do_show_overlayed)
         parser_show_overlayed.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of higher priority recipes with the ones they overlay indented underneath', action='store_true')

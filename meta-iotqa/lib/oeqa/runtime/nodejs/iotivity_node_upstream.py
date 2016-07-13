@@ -5,7 +5,7 @@ import shutil
 
 from oeqa.oetest import oeRuntimeTest
 from oeqa.utils.decorators import tag
-from get_source import get_test_module_repo
+from oeqa.runtime.nodejs.get_source import get_test_module_repo
 
 
 COPY_NODE_MODULES_LIST = []
@@ -81,8 +81,7 @@ def copy_test_files(self):
         'tests',
         'grunt-build',
         'Gruntfile.js',
-        '.jscsrc',
-        'package.json'
+        '.jscsrc'
     ]
     for item in COPY_FILE_LIST:
         new_item = os.path.join(self.files_dir, item)

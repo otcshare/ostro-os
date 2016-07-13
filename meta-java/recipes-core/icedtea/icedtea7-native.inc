@@ -17,6 +17,13 @@ PACKAGECONFIG[x11] = ",--disable-headful,libx11-native xproto-native libxt-nativ
 OEMAKE_BUILD_HEADLESS_ONLY = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', 'BUILD_HEADLESS_ONLY=1', d)}"
 CFLAGS_append = "${@bb.utils.contains('PACKAGECONFIG', 'x11', '', ' -DHEADLESS=true', d)}"
 
+# Disable dead store elimination and set C++ standard to C++98.
+# There are dead stores in the JVM that would be pretty hard to
+# remove, so disable the optimisation in the compiler.
+CFLAGS_append = " -fno-tree-dse"
+CXXFLAGS_append = " -fno-tree-dse"
+CXX_append = " -std=gnu++98"
+
 inherit native java autotools pkgconfig
 
 JAVA_HOME[unexport] = "1"
@@ -153,6 +160,8 @@ do_configure_append() {
 	for F in openjdk/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/agent/src/os/linux/Makefile ;
 	do
 		sed -i \
+			-e"s|HOST_GCC = gcc$|HOST_GCC = ${CC}|" \
+			-e"s|HOST_CPP = g++$|HOST_CPP = ${CXX}|" \
 			-e"s|gcc\$(GCC_SUFFIX)|${CC}|" \
 			-e"s|g++\$(GCC_SUFFIX)|${CXX}|" \
 			$F

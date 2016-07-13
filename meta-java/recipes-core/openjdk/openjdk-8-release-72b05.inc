@@ -4,6 +4,7 @@ PATCHES_URI="\
     file://dont-expect-fqpn-for-make.patch;striplevel=0 \
     file://openjdk8-no-genx11-in-headless.patch;apply=no \
     file://openjdk8-no-unused-deps.patch;apply=no \
+    file://openjdk8-avoid-early-ldflags-expansion.patch;apply=no \
     file://openjdk8-find-compiler-fix-env-respect.patch;apply=no \
     file://openjdk8-prevent-debuginfo-in-favour-of-openembedded-package-split.patch;apply=no \
 "

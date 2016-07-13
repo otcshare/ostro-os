@@ -123,3 +123,7 @@ BB_DISKMON_DIRS = ""
 # ARCHIVER_MODE[src] = "original"
 # ARCHIVER_MODE[diff] = "1"
 # ARCHIVER_MODE[recipe] = "1"
+
+# We need to debug a pseudo slowness issue. This setting here ensures
+# that the pseudo binary has debug information.
+INHIBIT_SYSROOT_STRIP = "1"

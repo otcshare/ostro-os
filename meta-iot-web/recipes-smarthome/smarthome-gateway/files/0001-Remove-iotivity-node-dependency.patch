@@ -1,0 +1,25 @@
+From 249c69b10e717b4bfab930d1a9c0dc5d891bf1d4 Mon Sep 17 00:00:00 2001
+From: Sudarsana Nagineni <sudarsana.nagineni@intel.com>
+Date: Mon, 27 Jun 2016 12:58:05 +0300
+Subject: [PATCH] Remove iotivity-node dependency from package.json
+
+Signed-off-by: Sudarsana Nagineni <sudarsana.nagineni@intel.com>
+---
+ package.json | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/package.json b/package.json
+index 78f4e27..60982bc 100644
+--- a/package.json
++++ b/package.json
+@@ -9,7 +9,6 @@
+   "author": "",
+   "license": "Apache-2.0",
+   "dependencies": { 
+-	"iotivity-node": "^1.1.0-4",
+ 	"express": "*",
+ 	"websocket": "*",
+ 	"http": "*"
+-- 
+1.9.1
+

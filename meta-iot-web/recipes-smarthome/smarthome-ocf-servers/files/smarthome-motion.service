@@ -1,0 +1,13 @@
+[Unit]
+Description=SmartHome Motion sensor startup service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /opt/smarthome-ocf-servers/smarthome-motion.js
+Environment='NODE_PATH=/usr/lib/node_modules/'
+Restart=on-failure
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
