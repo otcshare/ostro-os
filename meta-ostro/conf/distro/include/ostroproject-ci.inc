@@ -15,6 +15,9 @@ INHERIT += "buildstats-summary"
 # Enable CVE and other security checks.
 INHERIT += "isafw"
 
+# Additional CI specific tweaks.
+INHERIT += "ostroproject-ci"
+
 # Most of the images are expected to contain GPLv3
 # components. Therefore we only enable the license check for those
 # which must not have them (whitelisting), instead of excluding images
