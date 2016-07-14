@@ -113,6 +113,8 @@ def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+
    
 #export test asset
 def export_testsuite(d, exportdir):
+    import platform
+
     oeqadir = d.expand('${COREBASE}/meta/lib/oeqa')
     recursive_overwrite(oeqadir, os.path.join(exportdir, "oeqa"))
     
@@ -123,7 +125,14 @@ def export_testsuite(d, exportdir):
                         dest=os.path.join(exportdir))
             bb.plain("Exported tests from %s to: %s" % \
                      (os.path.join(p, "lib"), exportdir) )
-
+    # runtest.py must use Python3 if we are on Python3.
+    if int(platform.python_version().split('.')[0]) >= 3:
+        runtestpy = os.path.join(exportdir, 'runtest.py')
+        with open(runtestpy) as f:
+            code = f.read()
+        code = code.replace('#!/usr/bin/env python', '#!/usr/bin/env python3')
+        with open(runtestpy, 'w') as f:
+            f.write(code)
 
 #dump build data to external file
 def dump_builddata(d, tdir):
