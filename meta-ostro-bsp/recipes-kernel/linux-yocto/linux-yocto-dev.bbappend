@@ -30,16 +30,6 @@ SRC_URI_append_beaglebone = " file://sensors.cfg"
 SRC_URI_append_intel-corei7-64 = " file://sensors.cfg"
 SRC_URI_append_intel-core2-32 = " file://sensors.cfg"
 
-# Add patch to fix incorrect device name of IIO device TMP006
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
-
-# Add patch to fix incorrect device name of IIO device SI7020
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-si7020-Set-correct-iio-name.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-si7020-Set-correct-iio-name.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-si7020-Set-correct-iio-name.patch"
-
 #  BeagleBone Black enable all I2Cs
 SRC_URI_append_beaglebone = " file://0001-v3.15.0-ARM-dts-am335x-boneblack-configure-i2c1-and-2.patch"
 

@@ -97,16 +97,6 @@ SRC_URI_append_intel-corei7-64 = " file://no-gfx.cfg"
 # enable usb gadget
 SRC_URI_append_intel-quark = " file://usb-gadget.cfg"
 
-# Add patch to fix incorrect device name of IIO device TMP006
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-tmp006-Set-correct-iio-name.patch"
-
-# Add patch to fix incorrect device name of IIO device SI7020
-SRC_URI_append_intel-corei7-64 = " file://0001-iio-si7020-Set-correct-iio-name.patch"
-SRC_URI_append_intel-core2-32 = " file://0001-iio-si7020-Set-correct-iio-name.patch"
-SRC_URI_append_intel-quark = " file://0001-iio-si7020-Set-correct-iio-name.patch"
-
 KERNEL_MODULE_AUTOLOAD_append_intel-quark = " g_acm_ms"
 KERNEL_MODULE_PROBECONF_append_intel-quark = " g_acm_ms"
 
