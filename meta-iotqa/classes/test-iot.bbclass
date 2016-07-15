@@ -130,7 +130,18 @@ def export_testsuite(d, exportdir):
         runtestpy = os.path.join(exportdir, 'runtest.py')
         with open(runtestpy) as f:
             code = f.read()
-        code = code.replace('#!/usr/bin/env python', '#!/usr/bin/env python3')
+        # Unfortunately, only replacing the first line is not enough
+        # because the CI test scripts hard-code "python iottest/runtest.py".
+        # Instead of teaching the test scripts to detect the right Python
+        # version, we simply fix the incorrect invocation by re-executing
+        # under Python3.
+        code = code.replace('#!/usr/bin/env python',
+                            # ''' string would be nicer, but leads to a bbclass parse error.
+                            '#!/usr/bin/env python3\n'
+                            'import platform\n'
+                            'if int(platform.python_version().split(".")[0]) < 3:\n'
+                            '    import os, sys\n'
+                            '    os.execvp("python3", [__file__] + sys.argv)\n')
         with open(runtestpy, 'w') as f:
             f.write(code)
 
