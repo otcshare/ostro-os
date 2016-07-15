@@ -109,7 +109,11 @@ class BaseOsTest(oeRuntimeTest):
             "GPT: Use GNU Parted to correct GPT errors",
             # IOTOS-1575 [Edison] wpa_supplicant error during system booting
             "Failed to open config file '/etc/wpa_supplicant/wpa_supplicant-wlan0.conf'",
+            # ignore kernel errors
             "^\w{3,} \d{,2} \d{2}:\d{2}:\d{2} \S+ kernel:",
+            # IOTOS-1691 Ethernet relevant errors at system startup
+            "Error changing net interface name \S+ to \S+: Device or resource busy",
+            "open error Permission denied for /var/lib/connman/ethernet_\S+_cable/data",
             ]
         self.longMessage = True
         cmd = "journalctl -ab"

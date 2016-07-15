@@ -198,6 +198,17 @@ fakeroot python do_rootfs () {
     from oe.rootfs import create_rootfs
     from oe.manifest import create_manifest
 
+    # NOTE: if you add, remove or significantly refactor the stages of this
+    # process then you should recalculate the weightings here. This is quite
+    # easy to do - just change the MultiStageProgressReporter line temporarily
+    # to pass debug=True as the last parameter and you'll get a printout of
+    # the weightings as well as a map to the lines where next_stage() was
+    # called. Of course this isn't critical, but it helps to keep the progress
+    # reporting accurate.
+    stage_weights = [1, 203, 354, 186, 65, 4228, 1, 353, 49, 330, 382, 23, 1]
+    progress_reporter = bb.progress.MultiStageProgressReporter(d, stage_weights)
+    progress_reporter.next_stage()
+
     # Handle package exclusions
     excl_pkgs = d.getVar("PACKAGE_EXCLUDE", True).split()
     inst_pkgs = d.getVar("PACKAGE_INSTALL", True).split()
@@ -230,8 +241,12 @@ fakeroot python do_rootfs () {
     # Generate the initial manifest
     create_manifest(d)
 
-    # Generate rootfs
-    create_rootfs(d)
+    progress_reporter.next_stage()
+
+    # generate rootfs
+    create_rootfs(d, progress_reporter=progress_reporter)
+
+    progress_reporter.finish()
 }
 do_rootfs[dirs] = "${TOPDIR}"
 do_rootfs[cleandirs] += "${S}"
@@ -287,6 +302,7 @@ def setup_debugfs_variables(d):
     d.appendVar('IMAGE_ROOTFS', '-dbg')
     d.appendVar('IMAGE_LINK_NAME', '-dbg')
     d.appendVar('IMAGE_NAME','-dbg')
+    d.setVar('IMAGE_BUILDING_DEBUGFS', 'true')
     debugfs_image_fstypes = d.getVar('IMAGE_FSTYPES_DEBUGFS', True)
     if debugfs_image_fstypes:
         d.setVar('IMAGE_FSTYPES', debugfs_image_fstypes)
@@ -403,7 +419,7 @@ python () {
         rm_tmp_images = set()
         def gen_conversion_cmds(bt):
             for ctype in ctypes:
-                if bt.endswith("." + ctype):
+                if bt[bt.find('.') + 1:] == ctype:
                     type = bt[0:-len(ctype) - 1]
                     if type.startswith("debugfs_"):
                         type = type[8:]
@@ -518,14 +534,13 @@ python create_symlinks() {
     taskname = d.getVar("BB_CURRENTTASK", True)
     subimages = (d.getVarFlag("do_" + taskname, 'subimages', False) or "").split()
     imgsuffix = d.getVarFlag("do_" + taskname, 'imgsuffix', True) or d.expand("${IMAGE_NAME_SUFFIX}.")
-    os.chdir(deploy_dir)
 
     if not link_name:
         return
     for type in subimages:
-        dst = deploy_dir + "/" + link_name + "." + type
+        dst = os.path.join(deploy_dir, link_name + "." + type)
         src = img_name + imgsuffix + type
-        if os.path.exists(src):
+        if os.path.exists(os.path.join(deploy_dir, src)):
             bb.note("Creating symlink: %s -> %s" % (dst, src))
             if os.path.islink(dst):
                 if d.getVar('RM_OLD_IMAGE', True) == "1" and \

@@ -22,7 +22,7 @@
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-from selenium_helpers import SeleniumTestCase
+from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import Project, Release, BitbakeVersion, Build, LogMessage
 from orm.models import Layer, Layer_Version, Recipe, CustomImageRecipe
@@ -48,6 +48,10 @@ class TestBuildDashboardPage(SeleniumTestCase):
                                            started_on=now,
                                            completed_on=now)
 
+        self.build3 = Build.objects.create(project=project,
+                                           started_on=now,
+                                           completed_on=now)
+
         # exception
         msg1 = 'an exception was thrown'
         self.exception_message = LogMessage.objects.create(
@@ -70,6 +74,11 @@ class TestBuildDashboardPage(SeleniumTestCase):
         layer_version = Layer_Version.objects.create(
             layer=layer, build=self.build1
         )
+
+        # non-image recipes related to a build, for testing the new custom
+        # image button
+        layer_version2 = Layer_Version.objects.create(layer=layer,
+            build=self.build3)
 
         # image recipes
         self.image_recipe1 = Recipe.objects.create(
@@ -140,7 +149,7 @@ class TestBuildDashboardPage(SeleniumTestCase):
         dashboard for the Build object build
         """
         self._get_build_dashboard(build)
-        return self.find_all('#errors div.alert-error')
+        return self.find_all('#errors div.alert-danger')
 
     def _check_for_log_message(self, build, log_message):
         """
@@ -179,23 +188,15 @@ class TestBuildDashboardPage(SeleniumTestCase):
         the WebElement modal match the list of text values in expected
         """
         # labels containing the radio buttons we're testing for
-        labels = modal.find_elements_by_tag_name('label')
+        labels = modal.find_elements_by_css_selector(".radio")
 
-        # because the label content has the structure
-        #   label text
-        #   <input...>
-        # we have to regex on its innerHTML, as we can't just retrieve the
-        # "label text" on its own via the Selenium API
-        labels_text = sorted(map(
-            lambda label: label.get_attribute('innerHTML'), labels
-        ))
-
-        expected = sorted(expected)
-
+        labels_text = [lab.text for lab in labels]
         self.assertEqual(len(labels_text), len(expected))
 
-        for idx, label_text in enumerate(labels_text):
-            self.assertRegexpMatches(label_text, expected[idx])
+        for expected_text in expected:
+            self.assertTrue(expected_text in labels_text,
+                            "Could not find %s in %s" % (expected_text,
+                                                         labels_text))
 
     def test_exceptions_show_as_errors(self):
         """
@@ -217,7 +218,13 @@ class TestBuildDashboardPage(SeleniumTestCase):
         the user choose one of them to edit
         """
         self._get_build_dashboard(self.build1)
+
+        # click the "edit custom image" button, which populates the modal
+        selector = '[data-role="edit-custom-image-trigger"]'
+        self.click(selector)
+
         modal = self.driver.find_element_by_id('edit-custom-image-modal')
+        self.wait_until_visible("#edit-custom-image-modal")
 
         # recipes we expect to see in the edit custom image modal
         expected_recipes = [
@@ -235,10 +242,11 @@ class TestBuildDashboardPage(SeleniumTestCase):
         self._get_build_dashboard(self.build1)
 
         # click the "new custom image" button, which populates the modal
-        selector = '[data-role="new-custom-image-trigger"] button'
+        selector = '[data-role="new-custom-image-trigger"]'
         self.click(selector)
 
         modal = self.driver.find_element_by_id('new-custom-image-modal')
+        self.wait_until_visible("#new-custom-image-modal")
 
         # recipes we expect to see in the new custom image modal
         expected_recipes = [
@@ -249,3 +257,14 @@ class TestBuildDashboardPage(SeleniumTestCase):
         ]
 
         self._check_labels_in_modal(modal, expected_recipes)
+
+    def test_new_custom_image_button_no_image(self):
+        """
+        Check that a build which builds non-image recipes doesn't show
+        the new custom image button on the dashboard.
+        """
+        self._get_build_dashboard(self.build3)
+        selector = '[data-role="new-custom-image-trigger"]'
+        self.assertFalse(self.element_exists(selector),
+            'new custom image button should not show for builds which ' \
+            'don\'t have any image recipes')

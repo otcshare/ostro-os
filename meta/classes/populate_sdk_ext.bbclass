@@ -39,19 +39,20 @@ SDK_UPDATE_URL ?= ""
 
 SDK_TARGETS ?= "${PN}"
 
-def get_sdk_install_targets(d):
+def get_sdk_install_targets(d, images_only=False):
     sdk_install_targets = ''
     if d.getVar('SDK_EXT_TYPE', True) != 'minimal':
         sdk_install_targets = d.getVar('SDK_TARGETS', True)
 
         depd = d.getVar('BB_TASKDEPDATA', False)
-        for v in depd.itervalues():
+        for v in depd.values():
             if v[1] == 'do_image_complete':
                 if v[0] not in sdk_install_targets:
                     sdk_install_targets += ' {}'.format(v[0])
 
-    if d.getVar('SDK_INCLUDE_PKGDATA', True) == '1':
-        sdk_install_targets += ' meta-world-pkgdata:do_allpackagedata'
+    if not images_only:
+        if d.getVar('SDK_INCLUDE_PKGDATA', True) == '1':
+            sdk_install_targets += ' meta-world-pkgdata:do_allpackagedata'
 
     return sdk_install_targets
 
@@ -129,8 +130,8 @@ python copy_buildsystem () {
     d.setVar('scriptrelpath', scriptrelpath)
 
     # Write out config file for devtool
-    import ConfigParser
-    config = ConfigParser.SafeConfigParser()
+    import configparser
+    config = configparser.SafeConfigParser()
     config.add_section('General')
     config.set('General', 'bitbake_subdir', conf_bbpath)
     config.set('General', 'init_path', conf_initpath)
@@ -223,9 +224,12 @@ python copy_buildsystem () {
             # warning.
             f.write('SIGGEN_LOCKEDSIGS_SSTATE_EXISTS_CHECK = "none"\n\n')
 
-            # Error if the sigs in the locked-signature file don't match
+            # Warn if the sigs in the locked-signature file don't match
             # the sig computed from the metadata.
             f.write('SIGGEN_LOCKEDSIGS_TASKSIG_CHECK = "warn"\n\n')
+
+            # Set up whitelist for run on install
+            f.write('BB_SETSCENE_ENFORCE_WHITELIST = "%:* *:do_shared_workdir *:do_rm_work"\n\n')
 
             # Hide the config information from bitbake output (since it's fixed within the SDK)
             f.write('BUILDCFG_HEADER = ""\n')
@@ -267,7 +271,7 @@ python copy_buildsystem () {
     # Ensure any variables set from the external environment (by way of
     # BB_ENV_EXTRAWHITE) are set in the SDK's configuration
     extralines = []
-    for name, value in env_whitelist_values.iteritems():
+    for name, value in env_whitelist_values.items():
         actualvalue = d.getVar(name, True) or ''
         if value != actualvalue:
             extralines.append('%s = "%s"\n' % (name, actualvalue))
@@ -280,7 +284,7 @@ python copy_buildsystem () {
             f.write('\n')
 
     # Filter the locked signatures file to just the sstate tasks we are interested in
-    excluded_targets = d.getVar('SDK_TARGETS', True)
+    excluded_targets = get_sdk_install_targets(d, images_only=True)
     sigfile = d.getVar('WORKDIR', True) + '/locked-sigs.inc'
     lockedsigs_pruned = baseoutpath + '/conf/locked-sigs.inc'
     oe.copy_buildsystem.prune_lockedsigs([],
@@ -424,7 +428,7 @@ sdk_ext_postinst() {
 		# current working directory when first ran, nor will it set $1 when
 		# sourcing a script. That is why this has to look so ugly.
 		LOGFILE="$target_sdk_dir/preparing_build_system.log"
-		sh -c ". buildtools/environment-setup* > $LOGFILE && cd $target_sdk_dir/`dirname ${oe_init_build_env_path}` && set $target_sdk_dir && . $target_sdk_dir/${oe_init_build_env_path} $target_sdk_dir >> $LOGFILE && python $target_sdk_dir/ext-sdk-prepare.py '${SDK_INSTALL_TARGETS}' >> $LOGFILE 2>&1" || { echo "ERROR: SDK preparation failed: see $LOGFILE"; cat "$LOGFILE"; echo "printf 'ERROR: this SDK was not fully installed and needs reinstalling\n'" >> $env_setup_script ; exit 1 ; }
+		sh -c ". buildtools/environment-setup* > $LOGFILE && cd $target_sdk_dir/`dirname ${oe_init_build_env_path}` && set $target_sdk_dir && . $target_sdk_dir/${oe_init_build_env_path} $target_sdk_dir >> $LOGFILE && python $target_sdk_dir/ext-sdk-prepare.py '${SDK_INSTALL_TARGETS}' >> $LOGFILE 2>&1" || { echo "ERROR: SDK preparation failed: see $LOGFILE for a slightly more detailed log"; echo "printf 'ERROR: this SDK was not fully installed and needs reinstalling\n'" >> $env_setup_script ; exit 1 ; }
 		rm $target_sdk_dir/ext-sdk-prepare.py
 	fi
 	echo done
@@ -447,7 +451,13 @@ fakeroot python do_populate_sdk_ext() {
 }
 
 def get_ext_sdk_depends(d):
-    return d.getVarFlag('do_rootfs', 'depends', True) + ' ' + d.getVarFlag('do_build', 'depends', True)
+    # Note: the deps varflag is a list not a string, so we need to specify expand=False
+    deps = d.getVarFlag('do_image_complete', 'deps', False)
+    pn = d.getVar('PN', True)
+    deplist = ['%s:%s' % (pn, dep) for dep in deps]
+    for task in ['do_image_complete', 'do_rootfs', 'do_build']:
+        deplist.extend((d.getVarFlag(task, 'depends', True) or '').split())
+    return ' '.join(deplist)
 
 python do_sdk_depends() {
     # We have to do this separately in its own task so we avoid recursing into

@@ -130,6 +130,7 @@ class SeleniumTestCase(StaticLiveServerTestCase):
         # instantiate the Selenium webdriver once for all the test methods
         # in this test case
         cls.driver = create_selenium_driver()
+        cls.driver.maximize_window()
 
     @classmethod
     def tearDownClass(cls):
@@ -156,6 +157,13 @@ class SeleniumTestCase(StaticLiveServerTestCase):
     def find_all(self, selector):
         """ Find all elements matching CSS selector """
         return self.driver.find_elements_by_css_selector(selector)
+
+    def element_exists(self, selector):
+        """
+        Return True if one element matching selector exists,
+        False otherwise
+        """
+        return len(self.find_all(selector)) == 1
 
     def focused_element(self):
         """ Return the element which currently has focus on the page """

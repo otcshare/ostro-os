@@ -37,7 +37,7 @@ os.environ["DJANGO_SETTINGS_MODULE"] =\
 django.setup()
 
 from orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
-from orm.models import Target_Image_File, BuildArtifact
+from orm.models import Target_Image_File, TargetKernelFile, TargetSDKFile
 from orm.models import Variable, VariableHistory
 from orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from orm.models import Task_Dependency, Package_Dependency
@@ -121,11 +121,27 @@ class ORMWrapper(object):
 
         return vars(self)[dictname][key]
 
+    def get_similar_target_with_image_files(self, target):
+        """
+        Get a Target object "similar" to target; i.e. with the same target
+        name ('core-image-minimal' etc.) and machine.
+        """
+        return target.get_similar_target_with_image_files()
+
+    def get_similar_target_with_sdk_files(self, target):
+        return target.get_similar_target_with_sdk_files()
+
+    def clone_image_artifacts(self, target_from, target_to):
+        target_to.clone_image_artifacts_from(target_from)
+
+    def clone_sdk_artifacts(self, target_from, target_to):
+        target_to.clone_sdk_artifacts_from(target_from)
+
     def _timestamp_to_datetime(self, secs):
         """
         Convert timestamp in seconds to Python datetime
         """
-        return datetime(1970, 1, 1) + timedelta(seconds=secs)
+        return timezone.make_aware(datetime(1970, 1, 1) + timedelta(seconds=secs))
 
     # pylint: disable=no-self-use
     # we disable detection of no self use in functions because the methods actually work on the object
@@ -194,6 +210,10 @@ class ORMWrapper(object):
 
     @staticmethod
     def get_or_create_targets(target_info):
+        """
+        NB get_or_create() is used here because for Toaster-triggered builds,
+        we already created the targets when the build was triggered.
+        """
         result = []
         for target in target_info['targets']:
             task = ''
@@ -203,13 +223,10 @@ class ORMWrapper(object):
                 task = task[3:]
             if task == 'build':
                 task = ''
-            obj, created = Target.objects.get_or_create(build=target_info['build'],
-                                                        target=target)
-            if created:
-                obj.is_image = False
-                if task:
-                    obj.task = task
-                obj.save()
+
+            obj, _ = Target.objects.get_or_create(build=target_info['build'],
+                                                  target=target,
+                                                  task=task)
             result.append(obj)
         return result
 
@@ -237,6 +254,10 @@ class ORMWrapper(object):
 
     def update_target_set_license_manifest(self, target, license_manifest_path):
         target.license_manifest_path = license_manifest_path
+        target.save()
+
+    def update_target_set_package_manifest(self, target, package_manifest_path):
+        target.package_manifest_path = package_manifest_path
         target.save()
 
     def update_task_object(self, build, task_name, recipe_name, task_stats):
@@ -494,7 +515,7 @@ class ORMWrapper(object):
             parent_obj = self._cached_get(Target_File, target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
             tf_obj = Target_File.objects.create(
                         target = target_obj,
-                        path = unicode(path, 'utf-8'),
+                        path = path,
                         size = size,
                         inodetype = Target_File.ITYPE_DIRECTORY,
                         permission = permission,
@@ -519,7 +540,7 @@ class ORMWrapper(object):
 
             tf_obj = Target_File.objects.create(
                         target = target_obj,
-                        path = unicode(path, 'utf-8'),
+                        path = path,
                         size = size,
                         inodetype = inodetype,
                         permission = permission,
@@ -550,9 +571,7 @@ class ORMWrapper(object):
                 filetarget_path = "/".join(fcpl)
 
             try:
-                filetarget_obj = Target_File.objects.get(
-                                     target = target_obj,
-                                     path = unicode(filetarget_path, 'utf-8'))
+                filetarget_obj = Target_File.objects.get(target = target_obj, path = filetarget_path)
             except Target_File.DoesNotExist:
                 # we might have an invalid link; no way to detect this. just set it to None
                 filetarget_obj = None
@@ -561,7 +580,7 @@ class ORMWrapper(object):
 
             tf_obj = Target_File.objects.create(
                         target = target_obj,
-                        path = unicode(path, 'utf-8'),
+                        path = path,
                         size = size,
                         inodetype = Target_File.ITYPE_SYMLINK,
                         permission = permission,
@@ -676,20 +695,23 @@ class ORMWrapper(object):
             logger.warning("buildinfohelper: target_package_info could not identify recipes: \n%s", errormsg)
 
     def save_target_image_file_information(self, target_obj, file_name, file_size):
-        Target_Image_File.objects.create( target = target_obj,
-                            file_name = file_name,
-                            file_size = file_size)
+        Target_Image_File.objects.create(target=target_obj,
+            file_name=file_name, file_size=file_size)
 
-    def save_artifact_information(self, build_obj, file_name, file_size):
-        # we skip the image files from other builds
-        if Target_Image_File.objects.filter(file_name = file_name).count() > 0:
-            return
+    def save_target_kernel_file(self, target_obj, file_name, file_size):
+        """
+        Save kernel file (bzImage, modules*) information for a Target target_obj.
+        """
+        TargetKernelFile.objects.create(target=target_obj,
+            file_name=file_name, file_size=file_size)
 
-        # do not update artifacts found in other builds
-        if BuildArtifact.objects.filter(file_name = file_name).count() > 0:
-            return
-
-        BuildArtifact.objects.create(build = build_obj, file_name = file_name, file_size = file_size)
+    def save_target_sdk_file(self, target_obj, file_name, file_size):
+        """
+        Save SDK artifacts to the database, associating them with a
+        Target object.
+        """
+        TargetSDKFile.objects.create(target=target_obj, file_name=file_name,
+            file_size=file_size)
 
     def create_logmessage(self, log_information):
         assert 'build' in log_information
@@ -856,6 +878,11 @@ class BuildInfoHelper(object):
         It is instantiated once per build
         Keeps in memory all data that needs matching before writing it to the database
     """
+
+    # tasks which produce image files; note we include '', as we set
+    # the task for a target to '' (i.e. 'build') if no target is
+    # explicitly defined
+    IMAGE_GENERATING_TASKS = ['', 'build', 'image', 'populate_sdk_ext']
 
     # pylint: disable=protected-access
     # the code will look into the protected variables of the event; no easy way around this
@@ -1063,35 +1090,9 @@ class BuildInfoHelper(object):
 
         return self.brbe
 
-
-    def update_target_image_file(self, event):
-        evdata = BuildInfoHelper._get_data_from_event(event)
-
-        for t in self.internal_state['targets']:
-            if t.is_image == True:
-                output_files = list(evdata.viewkeys())
-                for output in output_files:
-                    if t.target in output and 'rootfs' in output and not output.endswith(".manifest"):
-                        self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
-
-    def update_artifact_image_file(self, event):
-        evdata = BuildInfoHelper._get_data_from_event(event)
-        for artifact_path in evdata.keys():
-            self.orm_wrapper.save_artifact_information(self.internal_state['build'], artifact_path, evdata[artifact_path])
-
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
             self.orm_wrapper.update_build_object(self.internal_state['build'], errors, warnings, taskfailures)
-
-
-    def store_license_manifest_path(self, event):
-        deploy_dir = BuildInfoHelper._get_data_from_event(event)['deploy_dir']
-        image_name = BuildInfoHelper._get_data_from_event(event)['image_name']
-        path = deploy_dir + "/licenses/" + image_name + "/license.manifest"
-        for target in self.internal_state['targets']:
-            if target.target in image_name:
-                self.orm_wrapper.update_target_set_license_manifest(target, path)
-
 
     def store_started_task(self, event):
         assert isinstance(event, (bb.runqueue.sceneQueueTaskStarted, bb.runqueue.runQueueTaskStarted, bb.runqueue.runQueueTaskSkipped))
@@ -1243,11 +1244,16 @@ class BuildInfoHelper(object):
                     logger.warning("KeyError in save_target_package_information"
                                    "%s ", e)
 
-                try:
-                    self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
-                except KeyError as e:
-                    logger.warning("KeyError in save_target_file_information"
-                                   "%s ", e)
+                # only try to find files in the image if the task for this
+                # target is one which produces image files; otherwise, the old
+                # list of files in the files-in-image.txt file will be
+                # appended to the target even if it didn't produce any images
+                if target.task in BuildInfoHelper.IMAGE_GENERATING_TASKS:
+                    try:
+                        self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
+                    except KeyError as e:
+                        logger.warning("KeyError in save_target_file_information"
+                                       "%s ", e)
 
 
 
@@ -1507,6 +1513,304 @@ class BuildInfoHelper(object):
         logger.info("Logging error 2: %s", log_information)
 
         self.orm_wrapper.create_logmessage(log_information)
+
+    def _get_filenames_from_image_license(self, image_license_manifest_path):
+        """
+        Find the FILES line in the image_license.manifest file,
+        which has the basenames of the bzImage and modules files
+        in this format:
+        FILES: bzImage--4.4.11+git0+3a5f494784_53e84104c5-r0-qemux86-20160603165040.bin modules--4.4.11+git0+3a5f494784_53e84104c5-r0-qemux86-20160603165040.tgz
+        """
+        files = []
+        with open(image_license_manifest_path) as image_license:
+            for line in image_license:
+                if line.startswith('FILES'):
+                    files_str = line.split(':')[1].strip()
+                    files_str = re.sub(r' {2,}', ' ', files_str)
+                    files = files_str.split(' ')
+        return files
+
+    def _endswith(self, str_to_test, endings):
+        """
+        Returns True if str ends with one of the strings in the list
+        endings, False otherwise
+        """
+        endswith = False
+        for ending in endings:
+            if str_to_test.endswith(ending):
+                endswith = True
+                break
+        return endswith
+
+    def _get_image_files(self, deploy_dir_image, image_name, image_file_extensions):
+        """
+        Find files in deploy_dir_image whose basename starts with the
+        string image_name and ends with one of the strings in
+        image_file_extensions.
+
+        Returns a list of file dictionaries like
+
+        [
+            {
+                'path': '/path/to/image/file',
+                'size': <file size in bytes>
+            }
+        ]
+        """
+        image_files = []
+
+        for dirpath, _, filenames in os.walk(deploy_dir_image):
+            for filename in filenames:
+                if filename.startswith(image_name) and \
+                self._endswith(filename, image_file_extensions):
+                    image_file_path = os.path.join(dirpath, filename)
+                    image_file_size = os.stat(image_file_path).st_size
+
+                    image_files.append({
+                        'path': image_file_path,
+                        'size': image_file_size
+                    })
+
+        return image_files
+
+    def scan_image_artifacts(self):
+        """
+        Scan for built image artifacts in DEPLOY_DIR_IMAGE and associate them
+        with a Target object in self.internal_state['targets'].
+
+        We have two situations to handle:
+
+        1. This is the first time a target + machine has been built, so
+        add files from the DEPLOY_DIR_IMAGE to the target.
+
+        OR
+
+        2. There are no new files for the target (they were already produced by
+        a previous build), so copy them from the most recent previous build with
+        the same target, task and machine.
+        """
+        deploy_dir_image = \
+            self.server.runCommand(['getVariable', 'DEPLOY_DIR_IMAGE'])[0]
+
+        # if there's no DEPLOY_DIR_IMAGE, there aren't going to be
+        # any image artifacts, so we can return immediately
+        if not deploy_dir_image:
+            return
+
+        buildname = self.server.runCommand(['getVariable', 'BUILDNAME'])[0]
+        machine = self.server.runCommand(['getVariable', 'MACHINE'])[0]
+        image_name = self.server.runCommand(['getVariable', 'IMAGE_NAME'])[0]
+
+        # location of the manifest files for this build;
+        # note that this file is only produced if an image is produced
+        license_directory = \
+            self.server.runCommand(['getVariable', 'LICENSE_DIRECTORY'])[0]
+
+        # file name extensions for image files
+        image_file_extensions_unique = {}
+        image_fstypes = self.server.runCommand(
+            ['getVariable', 'IMAGE_FSTYPES'])[0]
+        if image_fstypes != None:
+            image_types_str = image_fstypes.strip()
+            image_file_extensions = re.sub(r' {2,}', ' ', image_types_str)
+            image_file_extensions_unique = set(image_file_extensions.split(' '))
+
+        targets = self.internal_state['targets']
+
+        # filter out anything which isn't an image target
+        image_targets = [target for target in targets if target.is_image]
+
+        for image_target in image_targets:
+            # this is set to True if we find at least one file relating to
+            # this target; if this remains False after the scan, we copy the
+            # files from the most-recent Target with the same target + machine
+            # onto this Target instead
+            has_files = False
+
+            # we construct this because by the time we reach
+            # BuildCompleted, this has reset to
+            # 'defaultpkgname-<MACHINE>-<BUILDNAME>';
+            # we need to change it to
+            # <TARGET>-<MACHINE>-<BUILDNAME>
+            real_image_name = re.sub(r'^defaultpkgname', image_target.target,
+                image_name)
+
+            image_license_manifest_path = os.path.join(
+                license_directory,
+                real_image_name,
+                'image_license.manifest')
+
+            image_package_manifest_path = os.path.join(
+                license_directory,
+                real_image_name,
+                'image_license.manifest')
+
+            # if image_license.manifest exists, we can read the names of bzImage
+            # and modules files for this build from it, then look for them
+            # in the DEPLOY_DIR_IMAGE; note that this file is only produced
+            # if an image file was produced
+            if os.path.isfile(image_license_manifest_path):
+                has_files = True
+
+                basenames = self._get_filenames_from_image_license(
+                    image_license_manifest_path)
+
+                for basename in basenames:
+                    artifact_path = os.path.join(deploy_dir_image, basename)
+                    artifact_size = os.stat(artifact_path).st_size
+
+                    # note that the artifact will only be saved against this
+                    # build if it hasn't been already
+                    self.orm_wrapper.save_target_kernel_file(image_target,
+                        artifact_path, artifact_size)
+
+                # store the license manifest path on the target
+                # (this file is also created any time an image file is created)
+                license_manifest_path = os.path.join(license_directory,
+                    real_image_name, 'license.manifest')
+
+                self.orm_wrapper.update_target_set_license_manifest(
+                    image_target, license_manifest_path)
+
+                # store the package manifest path on the target (this file
+                # is created any time an image file is created)
+                package_manifest_path = os.path.join(deploy_dir_image,
+                    real_image_name + '.rootfs.manifest')
+
+                if os.path.exists(package_manifest_path):
+                    self.orm_wrapper.update_target_set_package_manifest(
+                        image_target, package_manifest_path)
+
+            # scan the directory for image files relating to this build
+            # (via real_image_name); note that we don't have to set
+            # has_files = True, as searching for the license manifest file
+            # will already have set it to true if at least one image file was
+            # produced; note that the real_image_name includes BUILDNAME, which
+            # in turn includes a timestamp; so if no files were produced for
+            # this timestamp (i.e. the build reused existing image files already
+            # in the directory), no files will be recorded against this target
+            image_files = self._get_image_files(deploy_dir_image,
+                real_image_name, image_file_extensions_unique)
+
+            for image_file in image_files:
+                self.orm_wrapper.save_target_image_file_information(
+                    image_target, image_file['path'], image_file['size'])
+
+            if not has_files:
+                # copy image files and build artifacts from the
+                # most-recently-built Target with the
+                # same target + machine as this Target; also copy the license
+                # manifest path, as that is not treated as an artifact and needs
+                # to be set separately
+                similar_target = \
+                    self.orm_wrapper.get_similar_target_with_image_files(
+                        image_target)
+
+                if similar_target:
+                    logger.info('image artifacts for target %s cloned from ' \
+                        'target %s' % (image_target.pk, similar_target.pk))
+                    self.orm_wrapper.clone_image_artifacts(similar_target,
+                        image_target)
+
+    def _get_sdk_targets(self):
+        """
+        Return targets which could generate SDK artifacts, i.e.
+        "do_populate_sdk" and "do_populate_sdk_ext".
+        """
+        return [target for target in self.internal_state['targets'] \
+            if target.task in ['populate_sdk', 'populate_sdk_ext']]
+
+    def scan_sdk_artifacts(self, event):
+        """
+        Note that we have to intercept an SDKArtifactInfo event from
+        toaster.bbclass (via toasterui) to get hold of the SDK variables we
+        need to be able to scan for files accurately: this is because
+        variables like TOOLCHAIN_OUTPUTNAME have reset to None by the time
+        BuildCompleted is fired by bitbake, so we have to get those values
+        while the build is still in progress.
+
+        For populate_sdk_ext, this runs twice, with two different
+        TOOLCHAIN_OUTPUTNAME settings, each of which will capture some of the
+        files in the SDK output directory.
+        """
+        sdk_vars = BuildInfoHelper._get_data_from_event(event)
+        toolchain_outputname = sdk_vars['TOOLCHAIN_OUTPUTNAME']
+
+        # targets which might have created SDK artifacts
+        sdk_targets = self._get_sdk_targets()
+
+        # location of SDK artifacts
+        tmpdir = self.server.runCommand(['getVariable', 'TMPDIR'])[0]
+        sdk_dir = os.path.join(tmpdir, 'deploy', 'sdk')
+
+        # all files in the SDK directory
+        artifacts = []
+        for dir_path, _, filenames in os.walk(sdk_dir):
+            for filename in filenames:
+                full_path = os.path.join(dir_path, filename)
+                if not os.path.islink(full_path):
+                    artifacts.append(full_path)
+
+        for sdk_target in sdk_targets:
+            # find files in the SDK directory which haven't already been
+            # recorded against a Target and whose basename matches
+            # TOOLCHAIN_OUTPUTNAME
+            for artifact_path in artifacts:
+                basename = os.path.basename(artifact_path)
+
+                toolchain_match = basename.startswith(toolchain_outputname)
+
+                # files which match the name of the target which produced them;
+                # for example,
+                # poky-glibc-x86_64-core-image-sato-i586-toolchain-ext-2.1+snapshot.sh
+                target_match = re.search(sdk_target.target, basename)
+
+                # targets which produce "*-nativesdk-*" files
+                is_ext_sdk_target = sdk_target.task in \
+                    ['do_populate_sdk_ext', 'populate_sdk_ext']
+
+                # SDK files which don't match the target name, i.e.
+                # x86_64-nativesdk-libc.*
+                # poky-glibc-x86_64-buildtools-tarball-i586-buildtools-nativesdk-standalone-2.1+snapshot*
+                is_ext_sdk_file = re.search('-nativesdk-', basename)
+
+                file_from_target = (toolchain_match and target_match) or \
+                    (is_ext_sdk_target and is_ext_sdk_file)
+
+                if file_from_target:
+                    # don't record the file if it's already been added to this
+                    # target
+                    matching_files = TargetSDKFile.objects.filter(
+                        target=sdk_target, file_name=artifact_path)
+
+                    if matching_files.count() == 0:
+                        artifact_size = os.stat(artifact_path).st_size
+
+                        self.orm_wrapper.save_target_sdk_file(
+                            sdk_target, artifact_path, artifact_size)
+
+    def clone_required_sdk_artifacts(self):
+        """
+        If an SDK target doesn't have any SDK artifacts, this means that
+        the postfuncs of populate_sdk or populate_sdk_ext didn't fire, which
+        in turn means that the targets of this build didn't generate any new
+        artifacts.
+
+        In this case, clone SDK artifacts for targets in the current build
+        from existing targets for this build.
+        """
+        sdk_targets = self._get_sdk_targets()
+        for sdk_target in sdk_targets:
+            # only clone for SDK targets which have no TargetSDKFiles yet
+            if sdk_target.targetsdkfile_set.all().count() == 0:
+                similar_target = \
+                    self.orm_wrapper.get_similar_target_with_sdk_files(
+                        sdk_target)
+                if similar_target:
+                    logger.info('SDK artifacts for target %s cloned from ' \
+                        'target %s' % (sdk_target.pk, similar_target.pk))
+                    self.orm_wrapper.clone_sdk_artifacts(similar_target,
+                        sdk_target)
 
     def close(self, errorcode):
         if self.brbe is not None:

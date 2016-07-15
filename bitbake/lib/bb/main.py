@@ -27,6 +27,7 @@ import sys
 import logging
 import optparse
 import warnings
+import fcntl
 
 import bb
 from bb import event
@@ -178,6 +179,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-D", "--debug", action="count", dest="debug", default=0,
                           help="Increase the debug level. You can specify this more than once.")
 
+        parser.add_option("-q", "--quiet", action="store_true", dest="quiet", default=False,
+                          help="Output less log message data to the terminal.")
+
         parser.add_option("-n", "--dry-run", action="store_true", dest="dry_run", default=False,
                           help="Don't execute, just go through the motions.")
 
@@ -278,12 +282,18 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         options, targets = parser.parse_args(argv)
 
+        if options.quiet and options.verbose:
+            parser.error("options --quiet and --verbose are mutually exclusive")
+
+        if options.quiet and options.debug:
+            parser.error("options --quiet and --debug are mutually exclusive")
+
         # use configuration files from environment variables
         if "BBPRECONF" in os.environ:
-            option.prefile.append(os.environ["BBPRECONF"])
+            options.prefile.append(os.environ["BBPRECONF"])
 
         if "BBPOSTCONF" in os.environ:
-            option.postfile.append(os.environ["BBPOSTCONF"])
+            options.postfile.append(os.environ["BBPOSTCONF"])
 
         # fill in proper log name if not supplied
         if options.writeeventlog is not None and len(options.writeeventlog) == 0:
@@ -336,10 +346,7 @@ def start_server(servermodule, configParams, configuration, features):
         server.saveConnectionDetails()
     except Exception as e:
         while hasattr(server, "event_queue"):
-            try:
-                import queue
-            except ImportError:
-                import Queue as queue
+            import queue
             try:
                 event = server.event_queue.get(block=False)
             except (queue.Empty, IOError):
@@ -363,7 +370,10 @@ def bitbake_main(configParams, configuration):
     # updates to log files for use with tail
     try:
         if sys.stdout.name == '<stdout>':
-            sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+            # Reopen with O_SYNC (unbuffered)
+            fl = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
+            fl |= os.O_SYNC
+            fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL, fl)
     except:
         pass
 

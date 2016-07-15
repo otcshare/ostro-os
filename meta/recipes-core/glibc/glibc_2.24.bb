@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://LICENSES;md5=e9a558e243b36d3209f380deb394b213 \
 
 DEPENDS += "gperf-native"
 
-SRCREV ?= "1ac3eaa6bcc473a56340c24511786ff48a91293e"
+SRCREV ?= "d461c9682d4954076f9ee9e07be903c2eef8e73b"
 
 #SRCBRANCH ?= "release/${PV}/master"
 SRCBRANCH ?= "master"
@@ -37,6 +37,7 @@ SRC_URI = "${GLIBC_GIT_URI};branch=${SRCBRANCH};name=glibc \
            file://0023-eglibc-Install-PIC-archives.patch \
            file://0024-eglibc-Forward-port-cross-locale-generation-support.patch \
            file://0025-Define-DUMMY_LOCALE_T-if-not-defined.patch \
+           file://elf-meta.patch \
 "
 
 SRC_URI += "\

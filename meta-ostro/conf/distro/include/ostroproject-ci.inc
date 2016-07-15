@@ -72,19 +72,6 @@ OSTROPROJECT_CI_TEST_EXPORT_TARGETS="ostro-image-swupd-dev"
 # <image_name>,<testsuite_name>,<testfiles_name>,$MACHINE
 OSTROPROJECT_CI_TEST_RUNS="ostro-image-swupd-dev,iot-testsuite.tar.gz,iot-testfiles.${MACHINE}.tar.gz,${MACHINE}"
 
-# In the CI system, the integer OS version used for swupd is derived
-# from the Jenkins build number part of the BUILD_ID. The conversion
-# to int and back to string acts as sanity check that we really get a
-# number out of the BUILD_ID.
-#
-# BUILD_ID is expected to have this format:
-# BUILD_ID = "<parent-build-timestamp (of Jenkins top job)>" + "-build-" + "<jenkins-top-job-build-number>"
-#
-# We multiply it by ten, to ensure that the version space has some gap
-# for minor updates. How to actually build minor updates with Jenkins
-# still needs to be determined.
-OS_VERSION ?= "${@ str(int('${BUILD_ID}'.split('-')[-1]) * 10) }"
-
 # Dont use disk space monitor in CI builds, to avoid frequent
 # space checks on (possibly remote, like NFS) volumes.
 BB_DISKMON_DIRS = ""

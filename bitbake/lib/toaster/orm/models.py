@@ -22,7 +22,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, IntegrityError
-from django.db.models import F, Q, Avg, Max, Sum
+from django.db.models import F, Q, Avg, Max, Sum, Count
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 
@@ -103,7 +103,7 @@ class GitURLValidator(validators.URLValidator):
 
 def GitURLField(**kwargs):
     r = models.URLField(**kwargs)
-    for i in xrange(len(r.validators)):
+    for i in range(len(r.validators)):
         if isinstance(r.validators[i], validators.URLValidator):
             r.validators[i] = GitURLValidator()
     return r
@@ -424,7 +424,7 @@ class Build(models.Model):
         tf = Task.objects.filter(build = self)
         tfc = tf.count()
         if tfc > 0:
-            completeper = tf.exclude(order__isnull=True).count()*100/tfc
+            completeper = tf.exclude(order__isnull=True).count()*100 // tfc
         else:
             completeper = 0
         return completeper
@@ -436,57 +436,61 @@ class Build(models.Model):
             eta += ((eta - self.started_on)*(100-completeper))/completeper
         return eta
 
+    def has_images(self):
+        """
+        Returns True if at least one of the targets for this build has an
+        image file associated with it, False otherwise
+        """
+        targets = Target.objects.filter(build_id=self.id)
+        has_images = False
+        for target in targets:
+            if target.has_images():
+                has_images = True
+                break
+        return has_images
+
+    def has_image_recipes(self):
+        """
+        Returns True if a build has any targets which were built from
+        image recipes.
+        """
+        image_recipes = self.get_image_recipes()
+        return len(image_recipes) > 0
+
     def get_image_file_extensions(self):
         """
-        Get list of file name extensions for images produced by this build
+        Get string of file name extensions for images produced by this build;
+        note that this is the actual list of extensions stored on Target objects
+        for this build, and not the value of IMAGE_FSTYPES.
+
+        Returns comma-separated string, e.g. "vmdk, ext4"
         """
-        targets = Target.objects.filter(build_id = self.id)
         extensions = []
 
-        # pattern to match against file path for building extension string
-        pattern = re.compile('\.([^\.]+?)$')
-
+        targets = Target.objects.filter(build_id = self.id)
         for target in targets:
-            if (not target.is_image):
+            if not target.is_image:
                 continue
 
-            target_image_files = Target_Image_File.objects.filter(target_id = target.id)
+            target_image_files = Target_Image_File.objects.filter(
+                target_id=target.id)
 
             for target_image_file in target_image_files:
-                file_name = os.path.basename(target_image_file.file_name)
-                suffix = ''
+                extensions.append(target_image_file.suffix)
 
-                continue_matching = True
-
-                # incrementally extract the suffix from the file path,
-                # checking it against the list of valid suffixes at each
-                # step; if the path is stripped of all potential suffix
-                # parts without matching a valid suffix, this returns all
-                # characters after the first '.' in the file name
-                while continue_matching:
-                    matches = pattern.search(file_name)
-
-                    if None == matches:
-                        continue_matching = False
-                        suffix = re.sub('^\.', '', suffix)
-                        continue
-                    else:
-                        suffix = matches.group(1) + suffix
-
-                    if suffix in Target_Image_File.SUFFIXES:
-                        continue_matching = False
-                        continue
-                    else:
-                        # reduce the file name and try to find the next
-                        # segment from the path which might be part
-                        # of the suffix
-                        file_name = re.sub('.' + matches.group(1), '', file_name)
-                        suffix = '.' + suffix
-
-                if not suffix in extensions:
-                    extensions.append(suffix)
+        extensions = list(set(extensions))
+        extensions.sort()
 
         return ', '.join(extensions)
+
+    def get_image_fstypes(self):
+        """
+        Get the IMAGE_FSTYPES variable value for this build as a de-duplicated
+        list of image file suffixes.
+        """
+        image_fstypes = Variable.objects.get(
+            build=self, variable_name='IMAGE_FSTYPES').variable_value
+        return list(set(re.split(r' {1,}', image_fstypes)))
 
     def get_sorted_target_list(self):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
@@ -600,28 +604,6 @@ class Build(models.Model):
     def __str__(self):
         return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
 
-
-# an Artifact is anything that results from a Build, and may be of interest to the user, and is not stored elsewhere
-class BuildArtifact(models.Model):
-    build = models.ForeignKey(Build)
-    file_name = models.FilePathField()
-    file_size = models.IntegerField()
-
-    def get_local_file_name(self):
-        try:
-            deploydir = Variable.objects.get(build = self.build, variable_name="DEPLOY_DIR").variable_value
-            return  self.file_name[len(deploydir)+1:]
-        except:
-            raise
-
-        return self.file_name
-
-    def get_basename(self):
-        return os.path.basename(self.file_name)
-
-    def is_available(self):
-        return self.build.buildrequest.environment.has_artifact(self.file_name)
-
 class ProjectTarget(models.Model):
     project = models.ForeignKey(Project)
     target = models.CharField(max_length=100)
@@ -635,12 +617,178 @@ class Target(models.Model):
     is_image = models.BooleanField(default = False)
     image_size = models.IntegerField(default=0)
     license_manifest_path = models.CharField(max_length=500, null=True)
+    package_manifest_path = models.CharField(max_length=500, null=True)
 
     def package_count(self):
         return Target_Installed_Package.objects.filter(target_id__exact=self.id).count()
 
     def __unicode__(self):
         return self.target
+
+    def get_similar_targets(self):
+        """
+        Get target sfor the same machine, task and target name
+        (e.g. 'core-image-minimal') from a successful build for this project
+        (but excluding this target).
+
+        Note that we only look for targets built by this project because
+        projects can have different configurations from each other, and put
+        their artifacts in different directories.
+
+        The possibility of error when retrieving candidate targets
+        is minimised by the fact that bitbake will rebuild artifacts if MACHINE
+        (or various other variables) change. In this case, there is no need to
+        clone artifacts from another target, as those artifacts will have
+        been re-generated for this target anyway.
+        """
+        query = ~Q(pk=self.pk) & \
+            Q(target=self.target) & \
+            Q(build__machine=self.build.machine) & \
+            Q(build__outcome=Build.SUCCEEDED) & \
+            Q(build__project=self.build.project)
+
+        return Target.objects.filter(query)
+
+    def get_similar_target_with_image_files(self):
+        """
+        Get the most recent similar target with Target_Image_Files associated
+        with it, for the purpose of cloning those files onto this target.
+        """
+        similar_target = None
+
+        candidates = self.get_similar_targets()
+        if candidates.count() == 0:
+            return similar_target
+
+        task_subquery = Q(task=self.task)
+
+        # we can look for a 'build' task if this task is a 'populate_sdk_ext'
+        # task, as the latter also creates images; and vice versa; note that
+        # 'build' targets can have their task set to '';
+        # also note that 'populate_sdk' does not produce image files
+        image_tasks = [
+            '', # aka 'build'
+            'build',
+            'image',
+            'populate_sdk_ext'
+        ]
+        if self.task in image_tasks:
+            task_subquery = Q(task__in=image_tasks)
+
+        # annotate with the count of files, to exclude any targets which
+        # don't have associated files
+        candidates = candidates.annotate(num_files=Count('target_image_file'))
+
+        query = task_subquery & Q(num_files__gt=0)
+
+        candidates = candidates.filter(query)
+
+        if candidates.count() > 0:
+            candidates.order_by('build__completed_on')
+            similar_target = candidates.last()
+
+        return similar_target
+
+    def get_similar_target_with_sdk_files(self):
+        """
+        Get the most recent similar target with TargetSDKFiles associated
+        with it, for the purpose of cloning those files onto this target.
+        """
+        similar_target = None
+
+        candidates = self.get_similar_targets()
+        if candidates.count() == 0:
+            return similar_target
+
+        # annotate with the count of files, to exclude any targets which
+        # don't have associated files
+        candidates = candidates.annotate(num_files=Count('targetsdkfile'))
+
+        query = Q(task=self.task) & Q(num_files__gt=0)
+
+        candidates = candidates.filter(query)
+
+        if candidates.count() > 0:
+            candidates.order_by('build__completed_on')
+            similar_target = candidates.last()
+
+        return similar_target
+
+    def clone_image_artifacts_from(self, target):
+        """
+        Make clones of the Target_Image_Files and TargetKernelFile objects
+        associated with Target target, then associate them with this target.
+
+        Note that for Target_Image_Files, we only want files from the previous
+        build whose suffix matches one of the suffixes defined in this
+        target's build's IMAGE_FSTYPES configuration variable. This prevents the
+        Target_Image_File object for an ext4 image being associated with a
+        target for a project which didn't produce an ext4 image (for example).
+
+        Also sets the license_manifest_path and package_manifest_path
+        of this target to the same path as that of target being cloned from, as
+        the manifests are also build artifacts but are treated differently.
+        """
+
+        image_fstypes = self.build.get_image_fstypes()
+
+        # filter out any image files whose suffixes aren't in the
+        # IMAGE_FSTYPES suffixes variable for this target's build
+        image_files = [target_image_file \
+            for target_image_file in target.target_image_file_set.all() \
+            if target_image_file.suffix in image_fstypes]
+
+        for image_file in image_files:
+            image_file.pk = None
+            image_file.target = self
+            image_file.save()
+
+        kernel_files = target.targetkernelfile_set.all()
+        for kernel_file in kernel_files:
+            kernel_file.pk = None
+            kernel_file.target = self
+            kernel_file.save()
+
+        self.license_manifest_path = target.license_manifest_path
+        self.package_manifest_path = target.package_manifest_path
+        self.save()
+
+    def clone_sdk_artifacts_from(self, target):
+        """
+        Clone TargetSDKFile objects from target and associate them with this
+        target.
+        """
+        sdk_files = target.targetsdkfile_set.all()
+        for sdk_file in sdk_files:
+            sdk_file.pk = None
+            sdk_file.target = self
+            sdk_file.save()
+
+    def has_images(self):
+        """
+        Returns True if this target has one or more image files attached to it.
+        """
+        return self.target_image_file_set.all().count() > 0
+
+# kernel artifacts for a target: bzImage and modules*
+class TargetKernelFile(models.Model):
+    target = models.ForeignKey(Target)
+    file_name = models.FilePathField()
+    file_size = models.IntegerField()
+
+    @property
+    def basename(self):
+        return os.path.basename(self.file_name)
+
+# SDK artifacts for a target: sh and manifest files
+class TargetSDKFile(models.Model):
+    target = models.ForeignKey(Target)
+    file_name = models.FilePathField()
+    file_size = models.IntegerField()
+
+    @property
+    def basename(self):
+        return os.path.basename(self.file_name)
 
 class Target_Image_File(models.Model):
     # valid suffixes for image files produced by a build
@@ -658,6 +806,13 @@ class Target_Image_File(models.Model):
 
     @property
     def suffix(self):
+        """
+        Suffix for image file, minus leading "."
+        """
+        for suffix in Target_Image_File.SUFFIXES:
+            if self.file_name.endswith(suffix):
+                return suffix
+
         filename, suffix = os.path.splitext(self.file_name)
         suffix = suffix.lstrip('.')
         return suffix
@@ -862,30 +1017,69 @@ class CustomImagePackage(Package):
                                             related_name='appends_set')
 
 
-
 class Package_DependencyManager(models.Manager):
     use_for_related_fields = True
+    TARGET_LATEST = "use-latest-target-for-target"
 
     def get_queryset(self):
         return super(Package_DependencyManager, self).get_queryset().exclude(package_id = F('depends_on__id'))
 
-    def get_total_source_deps_size(self):
-        """ Returns the total file size of all the packages that depend on
-        thispackage.
-        """
-        return self.all().aggregate(Sum('depends_on__size'))
+    def for_target_or_none(self, target):
+        """ filter the dependencies to be displayed by the supplied target
+        if no dependences are found for the target then try None as the target
+        which will return the dependences calculated without the context of a
+        target e.g. non image recipes.
 
-    def get_total_revdeps_size(self):
-        """ Returns the total file size of all the packages that depend on
-        this package.
+        returns: { size, packages }
         """
-        return self.all().aggregate(Sum('package_id__size'))
+        package_dependencies = self.all_depends().order_by('depends_on__name')
 
+        if target is self.TARGET_LATEST:
+            installed_deps =\
+                    package_dependencies.filter(~Q(target__target=None))
+        else:
+            installed_deps =\
+                    package_dependencies.filter(Q(target__target=target))
+
+        packages_list = None
+        total_size = 0
+
+        # If we have installed depdencies for this package and target then use
+        # these to display
+        if installed_deps.count() > 0:
+            packages_list = installed_deps
+            total_size = installed_deps.aggregate(
+                Sum('depends_on__size'))['depends_on__size__sum']
+        else:
+            new_list = []
+            package_names = []
+
+            # Find dependencies for the package that we know about even if
+            # it's not installed on a target e.g. from a non-image recipe
+            for p in package_dependencies.filter(Q(target=None)):
+                if p.depends_on.name in package_names:
+                    continue
+                else:
+                    package_names.append(p.depends_on.name)
+                    new_list.append(p.pk)
+                    # while we're here we may as well total up the size to
+                    # avoid iterating again
+                    total_size += p.depends_on.size
+
+            # We want to return a queryset here for consistency so pick the
+            # deps from the new_list
+            packages_list = package_dependencies.filter(Q(pk__in=new_list))
+
+        return {'packages': packages_list,
+                'size': total_size}
 
     def all_depends(self):
-        """ Returns just the depends packages and not any other dep_type """
+        """ Returns just the depends packages and not any other dep_type
+        Note that this is for any target
+        """
         return self.filter(Q(dep_type=Package_Dependency.TYPE_RDEPENDS) |
                            Q(dep_type=Package_Dependency.TYPE_TRDEPENDS))
+
 
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
@@ -1147,21 +1341,29 @@ class LayerIndexLayerSource(LayerSource):
         assert self.apiurl is not None
         from django.db import transaction, connection
 
-        import urllib2, urlparse, json
+        import json
         import os
+
+        try:
+            from urllib.request import urlopen, URLError
+            from urllib.parse import urlparse
+        except ImportError:
+            from urllib2 import urlopen, URLError
+            from urlparse import urlparse
+
         proxy_settings = os.environ.get("http_proxy", None)
         oe_core_layer = 'openembedded-core'
 
         def _get_json_response(apiurl = self.apiurl):
-            _parsedurl = urlparse.urlparse(apiurl)
+            _parsedurl = urlparse(apiurl)
             path = _parsedurl.path
 
             try:
-                res = urllib2.urlopen(apiurl)
-            except urllib2.URLError as e:
+                res = urlopen(apiurl)
+            except URLError as e:
                 raise Exception("Failed to read %s: %s" % (path, e.reason))
 
-            return json.loads(res.read())
+            return json.loads(res.read().decode('utf-8'))
 
         # verify we can get the basic api
         try:
@@ -1170,12 +1372,12 @@ class LayerIndexLayerSource(LayerSource):
             import traceback
             if proxy_settings is not None:
                 logger.info("EE: Using proxy %s" % proxy_settings)
-            logger.warning("EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e)))
+            logger.warning("EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc()))
             return
 
         # update branches; only those that we already have names listed in the
         # Releases table
-        whitelist_branch_names = map(lambda x: x.branch_name, Release.objects.all())
+        whitelist_branch_names = [rel.branch_name for rel in Release.objects.all()]
         if len(whitelist_branch_names) == 0:
             raise Exception("Failed to make list of branches to fetch")
 

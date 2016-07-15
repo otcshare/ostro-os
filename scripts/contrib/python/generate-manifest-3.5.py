@@ -100,7 +100,7 @@ class MakefileMaker:
         # generate package variables
         #
 
-        for name, data in sorted(self.packages.iteritems()):
+        for name, data in sorted(self.packages.items()):
             desc, deps, files = data
 
             #
@@ -133,7 +133,7 @@ class MakefileMaker:
         self.out( 'SUMMARY_${PN}-modules="All Python modules"' )
         line = 'RDEPENDS_${PN}-modules="'
 
-        for name, data in sorted(self.packages.iteritems()):
+        for name, data in sorted(self.packages.items()):
             if name not in ['${PN}-dev', '${PN}-distutils-staticdev']:
                 line += "%s " % name
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     #
 
     m.addPackage( "${PN}-core", "Python interpreter and core modules", "${PN}-lang ${PN}-re ${PN}-reprlib ${PN}-codecs ${PN}-io ${PN}-math",
-    "__future__.* _abcoll.* abc.* ast.* copy.* copyreg.* ConfigParser.* " +
+    "__future__.* _abcoll.* abc.* ast.* copy.* copyreg.* configparser.* " +
     "genericpath.* getopt.* linecache.* new.* " +
     "os.* posixpath.* struct.* " +
     "warnings.* site.* stat.* " +
@@ -336,7 +336,7 @@ if __name__ == "__main__":
     m.addPackage( "${PN}-resource", "Python resource control interface", "${PN}-core",
     "lib-dynload/resource.*.so" )
 
-    m.addPackage( "${PN}-shell", "Python shell-like functionality", "${PN}-core ${PN}-re",
+    m.addPackage( "${PN}-shell", "Python shell-like functionality", "${PN}-core ${PN}-re ${PN}-compression",
     "cmd.* commands.* dircache.* fnmatch.* glob.* popen2.* shlex.* shutil.*" )
 
     m.addPackage( "${PN}-subprocess", "Python subprocess support", "${PN}-core ${PN}-io ${PN}-re ${PN}-fcntl ${PN}-pickle",

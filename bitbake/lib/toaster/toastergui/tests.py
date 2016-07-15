@@ -25,6 +25,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
 from django.utils import timezone
+from django.db.models import Q
 
 from orm.models import Project, Release, BitbakeVersion, Package, LogMessage
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
@@ -57,7 +58,6 @@ class ViewTests(TestCase):
 
         self.project = Project.objects.first()
         self.recipe1 = Recipe.objects.get(pk=2)
-        self.recipe2 = Recipe.objects.last()
         self.customr = CustomImageRecipe.objects.first()
         self.cust_package = CustomImagePackage.objects.first()
         self.package = Package.objects.first()
@@ -77,7 +77,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('application/json'))
 
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
 
         self.assertTrue("error" in data)
         self.assertEqual(data["error"], "ok")
@@ -106,7 +106,7 @@ class ViewTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(response['Content-Type'].startswith('application/json'))
 
-            data = json.loads(response.content)
+            data = json.loads(response.content.decode('utf-8'))
 
             self.assertTrue("error" in data)
             self.assertEqual(data["error"], "ok")
@@ -157,26 +157,26 @@ class ViewTests(TestCase):
                 'project_id': self.project.id,
                 'dir_path' : "/path/in/repository"}
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["error"], "ok")
 
         #Test to verify import of a layer successful
         args['name'] = "meta-oe"
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertTrue(data["error"], "ok")
 
         #Test for html tag in the data
         args['<'] = "testing html tag"
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
         #Empty data passed
         args = {}
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
     def test_custom_ok(self):
@@ -186,7 +186,7 @@ class ViewTests(TestCase):
                   'base': self.recipe1.id}
         response = self.client.post(url, params)
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(data['error'], 'ok')
         self.assertTrue('url' in data)
         # get recipe from the database
@@ -202,7 +202,7 @@ class ViewTests(TestCase):
                        {'name': 'custom', 'project': self.project.id}]:
             response = self.client.post(url, params)
             self.assertEqual(response.status_code, 200)
-            data = json.loads(response.content)
+            data = json.loads(response.content.decode('utf-8'))
             self.assertNotEqual(data["error"], "ok")
 
     def test_xhr_custom_wrong_project(self):
@@ -211,7 +211,7 @@ class ViewTests(TestCase):
         params = {'name': 'custom', 'project': 0, "base": self.recipe1.id}
         response = self.client.post(url, params)
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
     def test_xhr_custom_wrong_base(self):
@@ -220,7 +220,7 @@ class ViewTests(TestCase):
         params = {'name': 'custom', 'project': self.project.id, "base": 0}
         response = self.client.post(url, params)
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
     def test_xhr_custom_details(self):
@@ -235,7 +235,7 @@ class ViewTests(TestCase):
                              'project_id': self.project.id,
                             }
                    }
-        self.assertEqual(json.loads(response.content), expected)
+        self.assertEqual(json.loads(response.content.decode('utf-8')), expected)
 
     def test_xhr_custom_del(self):
         """Test deleting custom recipe"""
@@ -248,12 +248,12 @@ class ViewTests(TestCase):
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"error": "ok"})
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {"error": "ok"})
         # try to delete not-existent recipe
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(json.loads(response.content)["error"], "ok")
+        self.assertNotEqual(json.loads(response.content.decode('utf-8'))["error"], "ok")
 
     def test_xhr_custom_packages(self):
         """Test adding and deleting package to a custom recipe"""
@@ -263,7 +263,7 @@ class ViewTests(TestCase):
                                                  self.cust_package.id)))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content),
+        self.assertEqual(json.loads(response.content.decode('utf-8')),
                          {"error": "ok"})
         self.assertEqual(self.customr.appends_set.first().name,
                          self.cust_package.name)
@@ -274,7 +274,7 @@ class ViewTests(TestCase):
 
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"error": "ok"})
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {"error": "ok"})
         all_packages = self.customr.get_all_packages().values_list('pk',
                                                                    flat=True)
 
@@ -286,7 +286,7 @@ class ViewTests(TestCase):
 
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(json.loads(response.content)["error"], "ok")
+        self.assertNotEqual(json.loads(response.content.decode('utf-8'))["error"], "ok")
 
     def test_xhr_custom_packages_err(self):
         """Test error conditions of xhr_customrecipe_packages"""
@@ -297,49 +297,56 @@ class ViewTests(TestCase):
             for method in (self.client.put, self.client.delete):
                 response = method(url)
                 self.assertEqual(response.status_code, 200)
-                self.assertNotEqual(json.loads(response.content),
+                self.assertNotEqual(json.loads(response.content.decode('utf-8')),
                                     {"error": "ok"})
 
     def test_download_custom_recipe(self):
         """Download the recipe file generated for the custom image"""
 
         # Create a dummy recipe file for the custom image generation to read
-        open("/tmp/a_recipe.bb", 'wa').close()
+        open("/tmp/a_recipe.bb", 'a').close()
         response = self.client.get(reverse('customrecipedownload',
                                            args=(self.project.id,
                                                  self.customr.id)))
 
         self.assertEqual(response.status_code, 200)
 
-
     def test_software_recipes_table(self):
         """Test structure returned for Software RecipesTable"""
         table = SoftwareRecipesTable()
         request = RequestFactory().get('/foo/', {'format': 'json'})
         response = table.get(request, pid=self.project.id)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
+
+        recipes = Recipe.objects.filter(Q(is_image=False))
+        self.assertTrue(len(recipes) > 1,
+                        "Need more than one software recipe to test "
+                        "SoftwareRecipesTable")
+
+        recipe1 = recipes[0]
+        recipe2 = recipes[1]
 
         rows = data['rows']
-        row1 = next(x for x in rows if x['name'] == self.recipe1.name)
-        row2 = next(x for x in rows if x['name'] == self.recipe2.name)
+        row1 = next(x for x in rows if x['name'] == recipe1.name)
+        row2 = next(x for x in rows if x['name'] == recipe2.name)
 
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
 
         # check other columns have been populated correctly
-        self.assertTrue(self.recipe1.name in row1['name'])
-        self.assertTrue(self.recipe1.version in row1['version'])
-        self.assertTrue(self.recipe1.description in
+        self.assertTrue(recipe1.name in row1['name'])
+        self.assertTrue(recipe1.version in row1['version'])
+        self.assertTrue(recipe1.description in
                         row1['get_description_or_summary'])
 
-        self.assertTrue(self.recipe1.layer_version.layer.name in
+        self.assertTrue(recipe1.layer_version.layer.name in
                         row1['layer_version__layer__name'])
 
-        self.assertTrue(self.recipe2.name in row2['name'])
-        self.assertTrue(self.recipe2.version in row2['version'])
-        self.assertTrue(self.recipe2.description in
+        self.assertTrue(recipe2.name in row2['name'])
+        self.assertTrue(recipe2.version in row2['version'])
+        self.assertTrue(recipe2.description in
                         row2['get_description_or_summary'])
 
-        self.assertTrue(self.recipe2.layer_version.layer.name in
+        self.assertTrue(recipe2.layer_version.layer.name in
                         row2['layer_version__layer__name'])
 
     def test_toaster_tables(self):
@@ -360,10 +367,12 @@ class ViewTests(TestCase):
                     'layerid': self.lver.pk,
                     'recipeid': self.recipe1.pk,
                     'recipe_id': image_recipe.pk,
-                    'custrecipeid': self.customr.pk}
+                    'custrecipeid': self.customr.pk,
+                    'build_id': 1,
+                    'target_id': 1}
 
             response = table.get(request, **args)
-            return json.loads(response.content)
+            return json.loads(response.content.decode('utf-8'))
 
         def get_text_from_td(td):
             """If we have html in the td then extract the text portion"""
@@ -371,14 +380,8 @@ class ViewTests(TestCase):
             if "<" not in td:
                 ret = td
             else:
-                ret = BeautifulSoup(td).text
+                ret = BeautifulSoup(td, "html.parser").text
 
-            # We change the td into ascii as a way to remove characters
-            # such as \xa0 (non break space) which mess with the ordering
-            # comparisons
-            ret.strip().encode('ascii',
-                               errors='replace').replace('?', ' ')
-            # Case where the td is empty
             if len(ret):
                 return "0"
             else:
@@ -386,11 +389,14 @@ class ViewTests(TestCase):
 
         # Get a list of classes in tables module
         tables = inspect.getmembers(toastergui.tables, inspect.isclass)
+        tables.extend(inspect.getmembers(toastergui.buildtables,
+                                         inspect.isclass))
 
         for name, table_cls in tables:
             # Filter out the non ToasterTables from the tables module
             if not issubclass(table_cls, toastergui.widgets.ToasterTable) or \
-                table_cls == toastergui.widgets.ToasterTable:
+                table_cls == toastergui.widgets.ToasterTable or \
+               'Mixin' in name:
                 continue
 
             # Get the table data without any options, this also does the

@@ -30,6 +30,10 @@
 TEST_LOG_DIR ?= "${WORKDIR}/testimage"
 
 TEST_EXPORT_DIR ?= "${TMPDIR}/testimage/${PN}"
+TEST_INSTALL_TMP_DIR ?= "${WORKDIR}/testimage/install_tmp"
+TEST_NEEDED_PACKAGES_DIR ?= "${WORKDIR}/testimage/packages"
+TEST_EXTRACTED_DIR ?= "${TEST_NEEDED_PACKAGES_DIR}/extracted"
+TEST_PACKAGED_DIR ?= "${TEST_NEEDED_PACKAGES_DIR}/packaged"
 
 RPMTESTSUITE = "${@bb.utils.contains('IMAGE_PKGTYPE', 'rpm', 'smart rpm', '', d)}"
 MINTESTSUITE = "ping"
@@ -64,6 +68,8 @@ TEST_TARGET ?= "qemu"
 
 TESTIMAGEDEPENDS = ""
 TESTIMAGEDEPENDS_qemuall = "qemu-native:do_populate_sysroot qemu-helper-native:do_populate_sysroot"
+TESTIMAGEDEPENDS += "${@bb.utils.contains('IMAGE_PKGTYPE', 'rpm', 'cpio-native:do_populate_sysroot', '', d)}"
+TESTIMAGEDEPENDS_qemuall += "${@bb.utils.contains('IMAGE_PKGTYPE', 'rpm', 'cpio-native:do_populate_sysroot', '', d)}"
 
 TESTIMAGELOCK = "${TMPDIR}/testimage.lock"
 TESTIMAGELOCK_qemuall = ""
@@ -100,6 +106,7 @@ testimage_dump_host () {
 python do_testimage() {
     testimage_main(d)
 }
+
 addtask testimage
 do_testimage[nostamp] = "1"
 do_testimage[depends] += "${TESTIMAGEDEPENDS}"
@@ -117,6 +124,7 @@ def testimage_main(d):
 
     pn = d.getVar("PN", True)
     bb.utils.mkdirhier(d.getVar("TEST_LOG_DIR", True))
+    test_create_extract_dirs(d)
 
     # we need the host dumper in test context
     host_dumper = get_host_dumper(d)
@@ -136,6 +144,7 @@ def testimage_main(d):
         import traceback
         bb.fatal("Loading tests failed:\n%s" % traceback.format_exc())
 
+    tc.extract_packages()
     target.deploy()
     try:
         target.start()
@@ -154,6 +163,17 @@ def testimage_main(d):
     finally:
         signal.signal(signal.SIGTERM, tc.origsigtermhandler)
         target.stop()
+
+def test_create_extract_dirs(d):
+    install_path = d.getVar("TEST_INSTALL_TMP_DIR", True)
+    package_path = d.getVar("TEST_PACKAGED_DIR", True)
+    extracted_path = d.getVar("TEST_EXTRACTED_DIR", True)
+    bb.utils.mkdirhier(d.getVar("TEST_LOG_DIR", True))
+    bb.utils.remove(package_path, recurse=True)
+    bb.utils.mkdirhier(install_path)
+    bb.utils.mkdirhier(package_path)
+    bb.utils.mkdirhier(extracted_path)
+
 
 testimage_main[vardepsexclude] =+ "BB_ORIGENV"
 

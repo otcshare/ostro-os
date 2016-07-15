@@ -35,8 +35,8 @@ import stat
 import bb
 import bb.msg
 import bb.process
-from contextlib import nested
-from bb import event, utils
+import bb.progress
+from bb import data, event, utils
 
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
@@ -138,6 +138,25 @@ class TaskInvalid(TaskBase):
         super(TaskInvalid, self).__init__(task, None, metadata)
         self._message = "No such task '%s'" % task
 
+class TaskProgress(event.Event):
+    """
+    Task made some progress that could be reported to the user, usually in
+    the form of a progress bar or similar.
+    NOTE: this class does not inherit from TaskBase since it doesn't need
+    to - it's fired within the task context itself, so we don't have any of
+    the context information that you do in the case of the other events.
+    The event PID can be used to determine which task it came from.
+    The progress value is normally 0-100, but can also be negative
+    indicating that progress has been made but we aren't able to determine
+    how much.
+    The rate is optional, this is simply an extra string to display to the
+    user if specified.
+    """
+    def __init__(self, progress, rate=None):
+        self.progress = progress
+        self.rate = rate
+        event.Event.__init__(self)
+
 
 class LogTee(object):
     def __init__(self, logger, outfile):
@@ -169,6 +188,11 @@ class LogTee(object):
 def exec_func(func, d, dirs = None, pythonexception=False):
     """Execute a BB 'function'"""
 
+    try:
+        oldcwd = os.getcwd()
+    except:
+        oldcwd = None
+
     body = d.getVar(func, False)
     if not body:
         if body is None:
@@ -192,9 +216,7 @@ def exec_func(func, d, dirs = None, pythonexception=False):
             bb.utils.mkdirhier(adir)
         adir = dirs[-1]
     else:
-        adir = d.getVar('B', True)
-        bb.utils.mkdirhier(adir)
-
+        adir = None
     ispython = flags.get('python')
 
     lockflag = flags.get('lockfiles')
@@ -238,6 +260,13 @@ def exec_func(func, d, dirs = None, pythonexception=False):
         else:
             exec_func_shell(func, d, runfile, cwd=adir)
 
+    if oldcwd and os.getcwd() != oldcwd:
+        try:
+            bb.warn("Task %s changed cwd to %s" % (func, os.getcwd()))
+            os.chdir(oldcwd)
+        except:
+            pass
+
 _functionfmt = """
 {function}(d)
 """
@@ -253,7 +282,8 @@ def exec_func_python(func, d, runfile, cwd=None, pythonexception=False):
     if cwd:
         try:
             olddir = os.getcwd()
-        except OSError:
+        except OSError as e:
+            bb.warn("%s: Cannot get cwd: %s" % (func, e))
             olddir = None
         os.chdir(cwd)
 
@@ -279,8 +309,8 @@ def exec_func_python(func, d, runfile, cwd=None, pythonexception=False):
         if cwd and olddir:
             try:
                 os.chdir(olddir)
-            except OSError:
-                pass
+            except OSError as e:
+                bb.warn("%s: Cannot restore cwd %s: %s" % (func, olddir, e))
 
 def shell_trap_code():
     return '''#!/bin/sh\n
@@ -328,7 +358,7 @@ trap '' 0
 exit $ret
 ''')
 
-    os.chmod(runfile, 0775)
+    os.chmod(runfile, 0o775)
 
     cmd = runfile
     if d.getVarFlag(func, 'fakeroot', False):
@@ -341,13 +371,30 @@ exit $ret
     else:
         logfile = sys.stdout
 
+    progress = d.getVarFlag(func, 'progress', True)
+    if progress:
+        if progress == 'percent':
+            # Use default regex
+            logfile = bb.progress.BasicProgressHandler(d, outfile=logfile)
+        elif progress.startswith('percent:'):
+            # Use specified regex
+            logfile = bb.progress.BasicProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+        elif progress.startswith('outof:'):
+            # Use specified regex
+            logfile = bb.progress.OutOfProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+        else:
+            bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
+
     def readfifo(data):
-        lines = data.split('\0')
+        lines = data.split(b'\0')
         for line in lines:
-            splitval = line.split(' ', 1)
-            cmd = splitval[0]
+            # Just skip empty commands
+            if not line:
+                continue
+            splitval = line.split(b' ', 1)
+            cmd = splitval[0].decode("utf-8")
             if len(splitval) > 1:
-                value = splitval[1]
+                value = splitval[1].decode("utf-8")
             else:
                 value = ''
             if cmd == 'bbplain':
@@ -369,13 +416,14 @@ exit $ret
                 level = int(splitval[0])
                 value = splitval[1]
                 bb.debug(level, value)
-
+            else:
+                bb.warn("Unrecognised command '%s' on FIFO" % cmd)
     tempdir = d.getVar('T', True)
     fifopath = os.path.join(tempdir, 'fifo.%s' % os.getpid())
     if os.path.exists(fifopath):
         os.unlink(fifopath)
     os.mkfifo(fifopath)
-    with open(fifopath, 'r+') as fifo:
+    with open(fifopath, 'r+b', buffering=0) as fifo:
         try:
             bb.debug(2, "Executing shell function %s" % func)
 
@@ -779,6 +827,7 @@ def deltask(task, d):
     bbtasks = d.getVar('__BBTASKS', False) or []
     if task in bbtasks:
         bbtasks.remove(task)
+        d.delVarFlag(task, 'task')
         d.setVar('__BBTASKS', bbtasks)
 
     d.delVarFlag(task, 'deps')
