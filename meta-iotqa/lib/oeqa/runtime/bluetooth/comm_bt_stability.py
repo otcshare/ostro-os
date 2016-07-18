@@ -14,7 +14,7 @@
 import os
 import time
 import subprocess
-import bluetooth
+from oeqa.runtime.bluetooth import bluetooth
 from oeqa.oetest import oeRuntimeTest
 from oeqa.utils.helper import shell_cmd_timeout
 from oeqa.utils.helper import get_files_dir
@@ -45,7 +45,7 @@ class BTStabilityTest(oeRuntimeTest):
             self.bt.ctl_power_on()
             self.bt.ctl_power_off()
             if i % 20 == 0:
-                print "Finish %d times, successful." % i
+                print ("Finish %d times, successful." % i)
 
     @tag(FeatureID="IOTOS-453")
     def test_bt_visable_onoff_multiple_time(self):
@@ -60,7 +60,7 @@ class BTStabilityTest(oeRuntimeTest):
             self.bt.ctl_visable_on()
             self.bt.ctl_visable_off()
             if i % 20 == 0:
-                print "Finish %d times, successful." % i
+                print ("Finish %d times, successful." % i)
 
 ##
 # @}

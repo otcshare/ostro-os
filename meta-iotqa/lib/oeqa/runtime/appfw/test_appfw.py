@@ -187,6 +187,6 @@ class AppFWTest(oeRuntimeTest):
     @tag(TestType = 'FVT', FeatureID = 'IOTOS-418')
     def test_appFW_app_autostart(self):
         ''' Check app is defined as autostart from manifest'''
-        (status,output) = self.target.run("cat %s | grep autostart | grep yes" % self.node_app_manifest)
+        (status,output) = self.target.run("cat %s | grep autostart | grep -iE 'yes|true'" % self.node_app_manifest)
         self.assertEqual(status , 0 , 'App not set to autostart')
         self.assertTrue(self._getProcessInfo(self.node_app_name))
