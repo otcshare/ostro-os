@@ -49,6 +49,7 @@ bison@core
 bluetooth-rfkill-event@edison
 bluez5@core
 boost@core
+bsdiff@meta-swupd
 busybox@core
 bzip2@core
 ca-certificates@core
