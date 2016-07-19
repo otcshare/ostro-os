@@ -65,6 +65,10 @@ def add(args, config, basepath, workspace):
         elif os.path.isdir(args.recipename):
             logger.warn('Ambiguous argument %s - assuming you mean it to be the recipe name')
 
+    if args.srctree and os.path.isfile(args.srctree):
+        args.fetchuri = 'file://' + os.path.abspath(args.srctree)
+        args.srctree = ''
+
     if args.fetch:
         if args.fetchuri:
             raise DevtoolError('URI specified as positional argument as well as -f/--fetch')
@@ -144,6 +148,8 @@ def add(args, config, basepath, workspace):
         extracmdopts += ' --also-native'
     if args.src_subdir:
         extracmdopts += ' --src-subdir "%s"' % args.src_subdir
+    if args.autorev:
+        extracmdopts += ' -a'
 
     tempdir = tempfile.mkdtemp(prefix='devtool')
     try:
@@ -262,28 +268,30 @@ def _check_compatible_recipe(pn, d):
     """Check if the recipe is supported by devtool"""
     if pn == 'perf':
         raise DevtoolError("The perf recipe does not actually check out "
-                           "source and thus cannot be supported by this tool")
+                           "source and thus cannot be supported by this tool",
+                           4)
 
     if pn in ['kernel-devsrc', 'package-index'] or pn.startswith('gcc-source'):
-        raise DevtoolError("The %s recipe is not supported by this tool" % pn)
+        raise DevtoolError("The %s recipe is not supported by this tool" % pn, 4)
 
     if bb.data.inherits_class('image', d):
         raise DevtoolError("The %s recipe is an image, and therefore is not "
-                           "supported by this tool" % pn)
+                           "supported by this tool" % pn, 4)
 
     if bb.data.inherits_class('populate_sdk', d):
         raise DevtoolError("The %s recipe is an SDK, and therefore is not "
-                           "supported by this tool" % pn)
+                           "supported by this tool" % pn, 4)
 
     if bb.data.inherits_class('packagegroup', d):
         raise DevtoolError("The %s recipe is a packagegroup, and therefore is "
-                           "not supported by this tool" % pn)
+                           "not supported by this tool" % pn, 4)
 
     if bb.data.inherits_class('meta', d):
         raise DevtoolError("The %s recipe is a meta-recipe, and therefore is "
-                           "not supported by this tool" % pn)
+                           "not supported by this tool" % pn, 4)
 
     if bb.data.inherits_class('externalsrc', d) and d.getVar('EXTERNALSRC', True):
+        # Not an incompatibility error per se, so we don't pass the error code
         raise DevtoolError("externalsrc is currently enabled for the %s "
                            "recipe. This prevents the normal do_patch task "
                            "from working. You will need to disable this "
@@ -319,7 +327,7 @@ def _git_exclude_path(srctree, path):
     # becomes greater than that.
     path = os.path.normpath(path)
     recurse = True if len(path.split(os.path.sep)) > 1 else False
-    git_files = _git_ls_tree(srctree, 'HEAD', recurse).keys()
+    git_files = list(_git_ls_tree(srctree, 'HEAD', recurse).keys())
     if path in git_files:
         git_files.remove(path)
         return git_files
@@ -496,7 +504,7 @@ def _extract_source(srctree, keep_temp, devbranch, sync, d):
 
         if 'noexec' in (d.getVarFlags('do_unpack', False) or []):
             raise DevtoolError("The %s recipe has do_unpack disabled, unable to "
-                               "extract source" % pn)
+                               "extract source" % pn, 4)
 
     if not sync:
         # Prepare for shutil.move later on
@@ -809,22 +817,19 @@ def modify(args, config, basepath, workspace):
 
     return 0
 
-def _get_patchset_revs(args, srctree, recipe_path):
+def _get_patchset_revs(srctree, recipe_path, initial_rev=None):
     """Get initial and update rev of a recipe. These are the start point of the
     whole patchset and start point for the patches to be re-generated/updated.
     """
     import bb
 
-    if args.initial_rev:
-        return args.initial_rev, args.initial_rev
-
-    # Parse initial rev from recipe
+    # Parse initial rev from recipe if not specified
     commits = []
-    initial_rev = None
     with open(recipe_path, 'r') as f:
         for line in f:
             if line.startswith('# initial_rev:'):
-                initial_rev = line.split(':')[-1].strip()
+                if not initial_rev:
+                    initial_rev = line.split(':')[-1].strip()
             elif line.startswith('# commit:'):
                 commits.append(line.split(':')[-1].strip())
 
@@ -835,7 +840,7 @@ def _get_patchset_revs(args, srctree, recipe_path):
         stdout, _ = bb.process.run('git rev-list --reverse %s..HEAD' %
                                    initial_rev, cwd=srctree)
         newcommits = stdout.split()
-        for i in xrange(min(len(commits), len(newcommits))):
+        for i in range(min(len(commits), len(newcommits))):
             if newcommits[i] == commits[i]:
                 update_rev = commits[i]
 
@@ -861,7 +866,7 @@ def _remove_file_entries(srcuri, filelist):
     entries = []
     for fname in filelist:
         basename = os.path.basename(fname)
-        for i in xrange(len(srcuri)):
+        for i in range(len(srcuri)):
             if (srcuri[i].startswith('file://') and
                     os.path.basename(srcuri[i].split(';')[0]) == basename):
                 entries.append(srcuri[i])
@@ -996,7 +1001,7 @@ def _export_local_files(srctree, rd, destdir):
         bb.process.run(['git', 'checkout', tree, '--', '.'], cwd=srctree,
                         env=dict(os.environ, GIT_WORK_TREE=destdir,
                                  GIT_INDEX_FILE=tmp_index))
-        new_set = _git_ls_tree(srctree, tree, True).keys()
+        new_set = list(_git_ls_tree(srctree, tree, True).keys())
     elif os.path.isdir(local_files_dir):
         # If not tracked by Git, just copy from working copy
         new_set = _ls_tree(os.path.join(srctree, 'oe-local-files'))
@@ -1071,14 +1076,14 @@ def _update_recipe_srcrev(args, srctree, rd, config_data):
                                                   patches_dir)
 
             # Remove deleted local files and "overlapping" patches
-            remove_files = del_f.values() + upd_p.values()
+            remove_files = list(del_f.values()) + list(upd_p.values())
             if remove_files:
                 removedentries = _remove_file_entries(srcuri, remove_files)[0]
                 update_srcuri = True
 
         if args.append:
             files = dict((os.path.join(local_files_dir, key), val) for
-                          key, val in upd_f.items() + new_f.items())
+                          key, val in list(upd_f.items()) + list(new_f.items()))
             removevalues = {}
             if update_srcuri:
                 removevalues  = {'SRC_URI': removedentries}
@@ -1089,11 +1094,11 @@ def _update_recipe_srcrev(args, srctree, rd, config_data):
         else:
             files_dir = os.path.join(os.path.dirname(recipefile),
                                      rd.getVar('BPN', True))
-            for basepath, path in upd_f.iteritems():
+            for basepath, path in upd_f.items():
                 logger.info('Updating file %s' % basepath)
                 _move_file(os.path.join(local_files_dir, basepath), path)
                 update_srcuri= True
-            for basepath, path in new_f.iteritems():
+            for basepath, path in new_f.items():
                 logger.info('Adding new file %s' % basepath)
                 _move_file(os.path.join(local_files_dir, basepath),
                            os.path.join(files_dir, basepath))
@@ -1123,7 +1128,7 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
         raise DevtoolError('unable to find workspace bbappend for recipe %s' %
                            args.recipename)
 
-    initial_rev, update_rev, changed_revs = _get_patchset_revs(args, srctree, append)
+    initial_rev, update_rev, changed_revs = _get_patchset_revs(srctree, append, args.initial_rev)
     if not initial_rev:
         raise DevtoolError('Unable to find initial revision - please specify '
                            'it with --initial-rev')
@@ -1140,7 +1145,7 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
             upd_p, new_p, del_p = _export_patches(srctree, rd, initial_rev,
                                                   all_patches_dir)
             # Remove deleted local files and  patches
-            remove_files = del_f.values() + del_p.values()
+            remove_files = list(del_f.values()) + list(del_p.values())
 
         # Get updated patches from source tree
         patches_dir = tempfile.mkdtemp(dir=tempdir)
@@ -1152,9 +1157,9 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
         srcuri = (rd.getVar('SRC_URI', False) or '').split()
         if args.append:
             files = dict((os.path.join(local_files_dir, key), val) for
-                         key, val in upd_f.items() + new_f.items())
+                         key, val in list(upd_f.items()) + list(new_f.items()))
             files.update(dict((os.path.join(patches_dir, key), val) for
-                              key, val in upd_p.items() + new_p.items()))
+                              key, val in list(upd_p.items()) + list(new_p.items())))
             if files or remove_files:
                 removevalues = None
                 if remove_files:
@@ -1171,11 +1176,11 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
                 logger.info('No patches or local source files needed updating')
         else:
             # Update existing files
-            for basepath, path in upd_f.iteritems():
+            for basepath, path in upd_f.items():
                 logger.info('Updating file %s' % basepath)
                 _move_file(os.path.join(local_files_dir, basepath), path)
                 updatefiles = True
-            for basepath, path in upd_p.iteritems():
+            for basepath, path in upd_p.items():
                 patchfn = os.path.join(patches_dir, basepath)
                 if changed_revs is not None:
                     # Avoid updating patches that have not actually changed
@@ -1190,13 +1195,13 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
             # Add any new files
             files_dir = os.path.join(os.path.dirname(recipefile),
                                      rd.getVar('BPN', True))
-            for basepath, path in new_f.iteritems():
+            for basepath, path in new_f.items():
                 logger.info('Adding new file %s' % basepath)
                 _move_file(os.path.join(local_files_dir, basepath),
                            os.path.join(files_dir, basepath))
                 srcuri.append('file://%s' % basepath)
                 updaterecipe = True
-            for basepath, path in new_p.iteritems():
+            for basepath, path in new_p.items():
                 logger.info('Adding new patch %s' % basepath)
                 _move_file(os.path.join(patches_dir, basepath),
                            os.path.join(files_dir, basepath))
@@ -1283,7 +1288,7 @@ def update_recipe(args, config, basepath, workspace):
 def status(args, config, basepath, workspace):
     """Entry point for the devtool 'status' subcommand"""
     if workspace:
-        for recipe, value in workspace.iteritems():
+        for recipe, value in workspace.items():
             recipefile = value['recipefile']
             if recipefile:
                 recipestr = ' (%s)' % recipefile
@@ -1302,14 +1307,15 @@ def reset(args, config, basepath, workspace):
         if args.all:
             raise DevtoolError("Recipe cannot be specified if -a/--all is used")
         else:
-            check_workspace_recipe(workspace, args.recipename, checksrc=False)
+            for recipe in args.recipename:
+                check_workspace_recipe(workspace, recipe, checksrc=False)
     elif not args.all:
         raise DevtoolError("Recipe must be specified, or specify -a/--all to "
                            "reset all recipes")
     if args.all:
-        recipes = workspace.keys()
+        recipes = list(workspace.keys())
     else:
-        recipes = [args.recipename]
+        recipes = args.recipename
 
     if recipes and not args.no_clean:
         if len(recipes) == 1:
@@ -1323,7 +1329,7 @@ def reset(args, config, basepath, workspace):
         for recipe in recipes:
             targets.append(recipe)
             recipefile = workspace[recipe]['recipefile']
-            if recipefile:
+            if recipefile and os.path.exists(recipefile):
                 targets.extend(get_bbclassextend_targets(recipefile, recipe))
         try:
             exec_build_env_command(config.init_path, basepath, 'bitbake -c clean %s' % ' '.join(targets))
@@ -1390,6 +1396,7 @@ def register_commands(subparsers, context):
     parser_add.add_argument('--fetch', '-f', help='Fetch the specified URI and extract it to create the source tree (deprecated - pass as positional argument instead)', metavar='URI')
     parser_add.add_argument('--version', '-V', help='Version to use within recipe (PV)')
     parser_add.add_argument('--no-git', '-g', help='If fetching source, do not set up source tree as a git repository', action="store_true")
+    parser_add.add_argument('--autorev', '-a', help='When fetching from a git repository, set SRCREV in the recipe to a floating revision instead of fixed', action="store_true")
     parser_add.add_argument('--binary', '-b', help='Treat the source tree as something that should be installed verbatim (no compilation, same directory structure). Useful with binary packages e.g. RPMs.', action='store_true')
     parser_add.add_argument('--also-native', help='Also add native variant (i.e. support building recipe for the build host as well as the target machine)', action='store_true')
     parser_add.add_argument('--src-subdir', help='Specify subdirectory within source tree to use', metavar='SUBDIR')
@@ -1446,9 +1453,9 @@ def register_commands(subparsers, context):
     parser_status.set_defaults(func=status)
 
     parser_reset = subparsers.add_parser('reset', help='Remove a recipe from your workspace',
-                                         description='Removes the specified recipe from your workspace (resetting its state)',
+                                         description='Removes the specified recipe(s) from your workspace (resetting its state back to that defined by the metadata).',
                                          group='working', order=-100)
-    parser_reset.add_argument('recipename', nargs='?', help='Recipe to reset')
+    parser_reset.add_argument('recipename', nargs='*', help='Recipe to reset')
     parser_reset.add_argument('--all', '-a', action="store_true", help='Reset all recipes (clear workspace)')
     parser_reset.add_argument('--no-clean', '-n', action="store_true", help='Don\'t clean the sysroot to remove recipe output')
     parser_reset.set_defaults(func=reset)

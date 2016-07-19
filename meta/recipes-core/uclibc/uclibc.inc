@@ -52,18 +52,20 @@ EXTRA_OEMAKE = "${OEMAKE_NO_CC} \
                 'HOSTCC=${BUILD_CC}' \
                 'HOST_CFLAGS=${BUILD_CFLAGS}' \
                 'CC=${CC}' \
-                ARCH=${UCLIBC_ARCH}"
+                ARCH=${UCLIBC_ARCH} \
+                V=1"
 
 EXTRA_OEMAKE_task_do_package = "${OEMAKE_NO_CC}"
-
-# enable verbose output:
-export V="2"
 
 # -O<n> -fno-omit-frame-pointer ends up with GCC ICE on thumb as reported
 # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44860
 #
 CFLAGS_remove_arm = "-fno-omit-frame-pointer"
 UCLIBC_EXTRA_CFLAGS  = "${@oe_filter_out('(-I\S+|-i\S+)', '${CFLAGS}', d)}"
+
+# Doesn't compile in MIPS16e mode due to use of hand-written
+# assembly
+MIPS_INSTRUCTION_SET_pn-uclibc = "mips"
 
 configmangle = '/^KERNEL_HEADERS/d; \
                 /^RUNTIME_PREFIX/d; \
@@ -88,16 +90,6 @@ python () {
     if "${OE_DEL}":
         d.setVar('configmangle_append', "${OE_DEL}" + "\n")
 
-    # by default uclibc uses mips1 ISA for o32 ABI
-    # if we use TARGET_CC_ARCH="-march=mips32" we end up 
-    # with conflicting march options to gcc. Here we
-    # ask for MIPS32 ISA to match the chosen arch
-    tune = d.getVar("DEFAULTTUNE", True)
-    if tune.startswith('mips32'):
-        import re
-        tune = re.sub('(el)*(-nf)*', '', tune)
-        d.setVar('configmangle_append',
-                 "/^### MIPS32_CHECK$/a\\\nCONFIG_MIPS_ISA_%s=y\n\n" % (tune.upper()))
     if "${OE_FEATURES}":
         d.setVar('configmangle_append',
                    "/^### DISTRO FEATURES$/a\\\n%s\n\n" %
@@ -146,7 +138,6 @@ do_configure() {
         echo "### FPU" >>${S}/merged.config
         echo "### ABI" >>${S}/merged.config
         echo "### DISTRO FEATURES" >>${S}/merged.config
-        echo "### MIPS32_CHECK" >>${S}/merged.config
 
         # Mangle the resulting .config depending on OE variables
         sed -i -e '${configmangle}' ${S}/merged.config

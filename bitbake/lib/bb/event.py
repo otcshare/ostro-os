@@ -24,10 +24,7 @@ BitBake build tools.
 
 import os, sys
 import warnings
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
 import logging
 import atexit
 import traceback
@@ -107,7 +104,7 @@ def fire_class_handlers(event, d):
 
     eid = str(event.__class__)[8:-2]
     evt_hmap = _event_handler_map.get(eid, {})
-    for name, handler in _handlers.iteritems():
+    for name, handler in list(_handlers.items()):
         if name in _catchall_handlers or name in evt_hmap:
             if _eventfilter:
                 if not _eventfilter(name, handler, event, d):
@@ -192,7 +189,7 @@ def register(name, handler, mask=None, filename=None, lineno=None):
 
     if handler is not None:
         # handle string containing python code
-        if isinstance(handler, basestring):
+        if isinstance(handler, str):
             tmp = "def %s(e):\n%s" % (name, handler)
             try:
                 code = bb.methodpool.compile_cache(tmp)
@@ -229,6 +226,13 @@ def register(name, handler, mask=None, filename=None, lineno=None):
 def remove(name, handler):
     """Remove an Event handler"""
     _handlers.pop(name)
+
+def get_handlers():
+    return _handlers
+
+def set_handlers(handlers):
+    global _handlers
+    _handlers = handlers
 
 def set_eventfilter(func):
     global _eventfilter
@@ -642,6 +646,33 @@ class MetadataEvent(Event):
         Event.__init__(self)
         self.type = eventtype
         self._localdata = eventdata
+
+class ProcessStarted(Event):
+    """
+    Generic process started event (usually part of the initial startup)
+    where further progress events will be delivered
+    """
+    def __init__(self, processname, total):
+        Event.__init__(self)
+        self.processname = processname
+        self.total = total
+
+class ProcessProgress(Event):
+    """
+    Generic process progress event (usually part of the initial startup)
+    """
+    def __init__(self, processname, progress):
+        Event.__init__(self)
+        self.processname = processname
+        self.progress = progress
+
+class ProcessFinished(Event):
+    """
+    Generic process finished event (usually part of the initial startup)
+    """
+    def __init__(self, processname):
+        Event.__init__(self)
+        self.processname = processname
 
 class SanityCheck(Event):
     """

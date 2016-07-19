@@ -1,0 +1,133 @@
+#!/usr/bin/python3
+#
+# Build performance test script
+#
+# Copyright (c) 2016, Intel Corporation.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms and conditions of the GNU General Public License,
+# version 2, as published by the Free Software Foundation.
+#
+# This program is distributed in the hope it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+"""Build performance test script"""
+import argparse
+import errno
+import fcntl
+import logging
+import os
+import sys
+from datetime import datetime
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/lib')
+import scriptpath
+scriptpath.add_oe_lib_path()
+from oeqa.buildperf import BuildPerfTestRunner, KernelDropCaches
+from oeqa.utils.commands import runCmd
+
+
+# Set-up logging
+LOG_FORMAT = '[%(asctime)s] %(levelname)s: %(message)s'
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+log = logging.getLogger()
+
+
+def acquire_lock(lock_f):
+    """Acquire flock on file"""
+    log.debug("Acquiring lock %s", os.path.abspath(lock_f.name))
+    try:
+        fcntl.flock(lock_f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError as err:
+        if err.errno == errno.EAGAIN:
+            return False
+        raise
+    log.debug("Lock acquired")
+    return True
+
+
+def pre_run_sanity_check():
+    """Sanity check of build environment"""
+    build_dir = os.environ.get("BUILDDIR")
+    if not build_dir:
+        log.error("BUILDDIR not set. Please run the build environmnent setup "
+                  "script.")
+        return False
+    if os.getcwd() != build_dir:
+        log.error("Please run this script under BUILDDIR (%s)", build_dir)
+        return False
+
+    ret = runCmd('which bitbake', ignore_status=True)
+    if ret.status:
+        log.error("bitbake command not found")
+        return False
+
+    return True
+
+
+def setup_file_logging(log_file):
+    """Setup loggin to file"""
+    log_dir = os.path.dirname(log_file)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    formatter = logging.Formatter(LOG_FORMAT)
+    handler = logging.FileHandler(log_file)
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
+
+
+def parse_args(argv):
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    parser.add_argument('-D', '--debug', action='store_true',
+                        help='Enable debug level logging')
+    parser.add_argument('--globalres-file',
+                        help="Append results to 'globalres' csv file")
+    parser.add_argument('--lock-file', default='./oe-build-perf.lock',
+                        metavar='FILENAME',
+                        help="Lock file to use")
+    parser.add_argument('-o', '--out-dir', default='results-{date}',
+                        help="Output directory for test results")
+
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    """Script entry point"""
+    args = parse_args(argv)
+
+    if args.debug:
+        log.setLevel(logging.DEBUG)
+
+    lock_f = open(args.lock_file, 'w')
+    if not acquire_lock(lock_f):
+        log.error("Another instance of this script is running, exiting...")
+        return 1
+
+    if not pre_run_sanity_check():
+        return 1
+
+    # Check our capability to drop caches and ask pass if needed
+    KernelDropCaches.check()
+
+    # Set-up log file
+    out_dir = args.out_dir.format(date=datetime.now().strftime('%Y%m%d%H%M%S'))
+    setup_file_logging(os.path.join(out_dir, 'output.log'))
+
+    # Run actual tests
+    runner = BuildPerfTestRunner(out_dir)
+    ret = runner.run_tests()
+    if not ret:
+        if args.globalres_file:
+            runner.update_globalres_file(args.globalres_file)
+
+    return ret
+
+
+if __name__ == '__main__':
+    sys.exit(main())
+

@@ -1,8 +1,11 @@
 # Inherit this class in recipes to enable building their introspection files
 
-# This sets up autoconf-based recipes to build introspection data (or not),
+# python3native is inherited to prevent introspection tools being run with
+# host's python 3 (they need to be run with native python 3)
+#
+# This also sets up autoconf-based recipes to build introspection data (or not),
 # depending on distro and machine features (see gobject-introspection-data class).
-inherit gobject-introspection-data
+inherit python3native gobject-introspection-data
 EXTRA_OECONF_prepend_class-target = "${@bb.utils.contains('GI_DATA_ENABLED', 'True', '--enable-introspection', '--disable-introspection', d)} "
 
 # When building native recipes, disable introspection, as it is not necessary,
@@ -20,13 +23,6 @@ DEPENDS_append_class-target = " gobject-introspection gobject-introspection-nati
 # needed for m4 macros.
 DEPENDS_append_class-native = " gobject-introspection-native"
 DEPENDS_append_class-nativesdk = " gobject-introspection-native"
-
-# This is necessary for python scripts to succeed - distutils fails if these
-# are not set
-export BUILD_SYS
-export HOST_SYS
-export STAGING_INCDIR
-export STAGING_LIBDIR
 
 # This is used by introspection tools to find .gir includes
 export XDG_DATA_DIRS = "${STAGING_DATADIR}"

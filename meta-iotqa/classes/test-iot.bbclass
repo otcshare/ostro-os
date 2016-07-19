@@ -92,8 +92,8 @@ do_test_iot[lockfiles] += "${TESTIMAGELOCK}"
 #overwrite copy src dir to dest
 def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+\.pyc"]):
     import shutil, re
-    notOverWrite = map(re.compile, notOverWrite)
-    ignores = map(re.compile, ignores)
+    notOverWrite = list(map(re.compile, notOverWrite))
+    ignores = list(map(re.compile, ignores))
     if os.path.isdir(src):
         if not os.path.isdir(dest):
             os.makedirs(dest)
@@ -101,8 +101,8 @@ def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+
         for f in files:
             fsrc = os.path.join(src, f)
             fdest = os.path.join(dest, f)
-            if filter(lambda x:x.match(f), notOverWrite) and os.path.exists(fdest) or\
-               filter(lambda x:x.match(f), ignores):
+            if any(map(lambda x:x.match(f), notOverWrite)) and os.path.exists(fdest) or\
+               any(map(lambda x:x.match(f), ignores)):
                 continue
             recursive_overwrite(fsrc, fdest)
     else:
@@ -113,10 +113,9 @@ def recursive_overwrite(src, dest, notOverWrite=[r'__init__\.py'], ignores=[r".+
    
 #export test asset
 def export_testsuite(d, exportdir):
-    import pkgutil
-    import shutil
+    import platform
 
-    oeqadir = pkgutil.get_loader("oeqa").filename
+    oeqadir = d.expand('${COREBASE}/meta/lib/oeqa')
     recursive_overwrite(oeqadir, os.path.join(exportdir, "oeqa"))
     
     bbpath = d.getVar("BBPATH", True).split(':')
@@ -126,7 +125,25 @@ def export_testsuite(d, exportdir):
                         dest=os.path.join(exportdir))
             bb.plain("Exported tests from %s to: %s" % \
                      (os.path.join(p, "lib"), exportdir) )
-
+    # runtest.py must use Python3 if we are on Python3.
+    if int(platform.python_version().split('.')[0]) >= 3:
+        runtestpy = os.path.join(exportdir, 'runtest.py')
+        with open(runtestpy) as f:
+            code = f.read()
+        # Unfortunately, only replacing the first line is not enough
+        # because the CI test scripts hard-code "python iottest/runtest.py".
+        # Instead of teaching the test scripts to detect the right Python
+        # version, we simply fix the incorrect invocation by re-executing
+        # under Python3.
+        code = code.replace('#!/usr/bin/env python',
+                            # ''' string would be nicer, but leads to a bbclass parse error.
+                            '#!/usr/bin/env python3\n'
+                            'import platform\n'
+                            'if int(platform.python_version().split(".")[0]) < 3:\n'
+                            '    import os, sys\n'
+                            '    os.execvp("python3", [__file__] + sys.argv)\n')
+        with open(runtestpy, 'w') as f:
+            f.write(code)
 
 #dump build data to external file
 def dump_builddata(d, tdir):
