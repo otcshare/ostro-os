@@ -26,6 +26,7 @@ DEPENDS_virtclass-native = "fastjar-native jaxp1.3-native xml-commons-resolver1.
 RDEPENDS_${PN} = "libjaxp1.3-java libxml-commons-resolver1.1-java"
 RDEPENDS_${PN}_virtclass-native = ""
 
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
   find src -exec \
     sed -i -e "s|@impl.name@|Xerces-J ${PV}|" \

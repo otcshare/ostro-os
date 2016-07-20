@@ -22,6 +22,7 @@ FINDARGS = "-name '*.properties'"
 CLEAN_PATH = ""
 
 # Some projects have a replaceable version number in their manifest template.
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
     if [ -d src/conf ]
     then
