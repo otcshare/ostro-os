@@ -13,6 +13,7 @@ S = "${WORKDIR}/xml-commons-resolver-${PV}"
 DEPENDS = "fastjar-native jaxp1.3"
 DEPENDS_virtclass-native = "fastjar-native jaxp1.3-native"
 
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
   find src -exec \
     sed -i -e "s|@impl.name@|XmlResolver|" \

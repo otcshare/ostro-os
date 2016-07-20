@@ -17,6 +17,7 @@ IMPL_REVISION = "1"
 JARFILENAME = "servlet-api-2.4.${IMPL_REVISION}.jar"
 ALTJARFILENAMES = "servlet-api-2.4.jar servlet-api.jar servlet2.4.jar"
 
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
   sed -i -e "s|2.3.@implementation.version@|2.4.${IMPL_REVISION}|" src/etc/manifest
 }

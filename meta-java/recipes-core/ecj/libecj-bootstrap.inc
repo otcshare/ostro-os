@@ -15,6 +15,7 @@ S = "${WORKDIR}"
 
 JAR = "ecj-bootstrap-${PV}.jar"
 
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
   if [ ! -d source ]; then
     mkdir source
