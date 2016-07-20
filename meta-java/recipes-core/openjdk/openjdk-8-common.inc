@@ -271,10 +271,8 @@ def version_specific_cflags(d):
         # doesn't work anyway.
         version = d.getVar('GCCVERSION', expand=True)[0]
 
-    if int(version) >= 4:
-        extraflags = d.getVar('FLAGS_GCC%d' % int(version), True)
-
-    return ''.join(extraflags)
+    extraflags = d.getVar('FLAGS_GCC%d' % int(version), True) or ''
+    return extraflags
 
 CFLAGS_append = " ${@version_specific_cflags(d)}"
 CXXFLAGS_append = " ${@version_specific_cflags(d)}"
