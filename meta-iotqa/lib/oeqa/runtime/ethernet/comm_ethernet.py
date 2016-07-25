@@ -71,9 +71,14 @@ class CommEthernet(oeRuntimeTest):
         # Use this prefix to get corresponding interface of the host
         (status, ifconfig) = shell_cmd_timeout('ifconfig')
         for line in ifconfig.splitlines():
-            if "inet addr:%s" % prefix in line.decode('ascii'):
+            if type(line) is bytes:
+                linetemp = line.decode('ascii')
+            if "inet addr:%s" % prefix in linetemp:
                 index = ifconfig.splitlines().index(line)
-                return ifconfig.splitlines()[index - 1].decode('ascii').split()[0]
+                interface = ifconfig.splitlines()[index - 1]
+                if type(interface) is bytes:
+                    interface = interface.decode('ascii')
+                return interface.split()[0]
 
         # if above return is not OK, there might be error, return Blank
         self.assertEqual(1, 0, msg="Host interface with %s is not found" % prefix)
@@ -90,12 +95,14 @@ class CommEthernet(oeRuntimeTest):
         # ping6 needs host's ethernet interface by -I, 
         # because default gateway is only for ipv4
         host_eth = self.get_interface()
-        cmd = "ping6 -I %s %s -c 1" % (host_eth.decode("ascii"), ip6_address) 
+        if type(host_eth) is bytes:
+            host_eth = host_eth.decode("ascii")
+        cmd = "ping6 -I %s %s -c 1" % (host_eth, ip6_address) 
         status, output = shell_cmd_timeout(cmd, timeout=60)
         ##
         # TESTPOINT: #1, test_ethernet_ipv6_ping
         #
-        self.assertEqual(status, 0, msg="Error messages: %s" % output.decode("ascii"))
+        self.assertEqual(status, 0, msg="Error messages: %s" % output)
 
     @tag(FeatureID="IOTOS-489")
     def test_ethernet_ipv6_ssh(self):
@@ -109,16 +116,19 @@ class CommEthernet(oeRuntimeTest):
         # Same as ping6, ssh with ipv6 also need host's ethernet interface
         # ssh root@<ipv6 address>%<eth>
         host_eth = self.get_interface()
-
+        if type(host_eth) is bytes:
+            host_eth = host_eth.decode("ascii")
         exp = os.path.join(os.path.dirname(__file__), "files/ipv6_ssh.exp")
-        cmd = "expect %s %s %s %s" % (exp, ip6_address, "ostro", host_eth.decode("ascii"))
+        cmd = "expect %s %s %s %s" % (exp, ip6_address, "ostro", host_eth)
         status, output = shell_cmd_timeout(cmd, timeout=60)
+        if type(output) is bytes:
+            output = output.decode("ascii")
         # In expect, it will input yes and password while login. And do 'ls /'
         # If see /home folder, it will return 2 as successful status.
         ##
         # TESTPOINT: #1, test_ethernet_ipv6_ssh
         #
-        self.assertEqual(status, 2, msg="Error messages: %s" % output.decode("ascii"))
+        self.assertEqual(status, 2, msg="Error messages: %s" % output)
 
 ##
 # @}

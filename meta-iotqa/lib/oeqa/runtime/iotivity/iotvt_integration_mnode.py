@@ -213,7 +213,9 @@ class IOtvtIntegrationMNode(oeRuntimeTest):
         ##
         # TESTPOINT: #1, test_group
         #
-        self.assertEqual(status, 2, msg="expect excution fail\n %s" % output.decode("ascii"))
+        if type(output) is bytes:
+            output = output.decode('ascii')
+        self.assertEqual(status, 2, msg="expect excution fail\n %s" % output)
 
     def test_mnode_presence_unicast(self):
         '''
