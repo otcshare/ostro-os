@@ -1,0 +1,13 @@
+appfwtest-commonapp:x:1004:1004::/home/appfwtest-commonapp:/sbin/nologin
+evil-bad-groups:x:1003:1003::/home/evil-bad-groups:/sbin/nologin
+foodine-pythontest:x:1002:1002::/home/foodine-pythontest:/sbin/nologin
+iodine-nodetest:x:1001:1001::/home/iodine-nodetest:/sbin/nologin
+messagebus:x:998:998::/var/lib/dbus:/bin/false
+nobody:x:65534:65534:nobody:/nonexistent:/bin/sh
+restful:x:991:991::/var/lib/empty:/bin/false
+root:x:0:0:root:/home/root:/bin/sh
+sshd:x:992:992::/var/run/sshd:/bin/false
+systemd-bus-proxy:x:993:993::/:/bin/nologin
+systemd-network:x:994:994::/:/bin/nologin
+systemd-timesync:x:995:995::/:/bin/nologin
+yoyodine-nativetest:x:1000:1000::/home/yoyodine-nativetest:/sbin/nologin

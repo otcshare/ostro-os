@@ -207,6 +207,11 @@ def swupd_create_rootfs(d):
         bb.debug(2, "Skipping swupd_create_rootfs() in bundle image %s for bundle %s." % (pn, bndl))
         return
 
+    havebundles = (d.getVar('SWUPD_BUNDLES', True) or '') != ''
+    if not havebundles:
+        bb.debug(2, "Skipping swupd_create_rootfs(), original rootfs can be used because no additional bundles are defined")
+        return
+
     # Sanity checking was already done in swupdimage.bbclass.
     # Here we can simply use the settings.
     imagebundles = d.getVarFlag('SWUPD_IMAGES', imageext, True).split() if imageext else []
@@ -286,9 +291,15 @@ fakeroot python do_copy_bundle_contents () {
     manifest_cmd = 'cd %s && find . ! -path . > %s' % (rootfs, outfile)
     subprocess.call(manifest_cmd, shell=True, stderr=subprocess.STDOUT)
 
-    # Copy the entire mega image's contents, we'll prune this down to only
-    # the files in the manifest in do_prune_bundle
-    copyxattrtree(d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
+    havebundles = (d.getVar('SWUPD_BUNDLES', True) or '') != ''
+    if havebundles:
+        # Copy the entire mega image's contents, we'll prune this down to only
+        # the files in the manifest in do_prune_bundle
+        copyxattrtree(d.getVar('MEGA_IMAGE_ROOTFS', True), bundledir)
+    else:
+        # Copy the original rootfs. There isn't any other rootfs because we
+        # don't have extra bundles.
+        copyxattrtree(d.getVar('IMAGE_ROOTFS', True), bundledir)
 
     create_bundle_manifest(d, bndl)
 }
