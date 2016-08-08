@@ -18,6 +18,7 @@ IMPL_REVISION = "public_draft"
 JARFILENAME = "jsp-api-2.0.${IMPL_REVISION}.jar"
 ALTJARFILENAMES = "jsp-api-2.0.jar jsp-api.jar"
 
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
   sed -i -e "s|@implementation.version@|${IMPL_REVISION}|" src/etc/manifest
 }
