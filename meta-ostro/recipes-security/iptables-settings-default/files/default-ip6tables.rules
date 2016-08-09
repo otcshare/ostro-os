@@ -7,6 +7,7 @@
 # allow containers to access DHCP service
 -A INPUT -i ve-+ -p udp -m udp --dport 67 -j ACCEPT
 -A INPUT -s fe80::/10 -j ACCEPT
+-A INPUT -i lo -j ACCEPT
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p ipv6-icmp -j ACCEPT
 # allow forwarding traffic to/from containers
