@@ -4,7 +4,6 @@ PATCHES_URI="\
     file://dont-expect-fqpn-for-make.patch;striplevel=0 \
     file://openjdk8-no-genx11-in-headless.patch;apply=no \
     file://openjdk8-no-unused-deps.patch;apply=no \
-    file://openjdk8-avoid-early-ldflags-expansion.patch;apply=no \
     file://openjdk8-find-compiler-fix-env-respect.patch;apply=no \
     file://openjdk8-prevent-debuginfo-in-favour-of-openembedded-package-split.patch;apply=no \
 "
@@ -16,40 +15,40 @@ BUILD_DIR_ECJ = "openjdk.build-ecj"
 # Force arm mode for now
 ARM_INSTRUCTION_SET_armv4t = "ARM"
 
-# Enable zero mode for arm based builds, as normal hotspot fails to build 
+# Enable zero mode for arm based builds, as normal hotspot fails to build
 PACKAGECONFIG_append_arm = " zero"
 
-CORBA_CHANGESET = "7deeb4f70404"
-SRC_URI[corba.md5sum] = "544b4963d14fb7155b12dbc56d058649"
-SRC_URI[corba.sha256sum] = "a75c31706f634585baf0d0a0b20e321ac634d41d6afb62bd6ffb1f9c0b766d09"
+CORBA_CHANGESET = "56b133772ec1"
+SRC_URI[corba.md5sum] = "b67bd442400e6805ddb986e78adc2834"
+SRC_URI[corba.sha256sum] = "d5aabb9b3681b0593dde1b9eee4ff9b4cbabe7568b041f9e63e6fa73ba11bb86"
 
-HOTSPOT_CHANGESET = "d7b01fb81aa8"
-SRC_URI[hotspot.md5sum] = "9a94802c1179faedf06d65d2f6fcc6c7"
-SRC_URI[hotspot.sha256sum] = "5dacf0b9c86aa78061ca87c9ade1708b56deba35e2e559dcf9dbc50d85ba3ace"
+HOTSPOT_CHANGESET = "ac29c9c1193a"
+SRC_URI[hotspot.md5sum] = "4383d833de07fc617595a01a78efd0fc"
+SRC_URI[hotspot.sha256sum] = "1e36c6d207ac1a7d6d08f28a61bf061188df0562d89baf606138d8245d690982"
 
-JAXP_CHANGESET = "acbcb6682c9b"
-SRC_URI[jaxp.md5sum] = "34b6700d03a0e2f13a272b4121536544"
-SRC_URI[jaxp.sha256sum] = "b6b60e174c3d980773dd56e0a2e7cacc26b05e401f6a08a1ffef594b6166865a"
+JAXP_CHANGESET = "1f032000ff4b"
+SRC_URI[jaxp.md5sum] = "a4a46860d00f8b513a690166b9ae0b56"
+SRC_URI[jaxp.sha256sum] = "dfa0098ca9b9f99cb9de4ee9f3c61b0ad28f968ecda770f09e603c6dd8f78df3"
 
-JAXWS_CHANGESET = "6aba0f814a15"
-SRC_URI[jaxws.md5sum] = "bad8a6e540dca0889d5c0edef47fe6ca"
-SRC_URI[jaxws.sha256sum] = "ae57bb090ec2c5338c6f740dbfd20a92f52e60379b764c4bc874464c5955b375"
+JAXWS_CHANGESET = "81f2d81a48d7"
+SRC_URI[jaxws.md5sum] = "0077cb7f1d1b31ba882f910bd3c30050"
+SRC_URI[jaxws.sha256sum] = "c28322d7a9805d06b6f3a49d316aa4746076dfc106431a952fe0d12b6690cbdc"
 
-JDK_CHANGESET = "39baa472e20c"
-SRC_URI[jdk.md5sum] = "746e4d38fa3d31a22239d160688ed447"
-SRC_URI[jdk.sha256sum] = "e3587fa57eec72c561f0695723649a745966bb2a74803ff8a451b80fd2079f99"
+JDK_CHANGESET = "48c99b423839"
+SRC_URI[jdk.md5sum] = "316fc871a823ff8f1db39a2fca51bd12"
+SRC_URI[jdk.sha256sum] = "bca18458ba0a0b8d79639829b8a71cdf65dd788b5c28658102b6b4691a47a420"
 
-LANGTOOLS_CHANGESET = "10ffafaf5340"
-SRC_URI[langtools.md5sum] = "4562acae958cc9b9f68300d5c2e6feb3"
-SRC_URI[langtools.sha256sum] = "5d14b666fbc6ee93d60c6a135eb8163a95ca5de96d390894e0c0b59719cf7fe4"
+LANGTOOLS_CHANGESET = "0549bf2f507d"
+SRC_URI[langtools.md5sum] = "bff92b915d26afd0c9b7c4b9013ee424"
+SRC_URI[langtools.sha256sum] = "4a918bab7a8f13b6705085be0d043b03e24afb4ff3c67ad98000c6b9fe577cb8"
 
-NASHORN_CHANGESET = "9ff5c2181333"
-SRC_URI[nashorn.md5sum] = "c6d234d73ab4d95072b7600b731bbfff"
-SRC_URI[nashorn.sha256sum] = "f56ee0bc65c8f4954bbec0e777c0158a44dc4b744407991a96f6627be433807d"
+NASHORN_CHANGESET = "0948e61a3722"
+SRC_URI[nashorn.md5sum] = "19e79a31ad20b55b47d6b9f1b20eaac0"
+SRC_URI[nashorn.sha256sum] = "caa1f648cfbe45c081460bc9c2d9a7b83910bb468c325d8acc2ee4417460915e"
 
-OPENJDK_CHANGESET = "e8bed1496ff2"
-SRC_URI[openjdk.md5sum] = "182992a90cbe209b34142f934319704b"
-SRC_URI[openjdk.sha256sum] = "d835a9adcf766e68d5a73fb36040d9e35b36c0363c883b8f05560c49bb22bf0c"
+OPENJDK_CHANGESET = "bf0932d3e0f8"
+SRC_URI[openjdk.md5sum] = "2b52cc3d439fe0da2ecbb28671fbe5aa"
+SRC_URI[openjdk.sha256sum] = "66fa6ecf3047b7d8a216c1372616babe96f0fb40e89cb51575b80bf602d9ba59"
 
 OPENJDK_HG_U = "jdk8u"
 OPENJDK_HG_URL = "http://hg.openjdk.java.net/jdk8u/${OPENJDK_HG_U}"

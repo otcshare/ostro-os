@@ -1,4 +1,4 @@
-require openjdk-8-release-72b05.inc
+require openjdk-8-release-102b14.inc
 require openjdk-8-cross.inc
 
 # some patches extracted from http://cr.openjdk.java.net/~rkennke/shark-build-hotspot/webrev.01/hotspot.patch
@@ -8,10 +8,10 @@ PATCHES_URI_append = "\
     file://openjdk8-restrict-to-staging-dir.patch;apply=no \
     file://openjdk8-fix-shark-build.patch;apply=no \
     file://openjdk8-fix-shark-stdc++11.patch;apply=no \
-    file://openjdk8-use_builtin_frame_address_0_rather_than_returning_address_of_local_variable.patch;apply=no \
     file://openjdk8-fix-assembler-flag-handling-in-makefile.patch;apply=no \
     file://openjdk8-fix-adlc-flags.patch;apply=no \
     file://openjdk8-silence-d_fortify_source-warning.patch;apply=no \
+    file://openjdk8-fix-zero-mode-crash.patch;apply=no \
 "
 
 do_install() {
