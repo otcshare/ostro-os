@@ -7,11 +7,11 @@ Yocto Project build systems.
 This layer depends on:
 
 URI: git://git.openembedded.org/openembedded-core
-branch: daisy
+branch: krogoth
 revision: HEAD
 
 URI: git://git.openembedded.org/meta-openembedded
-branch: daisy
+branch: krogoth
 revision: HEAD
 
 Contributing
