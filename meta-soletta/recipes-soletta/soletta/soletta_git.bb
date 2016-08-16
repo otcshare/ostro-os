@@ -105,6 +105,9 @@ do_configure_append() {
        sed -i -e 's/^ *FLOW_NODE_TYPE_GTK=.*/# FLOW_NODE_TYPE_GTK is not set/g' ${S}/.config
    fi
 
+   sed -i "s/^\(CONFIG_LDFLAGS=\).*/\1\"${LDFLAGS}\"/g" ${S}/.config
+
+   oe_runmake oldconfig
 }
 
 do_compile() {
