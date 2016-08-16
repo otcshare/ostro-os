@@ -84,6 +84,8 @@ get_jdk7_jobs[vardepsexclude] += "OPENJDK_PARALLEL_MAKE"
 JDK_JOBS = "${@get_jdk7_jobs(d)}"
 
 EXTRA_OECONF = " \
+    --enable-downloading=no \
+    \
     --disable-tests \
     --disable-hotspot-tests \
     --disable-langtools-tests \
