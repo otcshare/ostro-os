@@ -1,7 +1,7 @@
 DESCRIPTION = "nodeJS Evented I/O for V8 JavaScript"
 HOMEPAGE = "http://nodejs.org"
-LICENSE = "MIT & BSD-2-Clause & BSD-3-Clause & ISC & AFL-2.0 & Apache-2.0 & OpenSSL & Zlib & Artistic-2.0 & (BSD-3-Clause | GPLv2)"
-LIC_FILES_CHKSUM = "file://LICENSE;md5=b70c304f43f326ddbc3474ba2b685522"
+LICENSE = "MIT & BSD-2-Clause & BSD-3-Clause & ISC & CC-BY-3.0 & AFL-2.1 & Apache-2.0 & OpenSSL & Zlib & Artistic-2.0 & (BSD-3-Clause | GPLv2)"
+LIC_FILES_CHKSUM = "file://LICENSE;md5=8e3c01094f0fcb889b13f0354e52f914"
 
 DEPENDS = "openssl"
 DEPENDS_append_class-target = " nodejs-native"
@@ -10,17 +10,17 @@ COMPATIBLE_MACHINE_armv4 = "(!.*armv4).*"
 COMPATIBLE_MACHINE_armv5 = "(!.*armv5).*"
 COMPATIBLE_MACHINE_mips64 = "(!.*mips64).*"
 
-SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.gz;name=node \
-           http://nodejs.org/download/release/v${PV}/node-v${PV}-headers.tar.gz;name=node-headers;unpack=false \
+SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz;name=node \
+           http://nodejs.org/dist/v${PV}/node-v${PV}-headers.tar.gz;name=node-headers;unpack=false \
            file://0002-generate-pkg-config-file-for-node-and-install.patch \
 "
 SRC_URI_append_quark = "file://0001-nodejs-add-compile-flag-options-for-quark.patch"
 SRC_URI_append_intel-quark = "file://0001-nodejs-add-compile-flag-options-for-quark.patch"
 
-SRC_URI[node.md5sum] = "ef756c3e773f08bccada08eb37ee699c"
-SRC_URI[node.sha256sum] = "f3e604cc4d05a4810c37cd43a838a2dc4399d517bd1e8c53b7670dcffc4dc481"
-SRC_URI[node-headers.md5sum] = "b021c28a69e29d152509c1606e1587b6"
-SRC_URI[node-headers.sha256sum] = "e759ee28a27dc47a5c80e48b063c0bee015f3b6d2f8f593ad0eabfab0ebb3922"
+SRC_URI[node.md5sum] = "ac8e38c83f29e83d496d4bc4283487b0"
+SRC_URI[node.sha256sum] = "97b99d378c56802444208409568e2e66c46332897f06aead74d1ffbe733bd488"
+SRC_URI[node-headers.md5sum] = "6c93a4cb93e1ddc793061f148ee2b4e6"
+SRC_URI[node-headers.sha256sum] = "12ee966eef2abc928f6d7fcf9cfcf2913ef0e59ae07e2dcc20726246ab174fd8"
 
 S = "${WORKDIR}/node-v${PV}"
 

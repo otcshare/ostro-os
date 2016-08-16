@@ -1,6 +1,6 @@
-From 178d0624120748a8625bb1169a9c65d2dfbc76aa Mon Sep 17 00:00:00 2001
+From 56d77d9bc7fc99d30b3e682bb82e8c6cac9c86f8 Mon Sep 17 00:00:00 2001
 From: Krisztian Litkey <krisztian.litkey@intel.com>
-Date: Fri, 8 Jan 2016 12:43:09 +0200
+Date: Wed, 17 Aug 2016 15:29:30 +0300
 Subject: [PATCH] nodejs: generate pkg-config file for node and install it
  during make install.
 
@@ -12,10 +12,10 @@ Signed-off-by: Sudarsana Nagineni <sudarsana.nagineni@intel.com>
  2 files changed, 109 insertions(+), 1 deletion(-)
 
 diff --git a/Makefile b/Makefile
-index 02619fa..8363801 100644
+index fae0958..372c48b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -59,7 +59,7 @@ config.gypi: configure
+@@ -76,7 +76,7 @@ config.gypi: configure
  		$(error No $@, please run ./configure first)
  	fi
  
@@ -24,7 +24,7 @@ index 02619fa..8363801 100644
  	$(PYTHON) tools/install.py $@ '$(DESTDIR)' '$(PREFIX)'
  
  uninstall:
-@@ -462,6 +462,17 @@ ifneq ($(haswrk), 0)
+@@ -595,6 +595,17 @@ ifneq ($(haswrk), 0)
  	@exit 1
  endif
  
@@ -43,10 +43,10 @@ index 02619fa..8363801 100644
  	@$(NODE) benchmark/common.js net
  
 diff --git a/configure b/configure
-index 0e83d8a..b9671c0 100755
+index 0be3a52..140bd4f 100755
 --- a/configure
 +++ b/configure
-@@ -75,6 +75,11 @@ parser.add_option('--gdb',
+@@ -77,6 +77,11 @@ parser.add_option('--gdb',
      dest='gdb',
      help='add gdb support')
  
@@ -58,7 +58,7 @@ index 0e83d8a..b9671c0 100755
  parser.add_option('--no-ifaddrs',
      action='store_true',
      dest='no_ifaddrs',
-@@ -1125,9 +1130,16 @@ config = {
+@@ -1176,9 +1181,16 @@ config = {
    'PYTHON': sys.executable,
  }
  
@@ -75,7 +75,7 @@ index 0e83d8a..b9671c0 100755
  config = '\n'.join(map('='.join, config.iteritems())) + '\n'
  
  write('config.mk',
-@@ -1147,4 +1159,89 @@ gyp_args += args
+@@ -1198,4 +1210,89 @@ gyp_args += args
  if warn.warned:
    warn('warnings were emitted in the configure phase')
  
