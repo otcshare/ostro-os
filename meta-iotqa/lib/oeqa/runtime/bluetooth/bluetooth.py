@@ -93,9 +93,13 @@ class BTFunction(object):
         btmac = self.get_bt_mac()
         cmd = 'expect %s %s %s' % (exp, self.target.ip, btmac)
         (status, output) = shell_cmd_timeout(cmd)
-        assert status == 0, "Get hci0 name fails: %s" % output.decode("ascii")
+        if type(output) is bytes:
+            output = output.decode("ascii")
+        assert status == 0, "Get hci0 name fails: %s" % output
         for line in output.splitlines():
-            if "Controller %s" % btmac in line.decode('ascii'):
+            if type(line) is bytes:
+                line = line.decode('ascii')
+            if "Controller %s" % btmac in line:
                 return line.split()[3]
         return ""
 
@@ -131,7 +135,9 @@ class BTFunction(object):
         exp = os.path.join(os.path.dirname(__file__), "files/power_on.exp")
         target_ip = self.target.ip
         status, output = shell_cmd_timeout('expect %s %s' % (exp, target_ip), timeout=200)
-        assert status == 2, "power on command fails: %s" % output.decode("ascii")
+        if type(output) is bytes:
+            output = output.decode("ascii")
+        assert status == 2, "power on command fails: %s" % output
 
     def ctl_power_off(self):
         '''bluetoothctl power off bluetooth device
@@ -143,7 +149,9 @@ class BTFunction(object):
         exp = os.path.join(os.path.dirname(__file__), "files/power_off.exp")
         target_ip = self.target.ip
         status, output = shell_cmd_timeout('expect %s %s' % (exp, target_ip), timeout=200)
-        assert status == 2, "power off command fails: %s" % output.decode("ascii")
+        if type(output) is bytes:
+            output = output.decode("ascii")
+        assert status == 2, "power off command fails: %s" % output
 
     def ctl_visable_on(self):
         '''bluetoothctl enable visibility
@@ -155,7 +163,9 @@ class BTFunction(object):
         exp = os.path.join(os.path.dirname(__file__), "files/discoverable_on.exp")
         target_ip = self.target.ip
         status, output = shell_cmd_timeout('expect %s %s' % (exp, target_ip), timeout=200)
-        assert status == 2, "discoverable on command fails: %s" % output.decode("ascii")
+        if type(output) is bytes:
+            output = output.decode("ascii")
+        assert status == 2, "discoverable on command fails: %s" % output
 
     def ctl_visable_off(self):
         '''bluetoothctl disable visibility
@@ -167,7 +177,9 @@ class BTFunction(object):
         exp = os.path.join(os.path.dirname(__file__), "files/discoverable_off.exp")
         target_ip = self.target.ip
         status, output = shell_cmd_timeout('expect %s %s' % (exp, target_ip), timeout=200)
-        assert status == 2, "discoverable off command fails: %s" % output.decode("ascii")
+        if type(output) is bytes:
+            output = output.decode("ascii")
+        assert status == 2, "discoverable off command fails: %s" % output
 
     def insert_6lowpan_module(self):
         '''Insert BLE 6lowpan module
@@ -244,7 +256,9 @@ class BTFunction(object):
         exp = os.path.join(os.path.dirname(__file__), "files/target_ssh.exp")
         exp_cmd = 'expect %s %s %s' % (exp, self.target.ip, ipv6)
         (status, output) = shell_cmd_timeout(exp_cmd)
-        assert status == 2, "Error messages: %s" % output.decode("ascii")
+        if type(output) is bytes:
+            output = output.decode("ascii")
+        assert status == 2, "Error messages: %s" % output
 
     def connect_6lowpan_ble(self, second):
         '''Build 6lowpan connection between taregts[0] and targets[1] over BLE

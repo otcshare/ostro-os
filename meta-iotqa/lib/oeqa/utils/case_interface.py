@@ -10,7 +10,14 @@ class ErrorException(Exception):
 
 def genTestObj(classname, testname, func=lambda self:None):
     cls = type(classname, (oeRuntimeTest,), {testname: func})
-    return cls(testname)
+    ret = cls(testname)
+    # a walk around method here: because some bugs in 
+    # oeqa.utils.decorators.LogResults.get_class_that_defined_method
+    # Because this case interface will generate test cases dyamiclly,
+    # So we can't run into else branch in that functions.
+    # To prevent that, It need chang this attr of cls to method
+    setattr(cls, testname, getattr(ret, testname))
+    return ret
 
 class TestCaseInterface(oeRuntimeTest):
     """
@@ -38,6 +45,7 @@ class TestCaseInterface(oeRuntimeTest):
             sys.stdout.write(stdout)
             sys.stderr.write(stderr)
             func()
+        testFake.__name__ = casename
         obj = genTestObj(classname, casename, testFake)
         obj.run(self.result)
 

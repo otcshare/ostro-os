@@ -37,6 +37,14 @@ class IOtvtClient(oeRuntimeTest):
         add_group("tester")
         add_user("iotivity-tester", "tester")
 
+        # set up firewall
+        (status, output) = cls.tc.target.run("cat /proc/sys/net/ipv4/ip_local_port_range")
+        port_range = output.split()
+
+        cls.tc.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport 5683 -j ACCEPT")
+        cls.tc.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport 5684 -j ACCEPT")
+        cls.tc.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport %s:%s -j ACCEPT" % (port_range[0], port_range[1]))
+
         # start server
         server_cmd = "/opt/iotivity/examples/resource/cpp/simpleserver > /tmp/svr_output &"
         run_as("iotivity-tester", server_cmd)

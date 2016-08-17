@@ -4,9 +4,9 @@
 :OUTPUT ACCEPT
 # allow containers to access DNS service
 -A INPUT -i ve-+ -p udp -m udp --dport 53 -j ACCEPT
-# allow containers to access DHCP service
--A INPUT -i ve-+ -p udp -m udp --dport 67 -j ACCEPT
--A INPUT -s fe80::/10 -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+# allow DHCPv6
+-A INPUT -s fe80::/10 -p udp -m udp --dport 546 -j ACCEPT
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A INPUT -p ipv6-icmp -j ACCEPT
 # allow forwarding traffic to/from containers
