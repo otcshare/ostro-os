@@ -49,8 +49,14 @@ class IOtvtIntegration(oeRuntimeTest):
         add_group("tester")
         add_user("iotivity-tester", "tester")
         # Setup firewall accept for multicast
+        (status, output) = cls.tc.target.run("cat /proc/sys/net/ipv4/ip_local_port_range")
+        port_range = output.split()
         cls.tc.target.run("/usr/sbin/iptables -w -A INPUT -p udp --dport 5683 -j ACCEPT")
         cls.tc.target.run("/usr/sbin/iptables -w -A INPUT -p udp --dport 5684 -j ACCEPT")
+        cls.tc.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport 5683 -j ACCEPT")
+        cls.tc.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport 5684 -j ACCEPT")
+        cls.tc.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport %s:%s -j ACCEPT" % (port_range[0], port_range[1]))
+
 
     @classmethod
     def tearDownClass(cls):
