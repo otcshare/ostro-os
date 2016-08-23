@@ -12,6 +12,7 @@ PATCHES_URI_append = "\
     file://openjdk8-fix-adlc-flags.patch;apply=no \
     file://openjdk8-silence-d_fortify_source-warning.patch;apply=no \
     file://openjdk8-fix-zero-mode-crash.patch;apply=no \
+    file://openjdk8-add-missing-linker-flags.patch;apply=no \
 "
 
 do_install() {

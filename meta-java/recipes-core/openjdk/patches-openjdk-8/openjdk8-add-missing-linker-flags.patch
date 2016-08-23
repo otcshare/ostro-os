@@ -1,0 +1,57 @@
+makefiles: Add missing EXTRA_LDFLAGS to certain files
+
+EXTRA_LDFLAGS were not used when building certain shared objects. This
+means that the Yocto specific linker flags were lost, which caused build
+failures due to a bad hash style.
+
+Signed-off-by: Erkka Kääriä <erkka.kaaria@intel.com>
+
+Upstream-Status: Pending
+---
+ hotspot/make/linux/makefiles/jsig.make   | 2 +-
+ hotspot/make/linux/makefiles/saproc.make | 2 +-
+ hotspot/make/linux/makefiles/vm.make     | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git hotspot/make/linux/makefiles/jsig.make hotspot/make/linux/makefiles/jsig.make
+index ce29eb1..e1d6c07 100644
+--- hotspot/make/linux/makefiles/jsig.amake
++++ hotspot/make/linux/makefiles/jsig.make
+@@ -44,7 +44,7 @@ LIBJSIG_MAPFILE = $(MAKEFILES_DIR)/mapfile-vers-jsig
+ # cause problems with interposing. See CR: 6466665
+ # LFLAGS_JSIG += $(MAPFLAG:FILENAME=$(LIBJSIG_MAPFILE))
+
+-LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE)
++LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE) $(EXTRA_LDFLAGS)
+
+ # DEBUG_BINARIES overrides everything, use full -g debug information
+ ifeq ($(DEBUG_BINARIES), true)
+diff --git hotspot/make/linux/makefiles/saproc.make hotspot/make/linux/makefiles/saproc.make
+index 7c6e4a8..369a0ba 100644
+--- hotspot/make/linux/makefiles/saproc.make
++++ hotspot/make/linux/makefiles/saproc.make
+@@ -73,7 +73,7 @@ ALT_SAINCDIR=-I$(ALT_SASRCDIR) -DALT_SASRCDIR
+ else
+ ALT_SAINCDIR=
+ endif
+-SA_LFLAGS = $(MAPFLAG:FILENAME=$(SAMAPFILE)) $(LDFLAGS_HASH_STYLE)
++SA_LFLAGS = $(MAPFLAG:FILENAME=$(SAMAPFILE)) $(LDFLAGS_HASH_STYLE) $(EXTRA_LDFLAGS)
+
+ SAARCH ?= $(BUILDARCH)
+
+diff --git hotspot/make/linux/makefiles/vm.make hotspot/make/linux/makefiles/vm.make
+index 1a48df9..72f8d11 100644
+--- hotspot/make/linux/makefiles/vm.make
++++ hotspot/make/linux/makefiles/vm.make
+@@ -122,7 +122,7 @@ CFLAGS += $(CFLAGS/NOEX)
+
+ # Extra flags from gnumake's invocation or environment
+ CFLAGS += $(EXTRA_CFLAGS)
+-LFLAGS += $(EXTRA_CFLAGS)
++LFLAGS += $(EXTRA_CFLAGS) $(EXTRA_LDFLAGS)
+
+ # Don't set excutable bit on stack segment
+ # the same could be done by separate execstack command
+--
+2.7.4
+
