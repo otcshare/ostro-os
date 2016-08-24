@@ -23,12 +23,8 @@ SRC_URI_append_intel-corei7-64 = " file://security-tpm.cfg"
 SRC_URI_append_intel-corei7-64 = " file://broxton.cfg"
 
 # I2C sensors
-SRC_URI_append_intel-quark = " file://sensors.cfg"
 SRC_URI_append_edison = " file://sensors.cfg"
 SRC_URI_append_beaglebone = " file://sensors.cfg"
-#  Minnow Max has I2C
-SRC_URI_append_intel-corei7-64 = " file://sensors.cfg"
-SRC_URI_append_intel-core2-32 = " file://sensors.cfg"
 
 #  BeagleBone Black enable all I2Cs
 SRC_URI_append_beaglebone = " file://0001-v3.15.0-ARM-dts-am335x-boneblack-configure-i2c1-and-2.patch"
