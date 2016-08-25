@@ -7,7 +7,7 @@ SRC_URI = "file://mmap.c"
 
 S = "${WORKDIR}"
 do_compile() {
-    ${CC} mmap.c -o mmap_test
+    ${CC} mmap.c ${LDFLAGS} -o mmap_test
 }
 
 do_install() {

@@ -9,8 +9,8 @@ SRC_URI = "file://udp_server.c \
 
 S = "${WORKDIR}"
 do_compile() {
-    ${CC} udp_client.c -o udp_client
-    ${CC} udp_server.c -o udp_server
+    ${CC} udp_client.c ${LDFLAGS} -o udp_client
+    ${CC} udp_server.c ${LDFLAGS} -o udp_server
 }
 
 do_install() {
