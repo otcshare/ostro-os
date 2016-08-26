@@ -7,10 +7,9 @@ LIC_FILES_CHKSUM = "file://LICENSES;md5=e9a558e243b36d3209f380deb394b213 \
 
 DEPENDS += "gperf-native"
 
-SRCREV ?= "d461c9682d4954076f9ee9e07be903c2eef8e73b"
+SRCREV ?= "ea23815a795f72035262953dad5beb03e09c17dd"
 
-#SRCBRANCH ?= "release/${PV}/master"
-SRCBRANCH ?= "master"
+SRCBRANCH ?= "release/${PV}/master"
 
 GLIBC_GIT_URI ?= "git://sourceware.org/git/glibc.git"
 UPSTREAM_CHECK_GITTAGREGEX = "(?P<pver>\d+\.\d+(\.\d+)*)"
@@ -37,7 +36,7 @@ SRC_URI = "${GLIBC_GIT_URI};branch=${SRCBRANCH};name=glibc \
            file://0023-eglibc-Install-PIC-archives.patch \
            file://0024-eglibc-Forward-port-cross-locale-generation-support.patch \
            file://0025-Define-DUMMY_LOCALE_T-if-not-defined.patch \
-           file://elf-meta.patch \
+           file://0026-build_local_scope.patch \
 "
 
 SRC_URI += "\
@@ -127,6 +126,12 @@ do_compile () {
 		fi
 	fi
 
+}
+
+# Use the host locale archive when built for nativesdk so that we don't need to
+# ship a complete (100MB) locale set.
+do_compile_prepend_class-nativesdk() {
+    echo "complocaledir=/usr/lib/locale" >> ${S}/configparms
 }
 
 require glibc-package.inc

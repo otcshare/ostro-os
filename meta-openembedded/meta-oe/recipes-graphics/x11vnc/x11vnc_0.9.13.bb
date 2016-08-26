@@ -9,7 +9,9 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=361b6b837cad26c6900a926b62aada5f \
 
 SRC_URI = "${SOURCEFORGE_MIRROR}/libvncserver/x11vnc/${PV}/x11vnc-${PV}.tar.gz\
            file://starting-fix.patch \
-           file://endian-fix.patch "
+           file://endian-fix.patch \
+           file://remove-redundant-RPATH.patch \
+"
 
 SRC_URI[md5sum] = "a372ec4fe8211221547b1c108cf56e4c"
 SRC_URI[sha256sum] = "f6829f2e629667a5284de62b080b13126a0736499fe47cdb447aedb07a59f13b"
@@ -27,6 +29,6 @@ PACKAGECONFIG[libvncserver] = "--with-system-libvncserver,--without-system-libvn
 
 do_prepare_sources () {
     # Remove old libtool macros from acinclude.m4
-    sed -i -e '/^# libtool.m4/q' acinclude.m4
+    sed -i -e '/^# libtool.m4/q' ${S}/acinclude.m4
 }
 do_patch[postfuncs] += "do_prepare_sources"

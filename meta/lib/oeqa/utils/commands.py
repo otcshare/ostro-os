@@ -78,7 +78,10 @@ class Command(object):
                 self.process.kill()
                 self.thread.join()
 
-        self.output = self.output.decode("utf-8").rstrip()
+        if not self.output:
+            self.output = ""
+        else:
+            self.output = self.output.decode("utf-8", errors='replace').rstrip()
         self.status = self.process.poll()
 
         self.log.debug("Command '%s' returned %d as exit code." % (self.cmd, self.status))
@@ -220,7 +223,7 @@ def runqemu(pn, ssh=True):
         tinfoil.config_data.setVar("TEST_QEMUBOOT_TIMEOUT", "1000")
         import oe.recipeutils
         recipefile = oe.recipeutils.pn_to_recipe(tinfoil.cooker, pn)
-        recipedata = oe.recipeutils.parse_recipe(recipefile, [], tinfoil.config_data)
+        recipedata = oe.recipeutils.parse_recipe(tinfoil.cooker, recipefile, [])
 
         # The QemuRunner log is saved out, but we need to ensure it is at the right
         # log level (and then ensure that since it's a child of the BitBake logger,
@@ -261,3 +264,15 @@ def runqemu(pn, ssh=True):
             qemu.stop()
         except:
             pass
+
+def updateEnv(env_file):
+    """
+    Source a file and update environment.
+    """
+
+    cmd = ". %s; env -0" % env_file
+    result = runCmd(cmd)
+
+    for line in result.output.split("\0"):
+        (key, _, value) = line.partition("=")
+        os.environ[key] = value

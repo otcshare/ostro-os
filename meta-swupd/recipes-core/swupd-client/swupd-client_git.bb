@@ -41,9 +41,9 @@ do_install_append () {
 
     # Write default values to the configuration hierarchy (since 3.4.0)
     install -d ${D}/usr/share/defaults/swupd
-    echo "{SWUPD_VERSION_URL}" >> ${D}/usr/share/defaults/swupd/versionurl
-    echo "{SWUPD_CONTENT_URL}" >> ${D}/usr/share/defaults/swupd/contenturl
-    echo "{SWUPD_FORMAT}" >> ${D}/usr/share/defaults/swupd/format
+    echo "${SWUPD_VERSION_URL}" >> ${D}/usr/share/defaults/swupd/versionurl
+    echo "${SWUPD_CONTENT_URL}" >> ${D}/usr/share/defaults/swupd/contenturl
+    echo "${SWUPD_FORMAT}" >> ${D}/usr/share/defaults/swupd/format
 }
 
 FILES_${PN} += "\

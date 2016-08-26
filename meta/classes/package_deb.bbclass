@@ -52,6 +52,7 @@ python do_package_deb () {
     import re, copy
     import textwrap
     import subprocess
+    import collections
 
     oldcwd = os.getcwd()
 
@@ -232,7 +233,7 @@ python do_package_deb () {
 
         rdepends = bb.utils.explode_dep_versions2(localdata.getVar("RDEPENDS", True) or "")
         debian_cmp_remap(rdepends)
-        for dep in rdepends.keys():
+        for dep in list(rdepends.keys()):
                 if dep == pkg:
                         del rdepends[dep]
                         continue
@@ -240,13 +241,14 @@ python do_package_deb () {
                         del rdepends[dep]
         rrecommends = bb.utils.explode_dep_versions2(localdata.getVar("RRECOMMENDS", True) or "")
         debian_cmp_remap(rrecommends)
-        for dep in rrecommends.keys():
+        for dep in list(rrecommends.keys()):
                 if '*' in dep:
                         del rrecommends[dep]
         rsuggests = bb.utils.explode_dep_versions2(localdata.getVar("RSUGGESTS", True) or "")
         debian_cmp_remap(rsuggests)
         # Deliberately drop version information here, not wanted/supported by deb
         rprovides = dict.fromkeys(bb.utils.explode_dep_versions2(localdata.getVar("RPROVIDES", True) or ""), [])
+        rprovides = collections.OrderedDict(sorted(rprovides.items(), key=lambda x: x[0]))
         debian_cmp_remap(rprovides)
         rreplaces = bb.utils.explode_dep_versions2(localdata.getVar("RREPLACES", True) or "")
         debian_cmp_remap(rreplaces)

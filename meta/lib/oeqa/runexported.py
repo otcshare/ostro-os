@@ -31,7 +31,7 @@ except ImportError:
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "oeqa")))
 
 from oeqa.oetest import ExportTestContext
-from oeqa.utils.commands import runCmd
+from oeqa.utils.commands import runCmd, updateEnv
 from oeqa.utils.sshcontrol import SSHControl
 
 # this isn't pretty but we need a fake target object
@@ -81,6 +81,7 @@ def main():
             specified in the json if that directory actually exists or it will error out.")
     parser.add_argument("-l", "--log-dir", dest="log_dir", help="This sets the path for TEST_LOG_DIR. If not specified \
             the current dir is used. This is used for usually creating a ssh log file and a scp test file.")
+    parser.add_argument("-a", "--tag", dest="tag", help="Only run test with specified tag.")
     parser.add_argument("json", help="The json file exported by the build system", default="testdata.json", nargs='?')
 
     args = parser.parse_args()
@@ -107,6 +108,9 @@ def main():
         if not os.path.isdir(d["DEPLOY_DIR"]):
             print("WARNING: The path to DEPLOY_DIR does not exist: %s" % d["DEPLOY_DIR"])
 
+    parsedArgs = {}
+    parsedArgs["tag"] = args.tag
+
     extract_sdk(d)
 
     target = FakeTarget(d)
@@ -114,7 +118,7 @@ def main():
         setattr(target, key, loaded["target"][key])
 
     target.exportStart()
-    tc = ExportTestContext(d, target, True)
+    tc = ExportTestContext(d, target, True, parsedArgs)
     tc.loadTests()
     tc.runTests()
 
@@ -137,19 +141,7 @@ def extract_sdk(d):
             if f.startswith("environment-setup"):
                 print("Setting up SDK environment...")
                 env_file = os.path.join(extract_path, f)
-                update_env(env_file)
-
-def update_env(env_file):
-    """
-    Source a file and update environment
-    """
-
-    cmd = ". %s; env -0" % env_file
-    result = runCmd(cmd)
-
-    for line in result.output.split("\0"):
-        (key, _, value) = line.partition("=")
-        os.environ[key] = value
+                updateEnv(env_file)
 
 if __name__ == "__main__":
     try:

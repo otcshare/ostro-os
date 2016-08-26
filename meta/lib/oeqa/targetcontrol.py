@@ -66,7 +66,7 @@ class BaseTarget(object, metaclass=ABCMeta):
         bb.note("SSH log file: %s" %  self.sshlog)
 
     @abstractmethod
-    def start(self, params=None, ssh=True):
+    def start(self, params=None, ssh=True, extra_bootparams=None):
         pass
 
     @abstractmethod
@@ -125,6 +125,12 @@ class QemuTarget(BaseTarget):
         dump_target_cmds = d.getVar("testimage_dump_target", True)
         dump_host_cmds = d.getVar("testimage_dump_host", True)
         dump_dir = d.getVar("TESTIMAGE_DUMP_DIR", True)
+        if d.getVar("QEMU_USE_KVM", False) is not None \
+           and d.getVar("QEMU_USE_KVM", False) == "True" \
+           and "x86" in d.getVar("MACHINE", True):
+            use_kvm = True
+        else:
+            use_kvm = False
 
         # Log QemuRunner log output to a file
         import oe.path
@@ -153,6 +159,7 @@ class QemuTarget(BaseTarget):
                             display = d.getVar("BB_ORIGENV", False).getVar("DISPLAY", True),
                             logfile = self.qemulog,
                             boottime = int(d.getVar("TEST_QEMUBOOT_TIMEOUT", True)),
+                            use_kvm = use_kvm,
                             dump_dir = dump_dir,
                             dump_host_cmds = d.getVar("testimage_dump_host", True))
 
@@ -174,8 +181,8 @@ class QemuTarget(BaseTarget):
         bb.note("Qemu log file: %s" % self.qemulog)
         super(QemuTarget, self).deploy()
 
-    def start(self, params=None, ssh=True):
-        if self.runner.start(params, get_ip=ssh):
+    def start(self, params=None, ssh=True, extra_bootparams=None):
+        if self.runner.start(params, get_ip=ssh, extra_bootparams=extra_bootparams):
             if ssh:
                 self.ip = self.runner.ip
                 self.server_ip = self.runner.server_ip
@@ -230,7 +237,7 @@ class SimpleRemoteTarget(BaseTarget):
     def deploy(self):
         super(SimpleRemoteTarget, self).deploy()
 
-    def start(self, params=None, ssh=True):
+    def start(self, params=None, ssh=True, extra_bootparams=None):
         if ssh:
             self.connection = SSHControl(self.ip, logfile=self.sshlog, port=self.port)
 

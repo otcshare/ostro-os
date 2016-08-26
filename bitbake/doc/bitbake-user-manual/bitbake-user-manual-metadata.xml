@@ -50,22 +50,52 @@
             <title>Variable Expansion</title>
 
             <para>
-                BitBake supports variables referencing one another's
-                contents using a syntax that is similar to shell scripting.
-                Following is an example that results in <filename>A</filename>
-                containing "aval" and <filename>B</filename> evaluating to
-                "preavalpost" based on that current value of
-                <filename>A</filename>.
+                Variables can reference the contents of other variables
+                using a syntax that is similar to variable expansion in
+                Bourne shells.
+                The following assignments
+                result in A containing "aval" and B evaluating to "preavalpost".
                 <literallayout class='monospaced'>
      A = "aval"
      B = "pre${A}post"
                 </literallayout>
-                You should realize that whenever <filename>B</filename> is
-                referenced, its evaluation will depend on the state of
-                <filename>A</filename> at that time.
-                Thus, later evaluations of <filename>B</filename> in the
-                previous example could result in different values
-                depending on the value of <filename>A</filename>.
+                <note>
+                    Unlike in Bourne shells, the curly braces are mandatory:
+                    Only <filename>${FOO}</filename> and not
+                    <filename>$FOO</filename> is recognized as an expansion of
+                    <filename>FOO</filename>.
+                </note>
+                The "=" operator does not immediately expand variable
+                references in the right-hand side.
+                Instead, expansion is deferred until the variable assigned to
+                is actually used.
+                The result depends on the current values of the referenced
+                variables.
+                The following example should clarify this behavior:
+                <literallayout class='monospaced'>
+     A = "${B} baz"
+     B = "${C} bar"
+     C = "foo"
+     *At this point, ${A} equals "foo bar baz"*
+     C = "qux"
+     *At this point, ${A} equals "qux bar baz"*
+     B = "norf"
+     *At this point, ${A} equals "norf baz"*
+                </literallayout>
+                Contrast this behavior with the
+                <link linkend='immediate-variable-expansion'>immediate variable expansion</link>
+                operator (i.e. ":=").
+            </para>
+
+            <para>
+                If the variable expansion syntax is used on a variable that
+                does not exist, the string is kept as is.
+                For example, given the following assignment,
+                <filename>BAR</filename> expands to the literal string
+                "${FOO}" as long as <filename>FOO</filename> does not exist.
+                <literallayout class='monospaced'>
+     BAR = "${FOO}"
+                </literallayout>
             </para>
         </section>
 
@@ -259,6 +289,60 @@
                 "789 123456" and <filename>FOO2</filename> becomes
                 "ghi abcdef".
             </para>
+
+            <para>
+                Like "_append" and "_prepend", "_remove"
+                is deferred until after parsing completes.
+            </para>
+        </section>
+
+        <section id='override-style-operation-advantages'>
+            <title>Override Style Operation Advantages</title>
+
+            <para>
+                An advantage of the override style operations
+                "_append", "_prepend", and "_remove" as compared to the
+                "+=" and "=+" operators is that the override style
+                operators provide guaranteed operations.
+                For example, consider a class <filename>foo.bbclass</filename>
+                that needs to add the value "val" to the variable
+                <filename>FOO</filename>, and a recipe that uses
+                <filename>foo.bbclass</filename> as follows:
+                <literallayout class='monospaced'>
+     inherit foo
+
+     FOO = "initial"
+                </literallayout>
+                If <filename>foo.bbclass</filename> uses the "+=" operator,
+                as follows, then the final value of <filename>FOO</filename>
+                will be "initial", which is not what is desired:
+                <literallayout class='monospaced'>
+     FOO += "val"
+                </literallayout>
+                If, on the other hand, <filename>foo.bbclass</filename>
+                uses the "_append" operator, then the final value of
+                <filename>FOO</filename> will be "initial val", as intended:
+                <literallayout class='monospaced'>
+     FOO_append = " val"
+                </literallayout>
+                <note>
+                    It is never necessary to use "+=" together with "_append".
+                    The following sequence of assignments appends "barbaz" to
+                    <filename>FOO</filename>:
+                    <literallayout class='monospaced'>
+     FOO_append = "bar"
+     FOO_append = "baz"
+                    </literallayout>
+                    The only effect of changing the second assignment in the
+                    previous example to use "+=" would be to add a space before
+                    "baz" in the appended value (due to how the "+=" operator
+                    works).
+                </note>
+                Another advantage of the override style operations is that
+                you can combine them with other overrides as described in the
+                "<link linkend='conditional-syntax-overrides'>Conditional Syntax (Overrides)</link>"
+                section.
+            </para>
         </section>
 
         <section id='variable-flag-syntax'>
@@ -277,8 +361,7 @@
                 You can define, append, and prepend values to variable flags.
                 All the standard syntax operations previously mentioned work
                 for variable flags except for override style syntax
-                (i.e. <filename>_prepend</filename>, <filename>_append</filename>,
-                and <filename>_remove</filename>).
+                (i.e. "_prepend", "_append", and "_remove").
             </para>
 
             <para>
@@ -289,9 +372,9 @@
      FOO[a] += "456"
                 </literallayout>
                 The variable <filename>FOO</filename> has two flags:
-                <filename>a</filename> and <filename>b</filename>.
+                <filename>[a]</filename> and <filename>[b]</filename>.
                 The flags are immediately set to "abc" and "123", respectively.
-                The <filename>a</filename> flag becomes "abc 456".
+                The <filename>[a]</filename> flag becomes "abc 456".
             </para>
 
             <para>
@@ -330,7 +413,43 @@
      PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
      PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
                 </literallayout>
+                <note>
+                    Inline Python expressions work just like variable expansions
+                    insofar as the "=" and ":=" operators are concerned.
+                    Given the following assignment, <filename>foo()</filename>
+                    is called each time <filename>FOO</filename> is expanded:
+                    <literallayout class='monospaced'>
+     FOO = "${@foo()}"
+                    </literallayout>
+                    Contrast this with the following immediate assignment, where
+                    <filename>foo()</filename> is only called once, while the
+                    assignment is parsed:
+                    <literallayout class='monospaced'>
+     FOO := "${@foo()}"
+                    </literallayout>
+                </note>
+                For a different way to set variables with Python code during
+                parsing, see the
+                "<link linkend='anonymous-python-functions'>Anonymous Python Functions</link>"
+                section.
             </para>
+        </section>
+
+        <section id='unsetting-variables'>
+            <title>Unseting variables</title>
+
+            <para>
+                It is possible to completely remove a variable or a variable flag 
+                from BitBake's internal data dictionary by using the "unset" keyword.
+                Here is an example:
+                <literallayout class='monospaced'>
+        unset DATE
+        unset do_fetch[noexec]
+                </literallayout>
+                These two statements remove the <filename>DATE</filename> and the 
+                <filename>do_fetch[noexec]</filename> flag.
+            </para>
+
         </section>
 
         <section id='providing-pathnames'>
@@ -455,6 +574,34 @@
      KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
                         </literallayout>
                         </para></listitem>
+                    <listitem><para><emphasis>Setting a Variable for a Single Task:</emphasis>
+                        BitBake supports setting a variable just for the
+                        duration of a single task.
+                        Here is an example:
+                        <literallayout class='monospaced'>
+     FOO_task-configure = "val 1"
+     FOO_task-compile = "val 2"
+                        </literallayout>
+                        In the previous example, <filename>FOO</filename>
+                        has the value "val 1" while the
+                        <filename>do_configure</filename> task is executed,
+                        and the value "val 2" while the
+                        <filename>do_compile</filename> task is executed.
+                        </para>
+
+                        <para>Internally, this is implemented by prepending
+                        the task (e.g. "task-compile:") to the value of
+                        <link linkend='var-OVERRIDES'><filename>OVERRIDES</filename></link>
+                        for the local datastore of the <filename>do_compile</filename>
+                        task.</para>
+
+                        <para>You can also use this syntax with other combinations
+                        (e.g. "<filename>_prepend</filename>") as shown in the
+                        following example:
+                        <literallayout class='monospaced'>
+     EXTRA_OEMAKE_prepend_task-compile = "${PARALLEL_MAKE} "
+                        </literallayout>
+                        </para></listitem>
                 </itemizedlist>
             </para>
         </section>
@@ -545,15 +692,15 @@
      OVERRIDES = "foo"
      A = "Y"
      A_foo_append = "Z"
-     A_foo_append += "X"
+     A_foo_append = "X"
                 </literallayout>
                 For this case, before any overrides are resolved,
                 <filename>A</filename> is set to "Y" using an immediate assignment.
                 After this immediate assignment, <filename>A_foo</filename> is set
                 to "Z", and then further appended with
-                "X" leaving the variable set to "Z X".
+                "X" leaving the variable set to "ZX".
                 Finally, applying the override for "foo" results in the conditional
-                variable <filename>A</filename> becoming "Z X" (i.e.
+                variable <filename>A</filename> becoming "ZX" (i.e.
                 <filename>A</filename> is replaced with <filename>A_foo</filename>).
             </para>
 
@@ -572,7 +719,7 @@
                 Initially, <filename>A</filename> is set to "1 45" because
                 of the three statements that use immediate operators.
                 After these assignments are made, BitBake applies the
-                <filename>_append</filename> operations.
+                "_append" operations.
                 Those operations result in <filename>A</filename> becoming "1 4523".
             </para>
         </section>
@@ -965,32 +1112,81 @@
             <title>Anonymous Python Functions</title>
 
             <para>
-                Sometimes it is useful to run some code during
-                parsing to set variables or to perform other operations
-                programmatically.
-                To do this, you can define an anonymous Python function.
-                Here is an example that conditionally sets a
-                variable based on the value of another variable:
-                <literallayout class='monospaced'>
-     python __anonymous () {
-         if d.getVar('SOMEVAR', True) == 'value':
-             d.setVar('ANOTHERVAR', 'value2')
-     }
-                </literallayout>
-                The "__anonymous" function name is optional, so the
-                following example is functionally equivalent to the above:
+                Sometimes it is useful to set variables or perform
+                other operations programmatically during parsing.
+                To do this, you can define special Python functions,
+                called anonymous Python functions, that run at the
+                end of parsing.
+                For example, the following conditionally sets a variable
+                based on the value of  another variable:
                 <literallayout class='monospaced'>
      python () {
          if d.getVar('SOMEVAR', True) == 'value':
              d.setVar('ANOTHERVAR', 'value2')
      }
                 </literallayout>
-                Because unlike other Python functions anonymous
-                Python functions are executed during parsing, the
-                "d" variable within an anonymous Python function represents
-                the datastore for the entire recipe.
-                Consequently, you can set variable values here and
-                those values can be picked up by other functions.
+                An equivalent way to mark a function as an anonymous
+                function is to give it the name "__anonymous", rather
+                than no name.
+            </para>
+
+            <para>
+                Anonymous Python functions always run at the end
+                of parsing, regardless of where they are defined.
+                If a recipe contains many anonymous functions, they
+                run in the same order as they are defined within the
+                recipe.
+                As an example, consider the following snippet:
+                <literallayout class='monospaced'>
+     python () {
+         d.setVar('FOO', 'foo 2')
+     }
+
+     FOO = "foo 1"
+
+     python () {
+         d.appendVar('BAR', ' bar 2')
+     }
+
+     BAR = "bar 1"
+                </literallayout>
+                The previous example is conceptually equivalent to the
+                following snippet:
+                <literallayout class='monospaced'>
+     FOO = "foo 1"
+     BAR = "bar 1"
+     FOO = "foo 2"
+     BAR += "bar 2"
+                </literallayout>
+                <filename>FOO</filename> ends up with the value "foo 2",
+                and <filename>BAR</filename> with the value "bar 1 bar 2".
+                Just as in the second snippet, the values set for the
+                variables within the anonymous functions become available
+                to tasks, which always run after parsing.
+            </para>
+
+            <para>
+                Overrides and override-style operators such as
+                "<filename>_append</filename>" are applied before
+                anonymous functions run.
+                In the following example, <filename>FOO</filename> ends
+                up with the value "foo from anonymous":
+                <literallayout class='monospaced'>
+     FOO = "foo"
+     FOO_append = " from outside"
+
+     python () {
+         d.setVar("FOO", "foo from anonymous")
+     }
+                </literallayout>
+                For methods you can use with anonymous Python functions,
+                see the
+                "<link linkend='accessing-datastore-variables-using-python'>Accessing Datastore Variables Using Python</link>"
+                section.
+                For a different method to run Python code during parsing,
+                see the
+                "<link linkend='inline-python-variable-expansion'>Inline Python Variable Expansion</link>"
+                section.
             </para>
         </section>
 
@@ -1172,7 +1368,7 @@
 
             <para>
                 If you want dependencies such as these to remain intact, use
-                the <filename>noexec</filename> varflag to disable the task
+                the <filename>[noexec]</filename> varflag to disable the task
                 instead of using the <filename>deltask</filename> command to
                 delete it:
                 <literallayout class='monospaced'>
@@ -1295,10 +1491,13 @@
             Tasks support a number of these flags which control various
             functionality of the task:
             <itemizedlist>
-                <listitem><para><emphasis>cleandirs:</emphasis>
-                    Empty directories that should created before the task runs.
+                <listitem><para><emphasis><filename>[cleandirs]</filename>:</emphasis>
+                    Empty directories that should be created before the
+                    task runs.
+                    Directories that already exist are removed and recreated
+                    to empty them.
                     </para></listitem>
-                <listitem><para><emphasis>depends:</emphasis>
+                <listitem><para><emphasis><filename>[depends]</filename>:</emphasis>
                     Controls inter-task dependencies.
                     See the
                     <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
@@ -1306,7 +1505,7 @@
                     "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>deptask:</emphasis>
+                <listitem><para><emphasis><filename>[deptask]</filename>:</emphasis>
                     Controls task build-time dependencies.
                     See the
                     <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
@@ -1314,12 +1513,13 @@
                     "<link linkend='build-dependencies'>Build Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>dirs:</emphasis>
+                <listitem><para><emphasis><filename>[dirs]</filename>:</emphasis>
                     Directories that should be created before the task runs.
-                    The last directory listed will be used as the work directory
-                    for the task.
+                    Directories that already exist are left as is.
+                    The last directory listed is used as the
+                    current working directory for the task.
                     </para></listitem>
-                <listitem><para><emphasis>lockfiles:</emphasis>
+                <listitem><para><emphasis><filename>[lockfiles]</filename>:</emphasis>
                      Specifies one or more lockfiles to lock while the task
                      executes.
                      Only one task may hold a lockfile, and any task that
@@ -1328,23 +1528,23 @@
                      You can use this variable flag to accomplish mutual
                      exclusion.
                     </para></listitem>
-                <listitem><para><emphasis>noexec:</emphasis>
+                <listitem><para><emphasis><filename>[noexec]</filename>:</emphasis>
                     Marks the tasks as being empty and no execution required.
-                    The <filename>noexec</filename> flag can be used to set up
+                    The <filename>[noexec]</filename> flag can be used to set up
                     tasks as dependency placeholders, or to disable tasks defined
                     elsewhere that are not needed in a particular recipe.
                     </para></listitem>
-                <listitem><para><emphasis>nostamp:</emphasis>
+                <listitem><para><emphasis><filename>[nostamp]</filename>:</emphasis>
                     Tells BitBake to not generate a stamp file for a task,
                     which implies the task should always be executed.
                     </para></listitem>
-                <listitem><para><emphasis>postfuncs:</emphasis>
+                <listitem><para><emphasis><filename>[postfuncs]</filename>:</emphasis>
                     List of functions to call after the completion of the task.
                     </para></listitem>
-                <listitem><para><emphasis>prefuncs:</emphasis>
+                <listitem><para><emphasis><filename>[prefuncs]</filename>:</emphasis>
                     List of functions to call before the task executes.
                     </para></listitem>
-                <listitem><para><emphasis>rdepends:</emphasis>
+                <listitem><para><emphasis><filename>[rdepends]</filename>:</emphasis>
                     Controls inter-task runtime dependencies.
                     See the
                     <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
@@ -1354,7 +1554,7 @@
                     "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>rdeptask:</emphasis>
+                <listitem><para><emphasis><filename>[rdeptask]</filename>:</emphasis>
                     Controls task runtime dependencies.
                     See the
                     <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
@@ -1364,12 +1564,12 @@
                     "<link linkend='runtime-dependencies'>Runtime Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>recideptask:</emphasis>
+                <listitem><para><emphasis><filename>[recideptask]</filename>:</emphasis>
                     When set in conjunction with
                     <filename>recrdeptask</filename>, specifies a task that
                     should be inspected for additional dependencies.
                     </para></listitem>
-                <listitem><para><emphasis>recrdeptask:</emphasis>
+                <listitem><para><emphasis><filename>[recrdeptask]</filename>:</emphasis>
                     Controls task recursive runtime dependencies.
                     See the
                     <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
@@ -1379,12 +1579,12 @@
                     "<link linkend='recursive-dependencies'>Recursive Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>stamp-extra-info:</emphasis>
+                <listitem><para><emphasis><filename>[stamp-extra-info]</filename>:</emphasis>
                     Extra stamp information to append to the task's stamp.
                     As an example, OpenEmbedded uses this flag to allow
                     machine-specific tasks.
                     </para></listitem>
-                <listitem><para><emphasis>umask:</emphasis>
+                <listitem><para><emphasis><filename>[umask]</filename>:</emphasis>
                     The umask to run the task under.
                     </para></listitem>
             </itemizedlist>
@@ -1397,7 +1597,7 @@
             "<link linkend='checksums'>Checksums (Signatures)</link>"
             section.
             <itemizedlist>
-                <listitem><para><emphasis>vardeps:</emphasis>
+                <listitem><para><emphasis><filename>[vardeps]</filename>:</emphasis>
                     Specifies a space-separated list of additional
                     variables to add to a variable's dependencies
                     for the purposes of calculating its signature.
@@ -1406,17 +1606,17 @@
                     does not allow BitBake to automatically determine
                     that the variable is referred to.
                     </para></listitem>
-                <listitem><para><emphasis>vardepsexclude:</emphasis>
+                <listitem><para><emphasis><filename>[vardepsexclude]</filename>:</emphasis>
                     Specifies a space-separated list of variables
                     that should be excluded from a variable's dependencies
                     for the purposes of calculating its signature.
                     </para></listitem>
-                <listitem><para><emphasis>vardepvalue:</emphasis>
+                <listitem><para><emphasis><filename>[vardepvalue]</filename>:</emphasis>
                     If set, instructs BitBake to ignore the actual
                     value of the variable and instead use the specified
                     value when calculating the variable's signature.
                     </para></listitem>
-                <listitem><para><emphasis>vardepvalueexclude:</emphasis>
+                <listitem><para><emphasis><filename>[vardepvalueexclude]</filename>:</emphasis>
                     Specifies a pipe-separated list of strings to exclude
                     from the variable's value when calculating the
                     variable's signature.
@@ -1624,15 +1824,32 @@
         <title>Dependencies</title>
 
         <para>
-            To allow for efficient operation given multiple processes
-            executing in parallel, BitBake handles dependencies at
-            the task level.
-            BitBake supports a robust method to handle these dependencies.
-        </para>
+            To allow for efficient parallel processing, BitBake handles
+            dependencies at the task level.
+            Dependencies can exist both between tasks within a single recipe
+            and between tasks in different recipes.
+            Following are examples of each:
+            <itemizedlist>
+                <listitem><para>For tasks within a single recipe, a
+                    recipe's <filename>do_configure</filename>
+                    task might need to complete before its
+                    <filename>do_compile</filename> task can run.
+                    </para></listitem>
+                <listitem><para>For tasks in different recipes, one
+                    recipe's <filename>do_configure</filename>
+                    task might require another recipe's
+                    <filename>do_populate_sysroot</filename>
+                    task to finish first such that the libraries and headers
+                    provided by the other recipe are available.
+                    </para></listitem>
+             </itemizedlist>
+         </para>
 
-        <para>
-            This section describes several types of dependency mechanisms.
-        </para>
+         <para>
+             This section describes several ways to declare dependencies.
+             Remember, even though dependencies are declared in different ways, they
+             are all simply dependencies between tasks.
+         </para>
 
         <section id='dependencies-internal-to-the-bb-file'>
             <title>Dependencies Internal to the <filename>.bb</filename> File</title>
@@ -1648,11 +1865,49 @@
                 <literallayout class='monospaced'>
      addtask printdate after do_fetch before do_build
                 </literallayout>
-                In this example, the <filename>printdate</filename> task is
-                depends on the completion of the <filename>do_fetch</filename>
+                In this example, the <filename>do_printdate</filename>
+                task depends on the completion of the
+                <filename>do_fetch</filename> task, and the
+                <filename>do_build</filename> task depends on the
+                completion of the <filename>do_printdate</filename>
                 task.
-                And, the <filename>do_build</filename> depends on the completion
-                of the <filename>printdate</filename> task.
+                <note><para>
+                    For a task to run, it must be a direct or indirect
+                    dependency of some other task that is scheduled to
+                    run.</para>
+
+                    <para>For illustration, here are some examples:
+                    <itemizedlist>
+                        <listitem><para>
+                            The directive
+                            <filename>addtask mytask before do_configure</filename>
+                            causes <filename>do_mytask</filename> to run before
+                            <filename>do_configure</filename> runs.
+                            Be aware that <filename>do_mytask</filename> still only
+                            runs if its <link linkend='checksums'>input checksum</link>
+                            has changed since the last time it was run.
+                            Changes to the input checksum of
+                            <filename>do_mytask</filename> also indirectly cause
+                            <filename>do_configure</filename> to run.
+                            </para></listitem>
+                        <listitem><para>
+                            The directive
+                            <filename>addtask mytask after do_configure</filename>
+                            by itself never causes <filename>do_mytask</filename>
+                            to run.
+                            <filename>do_mytask</filename> can still be run manually
+                            as follows:
+                            <literallayout class='monospaced'>
+     $ bitbake <replaceable>recipe</replaceable> -c mytask
+                            </literallayout>
+                            Declaring <filename>do_mytask</filename> as a dependency
+                            of some other task that is scheduled to run also causes
+                            it to run.
+                            Regardless, the task runs after
+                            <filename>do_configure</filename>.
+                            </para></listitem>
+                    </itemizedlist></para>
+                </note>
             </para>
         </section>
 
@@ -1663,7 +1918,8 @@
                 BitBake uses the
                 <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
                 variable to manage build time dependencies.
-                The "deptask" varflag for tasks signifies the task of each
+                The <filename>[deptask]</filename> varflag for tasks
+                signifies the task of each
                 item listed in <filename>DEPENDS</filename> that must
                 complete before that task can be executed.
                 Here is an example:
@@ -1692,7 +1948,8 @@
                 packages.
                 Each of those packages can have <filename>RDEPENDS</filename> and
                 <filename>RRECOMMENDS</filename> runtime dependencies.
-                The "rdeptask" flag for tasks is used to signify the task of each
+                The <filename>[rdeptask]</filename> flag for tasks is used to
+                signify the task of each
                 item runtime dependency which must have completed before that
                 task can be executed.
                 <literallayout class='monospaced'>
@@ -1708,7 +1965,7 @@
             <title>Recursive Dependencies</title>
 
             <para>
-                BitBake uses the "recrdeptask" flag to manage
+                BitBake uses the <filename>[recrdeptask]</filename> flag to manage
                 recursive task dependencies.
                 BitBake looks through the build-time and runtime
                 dependencies of the current recipe, looks through
@@ -1719,6 +1976,21 @@
                 the dependencies of those tasks.
                 Iterative passes continue until all dependencies are discovered
                 and added.
+            </para>
+
+            <para>
+                The <filename>[recrdeptask]</filename> flag is most commonly
+                used in high-level
+                recipes that need to wait for some task to finish "globally".
+                For example, <filename>image.bbclass</filename> has the following:
+                <literallayout class='monospaced'>
+     do_rootfs[recrdeptask] += "do_packagedata"
+                </literallayout>
+                This statement says that the <filename>do_packagedata</filename>
+                task of the current recipe and all recipes reachable
+                (by way of dependencies) from the
+                image recipe must run before the <filename>do_rootfs</filename>
+                task can run.
             </para>
 
             <para>
@@ -1738,7 +2010,8 @@
             <title>Inter-Task Dependencies</title>
 
             <para>
-                BitBake uses the "depends" flag in a more generic form
+                BitBake uses the <filename>[depends]</filename>
+                flag in a more generic form
                 to manage inter-task dependencies.
                 This more generic form allows for inter-dependency
                 checks for specific tasks rather than checks for
@@ -1754,7 +2027,8 @@
             </para>
 
             <para>
-                The "rdepends" flag works in a similar way but takes targets
+                The <filename>[rdepends]</filename> flag works in a similar
+                way but takes targets
                 in the runtime namespace instead of the build-time dependency
                 namespace.
             </para>
@@ -1785,9 +2059,9 @@
                     </thead>
                     <tbody>
                         <row>
-                            <entry align="left"><filename>d.getVar("X", expand=False)</filename></entry>
+                            <entry align="left"><filename>d.getVar("X", expand)</filename></entry>
                             <entry align="left">Returns the value of variable "X".
-                                Using "expand=True" expands the value.</entry>
+                            Using "expand=True" expands the value.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
@@ -1810,9 +2084,9 @@
                             <entry align="left">Renames the variable "X" to "Y".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.getVarFlag("X", flag, expand=False)</filename></entry>
-                            <entry align="left">Gets then named flag from the variable "X".
-                                Using "expand=True" expands the named flag.</entry>
+                            <entry align="left"><filename>d.getVarFlag("X", flag, expand)</filename></entry>
+                            <entry align="left">Returns the value of variable "X".
+                                Using "expand=True" expands the value.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>

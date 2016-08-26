@@ -55,12 +55,19 @@ x86_common = [
     'Could not enable PowerButton event',
     'probe of LNXPWRBN:00 failed with error -22',
     'pmd_set_huge: Cannot satisfy',
+    'failed to setup card detect gpio',
 ] + common_errors
 
 qemux86_common = [
     'wrong ELF class',
     "fail to add MMCONFIG information, can't access extended PCI configuration space under this bridge.",
     "can't claim BAR ",
+    'amd_nb: Cannot enumerate AMD northbridges',
+    'uvesafb: 5000 ms task timeout error',
+    'detected fb_set_par error, error code: -22',
+    'Getting VBE info block failed',
+    'vbe_init() failed with -22',
+    'uvesafb: mode switch failed',
 ] + common_errors
 
 ignore_errors = { 
@@ -110,11 +117,19 @@ ignore_errors = {
         '(EE) Failed to load module psbdrv',
         '(EE) open /dev/fb0: No such file or directory',
         '(EE) AIGLX: reverting to software rendering',
+        'dmi: Firmware registration failed.',
+        'ioremap error for 0x78',
         ] + x86_common,
     'intel-corei7-64' : x86_common,
     'crownbay' : x86_common,
     'genericx86' : x86_common,
-    'genericx86-64' : x86_common,
+    'genericx86-64' : [
+        'Direct firmware load for i915',
+        'Failed to load firmware i915',
+        'Failed to fetch GuC',
+        'Failed to initialize GuC',
+        'The driver is built-in, so to load the firmware you need to',
+        ] + x86_common,
     'edgerouter' : [
         'Fatal server error:',
         ] + common_errors,

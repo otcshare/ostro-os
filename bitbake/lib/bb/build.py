@@ -188,6 +188,11 @@ class LogTee(object):
 def exec_func(func, d, dirs = None, pythonexception=False):
     """Execute a BB 'function'"""
 
+    try:
+        oldcwd = os.getcwd()
+    except:
+        oldcwd = None
+
     body = d.getVar(func, False)
     if not body:
         if body is None:
@@ -211,9 +216,7 @@ def exec_func(func, d, dirs = None, pythonexception=False):
             bb.utils.mkdirhier(adir)
         adir = dirs[-1]
     else:
-        adir = d.getVar('B', True)
-        bb.utils.mkdirhier(adir)
-
+        adir = None
     ispython = flags.get('python')
 
     lockflag = flags.get('lockfiles')
@@ -257,6 +260,13 @@ def exec_func(func, d, dirs = None, pythonexception=False):
         else:
             exec_func_shell(func, d, runfile, cwd=adir)
 
+    if oldcwd and os.getcwd() != oldcwd:
+        try:
+            bb.warn("Task %s changed cwd to %s" % (func, os.getcwd()))
+            os.chdir(oldcwd)
+        except:
+            pass
+
 _functionfmt = """
 {function}(d)
 """
@@ -272,7 +282,8 @@ def exec_func_python(func, d, runfile, cwd=None, pythonexception=False):
     if cwd:
         try:
             olddir = os.getcwd()
-        except OSError:
+        except OSError as e:
+            bb.warn("%s: Cannot get cwd: %s" % (func, e))
             olddir = None
         os.chdir(cwd)
 
@@ -298,8 +309,8 @@ def exec_func_python(func, d, runfile, cwd=None, pythonexception=False):
         if cwd and olddir:
             try:
                 os.chdir(olddir)
-            except OSError:
-                pass
+            except OSError as e:
+                bb.warn("%s: Cannot restore cwd %s: %s" % (func, olddir, e))
 
 def shell_trap_code():
     return '''#!/bin/sh\n
@@ -374,34 +385,43 @@ exit $ret
         else:
             bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
 
+    fifobuffer = bytearray()
     def readfifo(data):
-        lines = data.split(b'\0')
-        for line in lines:
-            splitval = line.split(b' ', 1)
-            cmd = splitval[0]
-            if len(splitval) > 1:
-                value = splitval[1].decode("utf-8")
+        nonlocal fifobuffer
+        fifobuffer.extend(data)
+        while fifobuffer:
+            message, token, nextmsg = fifobuffer.partition(b"\00")
+            if token:
+                splitval = message.split(b' ', 1)
+                cmd = splitval[0].decode("utf-8")
+                if len(splitval) > 1:
+                    value = splitval[1].decode("utf-8")
+                else:
+                    value = ''
+                if cmd == 'bbplain':
+                    bb.plain(value)
+                elif cmd == 'bbnote':
+                    bb.note(value)
+                elif cmd == 'bbwarn':
+                    bb.warn(value)
+                elif cmd == 'bberror':
+                    bb.error(value)
+                elif cmd == 'bbfatal':
+                    # The caller will call exit themselves, so bb.error() is
+                    # what we want here rather than bb.fatal()
+                    bb.error(value)
+                elif cmd == 'bbfatal_log':
+                    bb.error(value, forcelog=True)
+                elif cmd == 'bbdebug':
+                    splitval = value.split(' ', 1)
+                    level = int(splitval[0])
+                    value = splitval[1]
+                    bb.debug(level, value)
+                else:
+                    bb.warn("Unrecognised command '%s' on FIFO" % cmd)
+                fifobuffer = nextmsg
             else:
-                value = ''
-            if cmd == 'bbplain':
-                bb.plain(value)
-            elif cmd == 'bbnote':
-                bb.note(value)
-            elif cmd == 'bbwarn':
-                bb.warn(value)
-            elif cmd == 'bberror':
-                bb.error(value)
-            elif cmd == 'bbfatal':
-                # The caller will call exit themselves, so bb.error() is
-                # what we want here rather than bb.fatal()
-                bb.error(value)
-            elif cmd == 'bbfatal_log':
-                bb.error(value, forcelog=True)
-            elif cmd == 'bbdebug':
-                splitval = value.split(' ', 1)
-                level = int(splitval[0])
-                value = splitval[1]
-                bb.debug(level, value)
+                break
 
     tempdir = d.getVar('T', True)
     fifopath = os.path.join(tempdir, 'fifo.%s' % os.getpid())

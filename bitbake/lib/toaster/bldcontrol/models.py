@@ -63,20 +63,20 @@ class BuildRequest(models.Model):
     REQ_CREATED = 0
     REQ_QUEUED = 1
     REQ_INPROGRESS = 2
-    REQ_COMPLETED = 3
-    REQ_FAILED = 4
-    REQ_DELETED = 5
-    REQ_CANCELLING = 6
+    REQ_FAILED = 3
+    REQ_DELETED = 4
+    REQ_CANCELLING = 5
+    REQ_COMPLETED = 6
     REQ_ARCHIVE = 7
 
     REQUEST_STATE = (
         (REQ_CREATED, "created"),
         (REQ_QUEUED, "queued"),
         (REQ_INPROGRESS, "in progress"),
-        (REQ_COMPLETED, "completed"),
         (REQ_FAILED, "failed"),
         (REQ_DELETED, "deleted"),
         (REQ_CANCELLING, "cancelling"),
+        (REQ_COMPLETED, "completed"),
         (REQ_ARCHIVE, "archive"),
     )
 
@@ -91,7 +91,7 @@ class BuildRequest(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(BuildRequest, self).__init__(*args, **kwargs)
-        # Save the old state incase it's about to be modified
+        # Save the old state in case it's about to be modified
         self.old_state = self.state
 
     def save(self, *args, **kwargs):
@@ -130,6 +130,7 @@ class BRLayer(models.Model):
     req         = models.ForeignKey(BuildRequest)
     name        = models.CharField(max_length = 100)
     giturl      = models.CharField(max_length = 254)
+    local_source_dir = models.CharField(max_length=254, null=True)
     commit      = models.CharField(max_length = 254)
     dirpath     = models.CharField(max_length = 254)
     layer_version = models.ForeignKey(Layer_Version, null=True)

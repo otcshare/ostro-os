@@ -1,0 +1,535 @@
+From 7714a4c0e589f8b654e1270575512555ea4ad6c7 Mon Sep 17 00:00:00 2001
+From: Feng Mu <Feng.Mu@windriver.com>
+Date: Fri, 27 May 2016 16:44:33 +0800
+Subject: [PATCH] fix errors during cross compile
+
+Upstream-Status: Inappropriate [embedded specific]
+
+Signed-off-by: Feng Mu <Feng.Mu@windriver.com>
+---
+ Makefile.in  |  56 +++++++--
+ configure.in | 382 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 423 insertions(+), 14 deletions(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index aa46b24..c0fd87f 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -5,9 +5,13 @@ CC =		@CC@
+ HOSTCC =	@HOSTCC@
+ LIBTOOL =	./libtool
+ SQLITE_INC =	@SQLITE_INC@
++SQLITE_TARGET_INC =	@SQLITE_TARGET_INC@
+ SQLITE_LIB =	@SQLITE_LIB@
++SQLITE_TARGET_LIB =	@SQLITE_TARGET_LIB@
+ SQLITE3_INC =	@SQLITE3_INC@
++SQLITE3_TARGET_INC =	@SQLITE3_TARGET_INC@
+ SQLITE3_LIB =	@SQLITE3_LIB@
++SQLITE3_TARGET_LIB =	@SQLITE3_TARGET_LIB@
+ SQLITE3_A10N_C =	@SQLITE3_A10N_C@
+ SQLITE3_A10N_O =	@SQLITE3_A10N_O@
+ JAVAH =		@JAVAH@
+@@ -23,7 +27,7 @@ INSTALL =	@INSTALL@
+ JAR_DIR =	@JAR_DIR@
+ NATIVE_LIB_DIR =	@NATIVE_LIB_DIR@
+ 
+-CFLAGS=	$(JNIINCLUDE) $(SQLITE_INC) $(SQLITE3_INC) \
++CFLAGS_HOST=	$(JNIINCLUDE) $(SQLITE_INC) $(SQLITE3_INC) \
+ 	-DHAVE_SQLITE2=@HAVE_SQLITE2@ -DHAVE_SQLITE3=@HAVE_SQLITE3@ \
+ 	-DHAVE_SQLITE_FUNCTION_TYPE=@HAVE_SQLITE_FUNCTION_TYPE@ \
+ 	-DHAVE_SQLITE_OPEN_AUX_FILE=@HAVE_SQLITE_OPEN_AUX_FILE@ \
+@@ -53,9 +57,43 @@ CFLAGS=	$(JNIINCLUDE) $(SQLITE_INC) $(SQLITE3_INC) \
+ 	-DHAVE_SQLITE3_STATUS=@HAVE_SQLITE3_STATUS@ \
+ 	-DHAVE_SQLITE3_DB_STATUS=@HAVE_SQLITE3_DB_STATUS@ \
+ 	-DHAVE_SQLITE3_STMT_STATUS=@HAVE_SQLITE3_STMT_STATUS@ \
+-	@VALIST_FLAGS@ @CFLAGS@ @SQLITE3_A10N_FLAGS@
++	@VALIST_FLAGS@ @SQLITE3_A10N_FLAGS@
++
++LIBS_HOST=	@SQLITE_LIB@ @SQLITE3_LIB@ @LDFLAGS@
++
++CFLAGS_TARGET=	$(JNIINCLUDE) $(SQLITE_TARGET_INC) $(SQLITE3_INC) \
++	-DHAVE_SQLITE2_TARGET=@HAVE_SQLITE2_TARGET@ -DHAVE_SQLITE3=@HAVE_SQLITE3@ \
++	-DHAVE_SQLITE_TARGET_FUNCTION_TYPE=@HAVE_SQLITE_TARGET_FUNCTION_TYPE@ \
++	-DHAVE_SQLITE_TARGET_OPEN_AUX_FILE=@HAVE_SQLITE_TARGET_OPEN_AUX_FILE@ \
++	-DHAVE_SQLITE_TARGET_SET_AUTHORIZER=@HAVE_SQLITE_TARGET_SET_AUTHORIZER@ \
++	-DHAVE_SQLITE_TARGET_TRACE=@HAVE_SQLITE_TARGET_TRACE@ \
++	-DHAVE_SQLITE_TARGET_COMPILE=@HAVE_SQLITE_TARGET_COMPILE@ \
++	-DHAVE_SQLITE_TARGET_PROGRESS_HANDLER=@HAVE_SQLITE_TARGET_PROGRESS_HANDLER@ \
++	-DHAVE_SQLITE3_MALLOC=@HAVE_SQLITE3_MALLOC@ \
++	-DHAVE_SQLITE3_PREPARE_V2=@HAVE_SQLITE3_PREPARE_V2@ \
++	-DHAVE_SQLITE3_PREPARE16_V2=@HAVE_SQLITE3_PREPARE16_V2@ \
++	-DHAVE_SQLITE3_BIND_ZEROBLOB=@HAVE_SQLITE3_BIND_ZEROBLOB@ \
++	-DHAVE_SQLITE3_CLEAR_BINDINGS=@HAVE_SQLITE3_CLEAR_BINDINGS@ \
++	-DHAVE_SQLITE3_COLUMN_TABLE_NAME16=@HAVE_SQLITE3_COLUMN_TABLE_NAME16@ \
++	-DHAVE_SQLITE3_COLUMN_DATABASE_NAME16=@HAVE_SQLITE3_COLUMN_DATABASE_NAME16@ \
++	-DHAVE_SQLITE3_COLUMN_ORIGIN_NAME16=@HAVE_SQLITE3_COLUMN_ORIGIN_NAME16@ \
++	-DHAVE_SQLITE3_BIND_PARAMETER_COUNT=@HAVE_SQLITE3_BIND_PARAMETER_COUNT@ \
++	-DHAVE_SQLITE3_BIND_PARAMETER_NAME=@HAVE_SQLITE3_BIND_PARAMETER_NAME@ \
++	-DHAVE_SQLITE3_BIND_PARAMETER_INDEX=@HAVE_SQLITE3_BIND_PARAMETER_INDEX@ \
++	-DHAVE_SQLITE3_RESULT_ZEROBLOB=@HAVE_SQLITE3_RESULT_ZEROBLOB@ \
++	-DHAVE_SQLITE3_INCRBLOBIO=@HAVE_SQLITE3_INCRBLOBIO@ \
++	-DHAVE_SQLITE3_KEY=@HAVE_SQLITE3_KEY@ \
++	-DHAVE_SQLITE3_SHARED_CACHE=@HAVE_SQLITE3_SHARED_CACHE@ \
++	-DHAVE_SQLITE3_OPEN_V2=@HAVE_SQLITE3_OPEN_V2@ \
++	-DHAVE_SQLITE3_LOAD_EXTENSION=@HAVE_SQLITE3_LOAD_EXTENSION@ \
++	-DHAVE_SQLITE3_BACKUPAPI=@HAVE_SQLITE3_BACKUPAPI@ \
++	-DHAVE_SQLITE3_PROFILE=@HAVE_SQLITE3_PROFILE@ \
++	-DHAVE_SQLITE3_STATUS=@HAVE_SQLITE3_STATUS@ \
++	-DHAVE_SQLITE3_DB_STATUS=@HAVE_SQLITE3_DB_STATUS@ \
++	-DHAVE_SQLITE3_STMT_STATUS=@HAVE_SQLITE3_STMT_STATUS@ \
++	@VALIST_FLAGS@ @SQLITE3_A10N_FLAGS@
+ 
+-LIBS=	@SQLITE_LIB@ @SQLITE3_LIB@ @LDFLAGS@
++LIBS_TARGET=	@SQLITE_TARGET_LIB@ @SQLITE3_TARGET_LIB@ @LDFLAGS@
+ 
+ # Add new suffixes
+ .SUFFIXES: .java .class .lo .la .jar
+@@ -170,20 +208,18 @@ native/sqlite_jni.h:	SQLite/Database.class SQLite/Vm.class \
+ 	    SQLite.Profile
+ 
+ sqlite_jni.lo:	native/sqlite_jni.h native/sqlite_jni.c
+-	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) native/sqlite_jni.c
++	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS_TARGET) native/sqlite_jni.c
+ 
+ $(SQLITE3_A10N_O):	$(SQLITE3_A10N_C)
+-	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) $(SQLITE3_A10N_C)
++	$(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS_TARGET) $(SQLITE3_A10N_C)
+ 
+ libsqlite_jni.la:	sqlite_jni.lo $(SQLITE3_A10N_O)
+-	$(LIBTOOL) --mode=link $(CC) $(CFLAGS) -o libsqlite_jni.la \
++	$(LIBTOOL) --mode=link $(CC) $(CFLAGS_TARGET) -o libsqlite_jni.la \
+ 	    sqlite_jni.lo $(SQLITE3_A10N_O) -rpath $(NATIVE_LIB_DIR) \
+-	    -module -avoid-version $(LIBS)
++	    -module -avoid-version $(LIBS_TARGET)
+ 
+ native/mkconst:	native/mkconst.c
+-	$(LIBTOOL) --mode=link $(HOSTCC) @HOST_CFLAGS@ $(SQLITE_INC) \
+-	    $(SQLITE3_INC) -DHAVE_SQLITE2=@HAVE_SQLITE2@ \
+-	    -DHAVE_SQLITE3=@HAVE_SQLITE3@ -o native/mkconst native/mkconst.c
++	$(LIBTOOL) --mode=link $(HOSTCC) $(CFLAGS_HOST) -o native/mkconst native/mkconst.c
+ 
+ Makefile:	Makefile.in configure config.status
+ 	./config.status
+diff --git a/configure.in b/configure.in
+index c620bb6..61b3c2a 100644
+--- a/configure.in
++++ b/configure.in
+@@ -32,7 +32,7 @@ if test "x$JAR_DIR" = "x" ; then
+ fi
+ 
+ ##########
+-# Find SQLite header file and library
++# Find SQLite header file and library on host sysroot
+ #
+ AC_ARG_WITH(sqlite, [  --with-sqlite=DIR       use SQLite header/lib from DIR],
+   SQLITE_DIR=$withval)
+@@ -148,7 +148,122 @@ AC_SUBST(HAVE_SQLITE_COMPILE)
+ AC_SUBST(HAVE_SQLITE_PROGRESS_HANDLER)
+ 
+ ##########
+-# Find SQLite3 header file and library
++# Find SQLite header file and library on target sysroot
++#
++AC_ARG_WITH(sqlite-target, [  --with-sqlite-target=DIR       use target sysroot SQLite header/lib from DIR],
++  SQLITE_TARGET_DIR=$withval)
++if test ! -n "$SQLITE_TARGET_DIR" -a -d "$SQLITE_TARGET_DIR" ; then
++  AC_MSG_WARN([SQLite2-target directory $SQLITE_TARGET_DIR does not exist])
++fi
++
++SQLITE_TARGET_INC=""
++SQLITE_TARGET_LIB=""
++HAVE_SQLITE2_TARGET=0
++
++if test "$with_sqlite-target" != "no" ; then
++  if test -z "$SQLITE_TARGET_DIR" ; then
++    SQLITE_TARGET_DIR="../sqlite /usr /usr/local /opt"
++  fi
++  AC_MSG_CHECKING([for SQlite header and library])
++  SQLITE_TARGET_INC=UNKNOWN
++  SQLITE_TARGET_LIB=UNKNOWN
++  for i in $SQLITE_TARGET_DIR ; do
++    if test -r $i/sqlite.h ; then
++      if test -r $i/libsqlite.la ; then
++        SQLITE_TARGET_INC="-I$i"
++        SQLITE_TARGET_LIB="$i/libsqlite.la"
++        SQLITE_TARGET_LIBDIR="-L$i"
++        break
++      elif test -r $i/libsqlite.a ; then
++        SQLITE_TARGET_INC="-I$i"
++        SQLITE_TARGET_LIB="$i/libsqlite.a"
++        SQLITE_TARGET_LIBDIR="-L$i"
++        break
++      fi
++    elif test -r $i/include/sqlite.h ; then
++      for lib in lib64 lib ; do
++        if test -r $i/$lib/libsqlite.la ; then
++          SQLITE_TARGET_INC="-I$i/include"
++          SQLITE_TARGET_LIB="$i/$lib/libsqlite.la"
++          SQLITE_TARGET_LIBDIR="-L$i/$lib"
++          break
++        elif test -r $i/$lib/libsqlite.a ; then
++          SQLITE_TARGET_INC="-I$i/include"
++          SQLITE_TARGET_LIB="$i/$lib/libsqlite.a"
++          SQLITE_TARGET_LIBDIR="-L$i/$lib"
++          break
++        elif test -r $i/$lib/libsqlite.so ; then
++          SQLITE_TARGET_INC="-I$i/include"
++          SQLITE_TARGET_LIB="-lsqlite"
++          SQLITE_TARGET_LIBDIR="-L$i/$lib"
++          break
++        fi
++      done
++      if test "$SQLITE_TARGET_LIB" != "UNKNOWN" ; then
++        break
++      fi
++    fi
++  done
++  if test "$SQLITE_TARGET_LIB" = "UNKNOWN" ; then
++    lib=`pkg-config sqlite --libs 2>/dev/null`
++    if test -n "$lib" ; then
++      SQLITE_TARGET_INC=`pkg-config sqlite --cflags-only-I`
++      SQLITE_TARGET_LIB="$lib"
++      SQLITE_TARGET_LIBDIR=`pkg-config sqlite --libs-only-L`
++    fi
++  fi
++  if test "$SQLITE_TARGET_INC" = "UNKNOWN" -o "$SQLITE_TARGET_LIB" = "UNKNOWN" ; then
++    AC_MSG_RESULT(no)
++    AC_MSG_WARN(SQLite2 header files and/or library not found on target sysroot)
++    SQLITE_TARGET_INC=""
++    SQLITE_TARGET_LIB=""
++    HAVE_SQLITE2_TARGET=0
++  else
++    HAVE_SQLITE2_TARGET=1
++    AC_MSG_RESULT(yes)
++  fi
++fi
++AC_SUBST(SQLITE_TARGET_INC)
++AC_SUBST(SQLITE_TARGET_LIB)
++AC_SUBST(HAVE_SQLITE2_TARGET)
++
++##########
++# Check SQLite-TARGET features
++#
++HAVE_SQLITE_TARGET_FUNCTION_TYPE=0
++HAVE_SQLITE_TARGET_OPEN_AUX_FILE=0
++HAVE_SQLITE_TARGET_SET_AUTHORIZER=0
++HAVE_SQLITE_TARGET_TRACE=0
++HAVE_SQLITE_TARGET_COMPILE=0
++HAVE_SQLITE_TARGET_PROGRESS_HANDLER=0
++if test "$HAVE_SQLITE2_TARGET" = 1 ; then
++  saved_CFLAGS=$CFLAGS
++  CFLAGS="$CFLAGS $SQLITE_TARGET_INC"
++  saved_LIBS=$LIBS
++  LIBS="$LIBS $SQLITE_TARGET_LIBDIR"
++  AC_CHECK_LIB(sqlite,sqlite_function_type,
++	       HAVE_SQLITE_FUNCTION_TYPE=1,HAVE_SQLITE_FUNCTION_TYPE=0)
++  AC_CHECK_LIB(sqlite,sqlite_open_aux_file,
++	       HAVE_SQLITE_OPEN_AUX_FILE=1,HAVE_SQLITE_OPEN_AUX_FILE=0)
++  AC_CHECK_LIB(sqlite,sqlite_set_authorizer,
++	       HAVE_SQLITE_SET_AUTHORIZER=1,HAVE_SQLITE_SET_AUTHORIZER=0)
++  AC_CHECK_LIB(sqlite,sqlite_trace,
++	       HAVE_SQLITE_TRACE=1,HAVE_SQLITE_TRACE=0)
++  AC_CHECK_LIB(sqlite,sqlite_compile,
++	       HAVE_SQLITE_COMPILE=1,HAVE_SQLITE_COMPILE=0)
++  AC_CHECK_LIB(sqlite,sqlite_progress_handler,
++	       HAVE_SQLITE_PROGRESS_HANDLER=1,HAVE_SQLITE_PROGRESS_HANDLER=0)
++  LIBS=$saved_LIBS
++  CFLAGS=$saved_CFLAGS
++fi
++AC_SUBST(HAVE_SQLITE_TARGET_FUNCTION_TYPE)
++AC_SUBST(HAVE_SQLITE_TARGET_OPEN_AUX_FILE)
++AC_SUBST(HAVE_SQLITE_TARGET_SET_AUTHORIZER)
++AC_SUBST(HAVE_SQLITE_TARGET_TRACE)
++AC_SUBST(HAVE_SQLITE_TARGET_COMPILE)
++AC_SUBST(HAVE_SQLITE_TARGET_PROGRESS_HANDLER)
++##########
++# Find SQLite3 header file and library on host sysroot
+ #
+ AC_ARG_WITH(sqlite3,
+   [  --with-sqlite3=DIR      use SQLite3 header/lib from DIR],
+@@ -251,7 +366,7 @@ AC_SUBST(SQLITE3_LIB)
+ AC_SUBST(HAVE_SQLITE3)
+ 
+ ##########
+-# Check SQLite3 features
++# Check SQLite3 features on host sysroot
+ #
+ AC_ARG_ENABLE(load-extension,
+   [  --enable-load-extension support for loading SQLite 3.x extensions.
+@@ -402,6 +517,264 @@ AC_SUBST(SQLITE3_A10N_C)
+ AC_SUBST(SQLITE3_A10N_O)
+ AC_SUBST(SQLITE3_A10N_FLAGS)
+ 
++
++##########
++# Find SQLite3 header file and library on target sysroot
++#
++AC_ARG_WITH(sqlite3-target,
++  [  --with-sqlite3-target=DIR      use target sysroot SQLite3 header/lib from DIR],
++  SQLITE3_TARGET_DIR=$withval)
++if test ! -n "$SQLITE3_TARGET_DIR" -a -d "$SQLITE3_TARGET_DIR" ; then
++  AC_MSG_WARN([SQLite3 directory $SQLITE3_TARGET_DIR does not exist])
++fi
++
++if test -z "$SQLITE3_TARGET_DIR" ; then
++  SQLITE3_TARGET_DIR="../sqlite /usr /usr/local /opt"
++fi
++
++AC_MSG_CHECKING([for SQLite3 header and library])
++SQLITE3_TARGET_INC=UNKNOWN
++SQLITE3_TARGET_LIB=UNKNOWN
++for i in $SQLITE3_TARGET_DIR ; do
++  if test -r $i/sqlite3.h ; then
++    if test -r $i/sqlite3.c ; then
++      SQLITE3_TARGET_INC="-I$i"
++      SQLITE3_TARGET_LIB="unknown"
++      SQLITE3_TARGET_LIBDIR=""
++      SQLITE3_A10N_C="$i/sqlite3.c"
++      SQLITE3_A10N_O="sqlite3.lo"
++      break 
++    elif test -r $i/libsqlite3.la ; then
++      SQLITE3_TARGET_INC="-I$i"
++      SQLITE3_TARGET_LIB="$i/libsqlite3.la"
++      SQLITE3_TARGET_LIBDIR="-L$i"
++      break
++    elif test -r $i/libsqlite3.a ; then
++      SQLITE3_TARGET_INC="-I$i"
++      SQLITE3_TARGET_LIB="$i/libsqlite3.a"
++      SQLITE3_TARGET_LIBDIR="-L$i"
++      break
++    elif test -r $i/see-sqlite3.c ; then
++      SQLITE3_TARGET_INC="-I$i"
++      SQLITE3_TARGET_LIB="unknown"
++      SQLITE3_TARGET_LIBDIR=""
++      SQLITE3_A10N_C="$i/see-sqlite3.c"
++      SQLITE3_A10N_O="see-sqlite3.lo"
++      SQLITE3_IS_BUILD_WITH_SEE="yes"
++      HAVE_SQLITE3_KEY=1
++      break
++    fi
++  elif test -r $i/include/sqlite3.h ; then
++    for lib in lib64 lib ; do
++      if test -r $i/$lib/libsqlite3.la ; then
++        SQLITE3_TARGET_INC="-I$i/include"
++        SQLITE3_TARGET_LIB="$i/$lib/libsqlite3.la"
++        SQLITE3_TARGET_LIBDIR="-L$i/$lib"
++        break
++      elif test -r $i/$lib/libsqlite3.a ; then
++        SQLITE3_TARGET_INC="-I$i/include"
++        SQLITE3_TARGET_LIB="$i/$lib/libsqlite3.a"
++        SQLITE3_TARGET_LIBDIR="-L$i/$lib"
++        break
++      elif test -r $i/$lib/libsqlite3.so ; then
++        SQLITE3_TARGET_INC="-I$i/include"
++        SQLITE3_TARGET_LIB="-lsqlite3"
++        SQLITE3_TARGET_LIBDIR="-L$i/$lib"
++        break
++      fi
++    done
++    if test "$SQLITE3_TARGET_LIB" != "UNKNOWN" ; then
++      break
++    fi
++  fi
++done
++if test "$SQLITE3_TARGET_LIB" = "UNKNOWN" ; then
++  lib=`pkg-config sqlite3 --libs 2>/dev/null`
++  if test -n "$lib" ; then
++    SQLITE3_TARGET_INC=`pkg-config sqlite3 --cflags-only-I`
++    SQLITE3_TARGET_LIB="$lib"
++    SQLITE3_TARGET_LIBDIR=`pkg-config sqlite3 --libs-only-L`
++  fi
++fi
++if test "$SQLITE3_TARGET_INC" = "UNKNOWN" -o "$SQLITE3_TARGET_LIB" = "UNKNOWN" ; then
++  AC_MSG_RESULT(no)
++  AC_MSG_WARN(SQLite3 header files and/or library not found)
++  SQLITE3_TARGET_INC=""
++  SQLITE3_TARGET_LIB=""
++  HAVE_SQLITE3_TARGET=0
++elif test -n "$SQLITE3_A10N_C" ; then
++  SQLITE3_A10N_FLAGS="$SQLITE3_A10N_FLAGS -DSQLITE_ENABLE_COLUMN_METADATA=1"
++  SQLITE3_A10N_FLAGS="$SQLITE3_A10N_FLAGS -DSQLITE_DLL=1"
++  HAVE_SQLITE3_TARGET=1
++  if test "$SQLITE3_IS_BUILT_WITH_SEE" = "yes" ; then
++    SQLITE3_A10N_FLAGS="$SQLITE3_A10N_FLAGS -DSQLITE_HAS_CODEC=1"
++    AC_MSG_RESULT([yes, using SEE])
++  else
++    AC_MSG_RESULT(yes)
++  fi
++else
++  HAVE_SQLITE3_TARGET=1
++  AC_MSG_RESULT(yes)
++fi
++AC_SUBST(SQLITE3_TARGET_INC)
++AC_SUBST(SQLITE3_TARGET_LIB)
++AC_SUBST(HAVE_SQLITE3_TARGET)
++
++##########
++# Check SQLite3 features on target sysroot
++#
++AC_ARG_ENABLE(load-extension,
++  [  --enable-load-extension support for loading SQLite 3.x extensions.
++     ***** WARNING *** WARNING *** WARNING *** WARNING *** WARNING *****
++     ***  Note that the --enable-load-extension option makes it      ***
++     ***  possible for library users to load arbitrary native code   ***
++     ***  into the JVM bypassing its security manager checks, and    ***
++     ***  thus should be enabled only if you know what you're doing. ***
++     *******************************************************************])
++test "x$enable_load_extension" = "xyes" || enable_load_extension=no
++HAVE_SQLITE3_TARGET_MALLOC=0
++HAVE_SQLITE3_TARGET_PREPARE_V2=0
++HAVE_SQLITE3_TARGET_PREPARE16_V2=0
++HAVE_SQLITE3_TARGET_BIND_ZEROBLOB=0
++HAVE_SQLITE3_TARGET_CLEAR_BINDINGS=0
++HAVE_SQLITE3_TARGET_COLUMN_TABLE_NAME16=0
++HAVE_SQLITE3_TARGET_COLUMN_DATABASE_NAME16=0
++HAVE_SQLITE3_TARGET_COLUMN_ORIGIN_NAME16=0
++HAVE_SQLITE3_TARGET_BIND_PARAMETER_COUNT=0
++HAVE_SQLITE3_TARGET_BIND_PARAMETER_NAME=0
++HAVE_SQLITE3_TARGET_BIND_PARAMETER_INDEX=0
++HAVE_SQLITE3_TARGET_RESULT_ZEROBLOB=0
++HAVE_SQLITE3_TARGET_TARGET_INCRBLOBIO=0
++HAVE_SQLITE3_TARGET_KEY=0
++HAVE_SQLITE3_TARGET_SHARED_CACHE=0
++HAVE_SQLITE3_TARGET_OPEN_V2=0
++HAVE_SQLITE3_TARGET_LOAD_EXTENSION=0
++HAVE_SQLITE3_TARGET_BACKUPAPI=0
++HAVE_SQLITE3_TARGET_PROFILE=0
++HAVE_SQLITE3_TARGET_STATUS=0
++HAVE_SQLITE3_TARGET_DB_STATUS=0
++HAVE_SQLITE3_TARGET_STMT_STATUS=0
++if test "$HAVE_SQLITE3_TARGET" = 1 -a -n "$SQLITE3_A10N_C" ; then
++  HAVE_SQLITE3_TARGET_MALLOC=1
++  HAVE_SQLITE3_TARGET_PREPARE_V2=1
++  HAVE_SQLITE3_TARGET_PREPARE16_V2=1
++  HAVE_SQLITE3_TARGET_BIND_ZEROBLOB=1
++  HAVE_SQLITE3_TARGET_CLEAR_BINDINGS=1
++  HAVE_SQLITE3_TARGET_COLUMN_TABLE_NAME16=1
++  HAVE_SQLITE3_TARGET_COLUMN_DATABASE_NAME16=1
++  HAVE_SQLITE3_TARGET_COLUMN_ORIGIN_NAME16=1
++  HAVE_SQLITE3_TARGET_BIND_PARAMETER_COUNT=1
++  HAVE_SQLITE3_TARGET_BIND_PARAMETER_NAME=1
++  HAVE_SQLITE3_TARGET_BIND_PARAMETER_INDEX=1
++  HAVE_SQLITE3_TARGET_RESULT_ZEROBLOB=1
++  HAVE_SQLITE3_TARGET_TARGET_INCRBLOBIO=1
++  HAVE_SQLITE3_TARGET_SHARED_CACHE=1
++  HAVE_SQLITE3_TARGET_OPEN_V2=1
++  if test "$enable_load_extension" = "yes" ; then
++    HAVE_SQLITE3_TARGET_LOAD_EXTENSION=1
++  fi
++  HAVE_SQLITE3_TARGET_BACKUPAPI=1
++  HAVE_SQLITE3_TARGET_PROFILE=1
++  HAVE_SQLITE3_TARGET_STATUS=1
++  HAVE_SQLITE3_TARGET_DB_STATUS=1
++  HAVE_SQLITE3_TARGET_STMT_STATUS=1
++fi
++if test "$HAVE_SQLITE3_TARGET" = 1 -a -z "$SQLITE3_A10N_C" ; then
++  saved_CFLAGS=$CFLAGS
++  CFLAGS="$CFLAGS $SQLITE3_TARGET_INC"
++  saved_LIBS=$LIBS
++  LIBS="$LIBS $SQLITE3_TARGET_LIBDIR"
++  AC_CHECK_LIB(sqlite3,sqlite3_malloc,
++	       HAVE_SQLITE3_TARGET_MALLOC=1,HAVE_SQLITE3_TARGET_MALLOC=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_prepare_v2,
++	       HAVE_SQLITE3_TARGET_PREPARE_V2=1,HAVE_SQLITE3_TARGET_PREPARE_V2=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_prepare16_v2,
++	       HAVE_SQLITE3_TARGET_PREPARE16_V2=1,HAVE_SQLITE3_TARGET_PREPARE16_V2=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_bind_zeroblob,
++	       HAVE_SQLITE3_TARGET_BIND_ZEROBLOB=1,HAVE_SQLITE3_TARGET_BIND_ZEROBLOB=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_clear_bindings,
++	       HAVE_SQLITE3_TARGET_CLEAR_BINDINGS=1,HAVE_SQLITE3_TARGET_CLEAR_BINDINGS=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_column_table_name16,
++	       HAVE_SQLITE3_TARGET_COLUMN_TABLE_NAME16=1,
++	       HAVE_SQLITE3_TARGET_COLUMN_TABLE_NAME16=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_column_database_name16,
++	       HAVE_SQLITE3_TARGET_COLUMN_DATABASE_NAME16=1,
++	       HAVE_SQLITE3_TARGET_COLUMN_DATABASE_NAME16=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_column_origin_name16,
++	       HAVE_SQLITE3_TARGET_COLUMN_ORIGIN_NAME16=1,
++	       HAVE_SQLITE3_TARGET_COLUMN_ORIGIN_NAME16=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_bind_parameter_count,
++	       HAVE_SQLITE3_TARGET_BIND_PARAMETER_COUNT=1,
++	       HAVE_SQLITE3_TARGET_BIND_PARAMETER_COUNT=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_bind_parameter_name,
++	       HAVE_SQLITE3_TARGET_BIND_PARAMETER_NAME=1,
++	       HAVE_SQLITE3_TARGET_BIND_PARAMETER_NAME=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_bind_parameter_index,
++	       HAVE_SQLITE3_TARGET_BIND_PARAMETER_INDEX=1,
++	       HAVE_SQLITE3_TARGET_BIND_PARAMETER_INDEX=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_result_zeroblob,
++	       HAVE_SQLITE3_TARGET_RESULT_ZEROBLOB=1,HAVE_SQLITE3_TARGET_RESULT_ZEROBLOB=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_blob_open,
++	       HAVE_SQLITE3_TARGET_TARGET_INCRBLOBIO=1,HAVE_SQLITE3_TARGET_TARGET_INCRBLOBIO=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_key,
++	       HAVE_SQLITE3_TARGET_KEY=1,HAVE_SQLITE3_TARGET_KEY=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_rekey,
++	       ,HAVE_SQLITE3_TARGET_KEY=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_enable_shared_cache,
++	       HAVE_SQLITE3_TARGET_SHARED_CACHE=1,HAVE_SQLITE3_TARGET_SHARED_CACHE=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_open_v2,
++	       HAVE_SQLITE3_TARGET_OPEN_V2=1,HAVE_SQLITE3_TARGET_OPEN_V2=0)
++  if test "$enable_load_extension" = "yes" ; then
++    AC_CHECK_LIB(sqlite3,sqlite3_load_extension,
++		 HAVE_SQLITE3_TARGET_LOAD_EXTENSION=1,HAVE_SQLITE3_TARGET_LOAD_EXTENSION=0)
++  fi
++  AC_CHECK_LIB(sqlite3,sqlite3_backup_init,
++	       HAVE_SQLITE3_TARGET_BACKUPAPI=1,HAVE_SQLITE3_TARGET_BACKUPAPI=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_profile,
++	       HAVE_SQLITE3_TARGET_PROFILE=1,HAVE_SQLITE3_TARGET_PROFILE=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_status,
++	       HAVE_SQLITE3_TARGET_STATUS=1,HAVE_SQLITE3_TARGET_STATUS=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_db_status,
++	       HAVE_SQLITE3_TARGET_DB_STATUS=1,HAVE_SQLITE3_TARGET_DB_STATUS=0)
++  AC_CHECK_LIB(sqlite3,sqlite3_stmt_status,
++	       HAVE_SQLITE3_TARGET_STMT_STATUS=1,HAVE_SQLITE3_TARGET_STMT_STATUS=0)
++  LIBS=$saved_LIBS
++  CFLAGS=$saved_CFLAGS
++fi
++AC_SUBST(HAVE_SQLITE3_TARGET_MALLOC)
++AC_SUBST(HAVE_SQLITE3_TARGET_PREPARE_V2)
++AC_SUBST(HAVE_SQLITE3_TARGET_PREPARE16_V2)
++AC_SUBST(HAVE_SQLITE3_TARGET_BIND_ZEROBLOB)
++AC_SUBST(HAVE_SQLITE3_TARGET_CLEAR_BINDINGS)
++AC_SUBST(HAVE_SQLITE3_TARGET_COLUMN_TABLE_NAME16)
++AC_SUBST(HAVE_SQLITE3_TARGET_COLUMN_DATABASE_NAME16)
++AC_SUBST(HAVE_SQLITE3_TARGET_COLUMN_ORIGIN_NAME16)
++AC_SUBST(HAVE_SQLITE3_TARGET_BIND_PARAMETER_COUNT)
++AC_SUBST(HAVE_SQLITE3_TARGET_BIND_PARAMETER_NAME)
++AC_SUBST(HAVE_SQLITE3_TARGET_BIND_PARAMETER_INDEX)
++AC_SUBST(HAVE_SQLITE3_TARGET_RESULT_ZEROBLOB)
++AC_SUBST(HAVE_SQLITE3_TARGET_TARGET_INCRBLOBIO)
++AC_SUBST(HAVE_SQLITE3_TARGET_KEY)
++AC_SUBST(HAVE_SQLITE3_TARGET_SHARED_CACHE)
++AC_SUBST(HAVE_SQLITE3_TARGET_OPEN_V2)
++AC_SUBST(HAVE_SQLITE3_TARGET_LOAD_EXTENSION)
++AC_SUBST(HAVE_SQLITE3_TARGET_BACKUPAPI)
++AC_SUBST(HAVE_SQLITE3_TARGET_PROFILE)
++AC_SUBST(HAVE_SQLITE3_TARGET_STATUS)
++AC_SUBST(HAVE_SQLITE3_TARGET_DB_STATUS)
++AC_SUBST(HAVE_SQLITE3_TARGET_STMT_STATUS)
++
++if test -z "$SQLITE3_A10N_C" ; then
++  SQLITE3_A10N_C="native/dummy.c"
++  SQLITE3_A10N_O="dummy.lo"
++fi
++AC_SUBST(SQLITE3_A10N_C)
++AC_SUBST(SQLITE3_A10N_O)
++AC_SUBST(SQLITE3_A10N_FLAGS)
++
++
++
++
+ ##########
+ # Any usable SQLite found ?
+ #
+@@ -565,7 +938,7 @@ if test "x$JDBCVER"  = "x" ; then
+   $JAVA_RUN -version 2>&1 | grep 'version "1.4' >/dev/null && JDBCVER=JDBC2x
+   $JAVA_RUN -version 2>&1 | grep 'version "1.5' >/dev/null && JDBCVER=JDBC2y
+   $JAVA_RUN -version 2>&1 | grep 'version "1.6' >/dev/null && JDBCVER=JDBC2z
+-  $JAVA_RUN -version 2>&1 | grep 'version "1.[78]' >/dev/null && JDBCVER=JDBC2z1
++  $JAVA_RUN -version 2>&1 | grep 'version "1.@<:@78@:>@' >/dev/null && JDBCVER=JDBC2z1
+   $JAVA_RUN -version 2>&1 | grep 'JSR169' >/dev/null && JDBCVER=JDBC0
+ else
+   AC_MSG_WARN([overriding JDBC driver: $JDBCVER])
+-- 
+1.9.1
+

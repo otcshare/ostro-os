@@ -247,8 +247,15 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                           help="Run bitbake without a UI, only starting a server "
                                "(cooker) process.")
 
+        parser.add_option("", "--foreground", action="store_true",
+                          help="Run bitbake server in foreground.")
+
         parser.add_option("-B", "--bind", action="store", dest="bind", default=False,
                           help="The name/address for the bitbake server to bind to.")
+
+        parser.add_option("-T", "--idle-timeout", type=int,
+                          default=int(os.environ.get("BBTIMEOUT", "0")),
+                          help="Set timeout to unload bitbake server due to inactivity")
 
         parser.add_option("", "--no-setscene", action="store_true",
                           dest="nosetscene", default=False,
@@ -303,8 +310,10 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         # if BBSERVER says to autodetect, let's do that
         if options.remote_server:
-            [host, port] = options.remote_server.split(":", 2)
-            port = int(port)
+            port = -1
+            if options.remote_server != 'autostart':
+                host, port = options.remote_server.split(":", 2)
+                port = int(port)
             # use automatic port if port set to -1, means read it from
             # the bitbake.lock file; this is a bit tricky, but we always expect
             # to be in the base of the build directory if we need to have a
@@ -321,17 +330,19 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                     lf.close()
                     options.remote_server = remotedef
                 except Exception as e:
-                    raise BBMainException("Failed to read bitbake.lock (%s), invalid port" % str(e))
+                    if options.remote_server != 'autostart':
+                        raise BBMainException("Failed to read bitbake.lock (%s), invalid port" % str(e))
 
         return options, targets[1:]
 
 
 def start_server(servermodule, configParams, configuration, features):
     server = servermodule.BitBakeServer()
-    single_use = not configParams.server_only
+    single_use = not configParams.server_only and os.getenv('BBSERVER') != 'autostart'
     if configParams.bind:
         (host, port) = configParams.bind.split(':')
-        server.initServer((host, int(port)), single_use)
+        server.initServer((host, int(port)), single_use=single_use,
+                          idle_timeout=configParams.idle_timeout)
         configuration.interface = [server.serverImpl.host, server.serverImpl.port]
     else:
         server.initServer(single_use=single_use)
@@ -354,7 +365,8 @@ def start_server(servermodule, configParams, configuration, features):
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
         raise
-    server.detach()
+    if not configParams.foreground:
+        server.detach()
     cooker.lock.close()
     return server
 
@@ -394,6 +406,10 @@ def bitbake_main(configParams, configuration):
             raise BBMainException("FATAL: The '--server-only' option conflicts with %s.\n" %
                                   ("the BBSERVER environment variable" if "BBSERVER" in os.environ \
                                    else "the '--remote-server' option"))
+
+    elif configParams.foreground:
+        raise BBMainException("FATAL: The '--foreground' option can only be used "
+                              "with --server-only.\n")
 
     if configParams.bind and configParams.servertype != "xmlrpc":
         raise BBMainException("FATAL: If '-B' or '--bind' is defined, we must "
@@ -445,6 +461,14 @@ def bitbake_main(configParams, configuration):
         server = start_server(servermodule, configParams, configuration, featureset)
         bb.event.ui_queue = []
     else:
+        if os.getenv('BBSERVER') == 'autostart':
+            if configParams.remote_server == 'autostart' or \
+               not servermodule.check_connection(configParams.remote_server, timeout=2):
+                configParams.bind = 'localhost:0'
+                srv = start_server(servermodule, configParams, configuration, featureset)
+                configParams.remote_server = '%s:%d' % tuple(configuration.interface)
+                bb.event.ui_queue = []
+
         # we start a stub server that is actually a XMLRPClient that connects to a real server
         server = servermodule.BitBakeXMLRPCClient(configParams.observe_only,
                                                   configParams.xmlrpctoken)
@@ -484,6 +508,8 @@ def bitbake_main(configParams, configuration):
     else:
         print("Bitbake server address: %s, server port: %s" % (server.serverImpl.host,
                                                                server.serverImpl.port))
+        if configParams.foreground:
+            server.serverImpl.serve_forever()
         return 0
 
     return 1

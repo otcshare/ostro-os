@@ -17,7 +17,6 @@ KEXECTOOLS_nios2 ?= ""
 
 X11GLTOOLS = "\
     mesa-demos \
-    piglit \
     "
 
 3GTOOLS = "\
@@ -36,8 +35,6 @@ X11TOOLS = "\
 
 RDEPENDS_${PN} = "\
     blktool \
-    tslib-calibrate \
-    tslib-tests \
     lrzsz \
     ${KEXECTOOLS} \
     alsa-utils-amixer \

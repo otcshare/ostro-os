@@ -250,6 +250,7 @@ def explode_dep_versions2(s):
         if not (i in r and r[i]):
             r[lastdep] = []
 
+    r = collections.OrderedDict(sorted(r.items(), key=lambda x: x[0]))
     return r
 
 def explode_dep_versions(s):
@@ -374,6 +375,12 @@ def _print_exception(t, value, tb, realfile, text, context):
             level = level + 1
 
         error.append("Exception: %s" % ''.join(exception))
+
+        # If the exception is from spwaning a task, let's be helpful and display
+        # the output (which hopefully includes stderr).
+        if isinstance(value, subprocess.CalledProcessError):
+            error.append("Subprocess output:")
+            error.append(value.output.decode("utf-8", errors="ignore"))
     finally:
         logger.error("\n".join(error))
 
@@ -574,6 +581,7 @@ def preserved_envvars_exported():
         'TERM',
         'USER',
         'LC_ALL',
+        'BBSERVER',
     ]
 
 def preserved_envvars():
@@ -598,7 +606,6 @@ def filter_environment(good_vars):
             continue
 
         removed_vars[key] = os.environ[key]
-        os.unsetenv(key)
         del os.environ[key]
 
     # If we spawn a python process, we need to have a UTF-8 locale, else python's file
@@ -1444,9 +1451,8 @@ def set_process_name(name):
     # This is nice to have for debugging, not essential
     try:
         libc = cdll.LoadLibrary('libc.so.6')
-        buff = create_string_buffer(len(name)+1)
-        buff.value = name
-        libc.prctl(15, byref(buff), 0, 0, 0)
+        buf = create_string_buffer(bytes(name, 'utf-8'))
+        libc.prctl(15, byref(buf), 0, 0, 0)
     except:
         pass
 
@@ -1455,7 +1461,8 @@ def export_proxies(d):
     import os
 
     variables = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY',
-                    'ftp_proxy', 'FTP_PROXY', 'no_proxy', 'NO_PROXY']
+                    'ftp_proxy', 'FTP_PROXY', 'no_proxy', 'NO_PROXY',
+                    'GIT_PROXY_COMMAND']
     exported = False
 
     for v in variables:

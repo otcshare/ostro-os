@@ -5,15 +5,17 @@ OSIP_HANDOFF_POINTER = "17829888"
 # env is U-Boot primary environment where internal U-Boot variables are stored
 # this default generated binary environment, is embedded in a raw OSIP image
 # use by XFSTK tools to do the initial boot
-ENV_IMAGE = "${S}/env.bin"
-BASE_IMAGE = "${S}/u-boot.bin"
+ENV_IMAGE = "${B}/env.bin"
+BASE_IMAGE = "${B}/u-boot.bin"
 UBOOT_OSIP_SUFFIX = "img"
-UBOOT_TMP_IMG = "${S}/u-boot.${UBOOT_OSIP_SUFFIX}.no-osip"
-UBOOT_IMG = "${S}/u-boot.${UBOOT_OSIP_SUFFIX}"
+UBOOT_TMP_IMG = "${B}/u-boot.${UBOOT_OSIP_SUFFIX}.no-osip"
+UBOOT_IMG = "${B}/u-boot.${UBOOT_OSIP_SUFFIX}"
 UBOOT_OSIP_IMAGE = "u-boot-${MACHINE}-${PV}-${PR}.${UBOOT_OSIP_SUFFIX}"
 UBOOT_OSIP_BINARY = "u-boot.${UBOOT_OSIP_SUFFIX}"
 UBOOT_OSIP_SYMLINK = "u-boot-${MACHINE}.${UBOOT_OSIP_SUFFIX}"
 
+do_uboot_padding[dirs] = "${B}"
+do_uboot_uboot_env_mkimage[dirs] = "${B}"
 
 do_uboot_padding() {
     # U-Boot.bin map

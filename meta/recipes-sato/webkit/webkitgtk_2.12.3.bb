@@ -17,6 +17,7 @@ SRC_URI = "\
   file://0001-OptionsGTK.cmake-drop-the-hardcoded-introspection-gt.patch \
   file://0001-WebKitMacros-Append-to-I-and-not-to-isystem.patch \
   file://musl-fixes.patch \
+  file://ppc-musl-fix.patch \
   "
 SRC_URI[md5sum] = "aebb4029c09dd81664aa830e4a584c85"
 SRC_URI[sha256sum] = "173cbb9a2eca23eee52e99965483ab25aa9c0569ef5b57041fc0c129cc26c307"
@@ -71,13 +72,12 @@ EXTRA_OECMAKE_append_armv5 = " -DENABLE_JIT=OFF "
 EXTRA_OECMAKE_append_armv6 = " -DENABLE_JIT=OFF "
 EXTRA_OECMAKE_append_armv4 = " -DENABLE_JIT=OFF "
 
-# ARM JIT can build on armv7a, but doesnt' work on runtime, cause
-# displaying problems or ephiphany hang.
-EXTRA_OECMAKE_append_armv7a = " -DENABLE_JIT=OFF "
-
 # binutils 2.25.1 has a bug on aarch64:
 # https://sourceware.org/bugzilla/show_bug.cgi?id=18430
 EXTRA_OECMAKE_append_aarch64 = " -DUSE_LD_GOLD=OFF "
+EXTRA_OECMAKE_append_mips = " -DUSE_LD_GOLD=OFF "
+EXTRA_OECMAKE_append_mips64 = " -DUSE_LD_GOLD=OFF "
+EXTRA_OECMAKE_append_toolchain-clang = " -DUSE_LD_GOLD=OFF "
 
 # JIT not supported on MIPS either
 EXTRA_OECMAKE_append_mips = " -DENABLE_JIT=OFF "
@@ -89,7 +89,17 @@ SECURITY_CFLAGS_append_aarch64 = " -fPIE"
 FILES_${PN} += "${libdir}/webkit2gtk-4.0/injected-bundle/libwebkit2gtkinjectedbundle.so"
 
 # http://errors.yoctoproject.org/Errors/Details/20370/
-ARM_INSTRUCTION_SET = "arm"
+ARM_INSTRUCTION_SET_armv4 = "arm"
+ARM_INSTRUCTION_SET_armv5 = "arm"
+ARM_INSTRUCTION_SET_armv6 = "arm"
+
+# https://bugzilla.yoctoproject.org/show_bug.cgi?id=9474
+# https://bugs.webkit.org/show_bug.cgi?id=159880
+# JSC JIT can build on ARMv7 with -marm, but doesn't work on runtime.
+# Upstream only tests regularly the JSC JIT on ARMv7 with Thumb2 (-mthumb).
+ARM_INSTRUCTION_SET_armv7a = "thumb"
+ARM_INSTRUCTION_SET_armv7r = "thumb"
+ARM_INSTRUCTION_SET_armv7ve = "thumb"
 
 # Invalid data memory access: 0x00000000
 # ...

@@ -203,8 +203,12 @@ class ISA_CVEChecker:
                 if (patch1[0] == patch):
                     continue
             patchstripped = patch1[2].split('-')
-            patch_info += " CVE-" + \
-                patchstripped[1] + "-" + re.findall('\d+', patchstripped[2])[0]
+            try:
+                patch_info += " CVE-" + \
+                    patchstripped[1] + "-" + re.findall('\d+', patchstripped[2])[0]
+            except IndexError:
+                # string parsing attempt failed, so just skip this patch
+               continue
         return patch_info
 
 # ======== supported callbacks from ISA ============= #

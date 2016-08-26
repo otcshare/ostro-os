@@ -8,7 +8,7 @@
 # To use it add testimage to global inherit and call your target image with -c testimage
 # You can try it out like this:
 # - first build a qemu core-image-sato
-# - add INHERIT += "testimage" in local.conf
+# - add IMAGE_CLASSES += "testimage" in local.conf
 # - then bitbake core-image-sato -c testimage. That will run a standard suite of tests.
 
 # You can set (or append to) TEST_SUITES in local.conf to select the tests
@@ -51,15 +51,12 @@ DEFAULT_TEST_SUITES_pn-core-image-sato = "${NETTESTSUITE} connman xorg parselogs
 DEFAULT_TEST_SUITES_pn-core-image-sato-sdk = "${NETTESTSUITE} connman xorg perl python \
     ${DEVTESTSUITE} parselogs ${RPMTESTSUITE}"
 DEFAULT_TEST_SUITES_pn-core-image-lsb-dev = "${NETTESTSUITE} pam perl python parselogs ${RPMTESTSUITE}"
-DEFAULT_TEST_SUITES_pn-core-image-lsb-sdk = "${NETTESTSUITE} buildcvs buildiptables buildsudoku \
+DEFAULT_TEST_SUITES_pn-core-image-lsb-sdk = "${NETTESTSUITE} buildcvs buildiptables buildgalculator \
     connman ${DEVTESTSUITE} pam perl python parselogs ${RPMTESTSUITE}"
 DEFAULT_TEST_SUITES_pn-meta-toolchain = "auto"
 
 # aarch64 has no graphics
 DEFAULT_TEST_SUITES_remove_aarch64 = "xorg"
-
-#qemumips is too slow for buildsudoku
-DEFAULT_TEST_SUITES_remove_qemumips = "buildsudoku"
 
 TEST_SUITES ?= "${DEFAULT_TEST_SUITES}"
 
@@ -147,7 +144,10 @@ def testimage_main(d):
     tc.extract_packages()
     target.deploy()
     try:
-        target.start()
+        bootparams = None
+        if d.getVar('VIRTUAL-RUNTIME_init_manager', '') == 'systemd':
+            bootparams = 'systemd.log_level=debug systemd.log_target=console'
+        target.start(extra_bootparams=bootparams)
         starttime = time.time()
         result = tc.runTests()
         stoptime = time.time()

@@ -40,9 +40,9 @@ logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
-    def __init__(self, msg, maxval, widgets=None):
+    def __init__(self, msg, maxval, widgets=None, extrapos=-1):
         self.msg = msg
-        self.extrapos = -1
+        self.extrapos = extrapos
         if not widgets:
             widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
             progressbar.ETA()]
@@ -69,15 +69,16 @@ class BBProgress(progressbar.ProgressBar):
         self.widgets[0] = msg
 
     def setextra(self, extra):
-        if extra:
-            extrastr = str(extra)
-            if extrastr[0] != ' ':
-                extrastr = ' ' + extrastr
-            if extrastr[-1] != ' ':
-                extrastr += ' '
-        else:
-            extrastr = ' '
-        self.widgets[self.extrapos] = extrastr
+        if self.extrapos > -1:
+            if extra:
+                extrastr = str(extra)
+                if extrastr[0] != ' ':
+                    extrastr = ' ' + extrastr
+                if extrastr[-1] != ' ':
+                    extrastr += ' '
+            else:
+                extrastr = ' '
+            self.widgets[self.extrapos] = extrastr
 
     def _need_update(self):
         # We always want the bar to print when update() is called
@@ -241,10 +242,10 @@ class TerminalFilter(object):
                 start_time = activetasks[t].get("starttime", None)
                 if not pbar or pbar.bouncing != (progress < 0):
                     if progress < 0:
-                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider()])
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider(), ''], extrapos=2)
                         pbar.bouncing = True
                     else:
-                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100)
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ''], extrapos=4)
                         pbar.bouncing = False
                     activetasks[t]["progressbar"] = pbar
                 tasks.append((pbar, progress, rate, start_time))
@@ -255,17 +256,22 @@ class TerminalFilter(object):
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
             print(content)
         else:
-            if not len(activetasks):
+            if self.quiet:
+                content = "Running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
+            elif not len(activetasks):
                 content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
             else:
                 content = "Currently %2s running tasks (%s of %s)" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
-            maxtask = self.helper.tasknumber_total + 1
+            maxtask = self.helper.tasknumber_total
             if not self.main_progress or self.main_progress.maxval != maxtask:
                 widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
                 self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets)
                 self.main_progress.start(False)
             self.main_progress.setmessage(content)
-            self.main_progress.update(self.helper.tasknumber_current)
+            progress = self.helper.tasknumber_current - 1
+            if progress < 0:
+                progress = 0
+            self.main_progress.update(progress)
             print('')
         lines = 1 + int(len(content) / (self.columns + 1))
         if not self.quiet:
@@ -582,23 +588,23 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     tasktype = 'noexec task'
                 else:
                     tasktype = 'task'
-                logger.info("Running %s %s of %s (ID: %s, %s)",
+                logger.info("Running %s %d of %d (%s)",
                             tasktype,
                             event.stats.completed + event.stats.active +
                                 event.stats.failed + 1,
-                            event.stats.total, event.taskid, event.taskstring)
+                            event.stats.total, event.taskstring)
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
                 return_value = 1
                 taskfailures.append(event.taskstring)
-                logger.error("Task %s (%s) failed with exit code '%s'",
-                             event.taskid, event.taskstring, event.exitcode)
+                logger.error("Task (%s) failed with exit code '%s'",
+                             event.taskstring, event.exitcode)
                 continue
 
             if isinstance(event, bb.runqueue.sceneQueueTaskFailed):
-                logger.warning("Setscene task %s (%s) failed with exit code '%s' - real task will be run instead",
-                               event.taskid, event.taskstring, event.exitcode)
+                logger.warning("Setscene task (%s) failed with exit code '%s' - real task will be run instead",
+                               event.taskstring, event.exitcode)
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):

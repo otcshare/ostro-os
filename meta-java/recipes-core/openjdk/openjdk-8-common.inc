@@ -186,6 +186,8 @@ def get_jdk8_native_jobs(d):
     # Whatever found in PARALLEL_MAKE was not suitable.
     return "1"
 
+get_jdk8_native_jobs[vardepsexclude] += "OPENJDK8_PARALLEL_MAKE"
+
 # A function that is needed in the Shark builds.
 def get_llvm_configure_arch(d):
     import bb;
@@ -237,6 +239,43 @@ EXTRA_OECONF_append = "\
         --with-update-version=${OPENJDK_UPDATE_VERSION} \
 "
 
-CFLAGS_append = " -fno-lifetime-dse -fno-delete-null-pointer-checks"
-CXXFLAGS_append = " -fno-lifetime-dse -fno-delete-null-pointer-checks"
+# GCC 6 sets the default C++ standard to C++14 and introduces dead store
+# elimination by default. OpenJDK 8 is not ready for either of these
+# changes.
+FLAGS_GCC6 = "-fno-lifetime-dse -fno-delete-null-pointer-checks"
+
+# All supported cross compilers support the compiler flags that were
+# added to make compilation with gcc6 work. But the host compiler for
+# native compilation is a different story: it may be too old (for example,
+# gcc 4.9.2 on Debian Wheezy). In that case we need to check what the
+# version is and only add the flags that are appropriate for that GCC
+# version.
+
+def version_specific_cflags(d):
+    extraflags = None
+    version = None
+
+    if bb.data.inherits_class('native', d):
+        from subprocess import Popen, PIPE
+
+        cmd = d.expand('${CPP} -P -').split()
+        cc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        # This check is GCC specific. Clang always returns 4. For Clang
+        # __clang_major__ and __clang_minor__ need to be checked. Ideally
+        # __GNUC_MINOR__ would be checked as well, but for this recipe
+        # GCC major is all we care about.
+        version = cc.communicate(b'__GNUC__')[0].decode('utf-8')[0]
+    else:
+        # in the cross case, trust that GCCVERSION is correct. This won't
+        # work if the native toolchain is Clang, but as of this writing that
+        # doesn't work anyway.
+        version = d.getVar('GCCVERSION', expand=True)[0]
+
+    if version.isdigit():
+        extraflags = d.getVar('FLAGS_GCC%d' % int(version), True) or ''
+        return extraflags
+    return ''
+
+CFLAGS_append = " ${@version_specific_cflags(d)}"
+CXXFLAGS_append = " ${@version_specific_cflags(d)}"
 CXX_append = " -std=gnu++98"

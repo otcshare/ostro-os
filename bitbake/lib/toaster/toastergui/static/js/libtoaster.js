@@ -148,6 +148,21 @@ var libtoaster = (function () {
     });
   }
 
+  function _getMostRecentBuilds(url, onsuccess, onfail) {
+    $.ajax({
+      url: url,
+      type: 'GET',
+      data : {format: 'json'},
+      headers: {'X-CSRFToken': $.cookie('csrftoken')},
+      success: function (data) {
+        onsuccess ? onsuccess(data) : console.log(data);
+      },
+      error: function (data) {
+        onfail ? onfail(data) : console.error(data);
+      }
+    });
+  }
+
   /* Get a project's configuration info */
   function _getProjectInfo(url, onsuccess, onfail){
     $.ajax({
@@ -421,11 +436,27 @@ var libtoaster = (function () {
      });
   }
 
+  // if true, the loading spinner for Ajax requests will be displayed
+  // if requests take more than 1200ms
+  var ajaxLoadingTimerEnabled = true;
+
+  // turn on the page-level loading spinner for Ajax requests
+  function _enableAjaxLoadingTimer() {
+    ajaxLoadingTimerEnabled = true;
+  }
+
+  // turn off the page-level loading spinner for Ajax requests
+  function _disableAjaxLoadingTimer() {
+    ajaxLoadingTimerEnabled = false;
+  }
 
   return {
+    enableAjaxLoadingTimer: _enableAjaxLoadingTimer,
+    disableAjaxLoadingTimer: _disableAjaxLoadingTimer,
     reload_params : reload_params,
     startABuild : _startABuild,
     cancelABuild : _cancelABuild,
+    getMostRecentBuilds: _getMostRecentBuilds,
     makeTypeahead : _makeTypeahead,
     getProjectInfo: _getProjectInfo,
     getLayerDepsForProject : _getLayerDepsForProject,
@@ -468,7 +499,6 @@ function reload_params(params) {
     }
     window.location.href = url+"?"+callparams.join('&');
 }
-
 
 /* Things that happen for all pages */
 $(document).ready(function() {
@@ -628,7 +658,9 @@ $(document).ready(function() {
         window.clearTimeout(ajaxLoadingTimer);
 
       ajaxLoadingTimer = window.setTimeout(function() {
-        $("#loading-notification").fadeIn();
+        if (libtoaster.ajaxLoadingTimerEnabled) {
+          $("#loading-notification").fadeIn();
+        }
       }, 1200);
     });
 

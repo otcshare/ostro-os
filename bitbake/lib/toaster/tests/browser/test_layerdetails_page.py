@@ -49,9 +49,6 @@ class TestLayerDetailsPage(SeleniumTestCase):
         # project to add new custom images to
         self.project = Project.objects.create(name='foo', release=release)
 
-        layer_source = LayerSource.objects.create(
-            sourcetype=LayerSource.TYPE_IMPORTED)
-
         name = "meta-imported"
         vcs_url = "git://example.com/meta-imported"
         subdir = "/layer"
@@ -66,7 +63,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
 
         self.imported_layer_version = Layer_Version.objects.create(
             layer=imported_layer,
-            layer_source=layer_source,
+            layer_source=LayerSource.TYPE_IMPORTED,
             branch=gitrev,
             commit=gitrev,
             dirpath=subdir,
@@ -116,8 +113,8 @@ class TestLayerDetailsPage(SeleniumTestCase):
         new_values = ["%s-edited" % old_val
                       for old_val in self.initial_values]
 
-        for inputs in self.find_all("dd input[type=text]") + \
-                self.find_all("dd textarea"):
+        for inputs in self.find_all('dd input[type="text"]') + \
+                self.find_all('dd textarea'):
             # ignore the tt inputs (twitter typeahead input)
             if "tt-" in inputs.get_attribute("class"):
                 continue
@@ -125,8 +122,8 @@ class TestLayerDetailsPage(SeleniumTestCase):
             value = inputs.get_attribute("value")
 
             self.assertTrue(value in new_values,
-                            "Expecting any of \"%s\"but got \"%s\"" %
-                            (self.initial_values, value))
+                            "Expecting any of \"%s\" but got \"%s\"" %
+                            (new_values, value))
 
     def test_delete_layer(self):
         """ Delete the layer """

@@ -1,6 +1,6 @@
 # Development tool - standard commands plugin
 #
-# Copyright (C) 2014-2015 Intel Corporation
+# Copyright (C) 2014-2016 Intel Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -28,6 +28,7 @@ import argparse_oe
 import scriptutils
 import errno
 import glob
+import filecmp
 from collections import OrderedDict
 from devtool import exec_build_env_command, setup_tinfoil, check_workspace_recipe, use_external_build, setup_git_repo, recipe_to_append, get_bbclassextend_targets, DevtoolError
 from devtool import parse_recipe
@@ -220,7 +221,7 @@ def add(args, config, basepath, workspace):
         initial_rev = stdout.rstrip()
 
     tinfoil = setup_tinfoil(config_only=True, basepath=basepath)
-    rd = oe.recipeutils.parse_recipe(recipefile, None, tinfoil.config_data)
+    rd = oe.recipeutils.parse_recipe(tinfoil.cooker, recipefile, None)
     if not rd:
         return 1
 
@@ -875,10 +876,10 @@ def _remove_file_entries(srcuri, filelist):
                 break
     return entries, remaining
 
-def _remove_source_files(args, files, destpath):
+def _remove_source_files(append, files, destpath):
     """Unlink existing patch files"""
     for path in files:
-        if args.append:
+        if append:
             if not destpath:
                 raise Exception('destpath should be set here')
             path = os.path.join(destpath, os.path.basename(path))
@@ -1031,7 +1032,10 @@ def _export_local_files(srctree, rd, destdir):
     if new_set is not None:
         for fname in new_set:
             if fname in existing_files:
-                updated[fname] = existing_files.pop(fname)
+                origpath = existing_files.pop(fname)
+                workpath = os.path.join(local_files_dir, fname)
+                if not filecmp.cmp(origpath, workpath):
+                    updated[fname] = origpath
             elif fname != '.gitignore':
                 added[fname] = None
 
@@ -1039,7 +1043,19 @@ def _export_local_files(srctree, rd, destdir):
     return (updated, added, removed)
 
 
-def _update_recipe_srcrev(args, srctree, rd, config_data):
+def _determine_files_dir(rd):
+    """Determine the appropriate files directory for a recipe"""
+    recipedir = rd.getVar('FILE_DIRNAME', True)
+    for entry in rd.getVar('FILESPATH', True).split(':'):
+        relpth = os.path.relpath(entry, recipedir)
+        if not os.sep in relpth:
+            # One (or zero) levels below only, so we don't put anything in machine-specific directories
+            if os.path.isdir(entry):
+                return entry
+    return os.path.join(recipedir, rd.getVar('BPN', True))
+
+
+def _update_recipe_srcrev(srctree, rd, appendlayerdir, wildcard_version, no_remove):
     """Implement the 'srcrev' mode of update-recipe"""
     import bb
     import oe.recipeutils
@@ -1068,7 +1084,7 @@ def _update_recipe_srcrev(args, srctree, rd, config_data):
     try:
         local_files_dir = tempfile.mkdtemp(dir=tempdir)
         upd_f, new_f, del_f = _export_local_files(srctree, rd, local_files_dir)
-        if not args.no_remove:
+        if not no_remove:
             # Find list of existing patches in recipe file
             patches_dir = tempfile.mkdtemp(dir=tempdir)
             old_srcrev = (rd.getVar('SRCREV', False) or '')
@@ -1081,7 +1097,7 @@ def _update_recipe_srcrev(args, srctree, rd, config_data):
                 removedentries = _remove_file_entries(srcuri, remove_files)[0]
                 update_srcuri = True
 
-        if args.append:
+        if appendlayerdir:
             files = dict((os.path.join(local_files_dir, key), val) for
                           key, val in list(upd_f.items()) + list(new_f.items()))
             removevalues = {}
@@ -1089,11 +1105,10 @@ def _update_recipe_srcrev(args, srctree, rd, config_data):
                 removevalues  = {'SRC_URI': removedentries}
                 patchfields['SRC_URI'] = '\\\n    '.join(srcuri)
             _, destpath = oe.recipeutils.bbappend_recipe(
-                    rd, args.append, files, wildcardver=args.wildcard_version,
+                    rd, appendlayerdir, files, wildcardver=wildcard_version,
                     extralines=patchfields, removevalues=removevalues)
         else:
-            files_dir = os.path.join(os.path.dirname(recipefile),
-                                     rd.getVar('BPN', True))
+            files_dir = _determine_files_dir(rd)
             for basepath, path in upd_f.items():
                 logger.info('Updating file %s' % basepath)
                 _move_file(os.path.join(local_files_dir, basepath), path)
@@ -1114,21 +1129,21 @@ def _update_recipe_srcrev(args, srctree, rd, config_data):
                     'point to a git repository where you have pushed your '
                     'changes')
 
-    _remove_source_files(args, remove_files, destpath)
+    _remove_source_files(appendlayerdir, remove_files, destpath)
     return True
 
-def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
+def _update_recipe_patch(recipename, workspace, srctree, rd, appendlayerdir, wildcard_version, no_remove, initial_rev):
     """Implement the 'patch' mode of update-recipe"""
     import bb
     import oe.recipeutils
 
     recipefile = rd.getVar('FILE', True)
-    append = workspace[args.recipename]['bbappend']
+    append = workspace[recipename]['bbappend']
     if not os.path.exists(append):
         raise DevtoolError('unable to find workspace bbappend for recipe %s' %
-                           args.recipename)
+                           recipename)
 
-    initial_rev, update_rev, changed_revs = _get_patchset_revs(srctree, append, args.initial_rev)
+    initial_rev, update_rev, changed_revs = _get_patchset_revs(srctree, append, initial_rev)
     if not initial_rev:
         raise DevtoolError('Unable to find initial revision - please specify '
                            'it with --initial-rev')
@@ -1139,7 +1154,7 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
         upd_f, new_f, del_f = _export_local_files(srctree, rd, local_files_dir)
 
         remove_files = []
-        if not args.no_remove:
+        if not no_remove:
             # Get all patches from source tree and check if any should be removed
             all_patches_dir = tempfile.mkdtemp(dir=tempdir)
             upd_p, new_p, del_p = _export_patches(srctree, rd, initial_rev,
@@ -1155,7 +1170,7 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
         updaterecipe = False
         destpath = None
         srcuri = (rd.getVar('SRC_URI', False) or '').split()
-        if args.append:
+        if appendlayerdir:
             files = dict((os.path.join(local_files_dir, key), val) for
                          key, val in list(upd_f.items()) + list(new_f.items()))
             files.update(dict((os.path.join(patches_dir, key), val) for
@@ -1170,7 +1185,8 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
                                      item in remaining]
                         removevalues = {'SRC_URI': removedentries + remaining}
                 _, destpath = oe.recipeutils.bbappend_recipe(
-                                rd, args.append, files,
+                                rd, appendlayerdir, files,
+                                wildcardver=wildcard_version,
                                 removevalues=removevalues)
             else:
                 logger.info('No patches or local source files needed updating')
@@ -1193,8 +1209,7 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
                 _move_file(patchfn, path)
                 updatefiles = True
             # Add any new files
-            files_dir = os.path.join(os.path.dirname(recipefile),
-                                     rd.getVar('BPN', True))
+            files_dir = _determine_files_dir(rd)
             for basepath, path in new_f.items():
                 logger.info('Adding new file %s' % basepath)
                 _move_file(os.path.join(local_files_dir, basepath),
@@ -1221,7 +1236,7 @@ def _update_recipe_patch(args, config, workspace, srctree, rd, config_data):
     finally:
         shutil.rmtree(tempdir)
 
-    _remove_source_files(args, remove_files, destpath)
+    _remove_source_files(appendlayerdir, remove_files, destpath)
     return True
 
 def _guess_recipe_update_mode(srctree, rdata):
@@ -1246,6 +1261,19 @@ def _guess_recipe_update_mode(srctree, rdata):
 
     return 'patch'
 
+def _update_recipe(recipename, workspace, rd, mode, appendlayerdir, wildcard_version, no_remove, initial_rev):
+    srctree = workspace[recipename]['srctree']
+    if mode == 'auto':
+        mode = _guess_recipe_update_mode(srctree, rd)
+
+    if mode == 'srcrev':
+        updated = _update_recipe_srcrev(srctree, rd, appendlayerdir, wildcard_version, no_remove)
+    elif mode == 'patch':
+        updated = _update_recipe_patch(recipename, workspace, srctree, rd, appendlayerdir, wildcard_version, no_remove, initial_rev)
+    else:
+        raise DevtoolError('update_recipe: invalid mode %s' % mode)
+    return updated
+
 def update_recipe(args, config, basepath, workspace):
     """Entry point for the devtool 'update-recipe' subcommand"""
     check_workspace_recipe(workspace, args.recipename)
@@ -1264,18 +1292,7 @@ def update_recipe(args, config, basepath, workspace):
     if not rd:
         return 1
 
-    srctree = workspace[args.recipename]['srctree']
-    if args.mode == 'auto':
-        mode = _guess_recipe_update_mode(srctree, rd)
-    else:
-        mode = args.mode
-
-    if mode == 'srcrev':
-        updated = _update_recipe_srcrev(args, srctree, rd, tinfoil.config_data)
-    elif mode == 'patch':
-        updated = _update_recipe_patch(args, config, workspace, srctree, rd, tinfoil.config_data)
-    else:
-        raise DevtoolError('update_recipe: invalid mode %s' % mode)
+    updated = _update_recipe(args.recipename, workspace, rd, args.mode, args.append, args.wildcard_version, args.no_remove, args.initial_rev)
 
     if updated:
         rf = rd.getVar('FILE', True)
@@ -1300,24 +1317,10 @@ def status(args, config, basepath, workspace):
     return 0
 
 
-def reset(args, config, basepath, workspace):
-    """Entry point for the devtool 'reset' subcommand"""
-    import bb
-    if args.recipename:
-        if args.all:
-            raise DevtoolError("Recipe cannot be specified if -a/--all is used")
-        else:
-            for recipe in args.recipename:
-                check_workspace_recipe(workspace, recipe, checksrc=False)
-    elif not args.all:
-        raise DevtoolError("Recipe must be specified, or specify -a/--all to "
-                           "reset all recipes")
-    if args.all:
-        recipes = list(workspace.keys())
-    else:
-        recipes = args.recipename
+def _reset(recipes, no_clean, config, basepath, workspace):
+    """Reset one or more recipes"""
 
-    if recipes and not args.no_clean:
+    if recipes and not no_clean:
         if len(recipes) == 1:
             logger.info('Cleaning sysroot for recipe %s...' % recipes[0])
         else:
@@ -1368,6 +1371,126 @@ def reset(args, config, basepath, workspace):
             else:
                 # This is unlikely, but if it's empty we can just remove it
                 os.rmdir(srctree)
+
+
+def reset(args, config, basepath, workspace):
+    """Entry point for the devtool 'reset' subcommand"""
+    import bb
+    if args.recipename:
+        if args.all:
+            raise DevtoolError("Recipe cannot be specified if -a/--all is used")
+        else:
+            for recipe in args.recipename:
+                check_workspace_recipe(workspace, recipe, checksrc=False)
+    elif not args.all:
+        raise DevtoolError("Recipe must be specified, or specify -a/--all to "
+                           "reset all recipes")
+    if args.all:
+        recipes = list(workspace.keys())
+    else:
+        recipes = args.recipename
+
+    _reset(recipes, args.no_clean, config, basepath, workspace)
+
+    return 0
+
+
+def _get_layer(layername, d):
+    """Determine the base layer path for the specified layer name/path"""
+    layerdirs = d.getVar('BBLAYERS', True).split()
+    layers = {os.path.basename(p): p for p in layerdirs}
+    # Provide some shortcuts
+    if layername.lower() in ['oe-core', 'openembedded-core']:
+        layerdir = layers.get('meta', None)
+    else:
+        layerdir = layers.get(layername, None)
+    if layerdir:
+        layerdir = os.path.abspath(layerdir)
+    return layerdir or layername
+
+def finish(args, config, basepath, workspace):
+    """Entry point for the devtool 'finish' subcommand"""
+    import bb
+    import oe.recipeutils
+
+    check_workspace_recipe(workspace, args.recipename)
+
+    tinfoil = setup_tinfoil(basepath=basepath, tracking=True)
+    try:
+        rd = parse_recipe(config, tinfoil, args.recipename, True)
+        if not rd:
+            return 1
+
+        destlayerdir = _get_layer(args.destination, tinfoil.config_data)
+        origlayerdir = oe.recipeutils.find_layerdir(rd.getVar('FILE', True))
+
+        if not os.path.isdir(destlayerdir):
+            raise DevtoolError('Unable to find layer or directory matching "%s"' % args.destination)
+
+        if os.path.abspath(destlayerdir) == config.workspace_path:
+            raise DevtoolError('"%s" specifies the workspace layer - that is not a valid destination' % args.destination)
+
+        # If it's an upgrade, grab the original path
+        origpath = None
+        origfilelist = None
+        append = workspace[args.recipename]['bbappend']
+        with open(append, 'r') as f:
+            for line in f:
+                if line.startswith('# original_path:'):
+                    origpath = line.split(':')[1].strip()
+                elif line.startswith('# original_files:'):
+                    origfilelist = line.split(':')[1].split()
+
+        if origlayerdir == config.workspace_path:
+            # Recipe file itself is in workspace, update it there first
+            appendlayerdir = None
+            origrelpath = None
+            if origpath:
+                origlayerpath = oe.recipeutils.find_layerdir(origpath)
+                if origlayerpath:
+                    origrelpath = os.path.relpath(origpath, origlayerpath)
+            destpath = oe.recipeutils.get_bbfile_path(rd, destlayerdir, origrelpath)
+            if not destpath:
+                raise DevtoolError("Unable to determine destination layer path - check that %s specifies an actual layer and %s/conf/layer.conf specifies BBFILES. You may also need to specify a more complete path." % (args.destination, destlayerdir))
+        elif destlayerdir == origlayerdir:
+            # Same layer, update the original recipe
+            appendlayerdir = None
+            destpath = None
+        else:
+            # Create/update a bbappend in the specified layer
+            appendlayerdir = destlayerdir
+            destpath = None
+
+        # Remove any old files in the case of an upgrade
+        if origpath and origfilelist and oe.recipeutils.find_layerdir(origpath) == oe.recipeutils.find_layerdir(destlayerdir):
+            for fn in origfilelist:
+                fnp = os.path.join(origpath, fn)
+                try:
+                    os.remove(fnp)
+                except FileNotFoundError:
+                    pass
+
+        # Actually update the recipe / bbappend
+        _update_recipe(args.recipename, workspace, rd, args.mode, appendlayerdir, wildcard_version=True, no_remove=False, initial_rev=args.initial_rev)
+
+        if origlayerdir == config.workspace_path and destpath:
+            # Recipe file itself is in the workspace - need to move it and any
+            # associated files to the specified layer
+            logger.info('Moving recipe file to %s' % destpath)
+            recipedir = os.path.dirname(rd.getVar('FILE', True))
+            for root, _, files in os.walk(recipedir):
+                for fn in files:
+                    srcpath = os.path.join(root, fn)
+                    relpth = os.path.relpath(os.path.dirname(srcpath), recipedir)
+                    destdir = os.path.abspath(os.path.join(destpath, relpth))
+                    bb.utils.mkdirhier(destdir)
+                    shutil.move(srcpath, os.path.join(destdir, fn))
+
+    finally:
+        tinfoil.shutdown()
+
+    # Everything else has succeeded, we can now reset
+    _reset([args.recipename], no_clean=False, config=config, basepath=basepath, workspace=workspace)
 
     return 0
 
@@ -1459,3 +1582,12 @@ def register_commands(subparsers, context):
     parser_reset.add_argument('--all', '-a', action="store_true", help='Reset all recipes (clear workspace)')
     parser_reset.add_argument('--no-clean', '-n', action="store_true", help='Don\'t clean the sysroot to remove recipe output')
     parser_reset.set_defaults(func=reset)
+
+    parser_finish = subparsers.add_parser('finish', help='Finish working on a recipe in your workspace',
+                                         description='Pushes any committed changes to the specified recipe to the specified layer and removes it from your workspace. Roughly equivalent to an update-recipe followed by reset, except the update-recipe step will do the "right thing" depending on the recipe and the destination layer specified.',
+                                         group='working', order=-100)
+    parser_finish.add_argument('recipename', help='Recipe to finish')
+    parser_finish.add_argument('destination', help='Layer/path to put recipe into. Can be the name of a layer configured in your bblayers.conf, the path to the base of a layer, or a partial path inside a layer. %(prog)s will attempt to complete the path based on the layer\'s structure.')
+    parser_finish.add_argument('--mode', '-m', choices=['patch', 'srcrev', 'auto'], default='auto', help='Update mode (where %(metavar)s is %(choices)s; default is %(default)s)', metavar='MODE')
+    parser_finish.add_argument('--initial-rev', help='Override starting revision for patches')
+    parser_finish.set_defaults(func=finish)

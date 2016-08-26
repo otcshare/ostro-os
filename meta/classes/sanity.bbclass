@@ -459,19 +459,19 @@ def check_gcc_march(sanity_data):
 
         # Check if GCC could work without march
         if not result:
-            status,res = oe.utils.getstatusoutput("${BUILD_PREFIX}gcc gcc_test.c -o gcc_test")
+            status,res = oe.utils.getstatusoutput(sanity_data.expand("${BUILD_PREFIX}gcc gcc_test.c -o gcc_test"))
             if status == 0:
                 result = True;
 
         if not result:
-            status,res = oe.utils.getstatusoutput("${BUILD_PREFIX}gcc -march=native gcc_test.c -o gcc_test")
+            status,res = oe.utils.getstatusoutput(sanity_data.expand("${BUILD_PREFIX}gcc -march=native gcc_test.c -o gcc_test"))
             if status == 0:
                 message = "BUILD_CFLAGS_append = \" -march=native\""
                 result = True;
 
         if not result:
             build_arch = sanity_data.getVar('BUILD_ARCH', True)
-            status,res = oe.utils.getstatusoutput("${BUILD_PREFIX}gcc -march=%s gcc_test.c -o gcc_test" % build_arch)
+            status,res = oe.utils.getstatusoutput(sanity_data.expand("${BUILD_PREFIX}gcc -march=%s gcc_test.c -o gcc_test" % build_arch))
             if status == 0:
                 message = "BUILD_CFLAGS_append = \" -march=%s\"" % build_arch
                 result = True;
@@ -932,10 +932,11 @@ def check_sanity_everybuild(status, d):
         with open(checkfile, "w") as f:
             f.write(tmpdir)
 
-    # Check /bin/sh links to dash or bash
-    real_sh = os.path.realpath('/bin/sh')
-    if not real_sh.endswith('/dash') and not real_sh.endswith('/bash'):
-        status.addresult("Error, /bin/sh links to %s, must be dash or bash\n" % real_sh)
+    # If /bin/sh is a symlink, check that it points to dash or bash
+    if os.path.islink('/bin/sh'):
+        real_sh = os.path.realpath('/bin/sh')
+        if not real_sh.endswith('/dash') and not real_sh.endswith('/bash'):
+            status.addresult("Error, /bin/sh links to %s, must be dash or bash\n" % real_sh)
 
 def check_sanity(sanity_data):
     class SanityStatus(object):

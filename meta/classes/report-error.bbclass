@@ -42,7 +42,7 @@ python errorreport_handler () {
             data['distro'] = e.data.getVar("DISTRO", True)
             data['target_sys'] = e.data.getVar("TARGET_SYS", True)
             data['failures'] = []
-            data['component'] = e.getPkgs()[0]
+            data['component'] = " ".join(e.getPkgs())
             data['branch_commit'] = str(base_detect_branch(e.data)) + ": " + str(base_detect_revision(e.data))
             lock = bb.utils.lockfile(datafile + '.lock')
             errorreport_savedata(e, data, "error-report.txt")
@@ -59,9 +59,11 @@ python errorreport_handler () {
                     logFile = codecs.open(log, 'r', 'utf-8')
                     logdata = logFile.read()
 
-                    topdir = e.data.getVar('TOPDIR', True)
-                    if topdir:
-                        logdata = logdata.replace(topdir, ' ')
+                    # Replace host-specific paths so the logs are cleaner
+                    for d in ("TOPDIR", "TMPDIR"):
+                        s = e.data.getVar(d, True)
+                        if s:
+                            logdata = logdata.replace(s, d)
 
                     logFile.close()
                 except:

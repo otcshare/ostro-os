@@ -20,6 +20,8 @@ SRC_URI = "\
     file://nss-no-rpath-for-cross-compiling.patch \
     file://nss-fix-incorrect-shebang-of-perl.patch \
     file://nss-fix-nsinstall-build.patch \
+    file://disable-Wvarargs-with-clang.patch \
+    file://pqg.c-ULL_addend.patch \
     file://nss.pc.in \
     file://signlibs.sh \
 "
@@ -62,6 +64,7 @@ do_compile_prepend_class-native() {
 do_compile() {
     export CROSS_COMPILE=1
     export NATIVE_CC="gcc"
+    export NATIVE_FLAGS="${HOST_CFLAGS}"
     export BUILD_OPT=1
 
     export FREEBL_NO_DEPEND=1

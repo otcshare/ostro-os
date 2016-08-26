@@ -17,6 +17,9 @@ SSTATE_EXTRAPATH   = ""
 SSTATE_EXTRAPATHWILDCARD = ""
 SSTATE_PATHSPEC   = "${SSTATE_DIR}/${SSTATE_EXTRAPATHWILDCARD}*/${SSTATE_PKGSPEC}"
 
+# explicitly make PV to depend on evaluated value of PV variable
+PV[vardepvalue] = "${PV}"
+
 # We don't want the sstate to depend on things like the distro string
 # of the system, we let the sstate paths take care of this.
 SSTATE_EXTRAPATH[vardepvalue] = ""
@@ -924,6 +927,9 @@ def setscene_depvalid(task, taskdependees, notneeded, d):
             # Nothing need depend on libc-initial/gcc-cross-initial
             if "-initial" in taskdependees[task][0]:
                 continue
+            # For meta-extsdk-toolchain we want all sysroot dependencies
+            if taskdependees[dep][0] == 'meta-extsdk-toolchain':
+                return False
             # Native/Cross populate_sysroot need their dependencies
             if isNativeCross(taskdependees[task][0]) and isNativeCross(taskdependees[dep][0]):
                 return False

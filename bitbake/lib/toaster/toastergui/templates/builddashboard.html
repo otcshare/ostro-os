@@ -1,8 +1,9 @@
 {% extends "basebuildpage.html" %}
 {% load humanize %}
 {% load projecttags %}
+{% load field_values_filter %}
 
-{% block title %} {{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}} - {{build.project.name}} - Toaster {% endblock %}
+{% block title %} {{build.get_sorted_target_list|field_values:"target"|join:", "}} {{build.machine}} - {{build.project.name}} - Toaster {% endblock %}
 {% block parentbreadcrumb %}
 {% if build.get_sorted_target_list.count > 0 %}
   {{build.get_sorted_target_list.0.target}}
@@ -13,9 +14,9 @@
 
 {% block buildinfomain %}
 <!-- page title -->
-<div class="col-md-10">
+<div class="{% if build.started %}col-md-10{% else %}col-md-12{% endif %}">
  <div class="page-header build-data">
-     <h1>{{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}}</h1>
+     <h1>{{build.get_sorted_target_list|field_values:"target"|join:", "}} {{build.machine}}</h1>
  </div>
 
 <!-- build result bar -->
@@ -37,8 +38,15 @@
 			{% endif %}
 			<span class="pull-right">
 				Build time:
-				<a class="alert-link" href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
-			</span>
+			  <span data-build-field="buildtime">
+          {% if build.outcome == build.SUCCEEDED %}
+            <a href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
+          {% else %}
+            {{ build.timespent_seconds|sectohms }}
+          {% endif %}
+        </span>
+      </span>
+
 		{%endif%}
 </div>
 
@@ -54,9 +62,9 @@
     </div>
     <div class="panel-collapse collapse in" id="error-info">
       <div class="panel-body">
-        <div class="col-md-10">
+        <div class="{% if build.started %}col-md-10{% else %}col-md-12{% endif %}">
           {% for error in build.errors %}
-            <div class="alert alert-danger" data-error="{{ error.id }}">
+            <div class="alert alert-danger" data-log-message-id="{{error.pk}}">
               <pre>{{error.message}}</pre>
             </div>
           {% endfor %}
@@ -68,52 +76,58 @@
 
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
-{% if hasImages %}
-    <h2>Images</h2>
+  {% if hasArtifacts %}
+    <h2 data-heading="build-artifacts">Build artifacts</h2>
     {% for target in targets %}
         {% if target.target.is_image %}
-    <div class="well well-transparent dashboard-section">
-        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a></h3>
-        <dl class="dl-horizontal">
-            <dt>Packages included</dt>
-            <dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
-            <dt>Total package size</dt>
-            <dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
-                        {% if target.targetHasNoImages %}
-                </dl>
-                <div class="row">
-                  <div class="col-md-7">
-                    <div class="alert alert-info">
-                      <p>
-                      <strong>This build did not create any image files</strong>
-                      </p>
-                      <p>
-                      This is probably because valid image and license manifest
-                      files from a previous build already exist in your
-                      <code>build/tmp/deploy</code>
-                      directory. You can
-                      also <a href="{% url 'target' build.pk target.target.pk %}">view the
-                        license manifest information</a> in Toaster.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+    <div class="well well-transparent dashboard-section" data-artifacts-for-target="{{target.target.pk}}">
+        {% if target.npkg > 0 %}
+            <h3>
+                <a href="{% url 'target' build.pk target.target.pk %}" data-link="target-packages">
+                  {{target.target.target}}
+                </a>
+            </h3>
+            <dl class="dl-horizontal">
+                <dt>Packages included</dt>
+                <dd>
+                    <a href="{% url 'target' build.pk target.target.pk %}">
+                        <span data-value="target-package-count">{{target.npkg}}</span>
+                    </a>
+                </dd>
+                <dt>Total package size</dt>
+                <dd>
+                    <span data-value="target-package-size">{{target.pkgsz|filtered_filesizeformat}}</span>
+                </dd>
+            </dl>
         {% else %}
-            <dt>
-                <span class="glyphicon glyphicon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></span>
+            <h3>{{target.target.target}}</h3>
+        {% endif %}
 
-                License manifest
+        {% if target.targetHasImages %}
+          <dl class="dl-horizontal">
+            <dt>
+              Manifests
             </dt>
+
             <dd>
-                <a href="{% url 'target' build.pk target.target.pk %}">View in Toaster</a> |
-                <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">Download</a></dd>
+              <a data-link="license-manifest" href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">License manifest</a>
+            </dd>
+
+            {% if target.target.package_manifest_path %}
+              <dd>
+                <a data-link="package-manifest" href="{% url 'build_artifact' build.pk 'packagemanifest' target.target.pk %}">Package manifest</a>
+              </dd>
+            {% endif %}
+          </dl>
+
+          <dl class="dl-horizontal">
             <dt>
                 <span class="glyphicon glyphicon-question-sign get-help" title="Image files are stored in <code>build/tmp/deploy/images/</code>"></span>
                 Image files
             </dt>
             <dd>
-                <ul class="list-unstyled">
-                    {% for i in target.imageFiles %}
+                <ul class="list-unstyled" data-links="image-artifacts">
+                    {% for i in target.imageFiles|dictsort:"suffix" %}
                         <li>
                             <a href="{% url 'build_artifact' build.pk 'imagefile' i.id %}">
                                 {{i.suffix}}
@@ -123,12 +137,42 @@
                     {% endfor %}
                 </ul>
             </dd>
-        </dl>
+            <dt>
+                Kernel artifacts
+            </dt>
+            <dd>
+                <ul class="list-unstyled" data-links="kernel-artifacts">
+                    {% for artifact in target.target_kernel_artifacts|dictsort:"basename" %}
+                        <li>
+                            <a href="{% url 'build_artifact' build.id 'targetkernelartifact' artifact.id %}">{{artifact.basename}}</a>
+                            ({{artifact.file_size|filtered_filesizeformat}})
+                        </li>
+                    {% endfor %}
+                  </ul>
+            </dd>
+          </dl>
+        {% endif %}
+        {% if target.target_sdk_artifacts_count > 0 %}
+          <dl class="dl-horizontal">
+            <dt>
+              SDK artifacts
+            </dt>
+            <dd>
+              <ul class="list-unstyled" data-links="sdk-artifacts">
+                {% for artifact in target.target_sdk_artifacts|dictsort:"basename" %}
+                <li>
+                  <a href="{% url 'build_artifact' build.id 'targetsdkartifact' artifact.id %}">{{artifact.basename}}</a>
+                  ({{artifact.file_size|filtered_filesizeformat}})
+                </li>
+                {% endfor %}
+              </ul>
+            </dd>
+          </dl>
         {% endif %}
     </div>
         {% endif %}
     {% endfor %}
-{% endif %}
+  {% endif %}
 
 {%else%}
 <!-- error dump -->
@@ -157,79 +201,82 @@
     </div>
 
 {% endif %}
-<!-- build summary -->
-<h2>Build summary</h2>
-  <div class="row">
-    <div class="col-md-4 dashboard-section">
-      <div class="well well-transparent">
-        <h3><a href="{%url 'configuration' build.pk%}">Configuration</a></h3>
-            <dl>
-        <dt>Machine</dt><dd>{{build.machine}}</dd>
-        <dt>Distro</dt><dd>{{build.distro}}</dd>
-        <dt>Layers</dt><dd><ul class="list-unstyled">{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<li>{{i.layer.name}}</li>{%endfor%}</ul></dd>
-            </dl>
-      </div>
-    </div>
-    <div class="col-md-4 dashboard-section">
-      <div class="well well-transparent">
-        <h3><a href="{%url 'tasks' build.pk%}">Tasks</a></h3>
-            <dl>
-            {% query build.task_build outcome=4 order__gt=0 as exectask%}
-            {% if exectask.count > 0 %}
-                <dt>Failed tasks</dt>
-                <dd>
-                {% if exectask.count == 1 %}
-                    <a class="text-danger" href="{% url "task" build.id exectask.0.id %}">
-                        {{exectask.0.recipe.name}}
-                        <span class="task-name">{{exectask.0.task_name}}</span>
-                    </a>
 
-                        <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
-                            <span class="glyphicon glyphicon-download-alt get-help" title="Download task log file"></i>
-                        </a>
-
-                {% elif exectask.count > 1%}
-                    <a class="text-danger" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>
-                {% endif %}
-                </dd>
-            {% endif %}
-        <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{% query build.task_build order__gt=0 as alltasks %}{{alltasks.count}}</a></dd>
-        <dt>
-            Tasks executed
-            <span class="glyphicon glyphicon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></span>
-        </dt>
-        <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
-        <dt>
-            Tasks not executed
-            <span class="glyphicon glyphicon-question-sign get-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></span>
-        </dt>
-        <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
-        <dt>
-            Reuse
-            <span class="glyphicon glyphicon-question-sign get-help" title="The percentage of 'not executed' tasks over the total number of tasks, which is a measure of the efficiency of your build"></span>
-        </dt>
-        <dd>
-{% query build.task_build order__gt=0 as texec %}
-{% if noexectask.count|multiply:100|divide:texec.count < 0 %}
-0
-{% else %}
-{{noexectask.count|multiply:100|divide:texec.count}}
-{% endif %}
-%
-        </dd>
-            </dl>
+{% if build.started %}
+  <!-- build summary -->
+  <h2 data-role="build-summary-heading">Build summary</h2>
+    <div class="row">
+      <div class="col-md-4 dashboard-section">
+        <div class="well well-transparent">
+          <h3><a href="{%url 'configuration' build.pk%}">Configuration</a></h3>
+              <dl>
+          <dt>Machine</dt><dd>{{build.machine}}</dd>
+          <dt>Distro</dt><dd>{{build.distro}}</dd>
+          <dt>Layers</dt><dd><ul class="list-unstyled">{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<li>{{i.layer.name}}</li>{%endfor%}</ul></dd>
+              </dl>
+        </div>
       </div>
-    </div>
-    <div class="col-md-4 dashboard-section">
-      <div class="well well-transparent">
-        <h3><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h3>
-            <dl>
-        <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>
-        <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{packagecount}}</a></dd>
-            </dl>
+      <div class="col-md-4 dashboard-section">
+        <div class="well well-transparent">
+          <h3><a href="{%url 'tasks' build.pk%}">Tasks</a></h3>
+              <dl>
+              {% query build.task_build outcome=4 order__gt=0 as exectask%}
+              {% if exectask.count > 0 %}
+                  <dt>Failed tasks</dt>
+                  <dd>
+                  {% if exectask.count == 1 %}
+                      <a class="text-danger" href="{% url "task" build.id exectask.0.id %}">
+                          {{exectask.0.recipe.name}}
+                          <span class="task-name">{{exectask.0.task_name}}</span>
+                      </a>
+
+                          <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
+                              <span class="glyphicon glyphicon-download-alt get-help" title="Download task log file"></i>
+                          </a>
+
+                  {% elif exectask.count > 1%}
+                      <a class="text-danger" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>
+                  {% endif %}
+                  </dd>
+              {% endif %}
+          <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{% query build.task_build order__gt=0 as alltasks %}{{alltasks.count}}</a></dd>
+          <dt>
+              Tasks executed
+              <span class="glyphicon glyphicon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></span>
+          </dt>
+          <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
+          <dt>
+              Tasks not executed
+              <span class="glyphicon glyphicon-question-sign get-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></span>
+          </dt>
+          <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
+          <dt>
+              Reuse
+              <span class="glyphicon glyphicon-question-sign get-help" title="The percentage of 'not executed' tasks over the total number of tasks, which is a measure of the efficiency of your build"></span>
+          </dt>
+          <dd>
+  {% query build.task_build order__gt=0 as texec %}
+  {% if noexectask.count|multiply:100|divide:texec.count < 0 %}
+  0
+  {% else %}
+  {{noexectask.count|multiply:100|divide:texec.count}}
+  {% endif %}
+  %
+          </dd>
+              </dl>
+        </div>
+      </div>
+      <div class="col-md-4 dashboard-section">
+        <div class="well well-transparent">
+          <h3><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h3>
+              <dl>
+          <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>
+          <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{packagecount}}</a></dd>
+              </dl>
+      </div>
     </div>
   </div>
-</div>
+{% endif %} <!-- end build summary -->
 
 {% if build.warnings.count %}
   <div class="panel panel-default" id="warnings">
@@ -241,9 +288,9 @@
     </div>
     <div class="panel-collapse collapse" id="warning-info">
       <div class="panel-body">
-        <div class="col-md-10">
+        <div class="{% if build.started %}col-md-10{% else %}col-md-12{% endif %}">
           {% for warning in logmessages %}{% if warning.level == 1 %}
-            <div class="alert alert-warning">
+            <div class="alert alert-warning" data-log-message-id="{{warning.pk}}">
               <pre>{{warning.message}}</pre>
             </div>
           {% endif %}{% endfor %}
@@ -261,7 +308,7 @@
         if (location.href.search('#warnings') > -1) {
             $('#warning-info').addClass('in');
         }
-	
+
 	//show warnings section when requested from the build outcome
 	$(".show-warnings").click(function() {
 	    $('#warning-info').addClass('in');

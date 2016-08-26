@@ -20,17 +20,44 @@
 
 script=`basename $0`
 usage () {
-    echo "Usage: $script [COMMITISH]"
+cat << EOF
+Usage: $script [-h] [-c COMMITISH] [-C GIT_REPO]
+
+Optional arguments:
+  -h                show this help and exit.
+  -a ARCHIVE_DIR    archive results tarball here, give an empty string to
+                    disable tarball archiving
+  -c COMMITISH      test (checkout) this commit
+  -C GIT_REPO       commit results into Git
+  -w WORK_DIR       work dir for this script
+EOF
 }
 
-if [ $# -gt 1 ]; then
-    usage
-    exit 1
-fi
-commitish=$1
+
+# Parse command line arguments
+archive_dir=~/perf-results/archives
+commitish=""
+results_repo=""
+while getopts "ha:c:C:w:" opt; do
+    case $opt in
+        h)  usage
+            exit 0
+            ;;
+        a)  archive_dir=`realpath "$OPTARG"`
+            ;;
+        c)  commitish=$OPTARG
+            ;;
+        C)  results_repo=`realpath "$OPTARG"`
+            ;;
+        w)  base_dir=`realpath "$OPTARG"`
+            ;;
+        *)  usage
+            exit 1
+            ;;
+    esac
+done
 
 echo "Running on `uname -n`"
-
 if ! git_topdir=$(git rev-parse --show-toplevel); then
         echo "The current working dir doesn't seem to be a git clone. Please cd there before running `basename $0`"
         exit 1
@@ -51,19 +78,24 @@ if [ -n "$commitish" ]; then
 fi
 
 # Setup build environment
+if [ -z "$base_dir" ]; then
+    base_dir="$git_topdir/build-perf-test"
+fi
+echo "Using working dir $base_dir"
+
 timestamp=`date "+%Y%m%d%H%M%S"`
 git_rev=$(git rev-parse --short HEAD)  || exit 1
-base_dir="$git_topdir/build-perf-test"
 build_dir="$base_dir/build-$git_rev-$timestamp"
 results_dir="$base_dir/results-$git_rev-$timestamp"
 globalres_log="$base_dir/globalres.log"
+machine="qemux86"
 
 mkdir -p "$base_dir"
 source ./oe-init-build-env $build_dir >/dev/null || exit 1
 
 # Additional config
 auto_conf="$build_dir/conf/auto.conf"
-echo 'MACHINE = "qemux86"' > "$auto_conf"
+echo "MACHINE = \"$machine\"" > "$auto_conf"
 echo 'BB_NUMBER_THREADS = "8"' >> "$auto_conf"
 echo 'PARALLEL_MAKE = "-j 8"' >> "$auto_conf"
 echo "DL_DIR = \"$base_dir/downloads\"" >> "$auto_conf"
@@ -77,7 +109,10 @@ fi
 # Run actual test script
 if ! oe-build-perf-test --out-dir "$results_dir" \
                         --globalres-file "$globalres_log" \
-                        --lock-file "$base_dir/oe-build-perf.lock"; then
+                        --lock-file "$base_dir/oe-build-perf.lock" \
+                        --commit-results "$results_repo" \
+                        --commit-results-branch "{tester_host}/{git_branch}/$machine" \
+                        --commit-results-tag "{tester_host}/{git_branch}/$machine/{git_commit_count}-g{git_commit}/{tag_num}"; then
     echo "oe-build-perf-test script failed!"
     exit 1
 fi
@@ -88,13 +123,14 @@ echo -ne "\n"
 
 cat "$globalres_log"
 
-echo -ne "\n\n-----------------\n"
-echo "Archiving results dir..."
-archive_dir=~/perf-results/archives
-mkdir -p "$archive_dir"
-results_basename=`basename "$results_dir"`
-results_dirname=`dirname "$results_dir"`
-tar -czf "$archive_dir/`uname -n`-${results_basename}.tar.gz" -C "$results_dirname" "$results_basename"
+if [ -n "$archive_dir" ]; then
+    echo -ne "\n\n-----------------\n"
+    echo "Archiving results in $archive_dir"
+    mkdir -p "$archive_dir"
+    results_basename=`basename "$results_dir"`
+    results_dirname=`dirname "$results_dir"`
+    tar -czf "$archive_dir/`uname -n`-${results_basename}.tar.gz" -C "$results_dirname" "$results_basename"
+fi
 
 rm -rf "$build_dir"
 rm -rf "$results_dir"

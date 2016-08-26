@@ -19,19 +19,25 @@ import errno
 import fcntl
 import logging
 import os
+import shutil
 import sys
+import unittest
 from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/lib')
 import scriptpath
 scriptpath.add_oe_lib_path()
-from oeqa.buildperf import BuildPerfTestRunner, KernelDropCaches
+import oeqa.buildperf
+from oeqa.buildperf import (BuildPerfTestLoader, BuildPerfTestResult,
+                            BuildPerfTestRunner, KernelDropCaches)
 from oeqa.utils.commands import runCmd
+from oeqa.utils.git import GitRepo, GitError
 
 
 # Set-up logging
 LOG_FORMAT = '[%(asctime)s] %(levelname)s: %(message)s'
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 log = logging.getLogger()
 
 
@@ -63,7 +69,30 @@ def pre_run_sanity_check():
     if ret.status:
         log.error("bitbake command not found")
         return False
+    return True
 
+def init_git_repo(path):
+    """Check/create Git repository where to store results"""
+    path = os.path.abspath(path)
+    if os.path.isfile(path):
+        log.error("Invalid Git repo %s: path exists but is not a directory", path)
+        return False
+    if not os.path.isdir(path):
+        try:
+            os.mkdir(path)
+        except (FileNotFoundError, PermissionError) as err:
+            log.error("Failed to mkdir %s: %s", path, err)
+            return False
+    if not os.listdir(path):
+        log.info("Initializing a new Git repo at %s", path)
+        GitRepo.init(path)
+    try:
+        GitRepo(path, is_topdir=True)
+    except GitError:
+        log.error("No Git repository but a non-empty directory found at %s.\n"
+                  "Please specify a Git repository, an empty directory or "
+                  "a non-existing directory", path)
+        return False
     return True
 
 
@@ -78,6 +107,14 @@ def setup_file_logging(log_file):
     log.addHandler(handler)
 
 
+def archive_build_conf(out_dir):
+    """Archive build/conf to test results"""
+    src_dir = os.path.join(os.environ['BUILDDIR'], 'conf')
+    tgt_dir = os.path.join(out_dir, 'build', 'conf')
+    os.makedirs(os.path.dirname(tgt_dir))
+    shutil.copytree(src_dir, tgt_dir)
+
+
 def parse_args(argv):
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
@@ -86,12 +123,25 @@ def parse_args(argv):
     parser.add_argument('-D', '--debug', action='store_true',
                         help='Enable debug level logging')
     parser.add_argument('--globalres-file',
+                        type=os.path.abspath,
                         help="Append results to 'globalres' csv file")
     parser.add_argument('--lock-file', default='./oe-build-perf.lock',
-                        metavar='FILENAME',
+                        metavar='FILENAME', type=os.path.abspath,
                         help="Lock file to use")
     parser.add_argument('-o', '--out-dir', default='results-{date}',
+                        type=os.path.abspath,
                         help="Output directory for test results")
+    parser.add_argument('--run-tests', nargs='+', metavar='TEST',
+                        help="List of tests to run")
+    parser.add_argument('--commit-results', metavar='GIT_DIR',
+                        type=os.path.abspath,
+                        help="Commit result data to a (local) git repository")
+    parser.add_argument('--commit-results-branch', metavar='BRANCH',
+                        default="{git_branch}",
+                        help="Commit results to branch BRANCH.")
+    parser.add_argument('--commit-results-tag', metavar='TAG',
+                        default="{git_branch}/{git_commit_count}-g{git_commit}/{tag_num}",
+                        help="Tag results commit with TAG.")
 
     return parser.parse_args(argv)
 
@@ -99,6 +149,10 @@ def parse_args(argv):
 def main(argv=None):
     """Script entry point"""
     args = parse_args(argv)
+
+    # Set-up log file
+    out_dir = args.out_dir.format(date=datetime.now().strftime('%Y%m%d%H%M%S'))
+    setup_file_logging(os.path.join(out_dir, 'output.log'))
 
     if args.debug:
         log.setLevel(logging.DEBUG)
@@ -110,22 +164,43 @@ def main(argv=None):
 
     if not pre_run_sanity_check():
         return 1
+    if args.commit_results:
+        if not init_git_repo(args.commit_results):
+            return 1
 
     # Check our capability to drop caches and ask pass if needed
     KernelDropCaches.check()
 
-    # Set-up log file
-    out_dir = args.out_dir.format(date=datetime.now().strftime('%Y%m%d%H%M%S'))
-    setup_file_logging(os.path.join(out_dir, 'output.log'))
+    # Load build perf tests
+    loader = BuildPerfTestLoader()
+    if args.run_tests:
+        suite = loader.loadTestsFromNames(args.run_tests, oeqa.buildperf)
+    else:
+        suite = loader.loadTestsFromModule(oeqa.buildperf)
+
+    archive_build_conf(out_dir)
+    runner = BuildPerfTestRunner(out_dir, verbosity=2)
+
+    # Suppress logger output to stderr so that the output from unittest
+    # is not mixed with occasional logger output
+    log.handlers[0].setLevel(logging.CRITICAL)
 
     # Run actual tests
-    runner = BuildPerfTestRunner(out_dir)
-    ret = runner.run_tests()
-    if not ret:
-        if args.globalres_file:
-            runner.update_globalres_file(args.globalres_file)
+    result = runner.run(suite)
 
-    return ret
+    # Restore logger output to stderr
+    log.handlers[0].setLevel(log.level)
+
+    if result.wasSuccessful():
+        if args.globalres_file:
+            result.update_globalres_file(args.globalres_file)
+        if args.commit_results:
+            result.git_commit_results(args.commit_results,
+                                      args.commit_results_branch,
+                                      args.commit_results_tag)
+        return 0
+
+    return 1
 
 
 if __name__ == '__main__':

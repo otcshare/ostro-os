@@ -30,7 +30,8 @@ from django.db import IntegrityError, Error
 from django.shortcuts import render, redirect, get_object_or_404
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact, CustomImagePackage
+from orm.models import Target_Installed_Package, Target_File, Target_Image_File, CustomImagePackage
+from orm.models import TargetKernelFile, TargetSDKFile
 from orm.models import BitbakeVersion, CustomImageRecipe
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
@@ -160,7 +161,7 @@ def _lv_to_dict(prj, x = None):
     return {"id": x.pk,
             "name": x.layer.name,
             "tooltip": "%s | %s" % (x.layer.vcs_url,x.get_vcs_reference()),
-            "detail": "(%s" % x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
+            "detail": "(%s" % x.layer.vcs_url + (")" if x.release == None else " | "+x.get_vcs_reference()+")"),
             "giturl": x.layer.vcs_url,
             "layerdetailurl" : reverse('layerdetails', args=(prj.id,x.pk)),
             "revision" : x.get_vcs_reference(),
@@ -470,46 +471,58 @@ def builddashboard( request, build_id ):
     recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( );
     tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );
 
-    ##
     # set up custom target list with computed package and image data
-    #
-
-    targets = [ ]
+    targets = []
     ntargets = 0
-    hasImages = False
-    targetHasNoImages = False
+
+    # True if at least one target for this build has an SDK artifact
+    # or image file
+    has_artifacts = False
+
     for t in tgts:
-        elem = { }
-        elem[ 'target' ] = t
-        if t.is_image:
-            hasImages = True
+        elem = {}
+        elem['target'] = t
+
+        target_has_images = False
+        image_files = []
+
         npkg = 0
         pkgsz = 0
         package = None
         for package in Package.objects.filter(id__in = [x.package_id for x in t.target_installed_package_set.all()]):
             pkgsz = pkgsz + package.size
-            if ( package.installed_name ):
+            if package.installed_name:
                 npkg = npkg + 1
-        elem[ 'npkg' ] = npkg
-        elem[ 'pkgsz' ] = pkgsz
-        ti = Target_Image_File.objects.filter( target_id = t.id )
-        imageFiles = [ ]
+        elem['npkg'] = npkg
+        elem['pkgsz'] = pkgsz
+        ti = Target_Image_File.objects.filter(target_id = t.id)
         for i in ti:
-            ndx = i.file_name.rfind( '/' )
-            if ( ndx < 0 ):
+            ndx = i.file_name.rfind('/')
+            if ndx < 0:
                 ndx = 0;
-            f = i.file_name[ ndx + 1: ]
-            imageFiles.append({
+            f = i.file_name[ndx + 1:]
+            image_files.append({
                 'id': i.id,
                 'path': f,
                 'size': i.file_size,
                 'suffix': i.suffix
             })
-        if t.is_image and (len(imageFiles) <= 0 or len(t.license_manifest_path) <= 0):
-            targetHasNoImages = True
-        elem[ 'imageFiles' ] = imageFiles
-        elem[ 'targetHasNoImages' ] = targetHasNoImages
-        targets.append( elem )
+        if len(image_files) > 0:
+            target_has_images = True
+        elem['targetHasImages'] = target_has_images
+
+        elem['imageFiles'] = image_files
+        elem['target_kernel_artifacts'] = t.targetkernelfile_set.all()
+
+        target_sdk_files = t.targetsdkfile_set.all()
+        target_sdk_artifacts_count = target_sdk_files.count()
+        elem['target_sdk_artifacts_count'] = target_sdk_artifacts_count
+        elem['target_sdk_artifacts'] = target_sdk_files
+
+        if target_has_images or target_sdk_artifacts_count > 0:
+            has_artifacts = True
+
+        targets.append(elem)
 
     ##
     # how many packages in this build - ignore anonymous ones
@@ -526,7 +539,7 @@ def builddashboard( request, build_id ):
     context = {
             'build'           : build,
             'project'         : build.project,
-            'hasImages'       : hasImages,
+            'hasArtifacts'    : has_artifacts,
             'ntargets'        : ntargets,
             'targets'         : targets,
             'recipecount'     : recipeCount,
@@ -809,11 +822,21 @@ def _find_task_dep(task_object):
 def _find_task_revdep(task_object):
     tdeps = Task_Dependency.objects.filter(depends_on=task_object).filter(task__order__gt=0)
     tdeps = tdeps.exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+
+    # exclude self-dependencies to prevent infinite dependency loop
+    # in generateCoveredList2()
+    tdeps = tdeps.exclude(task=task_object)
+
     return [tdep.task for tdep in tdeps]
 
 def _find_task_revdep_list(tasklist):
     tdeps = Task_Dependency.objects.filter(depends_on__in=tasklist).filter(task__order__gt=0)
     tdeps = tdeps.exclude(task__outcome=Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+
+    # exclude self-dependencies to prevent infinite dependency loop
+    # in generateCoveredList2()
+    tdeps = tdeps.exclude(task=F('depends_on'))
+
     return [tdep.task for tdep in tdeps]
 
 def _find_task_provider(task_object):
@@ -1275,7 +1298,7 @@ if True:
     from django.contrib.auth import authenticate, login
     from django.contrib.auth.decorators import login_required
 
-    from orm.models import Branch, LayerSource, ToasterSetting, Release, Machine, LayerVersionDependency
+    from orm.models import LayerSource, ToasterSetting, Release, Machine, LayerVersionDependency
     from bldcontrol.models import BuildRequest
 
     import traceback
@@ -1437,11 +1460,10 @@ if True:
         freqtargets = tmp
 
         layers = [{"id": x.layercommit.pk, "orderid": x.pk, "name" : x.layercommit.layer.name,
-                   "vcs_url": x.layercommit.layer.vcs_url, "vcs_reference" : x.layercommit.get_vcs_reference(),
+                   "vcs_url": x.layercommit.layer.vcs_url, "local_source_dir": x.layercommit.layer.local_source_dir, "vcs_reference" : x.layercommit.get_vcs_reference(),
                    "url": x.layercommit.layer.layer_index_url, "layerdetailurl": x.layercommit.get_detailspage_url(prj.pk),
-                   # This branch name is actually the release
                    "branch" : {"name" : x.layercommit.get_vcs_reference(),
-                               "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}
+                               "layersource" : x.layercommit.layer_source }
                    } for x in prj.projectlayer_set.all().order_by("id")]
 
         context = {
@@ -1649,18 +1671,12 @@ if True:
         prj = Project.objects.get(pk=request.POST['project_id'])
 
         # Strip trailing/leading whitespace from all values
-        # put into a new dict because POST one is immutable
+        # put into a new dict because POST one is immutable.
         post_data = dict()
         for key,val in request.POST.items():
           post_data[key] = val.strip()
 
 
-        # We need to know what release the current project is so that we
-        # can set the imported layer's up_branch_id
-        prj_branch_name = Release.objects.get(pk=prj.release_id).branch_name
-        up_branch, branch_created = Branch.objects.get_or_create(name=prj_branch_name, layer_source_id=LayerSource.TYPE_IMPORTED)
-
-        layer_source = LayerSource.objects.get(sourcetype=LayerSource.TYPE_IMPORTED)
         try:
             layer, layer_created = Layer.objects.get_or_create(name=post_data['name'])
         except MultipleObjectsReturned:
@@ -1668,8 +1684,8 @@ if True:
 
         if layer:
             if layer_created:
-                layer.layer_source = layer_source
-                layer.vcs_url = post_data['vcs_url']
+                layer.vcs_url = post_data.get('vcs_url')
+                layer.local_source_dir = post_data.get('local_source_dir')
                 layer.up_date = timezone.now()
                 layer.save()
             else:
@@ -1679,12 +1695,24 @@ if True:
                 if layer.vcs_url != post_data['vcs_url']:
                     return HttpResponse(jsonfilter({"error": "hint-layer-exists-with-different-url" , "current_url" : layer.vcs_url, "current_id": layer.id }), content_type = "application/json")
 
-
-            layer_version, version_created = Layer_Version.objects.get_or_create(layer_source=layer_source, layer=layer, project=prj, up_branch_id=up_branch.id,branch=post_data['git_ref'],  commit=post_data['git_ref'], dirpath=post_data['dir_path'])
+            layer_version, version_created = \
+                Layer_Version.objects.get_or_create(
+                        layer_source=LayerSource.TYPE_IMPORTED,
+                        layer=layer, project=prj,
+                        release=prj.release,
+                        branch=post_data['git_ref'],
+                        commit=post_data['git_ref'],
+                        dirpath=post_data['dir_path'])
 
             if layer_version:
                 if not version_created:
-                    return HttpResponse(jsonfilter({"error": "hint-layer-version-exists", "existing_layer_version": layer_version.id }), content_type = "application/json")
+                    return HttpResponse(jsonfilter({"error":
+                                                    "hint-layer-version-exists",
+                                                    "existing_layer_version":
+                                                    layer_version.id }),
+                                        content_type = "application/json")
+
+                layer_version.layer_source = LayerSource.TYPE_IMPORTED
 
                 layer_version.up_date = timezone.now()
                 layer_version.save()
@@ -1738,7 +1766,6 @@ if True:
                          "deps_added": layers_added }
 
         return HttpResponse(jsonfilter(json_response), content_type = "application/json")
-
 
     @xhr_response
     def xhr_customrecipe(request):
@@ -2166,20 +2193,33 @@ if True:
         }
         return render(request, template, context)
 
+    # TODO merge with api pseudo api here is used for deps modal
     @_template_renderer('layerdetails.html')
     def layerdetails(request, pid, layerid):
         project = Project.objects.get(pk=pid)
         layer_version = Layer_Version.objects.get(pk=layerid)
 
-        context = {'project' : project,
-            'layerversion' : layer_version,
-            'layerdeps' : {"list": [{"id": dep.id,
-                "name": dep.layer.name,
-                "layerdetailurl": reverse('layerdetails', args=(pid, dep.pk)),
-                "vcs_url": dep.layer.vcs_url,
-                "vcs_reference": dep.get_vcs_reference()} \
-                for dep in layer_version.get_alldeps(project.id)]},
-            'projectlayers': [player.layercommit.id for player in ProjectLayer.objects.filter(project=project)]
+        project_layers = ProjectLayer.objects.filter(
+            project=project).values_list("layercommit_id",
+                                         flat=True)
+
+        context = {
+            'project': project,
+            'layer_source': LayerSource.types_dict(),
+            'layerversion': layer_version,
+            'layerdeps': {
+                "list": [
+                    {
+                        "id": dep.id,
+                        "name": dep.layer.name,
+                        "layerdetailurl": reverse('layerdetails',
+                                                  args=(pid, dep.pk)),
+                        "vcs_url": dep.layer.vcs_url,
+                        "vcs_reference": dep.get_vcs_reference()
+                    }
+                    for dep in layer_version.get_alldeps(project.id)]
+            },
+            'projectlayers': list(project_layers)
         }
 
         return context
@@ -2291,11 +2331,19 @@ if True:
         elif artifact_type == "imagefile":
             file_name = Target_Image_File.objects.get(target__build = build, pk = artifact_id).file_name
 
-        elif artifact_type == "buildartifact":
-            file_name = BuildArtifact.objects.get(build = build, pk = artifact_id).file_name
+        elif artifact_type == "targetkernelartifact":
+            target = TargetKernelFile.objects.get(pk=artifact_id)
+            file_name = target.file_name
+
+        elif artifact_type == "targetsdkartifact":
+            target = TargetSDKFile.objects.get(pk=artifact_id)
+            file_name = target.file_name
 
         elif artifact_type == "licensemanifest":
             file_name = Target.objects.get(build = build, pk = artifact_id).license_manifest_path
+
+        elif artifact_type == "packagemanifest":
+            file_name = Target.objects.get(build = build, pk = artifact_id).package_manifest_path
 
         elif artifact_type == "tasklogfile":
             file_name = Task.objects.get(build = build, pk = artifact_id).logfile

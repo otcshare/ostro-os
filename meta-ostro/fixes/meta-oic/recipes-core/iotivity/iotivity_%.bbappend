@@ -3,7 +3,7 @@
 # a98a8180863ff45b477a1f8439ebcec21151d282).
 #
 # iotivity is one of the components that does not obey LDFLAGS.
-# However, fixing it§ needs a lot of rework in iotivity's scons
+# However, fixing it needs a lot of rework in iotivity's scons
 # scripts. 
 #
 # Temporarily skip "ldflags" for all PACKAGES:

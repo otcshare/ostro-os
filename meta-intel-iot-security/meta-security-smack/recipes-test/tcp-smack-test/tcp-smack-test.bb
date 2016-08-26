@@ -9,8 +9,8 @@ SRC_URI = "file://tcp_server.c \
 
 S = "${WORKDIR}"
 do_compile() {
-    ${CC} tcp_client.c -o tcp_client
-    ${CC} tcp_server.c -o tcp_server
+    ${CC} tcp_client.c ${LDFLAGS} -o tcp_client
+    ${CC} tcp_server.c ${LDFLAGS} -o tcp_server
 }
 
 do_install() {

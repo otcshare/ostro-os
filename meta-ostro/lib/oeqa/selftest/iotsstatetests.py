@@ -127,7 +127,7 @@ MACHINE = \"%s\"
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT)
                 stdout, stderr = p.communicate()
-                analysis.append(stdout)
+                analysis.append(stdout.decode("utf-8"))
         if len(errors) > 1:
             # If this fails, it often fails for a whole range of tasks where one depends on
             # the other. In this example, only the original source file was different:

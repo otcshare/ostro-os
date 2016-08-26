@@ -136,23 +136,21 @@ python base_do_fetch() {
 
 addtask unpack after do_fetch
 do_unpack[dirs] = "${WORKDIR}"
+
+python () {
+    if d.getVar('S', True) != d.getVar('WORKDIR', True):
+        d.setVarFlag('do_unpack', 'cleandirs', '${S}')
+    else:
+        d.setVarFlag('do_unpack', 'cleandirs', os.path.join('${S}', 'patches'))
+}
 python base_do_unpack() {
     src_uri = (d.getVar('SRC_URI', True) or "").split()
     if len(src_uri) == 0:
         return
 
-    rootdir = d.getVar('WORKDIR', True)
-
-    # Ensure that we cleanup ${S}/patches
-    # TODO: Investigate if we can remove
-    # the entire ${S} in this case.
-    s_dir = d.getVar('S', True)
-    p_dir = os.path.join(s_dir, 'patches')
-    bb.utils.remove(p_dir, True)
-
     try:
         fetcher = bb.fetch2.Fetch(src_uri, d)
-        fetcher.unpack(rootdir)
+        fetcher.unpack(d.getVar('WORKDIR', True))
     except bb.fetch2.BBFetchException as e:
         raise bb.build.FuncFailed(e)
 }
@@ -544,6 +542,19 @@ python () {
             elif pn in whitelist:
                 if pn in incompatwl:
                     bb.note("INCLUDING " + pn + " as buildable despite INCOMPATIBLE_LICENSE because it has been whitelisted")
+
+        # Try to verify per-package (LICENSE_<pkg>) values. LICENSE should be a
+        # superset of all per-package licenses. We do not do advanced (pattern)
+        # matching of license expressions - just check that all license strings
+        # in LICENSE_<pkg> are found in LICENSE.
+        license_set = oe.license.list_licenses(license)
+        for pkg in d.getVar('PACKAGES', True).split():
+            pkg_license = d.getVar('LICENSE_' + pkg, True)
+            if pkg_license:
+                unlisted = oe.license.list_licenses(pkg_license) - license_set
+                if unlisted:
+                    bb.warn("LICENSE_%s includes licenses (%s) that are not "
+                            "listed in LICENSE" % (pkg, ' '.join(unlisted)))
 
     needsrcrev = False
     srcuri = d.getVar('SRC_URI', True)

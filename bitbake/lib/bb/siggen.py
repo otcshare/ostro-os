@@ -144,8 +144,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def finalise(self, fn, d, variant):
 
-        if variant:
-            fn = "virtual:" + variant + ":" + fn
+        mc = d.getVar("__BBMULTICONFIG", False) or ""
+        if variant or mc:
+            fn = bb.cache.realfn2virtual(fn, variant, mc)
 
         try:
             taskdeps = self._build_data(fn, d)
@@ -293,23 +294,25 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         computed_basehash = calc_basehash(data)
         if computed_basehash != self.basehash[k]:
-            bb.error("Basehash mismatch %s verses %s for %s" % (computed_basehash, self.basehash[k], k))
+            bb.error("Basehash mismatch %s versus %s for %s" % (computed_basehash, self.basehash[k], k))
         if runtime and k in self.taskhash:
             computed_taskhash = calc_taskhash(data)
             if computed_taskhash != self.taskhash[k]:
-                bb.error("Taskhash mismatch %s verses %s for %s" % (computed_taskhash, self.taskhash[k], k))
+                bb.error("Taskhash mismatch %s versus %s for %s" % (computed_taskhash, self.taskhash[k], k))
 
 
-    def dump_sigs(self, dataCache, options):
+    def dump_sigs(self, dataCaches, options):
         for fn in self.taskdeps:
             for task in self.taskdeps[fn]:
+                tid = fn + ":" + task
+                (mc, _, _) = bb.runqueue.split_tid(tid)
                 k = fn + "." + task
                 if k not in self.taskhash:
                     continue
-                if dataCache.basetaskhash[k] != self.basehash[k]:
+                if dataCaches[mc].basetaskhash[k] != self.basehash[k]:
                     bb.error("Bitbake's cached basehash does not match the one we just generated (%s)!" % k)
-                    bb.error("The mismatched hashes were %s and %s" % (dataCache.basetaskhash[k], self.basehash[k]))
-                self.dump_sigtask(fn, task, dataCache.stamp[fn], True)
+                    bb.error("The mismatched hashes were %s and %s" % (dataCaches[mc].basetaskhash[k], self.basehash[k]))
+                self.dump_sigtask(fn, task, dataCaches[mc].stamp[fn], True)
 
 class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     name = "basichash"
@@ -363,10 +366,12 @@ def clean_basepaths_list(a):
 def compare_sigfiles(a, b, recursecb = None):
     output = []
 
-    p1 = pickle.Unpickler(open(a, "rb"))
-    a_data = p1.load()
-    p2 = pickle.Unpickler(open(b, "rb"))
-    b_data = p2.load()
+    with open(a, 'rb') as f:
+        p1 = pickle.Unpickler(f)
+        a_data = p1.load()
+    with open(b, 'rb') as f:
+        p2 = pickle.Unpickler(f)
+        b_data = p2.load()
 
     def dict_diff(a, b, whitelist=set()):
         sa = set(a.keys())
@@ -563,8 +568,9 @@ def calc_taskhash(sigdata):
 def dump_sigfile(a):
     output = []
 
-    p1 = pickle.Unpickler(open(a, "rb"))
-    a_data = p1.load()
+    with open(a, 'rb') as f:
+        p1 = pickle.Unpickler(f)
+        a_data = p1.load()
 
     output.append("basewhitelist: %s" % (a_data['basewhitelist']))
 

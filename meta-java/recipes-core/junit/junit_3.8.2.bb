@@ -13,6 +13,7 @@ DEPENDS += "unzip-native"
 
 inherit java-library
 
+do_unpackpost[dirs] = "${B}"
 do_unpackpost() {
 	mkdir -p src
 	# Prevent deletion by do_removebinaries.

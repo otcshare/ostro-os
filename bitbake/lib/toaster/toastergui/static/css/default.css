@@ -45,6 +45,7 @@ img.logo { height: 30px; vertical-align: bottom; }
 .alert-link.build-warnings,
 .glyphicon-warning-sign.build-warnings { color: #8a6d3b; }
 .build-result .project-name { margin-top: -10px; margin-bottom: 5px; }
+.rebuild-btn, .cancel-build-btn { cursor: pointer; }
 
 /* Styles for the help information */
 .get-help { color: #CCCCCC; }
@@ -195,17 +196,22 @@ h2 { margin-bottom: 25px; }
 .tt-suggestion:active { background-color: #f5f5f5; cursor: pointer; }
 
 /* Style the import layer form controls*/
-legend { border: none; }
+legend { border: none; margin-top: 20px; }
+.radioLegend { margin-bottom: 0; }
 #layer-name-ctrl { margin-top: 20px; }
 #import-layer-name,
 #layer-subdir { width: 20%; }
 #layer-git-repo-url { width: 40%; }
 #layer-git-ref { width: 32%; }
+#local-dir-path { width: 45%; }
 #layer-dependency { width: 16em; }
+#layer-deps-list { margin-top: 0; }
 #form-actions { margin-bottom: 30px; }
 #duplicate-layer-info dl { margin-top: 10px; }
 #duplicate-layer-info dd { margin-bottom: 10px; }
 .help-inline { color: #737373; margin-left: 10px; }
+.radio-help { width: 50%; margin-left: 20px; }
+#repo-select div:nth-of-type(2) { margin-top: 15px; }
 
 /* Give some padding to the in-cell tooltips we use for notifications in tables */
 td > .tooltip-inner,
@@ -248,6 +254,18 @@ code { color: #333; background-color: transparent; }
 
 /* Style the special no results message in the custom image details page */
 [id^="no-results-special-"] > .alert-warning > ol { margin-top: 10px; }
+
+/* style the loading spinner in the new custom image dialog */
+#create-new-custom-image-btn [data-role="loading-state"] {
+  padding-left: 16px;
+}
+
+/* icon has to be absolutely positioned, otherwise the spin animation doesn't work */
+#create-new-custom-image-btn [data-role="loading-state"] .icon-spinner {
+  position: absolute;
+  left: 26px;
+  bottom: 26px;
+}
 
 /* Style the content of modal dialogs */
 .modal-footer { text-align: left; }

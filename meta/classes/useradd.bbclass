@@ -3,11 +3,7 @@ inherit useradd_base
 # base-passwd-cross provides the default passwd and group files in the
 # target sysroot, and shadow -native and -sysroot provide the utilities
 # and support files needed to add and modify user and group accounts
-DEPENDS_append = "${USERADDDEPENDS}"
-USERADDDEPENDS = " base-files shadow-native shadow-sysroot shadow"
-USERADDDEPENDS_class-cross = ""
-USERADDDEPENDS_class-native = ""
-USERADDDEPENDS_class-nativesdk = ""
+DEPENDS_append_class-target = " base-files shadow-native shadow-sysroot shadow"
 
 # This preinstall function can be run in four different contexts:
 #
@@ -137,42 +133,38 @@ if test "x${STAGING_DIR_TARGET}" != "x"; then
         GROUPADD_PARAM="${@get_all_cmd_params(d, 'groupadd')}"
         USERADD_PARAM="${@get_all_cmd_params(d, 'useradd')}"
 
-        if test "x`echo $USERADD_PARAM | tr -d '[:space:]'`" != "x"; then
-            user=`echo "$USERADD_PARAM" | cut -d ';' -f 1 | awk '{ print $NF }'`
+        user=`echo "$USERADD_PARAM" | cut -d ';' -f 1 | awk '{ print $NF }'`
+        remaining=`echo "$USERADD_PARAM" | cut -d ';' -f 2- -s | sed -e 's#[ \t]*$##'`
+        while test "x$user" != "x"; do
             perform_userdel "${STAGING_DIR_TARGET}" "$OPT $user"
-        fi
+            user=`echo "$remaining" | cut -d ';' -f 1 | awk '{ print $NF }'`
+            remaining=`echo "$remaining" | cut -d ';' -f 2- -s | sed -e 's#[ \t]*$##'`
+        done
 
-        if test "x`echo $GROUPADD_PARAM | tr -d '[:space:]'`" != "x"; then
-            group=`echo "$GROUPADD_PARAM" | cut -d ';' -f 1 | awk '{ print $NF }'`
-            perform_groupdel "${STAGING_DIR_TARGET}" "$OPT $group"
-        fi
+        user=`echo "$GROUPADD_PARAM" | cut -d ';' -f 1 | awk '{ print $NF }'`
+        remaining=`echo "$GROUPADD_PARAM" | cut -d ';' -f 2- -s | sed -e 's#[ \t]*$##'`
+        while test "x$user" != "x"; do
+            perform_groupdel "${STAGING_DIR_TARGET}" "$OPT $user"
+            user=`echo "$remaining" | cut -d ';' -f 1 | awk '{ print $NF }'`
+            remaining=`echo "$remaining" | cut -d ';' -f 2- -s | sed -e 's#[ \t]*$##'`
+        done
 
     fi
 fi
 }
 
-SSTATECLEANFUNCS = "userdel_sysroot_sstate"
-SSTATECLEANFUNCS_class-cross = ""
-SSTATECLEANFUNCS_class-native = ""
-SSTATECLEANFUNCS_class-nativesdk = ""
+SSTATECLEANFUNCS_append_class-target = " userdel_sysroot_sstate"
 
 do_install[prefuncs] += "${SYSROOTFUNC}"
-SYSROOTFUNC = "useradd_sysroot"
-SYSROOTFUNC_class-cross = ""
-SYSROOTFUNC_class-native = ""
-SYSROOTFUNC_class-nativesdk = ""
-SSTATEPREINSTFUNCS += "${SYSROOTPOSTFUNC}"
-SYSROOTPOSTFUNC = "useradd_sysroot_sstate"
-SYSROOTPOSTFUNC_class-cross = ""
-SYSROOTPOSTFUNC_class-native = ""
-SYSROOTPOSTFUNC_class-nativesdk = ""
+SYSROOTFUNC_class-target = "useradd_sysroot"
+SYSROOTFUNC = ""
 
-USERADDSETSCENEDEPS = "${MLPREFIX}base-passwd:do_populate_sysroot_setscene pseudo-native:do_populate_sysroot_setscene shadow-native:do_populate_sysroot_setscene ${MLPREFIX}shadow-sysroot:do_populate_sysroot_setscene"
-USERADDSETSCENEDEPS_class-cross = ""
-USERADDSETSCENEDEPS_class-native = ""
-USERADDSETSCENEDEPS_class-nativesdk = ""
+SSTATEPREINSTFUNCS_append_class-target = " useradd_sysroot_sstate"
+
 do_package_setscene[depends] += "${USERADDSETSCENEDEPS}"
 do_populate_sysroot_setscene[depends] += "${USERADDSETSCENEDEPS}"
+USERADDSETSCENEDEPS_class-target = "${MLPREFIX}base-passwd:do_populate_sysroot_setscene pseudo-native:do_populate_sysroot_setscene shadow-native:do_populate_sysroot_setscene ${MLPREFIX}shadow-sysroot:do_populate_sysroot_setscene"
+USERADDSETSCENEDEPS = ""
 
 # Recipe parse-time sanity checks
 def update_useradd_after_parse(d):
