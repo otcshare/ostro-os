@@ -57,30 +57,9 @@ other layers needed. e.g.:
     /path/to/yocto/meta-intel-iot-security/meta-security-framework \
     "
 
-The Cynara-aware D-Bus daemon needs to be enabled explicitly by adding
-"dbus-cynara" to DISTRO_FEATURES, to allow using the layer without
-also changing the D-Bus behavior. When enabled, the regular "dbus"
-package gets replaced with an empty one that pulls in a separate
-"dbus-cynara" package automatically.
-
-The necessary Cyanara rules granting "System" processes the
-http://tizen.org/privilege/internal/dbus privilege can be created
-by installing the "security-manager-policy" package.
-
-
 II. Misc
 ========
 
-Conceptually, several components in this layer (in particular, Cynara,
-security-manager, and the Cynara-aware D-Bus) are optional in a
-Smack-based security architecture and thus sit on top of the
-security-smack layer.
-
-In practice, Cynara itself is independent of Smack and only its installation
-needs to be done slightly differently when using Smack. The components using Cynara
-then use Smack labels as identifiers for the entity trying to get a
-certain permission.
-
-Other components in this layer (like e2fsprogs or keyutils) are
-general-purpose tools or extensions which are needed when using Smack
-or integrity protection.
+Some components in this layer (like e2fsprogs or keyutils) are
+general-purpose tools or extensions which are needed when using Smack or
+integrity protection.

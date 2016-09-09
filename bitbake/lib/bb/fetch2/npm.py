@@ -13,7 +13,7 @@ Usage in the recipe:
     - name
     - version
 
-    npm://registry.npmjs.org/${PN}/-/${PN}-${PV}.tgz  would become npm://registry.npmjs.org;name=${PN};ver=${PV}
+    npm://registry.npmjs.org/${PN}/-/${PN}-${PV}.tgz  would become npm://registry.npmjs.org;name=${PN};version=${PV}
     The fetcher all triggers off the existence of ud.localpath. If that exists and has the ".done" stamp, its assumed the fetch is good/done
 
 """
@@ -88,7 +88,7 @@ class Npm(FetchMethod):
         ud.localpath = d.expand("${DL_DIR}/npm/%s" % ud.bbnpmmanifest)
 
         self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -O -t 2 -T 30 -nv --passive-ftp --no-check-certificate "
-        self.basecmd += " --directory-prefix=%s " % prefixdir
+        ud.prefixdir = prefixdir
 
         ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0")
         ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
@@ -102,7 +102,8 @@ class Npm(FetchMethod):
     def _runwget(self, ud, d, command, quiet):
         logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
         bb.fetch2.check_network_access(d, command)
-        runfetchcmd(command, d, quiet)
+        dldir = d.getVar("DL_DIR", True)
+        runfetchcmd(command, d, quiet, workdir=dldir)
 
     def _unpackdep(self, ud, pkg, data, destdir, dldir, d):
         file = data[pkg]['tgz']
@@ -137,7 +138,12 @@ class Npm(FetchMethod):
             workobj = json.load(datafile)
         dldir = "%s/%s" % (os.path.dirname(ud.localpath), ud.pkgname)
 
-        self._unpackdep(ud, ud.pkgname, workobj,  "%s/npmpkg" % destdir, dldir, d)
+        if 'subdir' in ud.parm:
+            unpackdir = '%s/%s' % (destdir, ud.parm.get('subdir'))
+        else:
+            unpackdir = '%s/npmpkg' % destdir
+
+        self._unpackdep(ud, ud.pkgname, workobj, unpackdir, dldir, d)
 
     def _parse_view(self, output):
         '''
@@ -181,7 +187,7 @@ class Npm(FetchMethod):
         outputurl = pdata['dist']['tarball']
         data[pkg] = {}
         data[pkg]['tgz'] = os.path.basename(outputurl)
-        self._runwget(ud, d, "%s %s" % (self.basecmd, outputurl), False)
+        self._runwget(ud, d, "%s --directory-prefix=%s %s" % (self.basecmd, ud.prefixdir, outputurl), False)
 
         dependencies = pdata.get('dependencies', {})
         optionalDependencies = pdata.get('optionalDependencies', {})
@@ -198,8 +204,15 @@ class Npm(FetchMethod):
         for dep, version in depsfound.items():
             self._getdependencies(dep, data[pkg]['deps'], version, d, ud)
 
-    def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest):
+    def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest, toplevel=True):
         logger.debug(2, "NPM shrinkwrap file is %s" % data)
+        if toplevel:
+            name = data.get('name', None)
+            if name and name != pkg:
+                for obj in data.get('dependencies', []):
+                    if obj == pkg:
+                        self._getshrinkeddependencies(obj, data['dependencies'][obj], data['dependencies'][obj]['version'], d, ud, lockdown, manifest, False)
+                        return
         outputurl = "invalid"
         if ('resolved' not in data) or (not data['resolved'].startswith('http')):
             # will be the case for ${PN}
@@ -208,7 +221,7 @@ class Npm(FetchMethod):
             outputurl = runfetchcmd(fetchcmd, d, True)
         else:
             outputurl = data['resolved']
-        self._runwget(ud, d, "%s %s" % (self.basecmd, outputurl), False)
+        self._runwget(ud, d, "%s --directory-prefix=%s %s" % (self.basecmd, ud.prefixdir, outputurl), False)
         manifest[pkg] = {}
         manifest[pkg]['tgz'] = os.path.basename(outputurl).rstrip()
         manifest[pkg]['deps'] = {}
@@ -225,7 +238,7 @@ class Npm(FetchMethod):
         if 'dependencies' in data:
             for obj in data['dependencies']:
                 logger.debug(2, "Found dep is %s" % str(obj))
-                self._getshrinkeddependencies(obj, data['dependencies'][obj], data['dependencies'][obj]['version'], d, ud, lockdown, manifest[pkg]['deps'])
+                self._getshrinkeddependencies(obj, data['dependencies'][obj], data['dependencies'][obj]['version'], d, ud, lockdown, manifest[pkg]['deps'], False)
 
     def download(self, ud, d):
         """Fetch url"""

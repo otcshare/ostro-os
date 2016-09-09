@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cynara-tests | sed -e 's/^\[ *OK *\] \(\S*\)$/PASS: \1/' -e 's/^\[ *FAILED *\] \(\S*\)$/FAIL: \1/'
-sh /usr/bin/cynara-db-migration-tests | sed -e 's/^Test .*(\([^)]*\)).*passed.*/PASS: \1/' -e 's/^Test .*(\([^)]*\)).*failed.*/FAIL: \1/'

@@ -145,9 +145,9 @@ class ISA_CFChecker():
         with open(self.full_report_name + "_" + img_name, 'a') as ffull_report:
             ffull_report.write('\nFile: ' + result[0].replace(fs_path, ""))
             ffull_report.write('\nsecurity flags: ' + str(result[1]))
-            ffull_report.write('\nexecstack: ' + result[2])
-            ffull_report.write('\nnodrop_groups: ' + result[3])
-            ffull_report.write('\nno mpx: ' + result[4])
+            ffull_report.write('\nexecstack: ' + str(result[2]))
+            ffull_report.write('\nnodrop_groups: ' + str(result[3]))
+            ffull_report.write('\nno mpx: ' + str(result[4]))
             ffull_report.write('\n')
 
     def write_report(self):

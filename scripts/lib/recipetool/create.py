@@ -399,6 +399,10 @@ def create_recipe(args):
                     if '<html' in f.read(100).lower():
                         logger.error('Fetching "%s" returned a single HTML page - check the URL is correct and functional' % fetchuri)
                         sys.exit(1)
+        if os.path.exists(os.path.join(srctree, '.gitmodules')) and srcuri.startswith('git://'):
+            srcuri = 'gitsm://' + srcuri[6:]
+            logger.info('Fetching submodules...')
+            bb.process.run('git submodule update --init --recursive', cwd=srctree)
 
         if is_package(fetchuri):
             tmpfdir = tempfile.mkdtemp(prefix='recipetool-')
@@ -477,51 +481,8 @@ def create_recipe(args):
     # We need a blank line here so that patch_recipe_lines can rewind before the LICENSE comments
     lines_before.append('')
 
-    licvalues = guess_license(srctree_use)
-    lic_files_chksum = []
-    lic_unknown = []
-    if licvalues:
-        licenses = []
-        for licvalue in licvalues:
-            if not licvalue[0] in licenses:
-                licenses.append(licvalue[0])
-            lic_files_chksum.append('file://%s;md5=%s' % (licvalue[1], licvalue[2]))
-            if licvalue[0] == 'Unknown':
-                lic_unknown.append(licvalue[1])
-        lines_before.append('# WARNING: the following LICENSE and LIC_FILES_CHKSUM values are best guesses - it is')
-        lines_before.append('# your responsibility to verify that the values are complete and correct.')
-        if len(licvalues) > 1:
-            lines_before.append('#')
-            lines_before.append('# NOTE: multiple licenses have been detected; if that is correct you should separate')
-            lines_before.append('# these in the LICENSE value using & if the multiple licenses all apply, or | if there')
-            lines_before.append('# is a choice between the multiple licenses. If in doubt, check the accompanying')
-            lines_before.append('# documentation to determine which situation is applicable.')
-        if lic_unknown:
-            lines_before.append('#')
-            lines_before.append('# The following license files were not able to be identified and are')
-            lines_before.append('# represented as "Unknown" below, you will need to check them yourself:')
-            for licfile in lic_unknown:
-                lines_before.append('#   %s' % licfile)
-            lines_before.append('#')
-    else:
-        lines_before.append('# Unable to find any files that looked like license statements. Check the accompanying')
-        lines_before.append('# documentation and source headers and set LICENSE and LIC_FILES_CHKSUM accordingly.')
-        lines_before.append('#')
-        lines_before.append('# NOTE: LICENSE is being set to "CLOSED" to allow you to at least start building - if')
-        lines_before.append('# this is not accurate with respect to the licensing of the software being built (it')
-        lines_before.append('# will not be in most cases) you must specify the correct value before using this')
-        lines_before.append('# recipe for anything other than initial testing/development!')
-        licenses = ['CLOSED']
-    pkg_license = extravalues.pop('LICENSE', None)
-    if pkg_license:
-        if licenses == ['Unknown']:
-            lines_before.append('# NOTE: The following LICENSE value was determined from the original package metadata')
-            licenses = [pkg_license]
-        else:
-            lines_before.append('# NOTE: Original package metadata indicates license is: %s' % pkg_license)
-    lines_before.append('LICENSE = "%s"' % ' '.join(licenses))
-    lines_before.append('LIC_FILES_CHKSUM = "%s"' % ' \\\n                    '.join(lic_files_chksum))
-    lines_before.append('')
+    handled = []
+    licvalues = handle_license_vars(srctree_use, lines_before, handled, extravalues, tinfoil.config_data)
 
     classes = []
 
@@ -618,9 +579,6 @@ def create_recipe(args):
     handlers = [item[0] for item in handlers]
 
     # Apply the handlers
-    handled = []
-    handled.append(('license', licvalues))
-
     if args.binary:
         classes.append('bin_package')
         handled.append('buildsystem')
@@ -658,8 +616,11 @@ def create_recipe(args):
             # devtool looks for this specific exit code, so don't change it
             sys.exit(15)
         else:
-            if srcuri and srcuri.startswith(('git://', 'hg://', 'svn://')):
-                outfile = '%s_%s.bb' % (pn, srcuri.split(':', 1)[0])
+            if srcuri and srcuri.startswith(('gitsm://', 'git://', 'hg://', 'svn://')):
+                suffix = srcuri.split(':', 1)[0]
+                if suffix == 'gitsm':
+                    suffix = 'git'
+                outfile = '%s_%s.bb' % (pn, suffix)
             elif realpv:
                 outfile = '%s_%s.bb' % (pn, realpv)
             else:
@@ -753,13 +714,71 @@ def create_recipe(args):
         sys.stdout.write('\n'.join(outlines) + '\n')
     else:
         with open(outfile, 'w') as f:
-            f.write('\n'.join(outlines) + '\n')
+            lastline = None
+            for line in outlines:
+                if not lastline and not line:
+                    # Skip extra blank lines
+                    continue
+                f.write('%s\n' % line)
+                lastline = line
         logger.info('Recipe %s has been created; further editing may be required to make it fully functional' % outfile)
 
     if tempsrc:
-        shutil.rmtree(tempsrc)
+        if args.keep_temp:
+            logger.info('Preserving temporary directory %s' % tempsrc)
+        else:
+            shutil.rmtree(tempsrc)
 
     return 0
+
+def handle_license_vars(srctree, lines_before, handled, extravalues, d):
+    licvalues = guess_license(srctree, d)
+    lic_files_chksum = []
+    lic_unknown = []
+    if licvalues:
+        licenses = []
+        for licvalue in licvalues:
+            if not licvalue[0] in licenses:
+                licenses.append(licvalue[0])
+            lic_files_chksum.append('file://%s;md5=%s' % (licvalue[1], licvalue[2]))
+            if licvalue[0] == 'Unknown':
+                lic_unknown.append(licvalue[1])
+        lines_before.append('# WARNING: the following LICENSE and LIC_FILES_CHKSUM values are best guesses - it is')
+        lines_before.append('# your responsibility to verify that the values are complete and correct.')
+        if len(licvalues) > 1:
+            lines_before.append('#')
+            lines_before.append('# NOTE: multiple licenses have been detected; if that is correct you should separate')
+            lines_before.append('# these in the LICENSE value using & if the multiple licenses all apply, or | if there')
+            lines_before.append('# is a choice between the multiple licenses. If in doubt, check the accompanying')
+            lines_before.append('# documentation to determine which situation is applicable.')
+        if lic_unknown:
+            lines_before.append('#')
+            lines_before.append('# The following license files were not able to be identified and are')
+            lines_before.append('# represented as "Unknown" below, you will need to check them yourself:')
+            for licfile in lic_unknown:
+                lines_before.append('#   %s' % licfile)
+            lines_before.append('#')
+    else:
+        lines_before.append('# Unable to find any files that looked like license statements. Check the accompanying')
+        lines_before.append('# documentation and source headers and set LICENSE and LIC_FILES_CHKSUM accordingly.')
+        lines_before.append('#')
+        lines_before.append('# NOTE: LICENSE is being set to "CLOSED" to allow you to at least start building - if')
+        lines_before.append('# this is not accurate with respect to the licensing of the software being built (it')
+        lines_before.append('# will not be in most cases) you must specify the correct value before using this')
+        lines_before.append('# recipe for anything other than initial testing/development!')
+        licenses = ['CLOSED']
+    pkg_license = extravalues.pop('LICENSE', None)
+    if pkg_license:
+        if licenses == ['Unknown']:
+            lines_before.append('# NOTE: The following LICENSE value was determined from the original package metadata')
+            licenses = [pkg_license]
+        else:
+            lines_before.append('# NOTE: Original package metadata indicates license is: %s' % pkg_license)
+    lines_before.append('LICENSE = "%s"' % ' '.join(licenses))
+    lines_before.append('LIC_FILES_CHKSUM = "%s"' % ' \\\n                    '.join(lic_files_chksum))
+    lines_before.append('')
+    handled.append(('license', licvalues))
+    return licvalues
 
 def get_license_md5sums(d, static_only=False):
     import bb.utils
@@ -881,9 +900,9 @@ def crunch_license(licfile):
     license = crunched_md5sums.get(md5val, None)
     return license, md5val, lictext
 
-def guess_license(srctree):
+def guess_license(srctree, d):
     import bb
-    md5sums = get_license_md5sums(tinfoil.config_data)
+    md5sums = get_license_md5sums(d)
 
     licenses = []
     licspecs = ['*LICEN[CS]E*', 'COPYING*', '*[Ll]icense*', 'LEGAL*', '[Ll]egal*', '*GPL*', 'README.lic*', 'COPYRIGHT*', '[Cc]opyright*']
@@ -1040,5 +1059,6 @@ def register_commands(subparsers):
     parser_create.add_argument('--also-native', help='Also add native variant (i.e. support building recipe for the build host as well as the target machine)', action='store_true')
     parser_create.add_argument('--src-subdir', help='Specify subdirectory within source tree to use', metavar='SUBDIR')
     parser_create.add_argument('-a', '--autorev', help='When fetching from a git repository, set SRCREV in the recipe to a floating revision instead of fixed', action="store_true")
+    parser_create.add_argument('--keep-temp', action="store_true", help='Keep temporary directory (for debugging)')
     parser_create.set_defaults(func=create_recipe)
 

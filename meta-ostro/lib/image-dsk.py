@@ -125,10 +125,10 @@ def do_dsk_image():
     # Save to disk the layout with the PARTUUIDs used, to facilitate the
     # job of accessing programmatically individual partitions.
     disk_layout_file = \
-        os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
+        os.path.join(expand_vars("${IMGDEPLOYDIR}"),
                      expand_vars('${IMAGE_NAME}-disk-layout.json'))
     disk_layout_file_link = \
-        os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
+        os.path.join(expand_vars("${IMGDEPLOYDIR}"),
                      expand_vars('${IMAGE_LINK_NAME}-disk-layout.json'))
     with open(disk_layout_file, 'w') as disk_layout:
         json.dump(obj=partition_table, fp=disk_layout,
@@ -138,7 +138,7 @@ def do_dsk_image():
 
     # First step in creating the full disk image: loop file + GPT partition.
     full_image_name = \
-        os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"),
+        os.path.join(expand_vars("${IMGDEPLOYDIR}"),
                      expand_vars('${IMAGE_NAME}.dsk'))
     truncate_mib(full_image_name, full_image_size_mb)
     check_call(['sgdisk', '-o', full_image_name])
@@ -154,7 +154,7 @@ def do_dsk_image():
             partition_table[key]["name"] + ".part"
         partition_type = expand_vars(partition_table[key]["type"])
         full_partition_name = \
-            os.path.join(expand_vars("${DEPLOY_DIR_IMAGE}"), partition_name)
+            os.path.join(expand_vars("${IMGDEPLOYDIR}"), partition_name)
         # Create the temporary loop file for hostong the partition.
         truncate_mib(full_partition_name, partition_size_mb)
         # Populate the partition accordingly to its parameters.

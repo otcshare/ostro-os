@@ -34,7 +34,7 @@ script:
   - . init-travis-build-env
   - tail -50 conf/local.conf
   # And now building...
-  - ../scripts/travis-cmd-wrapper.py --deadline=$deadline bitbake core-image-minimal app-runas mmap-smack-test tcp-smack-test udp-smack-test || BITBAKE_RESULT=1
+  - ../scripts/travis-cmd-wrapper.py --deadline=$deadline bitbake core-image-minimal mmap-smack-test tcp-smack-test udp-smack-test || BITBAKE_RESULT=1
   - df -h .
   # The download directory can become quite large.
   - (du -h -c -s $(ls -1 -d downloads/* downloads/git2/* tmp*/work/*/*/downloads 2>/dev/null | grep -v -e '.done$' -e '/git2$')) || true

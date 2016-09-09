@@ -33,9 +33,6 @@ webserverKillAll()
             while kill -0 $pid 2>/dev/null; do
                 kill -SIGTERM -$pid 2>/dev/null
                 sleep 1
-                # Kill processes if they are still running - may happen
-                # in interactive shells
-                ps fux | grep "python.*manage.py runserver" | awk '{print $2}' | xargs kill
             done
             rm  ${pidfile}
         fi
@@ -95,10 +92,6 @@ stop_system()
     # prevent reentry
     if [ $INSTOPSYSTEM -eq 1 ]; then return; fi
     INSTOPSYSTEM=1
-    if [ -f ${BUILDDIR}/.toasterui.pid ]; then
-        kill `cat ${BUILDDIR}/.toasterui.pid` 2>/dev/null
-        rm ${BUILDDIR}/.toasterui.pid
-    fi
     webserverKillAll
     # unset exported variables
     unset TOASTER_DIR
@@ -247,14 +240,6 @@ case $CMD in
             if [ $WEBSERVER -gt 0 ]; then
                 $MANAGE checksocket "$ADDR_PORT" || return 1
             fi
-        fi
-
-        # kill Toaster web server if it's alive
-        if [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
-            echo "Warning: bitbake appears to be dead, but the Toaster web server is running." 1>&2
-            echo " Something fishy is going on." 1>&2
-            echo "Cleaning up the web server to start from a clean slate."
-            webserverKillAll
         fi
 
         # Create configuration file

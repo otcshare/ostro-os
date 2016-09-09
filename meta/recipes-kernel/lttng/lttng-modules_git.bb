@@ -8,12 +8,13 @@ LIC_FILES_CHKSUM = "file://LICENSE;md5=362844633a08753bd96ab322a6c7f9f6 \
 
 inherit module
 
-SRCREV = "e36de50dd09527901339797a61a0a40d241c1a6d"
+SRCREV = "6e4fc6f36d68fb3c8d40113f8670eb6e9c8ffd76"
 PV = "2.8.0+git${SRCPV}"
 
 COMPATIBLE_HOST = '(x86_64|i.86|powerpc|aarch64|mips|nios2|arm).*-linux'
 
-SRC_URI = "git://git.lttng.org/lttng-modules.git;branch=master"
+SRC_URI = "git://git.lttng.org/lttng-modules.git;branch=stable-2.8 \
+           file://Makefile-Do-not-fail-if-CONFIG_TRACEPOINTS-is-not-en.patch"
 
 export INSTALL_MOD_DIR="kernel/lttng-modules"
 

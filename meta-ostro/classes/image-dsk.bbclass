@@ -32,6 +32,10 @@ COMPRESS_DEPENDS_vdi = "qemu-native"
 COMPRESS_DEPENDS_bmap = "bmap-tools-native"
 COMPRESS_DEPENDS_ova = "vboxmanage-native"
 
+# temporary assignment: only needed in combination with OE-core which doesn't
+# have the variable yet.
+IMGDEPLOYDIR ??= "${DEPLOY_DIR_IMAGE}"
+
 # Needed to use native python libraries
 inherit pythonnative
 
@@ -68,14 +72,14 @@ create_ova() {
   STORAGE_DEVICE="0"
   STORAGE_DEVICE_TYPE="hdd"
 
-  RAW_IMAGE="${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.dsk"
-  VIRTUALBOX_IMAGE="${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.vmdk"
+  RAW_IMAGE="${IMGDEPLOYDIR}/${IMAGE_NAME}.dsk"
+  VIRTUALBOX_IMAGE="${IMGDEPLOYDIR}/${IMAGE_NAME}.vmdk"
   VIRTUALBOX_EXECUTABLE="${STAGING_BINDIR_NATIVE}/VBoxManage"
 
   APPLIANCE_NAME="${VM_NAME}.dsk.ova"
 
   FOLDER_NAME="virtualbox-vm"
-  WORK_FOLDER="${DEPLOY_DIR_IMAGE}/${FOLDER_NAME}"
+  WORK_FOLDER="${IMGDEPLOYDIR}/${FOLDER_NAME}"
 
   mkdir -p ${WORK_FOLDER}
 
@@ -101,7 +105,7 @@ create_ova() {
   ${VIRTUALBOX_EXECUTABLE} storageattach ${VM_NAME} --storagectl ${STORAGE_NAME} --medium ${VIRTUALBOX_IMAGE} --port ${STORAGE_PORT} --device ${STORAGE_DEVICE} --type ${STORAGE_DEVICE_TYPE}
 
   # export the image
-  ${VIRTUALBOX_EXECUTABLE} export ${VM_NAME} --output ${DEPLOY_DIR_IMAGE}/${APPLIANCE_NAME} --ovf20
+  ${VIRTUALBOX_EXECUTABLE} export ${VM_NAME} --output ${IMGDEPLOYDIR}/${APPLIANCE_NAME} --ovf20
 
   # unregister the VM from virtualbox -
   ${VIRTUALBOX_EXECUTABLE} unregistervm  ${VM_NAME}
@@ -331,7 +335,7 @@ deltask do_rootfs_wicenv
 # All variables explicitly passed to image-dsk.py.
 IMAGE_DSK_VARIABLES = " \
     APPEND \
-    DEPLOY_DIR_IMAGE \
+    IMGDEPLOYDIR \
     DSK_IMAGE_LAYOUT \
     IMAGE_LINK_NAME \
     IMAGE_NAME \

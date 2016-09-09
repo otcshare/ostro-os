@@ -85,12 +85,12 @@ PACKAGECONFIG_remove_pn-qemu-native = "sdl"
 ASSUME_PROVIDED_remove = "libsdl-native"
 
 # Enable security components.
-DISTRO_FEATURES_append = " systemd pam smack dbus-cynara ima"
+DISTRO_FEATURES_append = " systemd pam smack ima"
 OVERRIDES .= ":smack"
 VIRTUAL-RUNTIME_init_manager = "systemd"
 DISTRO_FEATURES_BACKFILL_CONSIDERED = "sysvinit"
 VIRTUAL-RUNTIME_initscripts = ""
-CORE_IMAGE_EXTRA_INSTALL_append_pn-core-image-minimal = " smack-userspace security-manager security-manager-policy cynara app-runas"
+CORE_IMAGE_EXTRA_INSTALL_append_pn-core-image-minimal = " smack-userspace"
 INHERIT_append_pn-core-image-minimal = " ima-evm-rootfs"
 IMA_EVM_KEY_DIR = "${IMA_EVM_BASE}/data/debug-keys"
 
