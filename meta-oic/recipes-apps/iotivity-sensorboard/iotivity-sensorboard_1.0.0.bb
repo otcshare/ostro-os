@@ -7,6 +7,7 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://server.cpp;beginline=1;endline=19;md5=a692dd0c72bcfa341a4ba826b37caf15"
 
 SRC_URI = "file://iotivity-sensorboard.tar.gz \
+        file://0001-Build-Use-LDFLAGS-variable-from-env-and-add-pthread-.patch \
           "
 
 S = "${WORKDIR}/iotivity-sensorboard"
