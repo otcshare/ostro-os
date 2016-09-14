@@ -7,7 +7,8 @@ LICENSE = "Apache-2.0"
 LIC_FILES_CHKSUM = "file://simpleclient.cpp;beginline=1;endline=19;md5=fc5a615cf1dc3880967127bc853b3e0c"
 
 SRC_URI = "file://iotivity-simple-client.tar.bz2 \
-          "
+        file://0001-build-Use-LDFLAGS-variable-from-env.patch \
+        "
 
 S = "${WORKDIR}/iotivity-simple-client"
 

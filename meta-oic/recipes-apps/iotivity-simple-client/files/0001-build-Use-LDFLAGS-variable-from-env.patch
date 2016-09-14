@@ -1,0 +1,35 @@
+From c513e8e44345d7fff2a38ef5ddb108d513a40ae7 Mon Sep 17 00:00:00 2001
+From: Philippe Coval <philippe.coval@osg.samsung.com>
+Date: Tue, 13 Sep 2016 17:14:03 +0200
+Subject: [PATCH] build: Use LDFLAGS variable from env
+
+Without this, QA check is failing and this message is reported:
+
+  do_package_qa: QA Issue: No GNU_HASH in the elf binary:
+  (...)
+  'iotivity-simple-client/simpleclient' [ldflags]
+
+Change-Id: Id22e5358f75b46861cf0dfb7b2af267dbe7d7014
+Bug: https://jira.iotivity.org/browse/IOT-1111
+Origin: https://github.com/TizenTeam/meta-oic
+Signed-off-by: Philippe Coval <philippe.coval@osg.samsung.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 9323169..2389f43 100644
+--- a/Makefile
++++ b/Makefile
+@@ -12,7 +12,7 @@ endif
+        $(CXX) -std=c++0x -c -o $@ $< $(YOCTOCXXFLAGS)
+
+ simpleclient: simpleclient.o
+-	$(CXX) -o simpleclient simpleclient.o $(YOCTOLDFLAGS)
++	$(CXX) -o $@ $^ $(LDFLAGS) $(YOCTOLDFLAGS)
+
+ clean:
+        rm -rf simpleclient *.o
+--
+1.9.1
+
