@@ -152,7 +152,7 @@ def update_suite_js():
     file_path = '/tmp/iotivity-node/tests/setup.js'
     for line in fileinput.input(file_path, inplace = True):
         new_line = line.replace('30000', '90000')
-        print new_line.strip('\n')
+        print(new_line.strip('\n'))
 
 @tag(TestType='EFT', FeatureID='IOTOS-764')
 class IotivitynodeRuntimeTest(oeRuntimeTest):
