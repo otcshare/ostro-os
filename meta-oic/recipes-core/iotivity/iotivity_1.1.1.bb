@@ -1,4 +1,4 @@
-PR = "r1"
+PR = "r2"
 SUMMARY = "IoTivity framework and SDK sponsored by the Open Connectivity Foundation."
 DESCRIPTION = "IoTivity is an open source software framework enabling seamless device-to-device connectivity to address the emerging needs of the Internet of Things."
 HOMEPAGE = "https://www.iotivity.org/"
@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://resource/include/OCApi.h;beginline=1;endline=19;md5=f
 
 url_iotivity = "git://github.com/iotivity/iotivity.git"
 branch_iotivity = "1.1-rel"
-SRCREV = "972ef41a25624501d7cd13a18a9f49be90b9c2d1"
+SRCREV = "8078b450c9a75b7aecaf6259fd0a8710318fce0f"
 SRC_URI = "${url_iotivity};destsuffix=${S};branch=${branch_iotivity};protocol=http;"
 
 url_tinycbor = "git://github.com/01org/tinycbor.git"
@@ -25,13 +25,14 @@ SRC_URI += "${url_gtest};name=gtest;subdir=${BP}/extlibs/gtest"
 url_hippomocks = "git://github.com/dascandy/hippomocks.git"
 SRCREV_hippomocks = "dca4725496abb0e41f8b582dec21d124f830a8e5"
 SRC_URI += "${url_hippomocks};name=hippomocks;destsuffix=${S}/extlibs/hippomocks-master;protocol=http"
+SRC_URI += "file://hippomocks_mips_patch"
 
 url_sqlite = "http://www.sqlite.org/2015/sqlite-amalgamation-3081101.zip"
 SRC_URI[sqlite3.md5sum] = "94907e831502e2080b76e281cfa24dde"
 SRC_URI[sqlite3.sha256sum] = "a3b0c07d1398d60ae9d21c2cc7f9be6b1bc5b0168cd94c321ede9a0fce2b3cd7"
 SRC_URI += "${url_sqlite};name=sqlite3;subdir=${BP}/extlibs/sqlite3;unpack=false"
 
-inherit scons
+inherit pkgconfig scons
 
 
 python () {
