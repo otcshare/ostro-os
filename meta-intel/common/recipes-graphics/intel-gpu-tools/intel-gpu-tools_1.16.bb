@@ -15,8 +15,8 @@ RDEPENDS_${PN}-tests += "bash"
 
 PACKAGE_BEFORE_PN = "${PN}-benchmarks ${PN}-tests"
 
-SRC_URI[md5sum] = "b09d69526c86174007bea2228e36b2f1"
-SRC_URI[sha256sum] = "3596e1d36e9c1203eed5abff5a0f272d573f4eb917b5cee4f029cce5a70a0f0c"
+SRC_URI[md5sum] = "95ae60c2c0e56736273edc406f8277c8"
+SRC_URI[sha256sum] = "c6be6d8311a939dd7ebb4639a2605bdbe711a4d3c77c8273a83f2050c2723ae1"
 
 PACKAGECONFIG ??= ""
 PACKAGECONFIG[libunwind] = "--with-libunwind,--without-libunwind,libunwind,libunwind"
