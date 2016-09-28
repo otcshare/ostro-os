@@ -1,0 +1,50 @@
+From c6fc833f4ce28c2a811fa1077f5e0975eadc4a23 Mon Sep 17 00:00:00 2001
+From: Philippe Coval <philippe.coval@osg.samsung.com>
+Date: Tue, 13 Sep 2016 18:14:07 +0200
+Subject: [PATCH] Build: Use LDFLAGS variable from env and add -pthread flag
+
+Without this change and error on linkage is displayed :
+
+  ld: observer.o: undefined reference to symbol 'pthread_create@@GLIBC_2.2.5'
+  libpthread.so.0: error adding symbols: DSO missing from command line
+  collect2: error: ld returned 1 exit status
+
+Also YOCTOLDFLAGS are replaced with regular LDFLAGS,
+to use quality check.
+
+Without this, QA check is failing and this message is reported:
+
+  do_package_qa: QA Issue: No GNU_HASH in the elf binary:
+
+Change-Id: I2f73b1c09908be38a9053943a894832519312751
+Bug: https://jira.iotivity.org/browse/IOT-1111
+Origin: https://github.com/TizenTeam/meta-oic
+Signed-off-by: Philippe Coval <philippe.coval@osg.samsung.com>
+---
+ Makefile | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index e78b777..5d09cc1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,7 @@
+ YOCTOCXXFLAGS=-I$(PKG_CONFIG_SYSROOT_DIR)/usr/include/iotivity/resource/ -I$(PKG_CONFIG_SYSROOT_DIR)/usr/include/iotivity/resource/stack -I$(PKG_CONFIG_SYSROOT_DIR)/usr/include/iotivity/resource/ocrandom -I$(PKG_CONFIG_SYSROOT_DIR)/usr/include/iotivity/resource/logger -I$(PKG_CONFIG_SYSROOT_DIR)/usr/include/iotivity/resource/oc_logger
+
+ YOCTOLDFLAGS=-loc -loctbstack -loc_logger -lmraa
++YOCTOLDFLAGS+=-pthread
+
+ all: sensorboard
+
+@@ -12,7 +13,7 @@ endif
+        $(CXX) -std=c++0x -c -o $@ $< $(YOCTOCXXFLAGS)
+
+ sensorboard: server.o observer.o
+-	$(CXX) -o sensorboard server.o observer.o $(YOCTOLDFLAGS)
++	$(CXX) -o $@ $^ $(LDFLAGS) $(YOCTOLDFLAGS)
+
+ clean:
+        rm -rf sensorboard *.o
+--
+1.9.1
+
