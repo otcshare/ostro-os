@@ -1,10 +1,10 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
 LINUX_VERSION_INTEL_COMMON = "4.8"
-SRCREV_META_INTEL_COMMON = "6128a9e47cd1aeb46b604469c17bff3eba8d5f93"
-SRCREV_MACHINE_INTEL_COMMON = "67813e7efa3a4614e209c2f058d92ef9a636441a"
+SRCREV_META_INTEL_COMMON ?= "6128a9e47cd1aeb46b604469c17bff3eba8d5f93"
+SRCREV_MACHINE_INTEL_COMMON ?= "b266f7ba78f0cb3d7073e1bf7bd7dfc92bec7431"
 
-KBRANCH_INTEL_COMMON = "standard/base"
+KBRANCH_INTEL_COMMON = "standard/preempt-rt/base"
 
 LINUX_VERSION_core2-32-intel-common = "${LINUX_VERSION_INTEL_COMMON}"
 COMPATIBLE_MACHINE_core2-32-intel-common = "${MACHINE}"
@@ -22,7 +22,6 @@ SRCREV_meta_corei7-64-intel-common ?= "${SRCREV_META_INTEL_COMMON}"
 SRCREV_machine_corei7-64-intel-common ?= "${SRCREV_MACHINE_INTEL_COMMON}"
 KERNEL_FEATURES_append_corei7-64-intel-common = "${KERNEL_FEATURES_INTEL_COMMON}"
 
-# Quark / X1000 BSP Info
 LINUX_VERSION_i586-nlp-32-intel-common = "${LINUX_VERSION_INTEL_COMMON}"
 COMPATIBLE_MACHINE_i586-nlp-32-intel-common = "${MACHINE}"
 KMACHINE_i586-nlp-32-intel-common = "intel-quark"
@@ -30,12 +29,3 @@ KBRANCH_i586-nlp-32-intel-common = "${KBRANCH_INTEL_COMMON}"
 SRCREV_meta_i586-nlp-32-intel-common ?= "${SRCREV_META_INTEL_COMMON}"
 SRCREV_machine_i586-nlp-32-intel-common ?= "${SRCREV_MACHINE_INTEL_COMMON}"
 KERNEL_FEATURES_append_i586-nlp-32-intel-common = ""
-
-
-# For Crystalforest and Romley
-KERNEL_MODULE_AUTOLOAD_append_core2-32-intel-common = " uio"
-KERNEL_MODULE_AUTOLOAD_append_corei7-64-intel-common = " uio"
-
-# For FRI2, NUC
-KERNEL_MODULE_AUTOLOAD_append_core2-32-intel-common = " iwlwifi"
-KERNEL_MODULE_AUTOLOAD_append_corei7-64-intel-common = " iwlwifi"
