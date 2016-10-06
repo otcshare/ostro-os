@@ -166,9 +166,9 @@ python run_buildstats () {
                 try:
                     rootfs_size = subprocess.check_output(["du", "-sh", rootfs],
                             stderr=subprocess.STDOUT).decode('utf-8')
-                except subprocess.CalledProcessError as e:
-                    bb.error("Failed to get rootfs size: %s" % e.output)
-                f.write("Uncompressed Rootfs size: %s" % rootfs_size)
+                    f.write("Uncompressed Rootfs size: %s" % rootfs_size)
+                except subprocess.CalledProcessError as err:
+                    bb.warn("Failed to get rootfs size: %s" % err.output.decode('utf-8'))
 
     elif isinstance(e, bb.build.TaskFailed):
         # Can have a failure before TaskStarted so need to mkdir here too
