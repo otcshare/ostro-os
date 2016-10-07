@@ -1,0 +1,54 @@
+From d253e81e001ccbff9d7a8ee1768006c5ac36b259 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 27 Sep 2016 16:43:57 +0200
+Subject: [PATCH 25/29] swupd_make_pack: fix extracting files with bsdtar
+
+TAR_XATTR_ARGS is no longer used as part of a plain string. Embedding
+the empty "" value for bsdtar inside an argv argument list passes an
+empty parameter to bsdtar, leading to:
+  bsdtar: Must specify one of -c, -r, -t, -u, -x
+
+To allow the the "no parameter" case, it has to be argument list: that
+can be empty. If not empty, it has to end with a comma.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ include/swupd.h | 4 ++--
+ src/pack.c      | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/include/swupd.h b/include/swupd.h
+index 43a5002..0aa6399 100644
+--- a/include/swupd.h
++++ b/include/swupd.h
+@@ -20,12 +20,12 @@
+ #define TAR_COMMAND "bsdtar"
+ #define TAR_XATTR_ARGS ""
+ #define TAR_XATTR_ARGS_STRLIST
+-#define TAR_WARN_ARGS ""
++#define TAR_WARN_ARGS_STRLIST
+ #else
+ #define TAR_COMMAND "tar"
+ #define TAR_XATTR_ARGS "--xattrs --xattrs-include='*'"
+ #define TAR_XATTR_ARGS_STRLIST "--xattrs", "--xattrs-include='*'",
+-#define TAR_WARN_ARGS "--warning=no-timestamp"
++#define TAR_WARN_ARGS_STRLIST "--warning=no-timestamp",
+ #endif
+ 
+ #if SWUPD_WITH_SELINUX
+diff --git a/src/pack.c b/src/pack.c
+index a1fbc51..12d7443 100644
+--- a/src/pack.c
++++ b/src/pack.c
+@@ -116,7 +116,7 @@ static void explode_pack_stage(int from_version, int to_version, char *module)
+ 		 * time on the client...
+ 		 */
+ 		string_or_die(&param, "%s/%s/%i_to_%i/staged", packstage_dir, module, from_version, to_version);
+-		char *const tarcmd[] = { TAR_COMMAND, "-C", param, TAR_WARN_ARGS, TAR_PERM_ATTR_ARGS_STRLIST, "-xf", path, NULL };
++		char *const tarcmd[] = { TAR_COMMAND, "-C", param, TAR_WARN_ARGS_STRLIST TAR_PERM_ATTR_ARGS_STRLIST, "-xf", path, NULL };
+ 		if (system_argv(tarcmd) == 0) {
+ 			unlink(path);
+ 		}
+-- 
+2.1.4
+

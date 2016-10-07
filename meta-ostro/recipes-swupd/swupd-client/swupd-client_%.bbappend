@@ -54,6 +54,7 @@ pkg_postinst_${PN}_append () {
     # from inheriting other undesired attributes like security.SMACK64TRANSMUTE
     # from upper folders (see xattr-images.bbclass for details).
     if ${@bb.utils.contains('DISTRO_FEATURES', 'smack', 'true', 'false', d)}; then
+       install -d $D/var/lib/swupd
        setfattr -n security.SMACK64 -v "_" $D/var/lib/swupd
     fi
 }

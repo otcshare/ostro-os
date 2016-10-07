@@ -55,9 +55,9 @@ ima_evm_sign_rootfs () {
 
     # Sign file with private IMA key. EVM not supported at the moment.
     bbnote "IMA/EVM: signing files 'find ${IMA_EVM_ROOTFS_SIGNED}' with private key '${IMA_EVM_PRIVKEY}'"
-    find ${IMA_EVM_ROOTFS_SIGNED} | xargs -d "\n" --max-args=1 --no-run-if-empty --verbose evmctl ima_sign --key ${IMA_EVM_PRIVKEY}
+    find ${IMA_EVM_ROOTFS_SIGNED} | xargs -d "\n" --no-run-if-empty --verbose evmctl ima_sign --key ${IMA_EVM_PRIVKEY}
     bbnote "IMA/EVM: hashing files 'find ${IMA_EVM_ROOTFS_HASHED}'"
-    find ${IMA_EVM_ROOTFS_HASHED} | xargs -d "\n" --max-args=1 --no-run-if-empty --verbose evmctl ima_hash
+    find ${IMA_EVM_ROOTFS_HASHED} | xargs -d "\n" --no-run-if-empty --verbose evmctl ima_hash
 
     # Optionally install custom policy for loading by systemd.
     if [ "${IMA_EVM_POLICY_SYSTEMD}" ]; then

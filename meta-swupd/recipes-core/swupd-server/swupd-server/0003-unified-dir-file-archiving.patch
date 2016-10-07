@@ -1,0 +1,403 @@
+From a2b9be5b5256664a073ef7378341751db1cacdf7 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Thu, 29 Sep 2016 08:31:52 +0200
+Subject: [PATCH 3/3] unified dir + file archiving
+
+---
+ src/fullfiles.c | 342 +++++++++++++++++++++++++-------------------------------
+ 1 file changed, 151 insertions(+), 191 deletions(-)
+
+diff --git a/src/fullfiles.c b/src/fullfiles.c
+index 2abe3ff..9fdfc2f 100644
+--- a/src/fullfiles.c
++++ b/src/fullfiles.c
+@@ -51,6 +51,10 @@ static void create_fullfile(struct file *file)
+ 	char *empty, *indir, *outdir;
+ 	struct archive_entry *entry = NULL;
+ 	struct archive *from = NULL, *to = NULL;
++	struct in_memory_archive best = { .buffer = NULL };
++	struct in_memory_archive current = { .buffer = NULL };
++	uint8_t *file_content = NULL;
++	size_t file_size;
+ 	int fd = -1;
+ 
+ 	if (file->is_deleted) {
+@@ -79,14 +83,83 @@ static void create_fullfile(struct file *file)
+ 		assert(0);
+ 	}
+ 
+-	if (file->is_dir) { /* directories are easy */
++	/* step 1: tar it with each compression type  */
++	typedef int (*filter_t)(struct archive *);
++	static const filter_t compression_filters[] = {
+ 		/*
+-		 * Uses the recommended restricted pax interchange
++		 * Start with the compression method that is most likely (*) to produce
++		 * the best result. That will allow aborting creation of archives earlier
++		 * when they become larger than the currently smallest archive.
++		 *
++		 * (*) statistics for ostro-image-swupd:
++		 *     43682 LZMA
++		 *     13398 gzip
++		 *       844 bzip2
++		 */
++		archive_write_add_filter_lzma,
++		archive_write_add_filter_gzip,
++		archive_write_add_filter_bzip2,
++		/*
++		 * TODO (?): can archive_write_add_filter_none ever be better than compressing?
++		 */
++		NULL
++	};
++	file_size = S_ISREG(sbuf.st_mode) ? sbuf.st_size : 0;
++
++	archive_entry_copy_sourcepath(entry, origin);
++	if (archive_read_disk_entry_from_file(from, entry, -1, &sbuf)) {
++		LOG(NULL, "Getting directory attributes failed", "%s: %s",
++		    origin, archive_error_string(from));
++		assert(0);
++	}
++	archive_entry_copy_pathname(entry, file->hash);
++	if (file_size) {
++		file_content = malloc(file_size);
++		if (!file_content) {
++			LOG(NULL, "out of memory", "");
++			assert(0);
++		}
++		fd = open(origin, O_RDONLY);
++		if (fd == -1) {
++			LOG(NULL, "Failed to open file", "%s: %s",
++			    origin, strerror(errno));
++			assert(0);
++		}
++		size_t done = 0;
++		while (done < file_size) {
++			ssize_t curr;
++			curr = read(fd, file_content + done, file_size - done);
++			if (curr == -1) {
++				LOG(NULL, "Failed to read from file", "%s: %s",
++				    origin, strerror(errno));
++				assert(0);
++			}
++			done += curr;
++		}
++	}
++
++	for (int i = 0; compression_filters[i]; i++) {
++		/* Need to re-initialize the archive handle, it cannot be re-used. */
++		if (to) {
++			archive_write_free(to);
++		}
++		/*
++		 * Use the recommended restricted pax interchange
+ 		 * format. Numeric uid/gid values are stored in the archive
+ 		 * (no uid/gid lookup enabled) because symbolic names can lead
+ 		 * to a hash mismatch during unpacking when /etc/passwd or
+ 		 * /etc/group change during an update (see
+ 		 * https://github.com/clearlinux/swupd-client/issues/101).
++		 *
++		 * Filenames read from the file system are expected to be
++		 * valid according to the current locale. archive_write_header()
++		 * will warn about filenames that it cannot properly decode
++		 * and proceeds by writing the raw bytes, but we treat this an
++		 * error by not distinguishing between ARCHIVE_FATAL
++		 * and ARCHIVE_WARN.
++		 *
++		 * When we fail with "Can't translate" errors, make sure that
++		 * LANG and/or LC_ env variables are set.
+ 		 */
+ 		to = archive_write_new();
+ 		assert(to);
+@@ -94,213 +167,100 @@ static void create_fullfile(struct file *file)
+ 			LOG(NULL, "PAX format", "%s", archive_error_string(to));
+ 			assert(0);
+ 		}
+-		archive_entry_copy_sourcepath(entry, origin);
+-		if (archive_read_disk_entry_from_file(from, entry, -1, &sbuf)) {
+-			LOG(NULL, "Getting directory attributes failed", "%s: %s",
+-			    origin, archive_error_string(from));
+-			assert(0);
+-		}
+-		archive_entry_copy_pathname(entry, file->hash);
+-		/* for a directory file, tar up simply with gzip */
+-		if (archive_write_add_filter_gzip(to)) {
+-			LOG(NULL, "Setting gzip compression failed", "%s", archive_error_string(to));
++		do {
++			/* Try compression methods until we find one which is supported. */
++			if (!compression_filters[i](to)) {
++				break;
++			}
++		} while(compression_filters[++i]);
++		/*
++		 * Regardless of the block size below, never pad the
++		 * last block, it just makes the archive larger.
++		 */
++		if (archive_write_set_bytes_in_last_block(to, 1)) {
++			LOG(NULL, "Removing padding failed", "");
+ 			assert(0);
+ 		}
+-		if (archive_write_open_filename(to, tarname)) {
+-			LOG(NULL, "Failed to create archive", "%s: %s",
+-			    tarname, archive_error_string(to));
++		/*
++		 * Invoke in_memory_write() as often as possible and check each
++		 * time whether we are already larger than the currently best
++		 * algorithm.
++		 */
++		current.maxsize = best.used;
++		if (archive_write_set_bytes_per_block(to, 0)) {
++			LOG(NULL, "Removing blocking failed", "");
+ 			assert(0);
+ 		}
+-		if (archive_write_header(to, entry)) {
+-			LOG(NULL, "Failed to write header", "%s: %s: %s",
+-			    tarname, origin, archive_error_string(to));
+-			assert(0);
++		/*
++		 * We can make an educated guess how large the resulting archive will be.
++		 * Avoids realloc() calls when the file is big.
++		 */
++		if (!current.allocated) {
++			current.allocated = file_size + 4096;
++			current.buffer = malloc(current.allocated);
+ 		}
+-		if (archive_write_close(to)) {
+-			LOG(NULL, "Failed to close archive", "%s: %s",
+-			    tarname, archive_error_string(to));
++		if (!current.buffer) {
++			LOG(NULL, "out of memory", "");
+ 			assert(0);
+ 		}
+-	} else { /* files are more complex */
+-		/* step 1: tar it with each compression type  */
+-		typedef int (*filter_t)(struct archive *);
+-		static const filter_t compression_filters[] = {
+-			/*
+-			 * Start with the compression method that is most likely (*) to produce
+-			 * the best result. That will allow aborting creation of archives earlier
+-			 * when they become larger than the currently smallest archive.
+-			 *
+-			 * (*) statistics for ostro-image-swupd:
+-			 *     43682 LZMA
+-			 *     13398 gzip
+-			 *       844 bzip2
+-			 */
+-			archive_write_add_filter_lzma,
+-			archive_write_add_filter_gzip,
+-			archive_write_add_filter_bzip2,
+-			/*
+-			 * TODO (?): can archive_write_add_filter_none ever be better than compressing?
+-			 */
+-			NULL
+-		};
+-		struct in_memory_archive best = { .buffer = NULL };
+-		struct in_memory_archive current = { .buffer = NULL };
+-		uint8_t *file_content = NULL;
+-		size_t file_size = S_ISREG(sbuf.st_mode) ? sbuf.st_size : 0;
+-
+-		archive_entry_copy_sourcepath(entry, origin);
+-		if (archive_read_disk_entry_from_file(from, entry, -1, &sbuf)) {
+-			LOG(NULL, "Getting directory attributes failed", "%s: %s",
+-			    origin, archive_error_string(from));
++		if (archive_write_open(to, &current, NULL, in_memory_write, NULL)) {
++			LOG(NULL, "Failed to create archive", "%s",
++			    archive_error_string(to));
+ 			assert(0);
+ 		}
+-		archive_entry_copy_pathname(entry, file->hash);
+-		if (file_size) {
+-			file_content = malloc(file_size);
+-			if (!file_content) {
+-				LOG(NULL, "out of memory", "");
+-				assert(0);
+-			}
+-			fd = open(origin, O_RDONLY);
+-			if (fd == -1) {
+-				LOG(NULL, "Failed to open file", "%s: %s",
+-				    origin, strerror(errno));
+-				assert(0);
+-			}
+-			size_t done = 0;
+-			while (done < file_size) {
+-				ssize_t curr;
+-				curr = read(fd, file_content + done, file_size - done);
+-				if (curr == -1) {
+-					LOG(NULL, "Failed to read from file", "%s: %s",
+-					    origin, strerror(errno));
+-					assert(0);
+-				}
+-				done += curr;
+-			}
+-		}
+-
+-		for (int i = 0; compression_filters[i]; i++) {
+-			/* Need to re-initialize the archive handle, it cannot be re-used. */
+-			if (to) {
++		if (archive_write_header(to, entry) ||
++		    file_content && archive_write_data(to, file_content, file_size) != (ssize_t)file_size ||
++		    archive_write_close(to)) {
++			if (current.maxsize && current.used >= current.maxsize) {
+ 				archive_write_free(to);
++				to = NULL;
++				continue;
+ 			}
+-			/*
+-			 * Use the recommended restricted pax interchange
+-			 * format. Numeric uid/gid values are stored in the archive
+-			 * (no uid/gid lookup enabled) because symbolic names can lead
+-			 * to a hash mismatch during unpacking when /etc/passwd or
+-			 * /etc/group change during an update (see
+-			 * https://github.com/clearlinux/swupd-client/issues/101).
+-			 *
+-			 * Filenames read from the file system are expected to be
+-			 * valid according to the current locale. archive_write_header()
+-			 * will warn about filenames that it cannot properly decode
+-			 * and proceeds by writing the raw bytes, but we treat this an
+-			 * error by not distinguishing between ARCHIVE_FATAL
+-			 * and ARCHIVE_WARN.
+-			 *
+-			 * When we fail with "Can't translate" errors, make sure that
+-			 * LANG and/or LC_ env variables are set.
+-			 */
+-			to = archive_write_new();
+-			assert(to);
+-			if (archive_write_set_format_pax_restricted(to)) {
+-				LOG(NULL, "PAX format", "%s", archive_error_string(to));
+-				assert(0);
+-			}
+-			do {
+-				/* Try compression methods until we find one which is supported. */
+-				if (!compression_filters[i](to)) {
+-					break;
+-				}
+-			} while(compression_filters[++i]);
+-			/* Never pad the last block, it just makes the archive larger. */
+-			if (archive_write_set_bytes_in_last_block(to, 1)) {
+-				LOG(NULL, "Removing padding failed", "");
+-				assert(0);
+-			}
+-			/*
+-			 * Invoke in_memory_write() as often as possible and check each
+-			 * time whether we are already larger than the currently best
+-			 * algorithm.
+-			 */
+-			current.maxsize = best.used;
+-			if (archive_write_set_bytes_per_block(to, 0)) {
+-				LOG(NULL, "Removing blocking failed", "");
+-				assert(0);
+-			}
+-			/*
+-			 * We can make an educated guess how large the resulting archive will be.
+-			 * Avoids realloc() calls when the file is big.
+-			 */
+-			if (!current.allocated) {
+-				current.allocated = file_size + 4096;
+-				current.buffer = malloc(current.allocated);
+-			}
+-			if (!current.buffer) {
+-				LOG(NULL, "out of memory", "");
+-				assert(0);
+-			}
+-			if (archive_write_open(to, &current, NULL, in_memory_write, NULL)) {
+-				LOG(NULL, "Failed to create archive", "%s",
+-				    archive_error_string(to));
+-				assert(0);
+-			}
+-			if (archive_write_header(to, entry) ||
+-			    file_content && archive_write_data(to, file_content, file_size) != (ssize_t)file_size ||
+-			    archive_write_close(to)) {
+-				if (current.maxsize && current.used >= current.maxsize) {
+-					archive_write_free(to);
+-					to = NULL;
+-					continue;
+-				}
+-				LOG(NULL, "Failed to store file in archive", "%s: %s",
+-				    origin, archive_error_string(to));
+-				assert(0);
+-			}
+-			if (!best.used || current.used < best.used) {
+-				free(best.buffer);
+-				best = current;
+-				memset(&current, 0, sizeof(current));
+-			} else {
+-				/* Simply re-use the buffer for the next iteration. */
+-				current.used = 0;
+-			}
+-		}
+-		if (!best.used) {
+-			LOG(NULL, "creating archive failed with all compression methods", "");
++			LOG(NULL, "Failed to store file in archive", "%s: %s",
++			    origin, archive_error_string(to));
+ 			assert(0);
+ 		}
+-
+-		/* step 2: write out to disk. Archives are immutable and thus read-only. */
+-		fd = open(tarname, O_CREAT|O_WRONLY, S_IRUSR|S_IRGRP|S_IROTH);
+-		if (fd <= 0) {
+-			LOG(NULL, "Failed to create archive", "%s: %s",
+-			    tarname, strerror(errno));
+-			assert(0);
+-		}
+-		size_t done = 0;
+-		while (done < best.used) {
+-			ssize_t curr;
+-			curr = write(fd, best.buffer + done, best.used - done);
+-			if (curr == -1) {
+-				LOG(NULL, "Failed to write archive", "%s: %s",
+-				    tarname, strerror(errno));
+-				assert(0);
+-			}
+-			done += curr;
++		if (!best.used || current.used < best.used) {
++			free(best.buffer);
++			best = current;
++			memset(&current, 0, sizeof(current));
++		} else {
++			/* Simply re-use the buffer for the next iteration. */
++			current.used = 0;
+ 		}
+-		if (close(fd)) {
+-			LOG(NULL, "Failed to complete writing archive", "%s: %s",
++	}
++	if (!best.used) {
++		LOG(NULL, "creating archive failed with all compression methods", "");
++		assert(0);
++	}
++
++	/* step 2: write out to disk. Archives are immutable and thus read-only. */
++	fd = open(tarname, O_CREAT|O_WRONLY, S_IRUSR|S_IRGRP|S_IROTH);
++	if (fd <= 0) {
++		LOG(NULL, "Failed to create archive", "%s: %s",
++		    tarname, strerror(errno));
++		assert(0);
++	}
++	size_t done = 0;
++	while (done < best.used) {
++		ssize_t curr;
++		curr = write(fd, best.buffer + done, best.used - done);
++		if (curr == -1) {
++			LOG(NULL, "Failed to write archive", "%s: %s",
+ 			    tarname, strerror(errno));
+ 			assert(0);
+ 		}
+-		fd = -1;
+-		free(best.buffer);
+-		free(current.buffer);
+-		free(file_content);
++		done += curr;
++	}
++	if (close(fd)) {
++		LOG(NULL, "Failed to complete writing archive", "%s: %s",
++		    tarname, strerror(errno));
++		assert(0);
+ 	}
++	fd = -1;
++	free(best.buffer);
++	free(current.buffer);
++	free(file_content);
+ 
+  done:
+ 	if (fd >= 0) {
+-- 
+2.1.4
+

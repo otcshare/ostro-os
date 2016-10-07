@@ -134,7 +134,7 @@ python() {
         bb.build.deltask('do_analysesource', d)
 }
 
-python analyse_image() {
+fakeroot python do_analyse_image() {
 
     from isafw import isafw
 
@@ -176,7 +176,6 @@ python analyse_image() {
 do_rootfs[depends] += "checksec-native:do_populate_sysroot ca-certificates-native:do_populate_sysroot"
 do_rootfs[depends] += "prelink-native:do_populate_sysroot"
 do_rootfs[depends] += "python-lxml-native:do_populate_sysroot"
-analyse_image[fakeroot] = "1"
 
 isafw_init[vardepsexclude] = "DATETIME"
 def isafw_init(isafw, d):
@@ -274,9 +273,6 @@ def manifest2pkglist(d):
 
     return pkglist
 
-
-IMAGE_POSTPROCESS_COMMAND += " analyse_image ; "
-
 # NOTE: by the time IMAGE_POSTPROCESS_COMMAND items are called, the image
 # has been stripped of the package manager database (if runtime package management
 # is not enabled, i.e. 'package-management' is not in IMAGE_FEATURES). If you
@@ -285,6 +281,20 @@ IMAGE_POSTPROCESS_COMMAND += " analyse_image ; "
 # ROOTFS_POSTUNINSTALL_COMMAND instead - however if you do that you should then be
 # aware that what you'll be looking at isn't exactly what you will see in the image
 # at runtime (there will be other postprocessing functions called after yours).
+#
+# do_analyse_image does not need the package manager database. Making it
+# a separate task instead of a IMAGE_POSTPROCESS_COMMAND has several
+# advantages:
+# - all other image commands are guaranteed to have completed
+# - it can run in parallel to other tasks which depend on the complete
+#   image, instead of blocking those other tasks
+# - meta-swupd helper images do not need to be analysed and won't be
+#   because nothing depends on their "do_build" task, only on
+#   do_image_complete
+python () {
+    if bb.data.inherits_class('image', d):
+        bb.build.addtask('do_analyse_image', 'do_build', 'do_image_complete', d)
+}
 
 python isafwreport_handler () {
 

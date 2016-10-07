@@ -61,9 +61,13 @@ OSTROPROJECT_CI_BUILD_TARGETS="ostro-image-noswupd ostro-image-swupd ostro-image
 # Following targets would be executed with do_populate_sdk task
 OSTROPROJECT_CI_SDK_TARGETS=""
 # Following targets would be executed with do_populate_sdk_ext task.
-# Uses the fully-populated image to ensure that the eSDK is as complete
-# as possible.
-OSTROPROJECT_CI_ESDK_TARGETS="ostro-image-swupd-all"
+# Uses the (almost) fully-populated dev image to ensure that the eSDK is
+# as complete as possible. We could use the ostro-image-swupd-all
+# here, but that would imply building and publishing that image due
+# to the way how do_populate_sdk_ext works. That's not worth the
+# overhead, because all that -all adds over -dev (by definition)
+# something that we don't expect to be used, like a second QA bundle.
+OSTROPROJECT_CI_ESDK_TARGETS="ostro-image-swupd-dev"
 # Following targets would be executed with do_test_iot_export task
 OSTROPROJECT_CI_TEST_EXPORT_TARGETS="ostro-image-swupd-dev"
 # Execute automatic tests for following images with corresponding
