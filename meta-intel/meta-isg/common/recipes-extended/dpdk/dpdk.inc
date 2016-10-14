@@ -11,6 +11,9 @@ SRC_URI = "http://dpdk.org/browse/dpdk/snapshot/dpdk-${PV}.tar.gz;name=dpdk \
 	   file://dpdk-16.07-dpdk-fix-installation-warning-and-issue.patch \
 	   file://dpdk-16.04-dpdk-fix-compilation-with-dynamic-libs.patch \
 	   file://dpdk-16.07-dpdk-fix-for-parellel-make-issue.patch \
+	   file://dpdk-16.07-net-ixgbe-move-PCI-device-IDs-from-EAL.patch \
+	   file://dpdk-16.07-net-igb-move-PCI-device-IDs-from-EAL.patch \
+	   file://dpdk-16.07-kni-fix-build-with-kernel-4.8.patch \
 	  "
 
 COMPATIBLE_MACHINE = "crystalforest|intel-corei7-64"
