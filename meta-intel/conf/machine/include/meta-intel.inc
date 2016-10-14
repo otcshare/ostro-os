@@ -31,3 +31,7 @@ MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = "${@bb.utils.contains('MACHINE_FEATURE
 # for the early boot time kernel microcode loading support,
 # merge the microcode data in the final initrd image.
 INITRD_LIVE_prepend = "${@bb.utils.contains('MACHINE_FEATURES', 'intel-ucode', '${DEPLOY_DIR_IMAGE}/microcode.cpio ', '', d)}"
+
+# Enable Runtime Machine Config by default
+DISTRO_FEATURES_append = " rmc"
+EFI_PROVIDER ?= "rmc-systemd-boot"
