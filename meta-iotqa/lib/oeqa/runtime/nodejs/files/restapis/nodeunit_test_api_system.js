@@ -9,15 +9,15 @@ var options = {
     path: '/api/system',
     method: 'GET',
     headers: {
-        'Accept': 'text/json'    
-    }    
+        'Accept': 'text/json'
+    }
 };
 
 var apiSystem = {};
 var responseJson = path.join(path.dirname(__filename), 'api_system.json');
 
 function sendHttpRequest(opts) {
-    var req = http.request(opts, function(res) {    
+    var req = http.request(opts, function (res) {
         apiSystem.statusCode = res.statusCode;
         res.setEncoding('utf8');
         
@@ -84,11 +84,11 @@ module.exports = {
     testApiSystemTypeValue: function(test) {
         test.strictEqual(this.apiSystem.apiResponse['type'], os.type(),                        
                         'local type value differs from the one from api response!');
-        test.done();                        
-    },  
-    
+        test.done();
+    },
+
     // arch    
-    testApiSystemArchNotNull: function(test) {
+    testApiSystemArchNotNull: function (test) {
         test.ok('arch' in this.apiSystem.apiResponse,
                     'arch is not a property in the response of /api/system!');
         test.done();
@@ -208,6 +208,6 @@ module.exports = {
         var localNetworkInterfaces = os.networkInterfaces();
         test.deepEqual(this.apiSystem.apiResponse['networkinterfaces'], localNetworkInterfaces,
                                 'local network interfaces differs from the one from /api/system!');
-        test.done();                                
+        test.done();
     } 
 };
