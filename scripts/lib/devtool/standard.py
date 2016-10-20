@@ -30,7 +30,7 @@ import errno
 import glob
 import filecmp
 from collections import OrderedDict
-from devtool import exec_build_env_command, setup_tinfoil, check_workspace_recipe, use_external_build, setup_git_repo, recipe_to_append, get_bbclassextend_targets, DevtoolError
+from devtool import exec_build_env_command, setup_tinfoil, check_workspace_recipe, use_external_build, setup_git_repo, recipe_to_append, get_bbclassextend_targets, ensure_npm, DevtoolError
 from devtool import parse_recipe
 
 logger = logging.getLogger('devtool')
@@ -64,7 +64,7 @@ def add(args, config, basepath, workspace):
             args.srctree = args.recipename
             args.recipename = None
         elif os.path.isdir(args.recipename):
-            logger.warn('Ambiguous argument %s - assuming you mean it to be the recipe name')
+            logger.warn('Ambiguous argument "%s" - assuming you mean it to be the recipe name' % args.recipename)
 
     if args.srctree and os.path.isfile(args.srctree):
         args.fetchuri = 'file://' + os.path.abspath(args.srctree)
@@ -74,7 +74,7 @@ def add(args, config, basepath, workspace):
         if args.fetchuri:
             raise DevtoolError('URI specified as positional argument as well as -f/--fetch')
         else:
-            # FIXME should show a warning that -f/--fetch is deprecated here
+            logger.warn('-f/--fetch option is deprecated - you can now simply specify the URL to fetch as a positional argument instead')
             args.fetchuri = args.fetch
 
     if args.recipename:
@@ -128,6 +128,9 @@ def add(args, config, basepath, workspace):
         color = args.color
     extracmdopts = ''
     if args.fetchuri:
+        if args.fetchuri.startswith('npm://'):
+            ensure_npm(config, basepath, args.fixed_setup)
+
         source = args.fetchuri
         if srctree:
             extracmdopts += ' -x %s' % srctree
@@ -150,13 +153,23 @@ def add(args, config, basepath, workspace):
 
     tempdir = tempfile.mkdtemp(prefix='devtool')
     try:
-        try:
-            stdout, _ = exec_build_env_command(config.init_path, basepath, 'recipetool --color=%s create -o %s "%s" %s' % (color, tempdir, source, extracmdopts))
-        except bb.process.ExecutionError as e:
-            if e.exitcode == 15:
-                raise DevtoolError('Could not auto-determine recipe name, please specify it on the command line')
-            else:
-                raise DevtoolError('Command \'%s\' failed:\n%s' % (e.command, e.stdout))
+        while True:
+            try:
+                stdout, _ = exec_build_env_command(config.init_path, basepath, 'recipetool --color=%s create -o %s "%s" %s' % (color, tempdir, source, extracmdopts))
+            except bb.process.ExecutionError as e:
+                if e.exitcode == 14:
+                    # FIXME this is a horrible hack that is unfortunately
+                    # necessary due to the fact that we can't run bitbake from
+                    # inside recipetool since recipetool keeps tinfoil active
+                    # with references to it throughout the code, so we have
+                    # to exit out and come back here to do it.
+                    ensure_npm(config, basepath, args.fixed_setup)
+                    continue
+                elif e.exitcode == 15:
+                    raise DevtoolError('Could not auto-determine recipe name, please specify it on the command line')
+                else:
+                    raise DevtoolError('Command \'%s\' failed:\n%s' % (e.command, e.stdout))
+            break
 
         recipes = glob.glob(os.path.join(tempdir, '*.bb'))
         if recipes:
@@ -568,8 +581,14 @@ def _extract_source(srctree, keep_temp, devbranch, sync, d):
         recipe_patches = [os.path.basename(patch) for patch in
                           oe.recipeutils.get_recipe_patches(crd)]
         local_files = oe.recipeutils.get_recipe_local_files(crd)
+
+        # Ignore local files with subdir={BP}
+        srcabspath = os.path.abspath(srcsubdir)
         local_files = [fname for fname in local_files if
-                       os.path.exists(os.path.join(workdir, fname))]
+                       os.path.exists(os.path.join(workdir, fname)) and
+                       (srcabspath == workdir or not
+                       os.path.join(workdir, fname).startswith(srcabspath +
+                           os.sep))]
         if local_files:
             for fname in local_files:
                 _move_file(os.path.join(workdir, fname),
@@ -1567,7 +1586,7 @@ def register_commands(subparsers, context):
     parser_add.add_argument('--binary', '-b', help='Treat the source tree as something that should be installed verbatim (no compilation, same directory structure). Useful with binary packages e.g. RPMs.', action='store_true')
     parser_add.add_argument('--also-native', help='Also add native variant (i.e. support building recipe for the build host as well as the target machine)', action='store_true')
     parser_add.add_argument('--src-subdir', help='Specify subdirectory within source tree to use', metavar='SUBDIR')
-    parser_add.set_defaults(func=add)
+    parser_add.set_defaults(func=add, fixed_setup=context.fixed_setup)
 
     parser_modify = subparsers.add_parser('modify', help='Modify the source for an existing recipe',
                                        description='Sets up the build environment to modify the source for an existing recipe. The default behaviour is to extract the source being fetched by the recipe into a git tree so you can work on it; alternatively if you already have your own pre-prepared source tree you can specify -n/--no-extract.',

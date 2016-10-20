@@ -431,10 +431,14 @@ def main(server, eventHandler, params):
                     buildinfohelper.scan_sdk_artifacts(event)
                 elif event.type == "SetBRBE":
                     buildinfohelper.brbe = buildinfohelper._get_data_from_event(event)
+                elif event.type == "TaskArtifacts":
+                    # not implemented yet
+                    # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=10283 for details
+                    pass
                 elif event.type == "OSErrorException":
                     logger.error(event)
                 else:
-                    logger.error("Unprocessed MetadataEvent %s ", str(event))
+                    logger.error("Unprocessed MetadataEvent %s", event.type)
                 continue
 
             if isinstance(event, bb.cooker.CookerExit):
@@ -450,9 +454,12 @@ def main(server, eventHandler, params):
             return_value += 1
 
         except EnvironmentError as ioerror:
-            # ignore interrupted io
-            if ioerror.args[0] == 4:
-                pass
+            logger.warning("EnvironmentError: %s" % ioerror)
+            # ignore interrupted io system calls
+            if ioerror.args[0] == 4: # errno 4 is EINTR
+                logger.warning("Skipped EINTR: %s" % ioerror)
+            else:
+                raise
         except KeyboardInterrupt:
             if params.observe_only:
                 print("\nKeyboard Interrupt, exiting observer...")

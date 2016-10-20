@@ -49,7 +49,7 @@
                 You can use single quotes instead of double quotes
                 when setting a variable's value.
                 Doing so allows you to use values that contain the double
-                character:
+                quote character:
                 <literallayout class='monospaced'>
      VARIABLE = 'I have a " in my value'
                 </literallayout>
@@ -276,6 +276,15 @@
                     You must control all spacing when you use the
                     override syntax.
                 </note>
+            </para>
+
+            <para>
+                It is also possible to append and prepend to shell
+                functions and BitBake-style Python functions.
+                See the
+                "<link linkend='shell-functions'>Shell Functions</link>" and
+                "<link linkend='bitbake-style-python-functions'>BitBake-Style Python Functions</link>
+                sections for examples.
             </para>
         </section>
 
@@ -1051,7 +1060,7 @@
                     directly as functions, tasks, or both.
                     They can also be called by other shell functions.
                     </para></listitem>
-                <listitem><para><emphasis>BitBake Style Python Functions:</emphasis>
+                <listitem><para><emphasis>BitBake-Style Python Functions:</emphasis>
                     Functions written in Python and executed by BitBake or other
                     Python functions using <filename>bb.build.exec_func()</filename>.
                     </para></listitem>
@@ -1090,10 +1099,60 @@
                 such as <filename>dash</filename>.
                 You should not use Bash-specific script (bashisms).
             </para>
+
+            <para>
+                Overrides and override-style operators like
+                <filename>_append</filename> and
+                <filename>_prepend</filename> can also be applied to
+                shell functions.
+                Most commonly, this application would be used in a
+                <filename>.bbappend</filename> file to modify functions in
+                the main recipe.
+                It can also be used to modify functions inherited from
+                classes.
+            </para>
+
+            <para>
+                As an example, consider the following:
+                <literallayout class='monospaced'>
+     do_foo() {
+         bbplain first
+         fn
+     }
+
+     fn_prepend() {
+         bbplain second
+     }
+
+     fn() {
+         bbplain third
+     }
+
+     do_foo_append() {
+         bbplain fourth
+     }
+                </literallayout>
+                Running <filename>do_foo</filename>
+                prints the following:
+                <literallayout class='monospaced'>
+     recipename do_foo: first
+     recipename do_foo: second
+     recipename do_foo: third
+     recipename do_foo: fourth
+                </literallayout>
+                <note>
+                    Overrides and override-style operators can
+                    be applied to any shell function, not just
+                    <link linkend='tasks'>tasks</link>.
+                </note>
+                You can use the <filename>bitbake -e</filename>&nbsp;<replaceable>recipename</replaceable>
+                command to view the final assembled function
+                after all overrides have been applied.
+            </para>
         </section>
 
         <section id='bitbake-style-python-functions'>
-            <title>BitBake Style Python Functions</title>
+            <title>BitBake-Style Python Functions</title>
 
             <para>
                 These functions are written in Python and executed by
@@ -1114,19 +1173,51 @@
                 Also in these types of functions, the datastore ("d")
                 is a global variable and is always automatically
                 available.
-           </para>
+                <note>
+                    Variable expressions (e.g. <filename>${X}</filename>)
+                    are no longer expanded within Python functions.
+                    This behavior is intentional in order to allow you
+                    to freely set variable values to expandable expressions
+                    without having them expanded prematurely.
+                    If you do wish to expand a variable within a Python
+                    function, use <filename>d.getVar("X", True)</filename>.
+                    Or, for more complicated expressions, use
+                    <filename>d.expand()</filename>.
+                </note>
+            </para>
 
-           <note>
-                Variable expressions (e.g. <filename>${X}</filename>) are no
-                longer expanded within Python functions.
-                This behavior is intentional in order to allow you to freely
-                set variable values to expandable expressions without having
-                them expanded prematurely.
-                If you do wish to expand a variable within a Python function,
-                use <filename>d.getVar("X", True)</filename>.
-                Or, for more complicated expressions, use
-                <filename>d.expand()</filename>.
-           </note>
+            <para>
+                Similar to shell functions, you can also apply overrides
+                and override-style operators to BitBake-style Python
+                functions.
+            </para>
+
+            <para>
+                As an example, consider the following:
+                <literallayout class='monospaced'>
+     python do_foo_prepend() {
+         bb.plain("first")
+     }
+
+     python do_foo() {
+         bb.plain("second")
+     }
+
+     python do_foo_append() {
+         bb.plain("third")
+     }
+                </literallayout>
+                Running <filename>do_foo</filename> prints
+                the following:
+                <literallayout class='monospaced'>
+     recipename do_foo: first
+     recipename do_foo: second
+     recipename do_foo: third
+                </literallayout>
+                You can use the <filename>bitbake -e</filename>&nbsp;<replaceable>recipename</replaceable>
+                command to view the final assembled function
+                after all overrides have been applied.
+            </para>
         </section>
 
         <section id='python-functions'>
@@ -1167,6 +1258,99 @@
                         You do not need to import them.
                         </para></listitem>
                 </itemizedlist>
+            </para>
+        </section>
+
+        <section id='bitbake-style-python-functions-versus-python-functions'>
+            <title>Bitbake-Style Python Functions Versus Python Functions</title>
+
+            <para>
+                Following are some important differences between
+                BitBake-style Python functions and regular Python
+                functions defined with "def":
+                <itemizedlist>
+                    <listitem><para>
+                        Only BitBake-style Python functions can be
+                        <link linkend='tasks'>tasks</link>.
+                        </para></listitem>
+                    <listitem><para>
+                        Overrides and override-style operators can only
+                        be applied to BitBake-style Python functions.
+                        </para></listitem>
+                    <listitem><para>
+                        Only regular Python functions can take arguments
+                        and return values.
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='variable-flags'>Variable flags</link>
+                        such as <filename>[dirs]</filename>,
+                        <filename>[cleandirs]</filename>, and
+                        <filename>[lockfiles]</filename> can be used
+                        on BitBake-style Python functions, but not on
+                        regular Python functions.
+                        </para></listitem>
+                    <listitem><para>
+                        BitBake-style Python functions generate a separate
+                        <filename>${</filename><link linkend='var-T'><filename>T</filename></link><filename>}/run.</filename><replaceable>function-name</replaceable><filename>.</filename><replaceable>pid</replaceable>
+                        script that is executed to run the function, and also
+                        generate a log file in
+                        <filename>${T}/log.</filename><replaceable>function-name</replaceable><filename>.</filename><replaceable>pid</replaceable>
+                        if they are executed as tasks.</para>
+
+                        <para>
+                        Regular Python functions execute "inline" and do not
+                        generate any files in <filename>${T}</filename>.
+                        </para></listitem>
+                    <listitem><para>
+                        Regular Python functions are called with the usual
+                        Python syntax.
+                        BitBake-style Python functions are usually tasks and
+                        are called directly by BitBake, but can also be called
+                        manually from Python code by using the
+                        <filename>bb.build.exec_func()</filename> function.
+                        Here is an example:
+                        <literallayout class='monospaced'>
+     bb.build.exec_func("my_bitbake_style_function", d)
+                        </literallayout>
+                        <note>
+                            <filename>bb.build.exec_func()</filename> can also
+                            be used to run shell functions from Python code.
+                            If you want to run a shell function before a Python
+                            function within the same task, then you can use a
+                            parent helper Python function that starts by running
+                            the shell function with
+                            <filename>bb.build.exec_func()</filename> and then
+                            runs the Python code.
+                        </note></para>
+
+                        <para>To detect errors from functions executed with
+                        <filename>bb.build.exec_func()</filename>, you
+                        can catch the <filename>bb.build.FuncFailed</filename>
+                        exception.
+                        <note>
+                            Functions in metadata (recipes and classes) should
+                            not themselves raise
+                            <filename>bb.build.FuncFailed</filename>.
+                            Rather, <filename>bb.build.FuncFailed</filename>
+                            should be viewed as a general indicator that the
+                            called function failed by raising an exception.
+                            For example, an exception raised by
+                            <filename>bb.fatal()</filename> will be caught inside
+                            <filename>bb.build.exec_func()</filename>, and a
+                            <filename>bb.build.FuncFailed</filename> will be raised
+                            in response.
+                        </note>
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                Due to their simplicity, you should prefer regular Python functions
+                over BitBake-style Python functions unless you need a feature specific
+                to BitBake-style Python functions.
+                Regular Python functions in metadata are a more recent invention than
+                BitBake-style Python functions, and older code tends to use
+                <filename>bb.build.exec_func()</filename> more often.
             </para>
         </section>
 
@@ -1347,37 +1531,29 @@
         <title>Tasks</title>
 
         <para>
-            Tasks are BitBake execution units that originate as
-            functions and make up the steps that BitBake needs to run
-            for given recipe.
-            Tasks are only supported in recipe (<filename>.bb</filename>
-            or <filename>.inc</filename>) and class
-            (<filename>.bbclass</filename>) files.
-            By convention, task names begin with the string "do_".
-        </para>
-
-        <para>
-            Here is an example of a task that prints out the date:
-            <literallayout class='monospaced'>
-     python do_printdate () {
-         import time
-         print time.strftime('%Y%m%d', time.gmtime())
-     }
-     addtask printdate after do_fetch before do_build
-            </literallayout>
+            Tasks are BitBake execution units that make up the
+            steps that BitBake can run for a given recipe.
+            Tasks are only supported in recipes and classes
+            (i.e. in <filename>.bb</filename> files and files
+            included or inherited from <filename>.bb</filename>
+            files).
+            By convention, tasks have names that start with "do_".
         </para>
 
         <section id='promoting-a-function-to-a-task'>
             <title>Promoting a Function to a Task</title>
 
             <para>
-                Any function can be promoted to a task by applying the
+                Tasks are either
+                <link linkend='shell-functions'>shell functions</link> or
+                <link linkend='bitbake-style-python-functions'>BitBake-style Python functions</link>
+                that have been promoted to tasks by using the
                 <filename>addtask</filename> command.
-                The <filename>addtask</filename> command also describes
-                inter-task dependencies.
-                Here is the function from the previous section but with the
-                <filename>addtask</filename> command promoting it to a task
-                and defining some dependencies:
+                The <filename>addtask</filename> command can also
+                optionally describe dependencies between the
+                task and other tasks.
+                Here is an example that shows how to define a task
+                and declare some dependencies:
                 <literallayout class='monospaced'>
      python do_printdate () {
          import time
@@ -1385,15 +1561,81 @@
      }
      addtask printdate after do_fetch before do_build
                 </literallayout>
-                In the example, the function is defined and then promoted
-                as a task.
-                The <filename>do_printdate</filename> task becomes a dependency of
-                the <filename>do_build</filename> task, which is the default
-                task.
-                And, the <filename>do_printdate</filename> task is dependent upon
-                the <filename>do_fetch</filename> task.
-                Execution of the <filename>do_build</filename> task results
-                in the <filename>do_printdate</filename> task running first.
+                The first argument to <filename>addtask</filename>
+                is the name of the function to promote to
+                a task.
+                If the name does not start with "do_", "do_" is
+                implicitly added, which enforces the convention that
+                all task names start with "do_".
+            </para>
+
+            <para>
+                In the previous example, the
+                <filename>do_printdate</filename> task becomes a
+                dependency of the <filename>do_build</filename>
+                task, which is the default task (i.e. the task run by
+                the <filename>bitbake</filename> command unless
+                another task is specified explicitly).
+                Additionally, the <filename>do_printdate</filename>
+                task becomes dependent upon the
+                <filename>do_fetch</filename> task.
+                Running the <filename>do_build</filename> task
+                results in the <filename>do_printdate</filename>
+                task running first.
+                <note>
+                    If you try out the previous example, you might see that
+                    the <filename>do_printdate</filename> task is only run
+                    the first time you build the recipe with
+                    the <filename>bitbake</filename> command.
+                    This is because BitBake considers the task "up-to-date"
+                    after that initial run.
+                    If you want to force the task to always be rerun for
+                    experimentation purposes, you can make BitBake always
+                    consider the task "out-of-date" by using the
+                    <filename>[</filename><link linkend='variable-flags'><filename>nostamp</filename></link><filename>]</filename>
+                    variable flag, as follows:
+                    <literallayout class='monospaced'>
+     do_printdate[nostamp] = "1"
+                    </literallayout>
+                    You can also explicitly run the task and provide the
+                    <filename>-f</filename> option as follows:
+                    <literallayout class='monospaced'>
+     $ bitbake <replaceable>recipe</replaceable> -c printdate -f
+                    </literallayout>
+                    When manually selecting a task to run with the
+                    <filename>bitbake</filename>&nbsp;<replaceable>recipe</replaceable>&nbsp;<filename>-c</filename>&nbsp;<replaceable>task</replaceable>
+                    command, you can omit the "do_" prefix as part of the
+                    task name.
+                </note>
+            </para>
+
+            <para>
+                You might wonder about the practical effects of using
+                <filename>addtask</filename> without specifying any
+                dependencies as is done in the following example:
+                <literallayout class='monospaced'>
+     addtask printdate
+                </literallayout>
+                In this example, assuming dependencies have not been
+                added through some other means, the only way to run
+                the task is by explicitly selecting it with
+                <filename>bitbake</filename>&nbsp;<replaceable>recipe</replaceable>&nbsp;<filename>-c printdate</filename>.
+                You can use the
+                <filename>do_listtasks</filename> task to list all tasks
+                defined in a recipe as shown in the following example:
+                <literallayout class='monospaced'>
+     $ bitbake <replaceable>recipe</replaceable> -c listtasks
+                </literallayout>
+                For more information on task dependencies, see the
+                "<link linkend='dependencies'>Dependencies</link>"
+                section.
+            </para>
+
+            <para>
+                See the
+                "<link linkend='variable-flags'>Variable Flags</link>"
+                section for information on variable flags you can use with
+                tasks.
             </para>
         </section>
 
@@ -1591,14 +1833,23 @@
                      exclusion.
                     </para></listitem>
                 <listitem><para><emphasis><filename>[noexec]</filename>:</emphasis>
-                    Marks the tasks as being empty and no execution required.
-                    The <filename>[noexec]</filename> flag can be used to set up
+                    When set to "1", marks the task as being empty, with
+                    no execution required.
+                    You can use the <filename>[noexec]</filename> flag to set up
                     tasks as dependency placeholders, or to disable tasks defined
                     elsewhere that are not needed in a particular recipe.
                     </para></listitem>
                 <listitem><para><emphasis><filename>[nostamp]</filename>:</emphasis>
-                    Tells BitBake to not generate a stamp file for a task,
-                    which implies the task should always be executed.
+                    When set to "1", tells BitBake to not generate a stamp
+                    file for a task, which implies the task should always
+                    be executed.
+                    <note><title>Caution</title>
+                        Any task that depends (possibly indirectly) on a
+                        <filename>[nostamp]</filename> task will always be
+                        executed as well.
+                        This can cause unnecessary rebuilding if you are
+                        not careful.
+                    </note>
                     </para></listitem>
                 <listitem><para><emphasis><filename>[postfuncs]</filename>:</emphasis>
                     List of functions to call after the completion of the task.
@@ -2133,7 +2384,8 @@
                             <row>
                                 <entry align="left"><filename>d.getVar("X", expand)</filename></entry>
                                 <entry align="left">Returns the value of variable "X".
-                                Using "expand=True" expands the value.</entry>
+                                    Using "expand=True" expands the value.
+                                    Returns "None" if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
@@ -2141,24 +2393,32 @@
                             </row>
                             <row>
                                 <entry align="left"><filename>d.appendVar("X", "value")</filename></entry>
-                                <entry align="left">Adds "value" to the end of the variable "X".</entry>
+                                <entry align="left">Adds "value" to the end of the variable "X".
+                                    Acts like <filename>d.setVar("X", "value")</filename>
+                                    if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.prependVar("X", "value")</filename></entry>
-                                <entry align="left">Adds "value" to the start of the variable "X".</entry>
+                                <entry align="left">Adds "value" to the start of the variable "X".
+                                    Acts like <filename>d.setVar("X", "value")</filename>
+                                    if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.delVar("X")</filename></entry>
-                                <entry align="left">Deletes the variable "X" from the datastore.</entry>
+                                <entry align="left">Deletes the variable "X" from the datastore.
+                                    Does nothing if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.renameVar("X", "Y")</filename></entry>
-                                <entry align="left">Renames the variable "X" to "Y".</entry>
+                                <entry align="left">Renames the variable "X" to "Y".
+                                    Does nothing if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.getVarFlag("X", flag, expand)</filename></entry>
                                 <entry align="left">Returns the value of variable "X".
-                                    Using "expand=True" expands the value.</entry>
+                                    Using "expand=True" expands the value.
+                                    Returns "None" if either the variable "X" or the named flag
+                                    does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>
@@ -2167,12 +2427,16 @@
                             <row>
                                 <entry align="left"><filename>d.appendVarFlag("X", flag, "value")</filename></entry>
                                 <entry align="left">Appends "value" to the named flag on the
-                                variable "X".</entry>
+                                    variable "X".
+                                    Acts like <filename>d.setVarFlag("X", flag, "value")</filename>
+                                    if the named flag does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.prependVarFlag("X", flag, "value")</filename></entry>
                                 <entry align="left">Prepends "value" to the named flag on
-                                   the variable "X".</entry>
+                                    the variable "X".
+                                    Acts like <filename>d.setVarFlag("X", flag, "value")</filename>
+                                    if the named flag does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.delVarFlag("X", flag)</filename></entry>
@@ -2188,16 +2452,23 @@
                             </row>
                             <row>
                                 <entry align="left"><filename>d.getVarFlags("X")</filename></entry>
-                                <entry align="left">Returns a <filename>flagsdict</filename> of the flags for
-                                    the variable "X".</entry>
+                                <entry align="left">Returns a <filename>flagsdict</filename>
+                                    of the flags for the variable "X".
+                                    Returns "None" if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.delVarFlags("X")</filename></entry>
-                                <entry align="left">Deletes all the flags for the variable "X".</entry>
+                                <entry align="left">Deletes all the flags for the variable "X".
+                                    Does nothing if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.expand(expression)</filename></entry>
-                                <entry align="left">Expands variable references in the specified string expression.</entry>
+                                <entry align="left">Expands variable references in the specified
+                                    string expression.
+                                    References to variables that do not exist are left as is.
+                                    For example, <filename>d.expand("foo ${X}")</filename>
+                                    expands to the literal string "foo ${X}" if the
+                                    variable "X" does not exist.</entry>
                             </row>
                         </tbody>
                     </tgroup>
@@ -2261,7 +2532,7 @@
                     the "setscene" part of the task's execution in order
                     to validate the list of task hashes.
                     </para></listitem>
-                <listitem><para><filename>BB_SETSCENE_VERIFY_FUNCTION</filename>
+                <listitem><para><filename>BB_SETSCENE_VERIFY_FUNCTION2</filename>
                     Specifies a function to call that verifies the list of
                     planned task execution before the main task execution
                     happens.

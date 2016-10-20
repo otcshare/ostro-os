@@ -69,15 +69,12 @@ python write_qemuboot_conf() {
     # to the kernel file, which hinders relocatability of the qb conf.
     # Read the link and replace it with the full filename of the target.
     kernel_link = os.path.join(d.getVar('DEPLOY_DIR_IMAGE', True), d.getVar('QB_DEFAULT_KERNEL', True))
-    kernel = os.readlink(kernel_link)
+    kernel = os.path.realpath(kernel_link)
     cf.set('config_bsp', 'QB_DEFAULT_KERNEL', kernel)
 
     bb.utils.mkdirhier(os.path.dirname(qemuboot))
     with open(qemuboot, 'w') as f:
         cf.write(f)
-
-    if d.getVar('RM_OLD_IMAGE', True) == "1" and os.path.exists(qemuboot_link):
-       os.remove(os.path.realpath(qemuboot_link))
 
     if os.path.lexists(qemuboot_link):
        os.remove(qemuboot_link)

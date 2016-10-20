@@ -17,23 +17,15 @@ function importLayerPageInit (ctx) {
   var currentLayerDepSelection;
   var validLayerName = /^(\w|-)+$/;
 
-  libtoaster.makeTypeahead(layerDepInput, libtoaster.ctx.layersTypeAheadUrl, { include_added: "true" }, function(item){
+  libtoaster.makeTypeahead(layerDepInput,
+                           libtoaster.ctx.layersTypeAheadUrl,
+                           { include_added: "true" }, function(item){
     currentLayerDepSelection = item;
+    layerDepBtn.removeAttr("disabled");
   });
 
-  // choices available in the typeahead
-  var layerDepsChoices = {};
-
-  // when the typeahead choices change, store an array of the available layer
-  // choices locally, to use for enabling/disabling the "Add layer" button
-  layerDepInput.on("typeahead-choices-change", function (event, data) {
-    layerDepsChoices = {};
-
-    if (data.choices) {
-      data.choices.forEach(function (item) {
-        layerDepsChoices[item.name] = item;
-      });
-    }
+  layerDepInput.on("typeahead:select", function(event, data){
+    currentLayerDepSelection = data;
   });
 
   // Disable local dir repo when page is loaded.
@@ -41,18 +33,8 @@ function importLayerPageInit (ctx) {
 
   // disable the "Add layer" button when the layer input typeahead is empty
   // or not in the typeahead choices
-  layerDepInput.on("input change", function () {
-    // get the choices from the typeahead
-    var choice = layerDepsChoices[$(this).val()];
-
-    if (choice) {
-      layerDepBtn.removeAttr("disabled");
-      currentLayerDepSelection = choice;
-    }
-    else {
-      layerDepBtn.attr("disabled","disabled");
-      currentLayerDepSelection = undefined;
-    }
+  layerDepInput.on("input change", function(){
+    layerDepBtn.attr("disabled","disabled");
   });
 
   /* We automatically add "openembedded-core" layer for convenience as a
@@ -95,7 +77,8 @@ function importLayerPageInit (ctx) {
 
     $("#layer-deps-list").append(newLayerDep);
 
-    libtoaster.getLayerDepsForProject(currentLayerDepSelection.layerdetailurl, function (data){
+    libtoaster.getLayerDepsForProject(currentLayerDepSelection.layerdetailurl,
+                                      function (data){
         /* These are the dependencies of the layer added as a dependency */
         if (data.list.length > 0) {
           currentLayerDepSelection.url = currentLayerDepSelection.layerdetailurl;
@@ -150,7 +133,9 @@ function importLayerPageInit (ctx) {
       var body = "<strong>"+layer.name+"</strong>'s dependencies ("+
         depNames.join(", ")+"</span>) require some layers that are not added to your project. Select the ones you want to add:</p>";
 
-      showLayerDepsModal(layer, depDepsArray, title, body, false, function(layerObsList){
+      showLayerDepsModal(layer,
+                         depDepsArray,
+                         title, body, false, function(layerObsList){
         /* Add the accepted layer dependencies' ids to the allDeps array */
         for (var key in layerObsList){
           allDeps.push(layerObsList[key].id);
@@ -191,9 +176,8 @@ function importLayerPageInit (ctx) {
             if (data.error != "ok") {
               console.log(data.error);
             } else {
-              /* Success layer import now go to the project page */
-              $.cookie('layer-imported-alert', JSON.stringify(data), { path: '/'});
-              window.location.replace(libtoaster.ctx.projectPageUrl+'?notify=layer-imported');
+              createImportedNotification(data);
+              window.location.replace(libtoaster.ctx.projectPageUrl);
             }
           },
           error: function (data) {
@@ -203,6 +187,30 @@ function importLayerPageInit (ctx) {
       });
     }
   });
+
+  /* Layer imported notification */
+  function createImportedNotification(imported){
+    var message = "Layer imported";
+
+    if (imported.deps_added.length === 0) {
+      message = "You have imported <strong><a class=\"alert-link\" href=\""+imported.imported_layer.layerdetailurl+"\">"+imported.imported_layer.name+"</a></strong> and added it to your project.";
+    } else {
+
+      var links = "<a href=\""+imported.imported_layer.layerdetailurl+"\">"+imported.imported_layer.name+"</a>, ";
+
+      imported.deps_added.map (function(item, index){
+        links +='<a href="'+item.layerdetailurl+'">'+item.name+'</a>';
+        /*If we're at the last element we don't want the trailing comma */
+        if (imported.deps_added[index+1] !== undefined)
+          links += ', ';
+      });
+
+      /* Length + 1 here to do deps + the imported layer */
+      message = 'You have imported <strong><a href="'+imported.imported_layer.layerdetailurl+'">'+imported.imported_layer.name+'</a></strong> and added <strong>'+(imported.deps_added.length+1)+'</strong> layers to your project: <strong>'+links+'</strong>';
+    }
+
+    libtoaster.setNotification("layer-imported", message);
+  }
 
   function enable_import_btn(enabled) {
     var importAndAddHint = $("#import-and-add-hint");
@@ -230,10 +238,13 @@ function importLayerPageInit (ctx) {
     }
 
     if (valid) {
-      if ($("#local-dir-radio").prop("checked") && localDirPath.val().length > 0) {
+      if ($("#local-dir-radio").prop("checked") &&
+          localDirPath.val().length > 0) {
         enable_import_btn(true);
       }
-      if ($("#git-repo-radio").prop("checked") && vcsURLInput.val().length > 0 && gitRefInput.val().length > 0) {
+
+      if ($("#git-repo-radio").prop("checked") &&
+          vcsURLInput.val().length > 0 && gitRefInput.val().length > 0) {
         enable_import_btn(true);
       }
     }
@@ -266,13 +277,13 @@ function importLayerPageInit (ctx) {
   }
 
   layerNameInput.on('blur', function() {
-      if (!$(this).val()){
-        return;
-      }
-      var name = $(this).val();
+    if (!$(this).val()){
+      return;
+    }
+    var name = $(this).val();
 
-      /* Check if the layer name exists */
-      $.getJSON(libtoaster.ctx.layersTypeAheadUrl,
+    /* Check if the layer name exists */
+    $.getJSON(libtoaster.ctx.layersTypeAheadUrl,
         { include_added: "true" , search: name, format: "json" },
         function(layer) {
           if (layer.results.length > 0) {

@@ -167,7 +167,6 @@ var libtoaster = (function () {
   function _getProjectInfo(url, onsuccess, onfail){
     $.ajax({
         type: "GET",
-        data : { format: "json" },
         url: url,
         headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
         success: function (_data) {
@@ -194,7 +193,7 @@ var libtoaster = (function () {
   function _editCurrentProject(data, onSuccess, onFail){
     $.ajax({
         type: "POST",
-        url: libtoaster.ctx.projectPageUrl + "?format=json",
+        url: libtoaster.ctx.xhrProjectUrl,
         data: data,
         headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
         success: function (data) {
@@ -343,10 +342,12 @@ var libtoaster = (function () {
   }
 
   function _showChangeNotification(message){
-    var alertMsg = $("#change-notification-msg");
+    $(".alert-dismissible").fadeOut().promise().done(function(){
+      var alertMsg = $("#change-notification-msg");
 
-    alertMsg.html(message);
-    $("#change-notification, #change-notification *").fadeIn();
+      alertMsg.html(message);
+      $("#change-notification, #change-notification *").fadeIn();
+    });
   }
 
   function _createCustomRecipe(name, baseRecipeId, doneCb){
@@ -450,6 +451,16 @@ var libtoaster = (function () {
     ajaxLoadingTimerEnabled = false;
   }
 
+  /* Utility function to set a notification for the next page load */
+  function _setNotification(name, message){
+    var data = {
+      name: name,
+      message: message
+    };
+
+    $.cookie('toaster-notification', JSON.stringify(data), { path: '/'});
+  }
+
   return {
     enableAjaxLoadingTimer: _enableAjaxLoadingTimer,
     disableAjaxLoadingTimer: _disableAjaxLoadingTimer,
@@ -469,6 +480,7 @@ var libtoaster = (function () {
     showChangeNotification : _showChangeNotification,
     createCustomRecipe: _createCustomRecipe,
     makeProjectNameValidation: _makeProjectNameValidation,
+    setNotification: _setNotification,
   };
 })();
 
@@ -502,6 +514,21 @@ function reload_params(params) {
 
 /* Things that happen for all pages */
 $(document).ready(function() {
+
+  (function showNotificationRequest(){
+    var cookie = $.cookie('toaster-notification');
+
+    if (!cookie)
+      return;
+
+    var notificationData = JSON.parse(cookie);
+
+    libtoaster.showChangeNotification(notificationData.message);
+
+    $.removeCookie('toaster-notification', { path: "/"});
+  })();
+
+
 
   var ajaxLoadingTimer;
 
@@ -690,6 +717,11 @@ $(document).ready(function() {
         ids[this.id] = true;
       });
     }
+
+    /* Make sure we don't have a notification overlay a modal */
+    $(".modal").on('show.bs.modal', function(){
+      $(".alert-dismissible").fadeOut();
+    });
 
     if (libtoaster.debug) {
       check_for_duplicate_ids();

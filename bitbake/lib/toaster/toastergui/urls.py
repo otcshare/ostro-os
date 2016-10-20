@@ -24,6 +24,7 @@ from toastergui import tables
 from toastergui import buildtables
 from toastergui import typeaheads
 from toastergui import api
+from toastergui import widgets
 
 urlpatterns = patterns('toastergui.views',
         # landing page
@@ -220,7 +221,15 @@ urlpatterns = patterns('toastergui.views',
             api.XhrBuildRequest.as_view(),
             name='xhr_buildrequest'),
 
-        url(r'^mostrecentbuilds$', api.MostRecentBuildsView.as_view(),
+        url(r'xhr_project/(?P<project_id>\d+)$',
+            api.XhrProject.as_view(),
+            name='xhr_project'),
+
+        url(r'xhr_build/(?P<build_id>\d+)$',
+            api.XhrBuild.as_view(),
+            name='xhr_build'),
+
+        url(r'^mostrecentbuilds$', widgets.MostRecentBuildsView.as_view(),
             name='most_recent_builds'),
 
           # default redirection

@@ -249,9 +249,13 @@ python package_do_split_gconvs () {
                 "powerpc": " --uint32-align=4 --big-endian ",    \
                 "powerpc64": " --uint32-align=4 --big-endian ",  \
                 "mips":    " --uint32-align=4 --big-endian ",    \
+                "mipsisa32r6":    " --uint32-align=4 --big-endian ",    \
                 "mips64":  " --uint32-align=4 --big-endian ",    \
+                "mipsisa64r6":  " --uint32-align=4 --big-endian ",    \
                 "mipsel":  " --uint32-align=4 --little-endian ", \
+                "mipsisa32r6el":  " --uint32-align=4 --little-endian ", \
                 "mips64el":" --uint32-align=4 --little-endian ", \
+                "mipsisa64r6el":" --uint32-align=4 --little-endian ", \
                 "i586":    " --uint32-align=4 --little-endian ", \
                 "i686":    " --uint32-align=4 --little-endian ", \
                 "x86_64":  " --uint32-align=4 --little-endian "  }
@@ -260,7 +264,7 @@ python package_do_split_gconvs () {
                 localedef_opts = locale_arch_options[target_arch]
             else:
                 bb.error("locale_arch_options not found for target_arch=" + target_arch)
-                raise bb.build.FuncFailed("unknown arch:" + target_arch + " for locale_arch_options")
+                bb.fatal("unknown arch:" + target_arch + " for locale_arch_options")
 
             localedef_opts += " --force  --no-archive --prefix=%s \
                 --inputfile=%s/%s/i18n/locales/%s --charmap=%s %s/%s" \
