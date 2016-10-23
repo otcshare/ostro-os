@@ -37,6 +37,8 @@ FILES_${PN} += " \
 
 SYSTEMD_SERVICE_${PN} = "soletta-dev-app-server.service soletta-dev-app-avahi-discover.service"
 
+SOLETTA_DEVAPP_INTERFACE ?= "enp2s0"
+
 do_install() {
   install -d ${D}{INSTALLATION_PATH}
   install -d ${D}${INSTALLATION_PATH}soletta-dev-app
@@ -58,4 +60,5 @@ do_install() {
 
  #Install set MAC address script
  install  -m 0755 ${WORKDIR}/soletta-dev-app-mac.sh ${D}${INSTALLATION_PATH}soletta-dev-app/scripts/
+ sed -i -e 's/INTERFACE/${SOLETTA_DEVAPP_INTERFACE}/g' ${D}${INSTALLATION_PATH}soletta-dev-app/scripts/soletta-dev-app-mac.sh
 }
