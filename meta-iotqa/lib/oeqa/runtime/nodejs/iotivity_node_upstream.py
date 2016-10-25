@@ -79,12 +79,13 @@ def copy_test_files(self):
     '''
     global COPY_FILE_LIST
     global COPY_FILE_LIST_WITH_PATH
+
+    # No need to copy package.json to iotivity-node module on target.
     COPY_FILE_LIST = [
         'tests',
         'grunt-build',
         'Gruntfile.js',
-        '.eslintrc.json',
-        'package.json'
+        '.eslintrc.json'
     ]
     for item in COPY_FILE_LIST:
         new_item = os.path.join(self.files_dir, item)
@@ -179,10 +180,11 @@ class IotivitynodeRuntimeTest(oeRuntimeTest):
         # Download the repository of soletta
         sys.stdout.write('\nDownloading the repository of iotivity-node...')
         sys.stdout.flush()
+
+        # Get the iotivity-node archive dynamically based on the version of target device.
         iotivity_url = ''.join([
             'https://github.com/otcshare/iotivity-node/archive/',
-            #self.branch_version,
-            '1.1.1-0.zip'
+            '%s.zip' % self.branch_version
             ])
         get_test_module_repo(iotivity_url, 'iotivity-node')
 
@@ -213,6 +215,7 @@ class IotivitynodeRuntimeTest(oeRuntimeTest):
         self.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport 5684 -j ACCEPT")
         self.target.run("/usr/sbin/ip6tables -w -A INPUT -s fe80::/10 -p udp -m udp --dport %s:%s -j ACCEPT" % (port_range[0], port_range[1]))
 
+
     @tag(CasesNumber=23)
     def test_apprt_iotivitynode(self):
         '''
@@ -231,13 +234,16 @@ class IotivitynodeRuntimeTest(oeRuntimeTest):
         run_grunt_cmd = ''.join([
             'cd ',
             self.target_path,
-            '; node_modules/grunt-cli/bin/grunt',
+            # Make sure all subtasks in test can be executed completely.
+            '; ./node_modules/grunt-cli/bin/grunt --force',
             ' test %s' % suites
             ])
-        format_result_cmd = ''.join([
-            'python ',
-            self.target_path,
-            'iotivity_node_upstream_parser_log.py'
+        format_result_cmd = ' '.join([
+            'python',
+            self.target_path + 'iotivity_node_upstream_parser_log.py',
+            '%stests/results.json' % self.target_path,
+            # Also parse the ocf-suite test results
+            '%snode_modules/iot-js-api-test-suite/lib/results.json' % self.target_path
             ])
         (status, output) = self.target.run(run_grunt_cmd)
         sys.stdout.write('\r' + ' ' * 78 + '\r')
@@ -288,8 +294,6 @@ class IotivitynodeRuntimeTest(oeRuntimeTest):
         self.target.run('rm %s*.py' % self.target_path)
         sys.stdout.write('\nClean all files related to testing done!!\n')
         sys.stdout.flush()
-
-
 ##
 # @}
 # @}

@@ -53,6 +53,10 @@ def inst_node_modules(url, module):
                     child_str.strip('.zip'))
                 os.system('rm %s*' % child_str)
     os.chdir('/tmp/%s' % module)
+
+    # No need to build iotivity native code during npm install
+    # We only copy JS node modules to the target for test.
+    os.system('\nrm -fv /tmp/%s/binding.gyp' % module)
     inst_node_cmd = 'npm install'
     inst_node_status = subprocess.Popen(inst_node_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     inst_node_status.wait()
