@@ -17,4 +17,5 @@ SRCREV = "3a74d4fc90cb322a4784a3515bef7118c8f8c5ba"
 SRC_URI += "file://0001-sd-boot-Link-RMC-libraries-into-bootloader.patch \
             file://0002-sd-boot-Load-board-specific-boot-entries-from-RMC-da.patch \
             file://0003-sd-boot-Support-global-kernel-command-line-fragment.patch \
-           "
+            file://0001-efi-boot.c-workaround-for-Joule-BIOS-hang.patch \
+            "
