@@ -80,13 +80,13 @@ class BlenoTest(oeRuntimeTest):
                 fp.write('{t} - runtest.py - RESULTS - ' \
                         'Testcase {tc_name}: {result}\n'.format(
                         t = time.strftime('%H:%M:%S', time.localtime()),
-                        tc_name = '"{tc}"'.format(tc = passed_tc.get('fullTitle')),
+                        tc_name = '{tc}'.format(tc = passed_tc.get('fullTitle').replace(' ', '_')),
                         result = 'PASSED'))
             for failed_tc in result_json.get('failures'):
                 fp.write('{t} - runtest.py - RESULTS - ' \
                         'Testcase {tc_name}: {result}\n'.format(
                         t = time.strftime('%H:%M:%S', time.localtime()),
-                        tc_name = '"{tc}"'.format(tc = failed_tc.get('fullTitle')),
+                        tc_name = '{tc}'.format(tc = failed_tc.get('fullTitle').replace(' ', '_')),
                         result = 'FAILED'))
             
 
