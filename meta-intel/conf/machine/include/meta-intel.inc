@@ -33,3 +33,6 @@ MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = "${@bb.utils.contains('MACHINE_FEATURE
 INITRD_LIVE_prepend = "${@bb.utils.contains('MACHINE_FEATURES', 'intel-ucode', '${DEPLOY_DIR_IMAGE}/microcode.cpio ', '', d)}"
 
 EFI_PROVIDER ?= "rmc-systemd-boot"
+
+# Add general MACHINEOVERRIDE for meta-intel
+MACHINEOVERRIDES =. "intel-x86-common:"
