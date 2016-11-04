@@ -66,6 +66,8 @@ def package_qa_get_machine_dict(d):
                         "i586" :      (3,      0,    0,          True,          32),
                         "x86_64":     (62,     0,    0,          True,          64),
                         "epiphany":   (4643,   0,    0,          True,          32),
+                        "mips":       ( 8,     0,    0,          False,         32),
+                        "mipsel":     ( 8,     0,    0,          True,          32),
                       },
             "linux" : { 
                         "aarch64" :   (183,    0,    0,          True,          64),
@@ -87,6 +89,10 @@ def package_qa_get_machine_dict(d):
                         "mipsel":     ( 8,     0,    0,          True,          32),
                         "mips64":     ( 8,     0,    0,          False,         64),
                         "mips64el":   ( 8,     0,    0,          True,          64),
+                        "mipsisa32r6":   ( 8,  0,    0,          False,         32),
+                        "mipsisa32r6el": ( 8,  0,    0,          True,          32),
+                        "mipsisa64r6":   ( 8,  0,    0,          False,         64),
+                        "mipsisa64r6el": ( 8,  0,    0,          True,          64),
                         "nios2":      (113,    0,    0,          True,          32),
                         "s390":       (22,     0,    0,          False,         32),
                         "sh4":        (42,     0,    0,          True,          32),
@@ -509,6 +515,8 @@ def package_qa_check_arch(path,name,d, elf, messages):
     """
     Check if archs are compatible
     """
+    import re
+
     if not elf:
         return
 
@@ -537,12 +545,12 @@ def package_qa_check_arch(path,name,d, elf, messages):
         = package_qa_get_machine_dict(d)[target_os][target_arch]
 
     # Check the architecture and endiannes of the binary
-    if not ((machine == elf.machine()) or \
-        ((("virtual/kernel" in provides) or bb.data.inherits_class("module", d) ) and (target_os == "linux-gnux32" or target_os == "linux-gnun32"))):
-        package_qa_add_message(messages, "arch", "Architecture did not match (%d to %d) on %s" % \
-                 (machine, elf.machine(), package_qa_clean_path(path,d)))
-    elif not ((bits == elf.abiSize()) or  \
-        ((("virtual/kernel" in provides) or bb.data.inherits_class("module", d) ) and (target_os == "linux-gnux32" or target_os == "linux-gnun32"))):
+    is_32 = (("virtual/kernel" in provides) or bb.data.inherits_class("module", d)) and \
+            (target_os == "linux-gnux32" or re.match('mips64.*32', d.getVar('DEFAULTTUNE', True)))
+    if not ((machine == elf.machine()) or is_32):
+        package_qa_add_message(messages, "arch", "Architecture did not match (%s, expected %s) on %s" % \
+                 (oe.qa.elf_machine_to_string(elf.machine()), oe.qa.elf_machine_to_string(machine), package_qa_clean_path(path,d)))
+    elif not ((bits == elf.abiSize()) or is_32):
         package_qa_add_message(messages, "arch", "Bit size did not match (%d to %d) %s on %s" % \
                  (bits, elf.abiSize(), bpn, package_qa_clean_path(path,d)))
     elif not littleendian == elf.isLittleEndian():

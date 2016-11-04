@@ -81,60 +81,77 @@ module.exports = {
     // required properties
     // n
     testApiOicDRequiredNNotNull: function(test) {
-        test.ok('n' in this.apiOicD.apiResponse[0],
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.ok('n' in this.apiOicD.apiResponse[i],
                     'n is not a property in the response of /api/oic/d while it is required!');
-        test.done();
+        }
+        test.done();        
     },
     testApiOicDRequiredNType: function(test) {
-        test.strictEqual(typeof this.apiOicD.apiResponse[0]['n'], 'string',
-                        'n property is not a string!');
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.strictEqual(typeof this.apiOicD.apiResponse[i]['n'], 'string',
+                            'n property is not a string!');            
+        }
         test.done();
     },
 
     // di
     testApiOicDRequiredDiNotNull: function(test) {
-        test.ok('di' in this.apiOicD.apiResponse[0],
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.ok('di' in this.apiOicD.apiResponse[i],
                     'di is not a property in the response of /api/oic/d while it is required!');
+        }
         test.done();
     },
     testApiOicDRequiredDiType: function(test) {
-        test.strictEqual(typeof this.apiOicD.apiResponse[0]['di'], 'string',
-                        'di property is not a string!');
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.strictEqual(typeof this.apiOicD.apiResponse[i]['di'], 'string',
+                            'di property is not a string!');
+        }
         test.done();
     },
     testApiOicDRequiredDiUuid: function(test) {
-        test.ok(checkStrIsUuid(this.apiOicD.apiResponse[0]['di']),
-                    'n property value is not UUID format!');
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.ok(checkStrIsUuid(this.apiOicD.apiResponse[i]['di']),
+                        'n property value is not UUID format!');
+        }
         test.done();
     },
 
     // icv
     testApiOicDRequiredIcvNotNull: function(test) {
-        test.ok('icv' in this.apiOicD.apiResponse[0],
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.ok('icv' in this.apiOicD.apiResponse[i],
                     'icv is not a property in the response of /api/oic/d while it is required!');
+        }
         test.done();
     },
     testApiOicRequiredDIcvType: function(test) {
-        test.strictEqual(typeof this.apiOicD.apiResponse[0]['icv'], 'string',
-                        'icv property is not a string!');
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            test.strictEqual(typeof this.apiOicD.apiResponse[i]['icv'], 'string',
+                            'icv property is not a string!');
+        }
         test.done();
     },
 
     // optional properties
     // dmv
     testApiOicDOptionalDmvType: function(test) {
-        if ('dmv' in this.apiOicD.apiResponse[0]) {
-            test.strictEqual(typeof this.apiOicD.apiResponse[0]['dmv'], 'string',
-                        'dmv property is not a string!');
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            if ('dmv' in this.apiOicD.apiResponse[i]) {
+                test.strictEqual(typeof this.apiOicD.apiResponse[i]['dmv'], 'string',
+                                'dmv property is not a string!');
+            }
         }
         test.done();
     },
     testApiOicDOptionalDmvCsv: function(test) {
-        if ('dmv' in this.apiOicD.apiResponse[0]) {
-            test.ok(checkStrIsCsv(this.apiOicD.apiResponse[0]['dmv']),
-                        'dmv property value is not csv format!');
+        for (var i = 0; i < this.apiOicD.apiResponse.length; i++) {
+            if ('dmv' in this.apiOicD.apiResponse[i]) {
+                test.ok(checkStrIsCsv(this.apiOicD.apiResponse[i]['dmv']),
+                            'dmv property value is not csv format!');
+            }
         }
         test.done();
     }
-
 };

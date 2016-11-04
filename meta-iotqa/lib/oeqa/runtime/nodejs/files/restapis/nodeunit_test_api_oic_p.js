@@ -55,99 +55,125 @@ module.exports = {
     // required properties
     // pi
     testApiOicPRequiredPiNotNull: function(test) {
-        test.ok('pi' in this.apiOicP.apiResponse, 
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            test.ok('pi' in this.apiOicP.apiResponse[i],
                     'pi is not a property in the response of /api/oic/p while it is required!');
+        }
         test.done();
     },
     testApiOicPRequiredPiType: function(test) {
-        test.strictEqual(typeof this.apiOicP.apiResponse['pi'], 'string',                         
-                        'pi property is not a string!');
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            test.strictEqual(typeof this.apiOicP.apiResponse[i]['pi'], 'string',                         
+                            'pi property is not a string!');
+        }
         test.done();
     },
     
     // mnmn
     testApiOicPRequiredMnmnNotNull: function(test) {
-        test.ok('mnmn' in this.apiOicP.apiResponse, 
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            test.ok('mnmn' in this.apiOicP.apiResponse[i], 
                     'mnmn is not a property in the response of /api/oic/p while it is required!');
+        }
         test.done();
     },
     testApiOicPRequiredMnmnType: function(test) {
-        test.strictEqual(typeof this.apiOicP.apiResponse['mnmn'], 'string',                         
-                        'mnmn property is not a string!');
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnmn'], 'string',                         
+                            'mnmn property is not a string!');
+        }
         test.done();
     },
     
     // optional properties
     // mnml
     testApiOicPOptionalMnmlType: function(test) {
-        if ('mnml' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnml'], 'string',
-                            'mnml property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnml' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnml'], 'string',
+                                'mnml property is not a string!');
+            }            
         }
         test.done();
     },
     // mnmo
     testApiOicPOptionalMnmoType: function(test) {
-        if ('mnmo' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnmo'], 'string',
-                            'mnmo property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnmo' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnmo'], 'string',
+                                'mnmo property is not a string!');
+            }            
         }
         test.done();
     },    
     // mndt
     testApiOicPOptionalMndtType: function(test) {
-        if ('mndt' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mndt'], 'string',
-                            'mndt property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mndt' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mndt'], 'string',
+                                'mndt property is not a string!');
+            }       
         }
         test.done();
     },    
     // mnpv
     testApiOicPOptionalMnpvType: function(test) {
-        if ('mnpv' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnpv'], 'string',
-                            'mnpv property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnpv' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnpv'], 'string',
+                                'mnpv property is not a string!');
+            }       
         }
         test.done();
     },
     // mnos
     testApiOicPOptionalMnosType: function(test) {
-        if ('mnos' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnos'], 'string',
-                            'mnos property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnos' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnos'], 'string',
+                                'mnos property is not a string!');
+            }
         }
         test.done();
-    },    
+    },
     // mnhw
     testApiOicPOptionalMnhwType: function(test) {
-        if ('mnhw' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnhw'], 'string',
-                            'mnhw property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnhw' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnhw'], 'string',
+                                'mnhw property is not a string!');
+            }
         }
         test.done();
     },  
     // mnfv
     testApiOicPOptionalMnfvType: function(test) {
-        if ('mnfv' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnfv'], 'string',
-                            'mnfv property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnfv' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse[i]['mnfv'], 'string',
+                                'mnfv property is not a string!');
+            }
         }
         test.done();
     },       
     // mnsl
     testApiOicPOptionalMnslType: function(test) {
-        if ('mnsl' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['mnsl'], 'string',
-                            'mnsl property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('mnsl' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse['mnsl'], 'string',
+                                'mnsl property is not a string!');       
+            }
         }
         test.done();
     },      
     // st
     testApiOicPOptionalStType: function(test) {
-        if ('st' in this.apiOicP.apiResponse) {
-            test.strictEqual(typeof this.apiOicP.apiResponse['st'], 'string',
-                            'st property is not a string!');            
+        for (var i = 0; i < this.apiOicP.apiResponse.length; i++) {
+            if ('st' in this.apiOicP.apiResponse) {
+                test.strictEqual(typeof this.apiOicP.apiResponse['st'], 'string',
+                                'st property is not a string!');
+            }
         }
         test.done();
     },          
-}
+};

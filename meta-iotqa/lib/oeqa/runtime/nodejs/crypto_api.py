@@ -170,7 +170,7 @@ class NodeJSCryptoAPITest(oeRuntimeTest):
                 fp.write('{t} - runtest.py - RESULTS - ' \
                         'Testcase {tc_name}: {result}\n'.format(
                         t = time.strftime('%H:%M:%S', time.localtime()),
-                        tc_name = tc.replace('/', '.').rstrip('.js'),
+                        tc_name = os.path.splitext(tc)[0].replace('/', '.'),
                         result = tc_result))
             
  

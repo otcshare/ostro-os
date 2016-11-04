@@ -2,11 +2,11 @@ DESCRIPTION = "Soletta Development Application"
 RDEPENDS_${PN} = "soletta nodejs systemd graphviz libmicrohttpd avahi-daemon bash git"
 LICENSE = "Apache-2.0"
 
-PV = "1_beta10"
+PV = "1_beta11"
 
 LIC_FILES_CHKSUM = "file://${S}/LICENSE;md5=93888867ace35ffec2c845ea90b2e16b"
-SRC_URI[md5sum] = "00f1c0b970cc8d682c7a20c960f4b8e7"
-SRC_URI[sha256sum] = "98ab16895a65692221035998a73d830b04a6835c672c9d64cac2010431519f8e"
+SRC_URI[md5sum] = "9c4dfd30cad368c3d57542eff288d33d"
+SRC_URI[sha256sum] = "8bfd68dd20fd8bb77c9080600f3ae36e13ea537f31ebf335eb83a6e0dec6c80b"
 SRC_URI = "https://github.com/solettaproject/soletta-dev-app/releases/download/v${PV}/soletta-dev-app_standalone_v${PV}.tar.gz;protocol=archive \
            file://soletta-dev-app.service \
            file://soletta-dev-app-mac.sh \
@@ -37,6 +37,8 @@ FILES_${PN} += " \
 
 SYSTEMD_SERVICE_${PN} = "soletta-dev-app-server.service soletta-dev-app-avahi-discover.service"
 
+SOLETTA_DEVAPP_INTERFACE ?= "enp2s0"
+
 do_install() {
   install -d ${D}{INSTALLATION_PATH}
   install -d ${D}${INSTALLATION_PATH}soletta-dev-app
@@ -58,4 +60,5 @@ do_install() {
 
  #Install set MAC address script
  install  -m 0755 ${WORKDIR}/soletta-dev-app-mac.sh ${D}${INSTALLATION_PATH}soletta-dev-app/scripts/
+ sed -i -e 's/INTERFACE/${SOLETTA_DEVAPP_INTERFACE}/g' ${D}${INSTALLATION_PATH}soletta-dev-app/scripts/soletta-dev-app-mac.sh
 }

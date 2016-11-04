@@ -48,7 +48,8 @@ BASIC_AUTH = "DB SASL LDAP NIS"
 DEPENDS += "${@bb.utils.contains('DISTRO_FEATURES', 'pam', 'libpam', '', d)}"
 BASIC_AUTH += "${@bb.utils.contains('DISTRO_FEATURES', 'pam', 'PAM', '', d)}"
 
-EXTRA_OECONF += "--with-default-user=squid --enable-auth-basic='${BASIC_AUTH}'"
+EXTRA_OECONF += "--with-default-user=squid --enable-auth-basic='${BASIC_AUTH}' --sysconfdir=${sysconfdir}/${BPN} --with-logdir=${localstatedir}/log/${BPN}"
+
 export BUILDCXXFLAGS="${BUILD_CXXFLAGS}"
 
 TESTDIR = "test-suite"
@@ -72,13 +73,26 @@ do_install_ptest() {
     sed -e 's/^\(runtest-TESTS:\)/\1 squid-conf-tests/' \
         -e "s/\(list=' \$(TESTS)\)/\1 squid-conf-tests/" \
         -i ${D}${PTEST_PATH}/${TESTDIR}/Makefile
+
+    # Ensure the path for command true is correct
+    sed -i 's:^TRUE = .*$:TRUE = /bin/true:' ${D}${PTEST_PATH}/${TESTDIR}/Makefile
 }
 
 do_install_append() {
+    if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
+        install -d ${D}${sysconfdir}/tmpfiles.d
+        echo "d ${localstatedir}/run/${BPN} 0755 squid squid -" >> ${D}${sysconfdir}/tmpfiles.d/${BPN}.conf
+        echo "d ${localstatedir}/log/${BPN} 0750 squid squid -" >> ${D}${sysconfdir}/tmpfiles.d/${BPN}.conf
+    fi
+
     install -d ${D}${sysconfdir}/default/volatiles
-    install -m 0644 ${WORKDIR}/volatiles.03_squid  ${D}${sysconfdir}/default/volatiles/volatiles.03_squid
+    install -m 0644 ${WORKDIR}/volatiles.03_squid ${D}${sysconfdir}/default/volatiles/03_squid
+
     rmdir "${D}${localstatedir}/run/${BPN}"
     rmdir --ignore-fail-on-non-empty "${D}${localstatedir}/run"
+
+    rmdir "${D}${localstatedir}/log/${BPN}"
+    rmdir --ignore-fail-on-non-empty "${D}${localstatedir}/log"
 }
 
 FILES_${PN} += "${libdir} ${datadir}/errors ${datadir}/icons"

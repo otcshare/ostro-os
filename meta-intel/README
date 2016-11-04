@@ -248,6 +248,17 @@ To create a direct-boot image for USB storage media, simply specify
 galileodisk-usb instead of galileodisk-sd in the "wic create ..."
 command, then write the output image to USB storage media and boot it.
 
+Actually, Galileo board can boot off with an image in hddimg format
+from USB drives too. But only live-boot, no installation, is supported
+at this point. An image in hddimg format is generated when you build
+quark BSP. You can follow the procedure in II.b to use dd command to
+prepare your USB drive, then press F7 key as what board prompts when it
+boots. Galileo should show a boot option menu for you to choose the
+UEFI USB boot option for the drive to boot the system. If the board
+already passes this stage and show a grub boot menu, you can press 'c'
+key and then type "quit" in grub shell. The board should come back to
+the UEFI boot menu.
+
 III. Technical Miscellany
 =========================
 

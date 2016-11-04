@@ -21,6 +21,10 @@ RUNTIMELIBITM_mips = ""
 RUNTIMELIBITM_mipsel = ""
 RUNTIMELIBITM_mips64 = ""
 RUNTIMELIBITM_mips64el = ""
+RUNTIMELIBITM_mipsisa32r6 = ""
+RUNTIMELIBITM_mipsisa32r6el = ""
+RUNTIMELIBITM_mipsisa64r6 = ""
+RUNTIMELIBITM_mipsisa64r6el = ""
 RUNTIMELIBITM_nios2 = ""
 RUNTIMELIBITM_microblaze = ""
 
@@ -87,6 +91,14 @@ do_install_append_class-target () {
 		if [ "${MULTILIBS}" != "" ]; then
 			mkdir ${D}${includedir}/c++/${BINV}/${TARGET_ARCH}-pokymllib64-linux
 			ln -s ../${TARGET_SYS} ${D}${includedir}/c++/${BINV}/${TARGET_ARCH}-pokymllib64-linux/32
+		else
+			ln -s ${TARGET_SYS} ${D}${includedir}/c++/${BINV}/${TARGET_ARCH}${TARGET_VENDOR}-linux
+		fi
+	fi
+	if [ "${TARGET_OS}" = "linux-gnux32" ]; then
+		if [ "${MULTILIBS}" != "" ]; then
+			mkdir ${D}${includedir}/c++/${BINV}/${TARGET_ARCH}-poky-linux
+			ln -s ../${TARGET_SYS} ${D}${includedir}/c++/${BINV}/${TARGET_ARCH}-poky-linux/x32
 		else
 			ln -s ${TARGET_SYS} ${D}${includedir}/c++/${BINV}/${TARGET_ARCH}${TARGET_VENDOR}-linux
 		fi

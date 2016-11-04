@@ -51,4 +51,5 @@ def write_log(output):
 
 
 if __name__ == '__main__':
-    format_results(JSON_PATH)
+    for json_file in sys.argv[1:]:
+        format_results(json_file)

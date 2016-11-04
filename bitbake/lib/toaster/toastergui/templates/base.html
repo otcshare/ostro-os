@@ -44,6 +44,7 @@
         {% if project.id %}
         projectId : {{project.id}},
         projectPageUrl : {% url 'project' project.id as purl %}{{purl|json}},
+        xhrProjectUrl : {% url 'xhr_project' project.id as pxurl %}{{pxurl|json}},
         projectName : {{project.name|json}},
         recipesTypeAheadUrl: {% url 'xhr_recipestypeahead' project.id as paturl%}{{paturl|json}},
         layersTypeAheadUrl: {% url 'xhr_layerstypeahead' project.id as paturl%}{{paturl|json}},
@@ -73,7 +74,7 @@
     </div>
 
     <div id="change-notification" class="alert alert-info alert-dismissible change-notification" style="display:none">
-      <button type="button" class="close" id="hide-alert" data-dismiss="alert">&times;</button>
+      <button type="button" class="close" id="hide-alert" data-toggle="alert">&times;</button>
       <span id="change-notification-msg"></span>
     </div>
 

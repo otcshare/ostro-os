@@ -1,0 +1,55 @@
+From d1807cc225db36a467a9ae81ac23a6eb7368730e Mon Sep 17 00:00:00 2001
+From: Ferruh Yigit <ferruh.yigit@intel.com>
+Date: Thu, 8 Sep 2016 19:32:09 +0100
+Subject: [PATCH 3/3] kni: fix build with kernel 4.8
+
+Upstream-Status: Backport [http://dpdk.org/browse/dpdk/commit/?id=
+7f5565592c5ab2f3541951d2b4e65188d01d5d00]
+
+Linux kernel v4.8 removes macro DEFINE_PCI_DEVICE_TABLE
+
+Linux: 7e9321599011 ("treewide: remove references to the now unnecessary
+DEFINE_PCI_DEVICE_TABLE")
+
+Replaced macro with its value in kni ethtool drivers.
+
+Signed-off-by: Ferruh Yigit <ferruh.yigit@intel.com>
+Acked-by: Pablo de Lara <pablo.de.lara.guarch@intel.com>
+Acked-by: Christian Ehrhardt <christian.ehrhardt@canonical.com>
+Acked-by: Stephen Hemminger <stephen@networkplumber.org>
+(cherry picked from commit 7f5565592c5ab2f3541951d2b4e65188d01d5d00)
+Signed-off-by: Rahul Kumar Gupta <rahul.kumarxx.gupta@intel.com>
+---
+ lib/librte_eal/linuxapp/kni/ethtool/igb/igb_main.c     | 2 +-
+ lib/librte_eal/linuxapp/kni/ethtool/ixgbe/ixgbe_main.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/librte_eal/linuxapp/kni/ethtool/igb/igb_main.c b/lib/librte_eal/linuxapp/kni/ethtool/igb/igb_main.c
+index bd803c0..efd39c6 100644
+--- a/lib/librte_eal/linuxapp/kni/ethtool/igb/igb_main.c
++++ b/lib/librte_eal/linuxapp/kni/ethtool/igb/igb_main.c
+@@ -76,7 +76,7 @@ static const char igb_driver_string[] =
+ static const char igb_copyright[] =
+ 				"Copyright (c) 2007-2013 Intel Corporation.";
+ 
+-DEFINE_PCI_DEVICE_TABLE(igb_pci_tbl) = {
++const struct pci_device_id igb_pci_tbl[] = {
+ 	{ PCI_VDEVICE(INTEL, E1000_DEV_ID_I354_BACKPLANE_1GBPS) },
+ 	{ PCI_VDEVICE(INTEL, E1000_DEV_ID_I354_SGMII) },
+ 	{ PCI_VDEVICE(INTEL, E1000_DEV_ID_I354_BACKPLANE_2_5GBPS) },
+diff --git a/lib/librte_eal/linuxapp/kni/ethtool/ixgbe/ixgbe_main.c b/lib/librte_eal/linuxapp/kni/ethtool/ixgbe/ixgbe_main.c
+index 92fc9fc..238028d 100644
+--- a/lib/librte_eal/linuxapp/kni/ethtool/ixgbe/ixgbe_main.c
++++ b/lib/librte_eal/linuxapp/kni/ethtool/ixgbe/ixgbe_main.c
+@@ -86,7 +86,7 @@ const char ixgbe_driver_version[] = DRV_VERSION;
+  * { Vendor ID, Device ID, SubVendor ID, SubDevice ID,
+  *   Class, Class Mask, private data (not used) }
+  */
+-DEFINE_PCI_DEVICE_TABLE(ixgbe_pci_tbl) = {
++const struct pci_device_id ixgbe_pci_tbl[] = {
+ 	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598)},
+ 	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AF_DUAL_PORT)},
+ 	{PCI_VDEVICE(INTEL, IXGBE_DEV_ID_82598AF_SINGLE_PORT)},
+-- 
+1.9.1
+

@@ -20,21 +20,21 @@
 
 import re
 import logging
+from collections import Counter
 
 from orm.models import Project, ProjectTarget, Build, Layer_Version
 from orm.models import LayerVersionDependency, LayerSource, ProjectLayer
 from orm.models import Recipe, CustomImageRecipe, CustomImagePackage
 from orm.models import Layer, Target, Package, Package_Dependency
+from orm.models import ProjectVariable
 from bldcontrol.models import BuildRequest
 from bldcontrol import bbcontroller
 
 from django.http import HttpResponse, JsonResponse
 from django.views.generic import View
 from django.core.urlresolvers import reverse
-from django.utils import timezone
 from django.db.models import Q, F
 from django.db import Error
-from toastergui.templatetags.projecttags import json, sectohms, get_tasks
 from toastergui.templatetags.projecttags import filtered_filesizeformat
 
 logger = logging.getLogger("toaster")
@@ -48,6 +48,28 @@ class XhrBuildRequest(View):
 
     def get(self, request, *args, **kwargs):
         return HttpResponse()
+
+    @staticmethod
+    def cancel_build(br):
+        """Cancel a build request"""
+        try:
+            bbctrl = bbcontroller.BitbakeController(br.environment)
+            bbctrl.forceShutDown()
+        except:
+            # We catch a bunch of exceptions here because
+            # this is where the server has not had time to start up
+            # and the build request or build is in transit between
+            # processes.
+            # We can safely just set the build as cancelled
+            # already as it never got started
+            build = br.build
+            build.outcome = Build.CANCELLED
+            build.save()
+
+        # We now hand over to the buildinfohelper to update the
+        # build state once we've finished cancelling
+        br.state = BuildRequest.REQ_CANCELLING
+        br.save()
 
     def post(self, request, *args, **kwargs):
         """
@@ -74,26 +96,7 @@ class XhrBuildRequest(View):
             for i in request.POST['buildCancel'].strip().split(" "):
                 try:
                     br = BuildRequest.objects.get(project=project, pk=i)
-
-                    try:
-                        bbctrl = bbcontroller.BitbakeController(br.environment)
-                        bbctrl.forceShutDown()
-                    except:
-                        # We catch a bunch of exceptions here because
-                        # this is where the server has not had time to start up
-                        # and the build request or build is in transit between
-                        # processes.
-                        # We can safely just set the build as cancelled
-                        # already as it never got started
-                        build = br.build
-                        build.outcome = Build.CANCELLED
-                        build.save()
-
-                    # We now hand over to the buildinfohelper to update the
-                    # build state once we've finished cancelling
-                    br.state = BuildRequest.REQ_CANCELLING
-                    br.save()
-
+                    self.cancel_build(br)
                 except BuildRequest.DoesNotExist:
                     return error_response('No such build request id %s' % i)
 
@@ -221,114 +224,8 @@ class XhrLayer(View):
 
         return JsonResponse({
             "error": "ok",
-            "redirect": reverse('project', args=(kwargs['pid'],))
+            "gotoUrl": reverse('projectlayers', args=(kwargs['pid'],))
         })
-
-
-class MostRecentBuildsView(View):
-    def _was_yesterday_or_earlier(self, completed_on):
-        now = timezone.now()
-        delta = now - completed_on
-
-        if delta.days >= 1:
-            return True
-
-        return False
-
-    def get(self, request, *args, **kwargs):
-        """
-        Returns a list of builds in JSON format.
-        """
-        project = None
-
-        project_id = request.GET.get('project_id', None)
-        if project_id:
-            try:
-                project = Project.objects.get(pk=project_id)
-            except:
-                # if project lookup fails, assume no project
-                pass
-
-        recent_build_objs = Build.get_recent(project)
-        recent_builds = []
-
-        for build_obj in recent_build_objs:
-            dashboard_url = reverse('builddashboard', args=(build_obj.pk,))
-            buildtime_url = reverse('buildtime', args=(build_obj.pk,))
-            rebuild_url = \
-                reverse('xhr_buildrequest', args=(build_obj.project.pk,))
-            cancel_url = \
-                reverse('xhr_buildrequest', args=(build_obj.project.pk,))
-
-            build = {}
-            build['id'] = build_obj.pk
-            build['dashboard_url'] = dashboard_url
-
-            buildrequest_id = None
-            if hasattr(build_obj, 'buildrequest'):
-                buildrequest_id = build_obj.buildrequest.pk
-            build['buildrequest_id'] = buildrequest_id
-
-            build['recipes_parsed_percentage'] = \
-                int((build_obj.recipes_parsed /
-                     build_obj.recipes_to_parse) * 100)
-
-            tasks_complete_percentage = 0
-            if build_obj.outcome in (Build.SUCCEEDED, Build.FAILED):
-                tasks_complete_percentage = 100
-            elif build_obj.outcome == Build.IN_PROGRESS:
-                tasks_complete_percentage = build_obj.completeper()
-            build['tasks_complete_percentage'] = tasks_complete_percentage
-
-            build['state'] = build_obj.get_state()
-
-            build['errors'] = build_obj.errors.count()
-            build['dashboard_errors_url'] = dashboard_url + '#errors'
-
-            build['warnings'] = build_obj.warnings.count()
-            build['dashboard_warnings_url'] = dashboard_url + '#warnings'
-
-            build['buildtime'] = sectohms(build_obj.timespent_seconds)
-            build['buildtime_url'] = buildtime_url
-
-            build['rebuild_url'] = rebuild_url
-            build['cancel_url'] = cancel_url
-
-            build['is_default_project_build'] = build_obj.project.is_default
-
-            build['build_targets_json'] = \
-                json(get_tasks(build_obj.target_set.all()))
-
-            # convert completed_on time to user's timezone
-            completed_on = timezone.localtime(build_obj.completed_on)
-
-            completed_on_template = '%H:%M'
-            if self._was_yesterday_or_earlier(completed_on):
-                completed_on_template = '%d/%m/%Y ' + completed_on_template
-            build['completed_on'] = completed_on.strftime(
-                completed_on_template)
-
-            targets = []
-            target_objs = build_obj.get_sorted_target_list()
-            for target_obj in target_objs:
-                if target_obj.task:
-                    targets.append(target_obj.target + ':' + target_obj.task)
-                else:
-                    targets.append(target_obj.target)
-            build['targets'] = ' '.join(targets)
-
-            # abbreviated form of the full target list
-            abbreviated_targets = ''
-            num_targets = len(targets)
-            if num_targets > 0:
-                abbreviated_targets = targets[0]
-            if num_targets > 1:
-                abbreviated_targets += (' +%s' % (num_targets - 1))
-            build['targets_abbreviated'] = abbreviated_targets
-
-            recent_builds.append(build)
-
-        return JsonResponse(recent_builds, safe=False)
 
 
 class XhrCustomRecipe(View):
@@ -499,7 +396,7 @@ class XhrCustomRecipeId(View):
         """ Get Custom Image recipe or return an error response"""
         try:
             custom_recipe = \
-                    CustomImageRecipe.objects.get(pk=recipe_id)
+                CustomImageRecipe.objects.get(pk=recipe_id)
             return custom_recipe, None
 
         except CustomImageRecipe.DoesNotExist:
@@ -524,8 +421,12 @@ class XhrCustomRecipeId(View):
         if error:
             return error
 
+        project = custom_recipe.project
+
         custom_recipe.delete()
-        return JsonResponse({"error": "ok"})
+        return JsonResponse({"error": "ok",
+                             "gotoUrl": reverse("projectcustomimages",
+                                                args=(project.pk,))})
 
 
 class XhrCustomRecipePackages(View):
@@ -772,3 +673,205 @@ class XhrCustomRecipePackages(View):
         except CustomImageRecipe.DoesNotExist:
             return error_response("Tried to remove package that wasn't"
                                   " present")
+
+
+class XhrProject(View):
+    """ Create, delete or edit a project
+
+    Entry point: /xhr_project/<project_id>
+    """
+    def post(self, request, *args, **kwargs):
+        """
+          Edit project control
+
+          Args:
+              layerAdd = layer_version_id layer_version_id ...
+              layerDel = layer_version_id layer_version_id ...
+              projectName = new_project_name
+              machineName = new_machine_name
+
+          Returns:
+              {"error": "ok"}
+            or
+              {"error": <error message>}
+        """
+        try:
+            prj = Project.objects.get(pk=kwargs['project_id'])
+        except Project.DoesNotExist:
+            return error_response("No such project")
+
+        # Add layers
+        if 'layerAdd' in request.POST and len(request.POST['layerAdd']) > 0:
+            for layer_version_id in request.POST['layerAdd'].split(','):
+                try:
+                    lv = Layer_Version.objects.get(pk=int(layer_version_id))
+                    ProjectLayer.objects.get_or_create(project=prj,
+                                                       layercommit=lv)
+                except Layer_Version.DoesNotExist:
+                    return error_response("Layer version %s asked to add "
+                                          "doesn't exist" % layer_version_id)
+
+        # Remove layers
+        if 'layerDel' in request.POST and len(request.POST['layerDel']) > 0:
+            layer_version_ids = request.POST['layerDel'].split(',')
+            ProjectLayer.objects.filter(
+                project=prj,
+                layercommit_id__in=layer_version_ids).delete()
+
+        # Project name change
+        if 'projectName' in request.POST:
+            prj.name = request.POST['projectName']
+            prj.save()
+
+        # Machine name change
+        if 'machineName' in request.POST:
+            machinevar = prj.projectvariable_set.get(name="MACHINE")
+            machinevar.value = request.POST['machineName']
+            machinevar.save()
+
+        return JsonResponse({"error": "ok"})
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns:
+            json object representing the current project
+        or:
+            {"error": <error message>}
+        """
+
+        try:
+            project = Project.objects.get(pk=kwargs['project_id'])
+        except Project.DoesNotExist:
+            return error_response("Project %s does not exist" %
+                                  kwargs['project_id'])
+
+        # Create the frequently built targets list
+
+        freqtargets = Counter(Target.objects.filter(
+            Q(build__project=project),
+            ~Q(build__outcome=Build.IN_PROGRESS)
+        ).order_by("target").values_list("target", flat=True))
+
+        freqtargets = freqtargets.most_common(5)
+
+        # We now have the targets in order of frequency but if there are two
+        # with the same frequency then we need to make sure those are in
+        # alphabetical order without losing the frequency ordering
+
+        tmp = []
+        switch = None
+        for i, freqtartget in enumerate(freqtargets):
+            target, count = freqtartget
+            try:
+                target_next, count_next = freqtargets[i+1]
+                if count == count_next and target > target_next:
+                    switch = target
+                    continue
+            except IndexError:
+                pass
+
+            tmp.append(target)
+
+            if switch:
+                tmp.append(switch)
+                switch = None
+
+        freqtargets = tmp
+
+        layers = []
+        for layer in project.projectlayer_set.all():
+            layers.append({
+                "id": layer.layercommit.pk,
+                "name": layer.layercommit.layer.name,
+                "vcs_url": layer.layercommit.layer.vcs_url,
+                "local_source_dir": layer.layercommit.layer.local_source_dir,
+                "vcs_reference": layer.layercommit.get_vcs_reference(),
+                "url": layer.layercommit.layer.layer_index_url,
+                "layerdetailurl": layer.layercommit.get_detailspage_url(
+                    project.pk),
+                "layersource": layer.layercommit.layer_source
+            })
+
+        data = {
+            "name": project.name,
+            "layers": layers,
+            "freqtargets": freqtargets,
+        }
+
+        if project.release is not None:
+            data['release'] = {
+                "id": project.release.pk,
+                "name": project.release.name,
+                "description": project.release.description
+            }
+
+        try:
+            data["machine"] = {"name":
+                               project.projectvariable_set.get(
+                                   name="MACHINE").value}
+        except ProjectVariable.DoesNotExist:
+            data["machine"] = None
+        try:
+            data["distro"] = project.projectvariable_set.get(
+                name="DISTRO").value
+        except ProjectVariable.DoesNotExist:
+            data["distro"] = "-- not set yet"
+
+        data['error'] = "ok"
+
+        return JsonResponse(data)
+
+    def put(self, request, *args, **kwargs):
+        # TODO create new project api
+        return HttpResponse()
+
+    def delete(self, request, *args, **kwargs):
+        """Delete a project. Cancels any builds in progress"""
+        try:
+            project = Project.objects.get(pk=kwargs['project_id'])
+            # Cancel any builds in progress
+            for br in BuildRequest.objects.filter(
+                    project=project,
+                    state=BuildRequest.REQ_INPROGRESS):
+                XhrBuildRequest.cancel_build(br)
+
+            project.delete()
+
+        except Project.DoesNotExist:
+            return error_response("Project %s does not exist" %
+                                  kwargs['project_id'])
+
+        return JsonResponse({
+            "error": "ok",
+            "gotoUrl": reverse("all-projects", args=[])
+        })
+
+
+class XhrBuild(View):
+    """ Delete a build object
+
+    Entry point: /xhr_build/<build_id>
+    """
+    def delete(self, request, *args, **kwargs):
+        """
+          Delete build data
+
+          Args:
+              build_id = build_id
+
+          Returns:
+              {"error": "ok"}
+            or
+              {"error": <error message>}
+        """
+        try:
+            build = Build.objects.get(pk=kwargs['build_id'])
+            project = build.project
+            build.delete()
+        except Build.DoesNotExist:
+            return error_response("Build %s does not exist" %
+                                  kwargs['build_id'])
+        return JsonResponse({
+            "error": "ok",
+            "gotoUrl": reverse("projectbuilds", args=(project.pk,))
+        })

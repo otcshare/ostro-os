@@ -1,8 +1,8 @@
 FILESEXTRAPATHS_prepend := "${THISDIR}/${PN}:"
 
-LINUX_VERSION_i586-nlp-32-intel-common = "4.4.20"
-SRCREV_meta_i586-nlp-32-intel-common = "59290c5f6192da2eccf478d37a8f9f88134822b3"
-SRCREV_machine_i586-nlp-32-intel-common = "2cbbf10c66383c0c052708686ab005a9f9dc442c"
+LINUX_VERSION_i586-nlp-32-intel-common = "4.4.26"
+SRCREV_meta_i586-nlp-32-intel-common = "3030330b066a33ce21164a8b30d0503cf9f68e5b"
+SRCREV_machine_i586-nlp-32-intel-common = "4eb72141aa7c3b626a7fc42ae8da6f8b29e43a2c"
 
 COMPATIBLE_MACHINE_i586-nlp-32-intel-common = "${MACHINE}"
 KBRANCH_i586-nlp-32-intel-common = "standard/tiny/intel/base"

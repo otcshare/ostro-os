@@ -19,6 +19,8 @@
 # oe-build-perf-test and archives the results.
 
 script=`basename $0`
+archive_dir=~/perf-results/archives
+
 usage () {
 cat << EOF
 Usage: $script [-h] [-c COMMITISH] [-C GIT_REPO]
@@ -26,16 +28,16 @@ Usage: $script [-h] [-c COMMITISH] [-C GIT_REPO]
 Optional arguments:
   -h                show this help and exit.
   -a ARCHIVE_DIR    archive results tarball here, give an empty string to
-                    disable tarball archiving
+                    disable tarball archiving (default: $archive_dir)
   -c COMMITISH      test (checkout) this commit
   -C GIT_REPO       commit results into Git
   -w WORK_DIR       work dir for this script
+                    (default: GIT_TOP_DIR/build-perf-test)
 EOF
 }
 
 
 # Parse command line arguments
-archive_dir=~/perf-results/archives
 commitish=""
 while getopts "ha:c:C:w:" opt; do
     case $opt in
@@ -56,6 +58,14 @@ while getopts "ha:c:C:w:" opt; do
             ;;
     esac
 done
+
+# Check positional args
+shift "$((OPTIND - 1))"
+if [ $# -ne 0 ]; then
+    echo "ERROR: No positional args are accepted."
+    usage
+    exit 1
+fi
 
 echo "Running on `uname -n`"
 if ! git_topdir=$(git rev-parse --show-toplevel); then
@@ -107,15 +117,20 @@ if [ -f "$base_dir/auto.conf.extra" ]; then
 fi
 
 # Run actual test script
-if ! oe-build-perf-test --out-dir "$results_dir" \
-                        --globalres-file "$globalres_log" \
-                        --lock-file "$base_dir/oe-build-perf.lock" \
-                        "${commit_results[@]}" \
-                        --commit-results-branch "{tester_host}/{git_branch}/$machine" \
-                        --commit-results-tag "{tester_host}/{git_branch}/$machine/{git_commit_count}-g{git_commit}/{tag_num}"; then
-    echo "oe-build-perf-test script failed!"
-    exit 1
-fi
+oe-build-perf-test --out-dir "$results_dir" \
+                   --globalres-file "$globalres_log" \
+                   --lock-file "$base_dir/oe-build-perf.lock" \
+                   "${commit_results[@]}" \
+                   --commit-results-branch "{tester_host}/{git_branch}/$machine" \
+                   --commit-results-tag "{tester_host}/{git_branch}/$machine/{git_commit_count}-g{git_commit}/{tag_num}"
+
+case $? in
+    1)  echo "ERROR: oe-build-perf-test script failed!"
+        exit 1
+        ;;
+    2)  echo "NOTE: some tests failed!"
+        ;;
+esac
 
 echo -ne "\n\n-----------------\n"
 echo "Global results file:"

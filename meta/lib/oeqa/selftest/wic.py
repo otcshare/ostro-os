@@ -284,3 +284,18 @@ class Wic(oeSelfTest):
         self.assertEqual(0, status)
         self.assertEqual(1, len(glob(self.resultdir + "%s-*direct" % image)))
         self.assertEqual(1, len(glob(self.resultdir + "%s-*direct.bmap" % image)))
+
+    def test_systemd_bootdisk(self):
+        """Test creation of systemd-bootdisk image"""
+        image = "systemd-bootdisk"
+        self.assertEqual(0, runCmd("wic create %s -e core-image-minimal" \
+                                   % image).status)
+        self.assertEqual(1, len(glob(self.resultdir + "%s-*direct" % image)))
+
+    def test_sdimage_bootpart(self):
+        """Test creation of sdimage-bootpart image"""
+        image = "sdimage-bootpart"
+        self.write_config('IMAGE_BOOT_FILES = "bzImage"\n')
+        self.assertEqual(0, runCmd("wic create %s -e core-image-minimal" \
+                                   % image).status)
+        self.assertEqual(1, len(glob(self.resultdir + "%s-*direct" % image)))

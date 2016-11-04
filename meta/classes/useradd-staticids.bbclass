@@ -16,7 +16,7 @@ def update_useradd_static_config(d):
             error(message)
 
         def error(self, message):
-            raise bb.build.FuncFailed(message)
+            bb.fatal(message)
 
     def list_extend(iterable, length, obj = None):
         """Ensure that iterable is the specified length by extending with obj
@@ -53,8 +53,7 @@ def update_useradd_static_config(d):
     def handle_missing_id(id, type, pkg):
         # For backwards compatibility we accept "1" in addition to "error"
         if d.getVar('USERADD_ERROR_DYNAMIC', True) == 'error' or d.getVar('USERADD_ERROR_DYNAMIC', True) == '1':
-            #bb.error("Skipping recipe %s, package %s which adds %sname %s does not have a static ID defined." % (d.getVar('PN', True),  pkg, type, id))
-            raise bb.build.FuncFailed("%s - %s: %sname %s does not have a static ID defined." % (d.getVar('PN', True), pkg, type, id))
+            raise NotImplementedError("%s - %s: %sname %s does not have a static ID defined. Skipping it." % (d.getVar('PN', True), pkg, type, id))
         elif d.getVar('USERADD_ERROR_DYNAMIC', True) == 'warn':
             bb.warn("%s - %s: %sname %s does not have a static ID defined." % (d.getVar('PN', True), pkg, type, id))
 
@@ -107,7 +106,7 @@ def update_useradd_static_config(d):
             try:
                 uaargs = parser.parse_args(re.split('''[ \t]+(?=(?:[^'"]|'[^']*'|"[^"]*")*$)''', param))
             except:
-                raise bb.build.FuncFailed("%s: Unable to parse arguments for USERADD_PARAM_%s: '%s'" % (d.getVar('PN', True), pkg, param))
+                bb.fatal("%s: Unable to parse arguments for USERADD_PARAM_%s: '%s'" % (d.getVar('PN', True), pkg, param))
 
             # Read all passwd files specified in USERADD_UID_TABLES or files/passwd
             # Use the standard passwd layout:
@@ -242,7 +241,7 @@ def update_useradd_static_config(d):
                 # If we're processing multiple lines, we could have left over values here...
                 gaargs = parser.parse_args(re.split('''[ \t]+(?=(?:[^'"]|'[^']*'|"[^"]*")*$)''', param))
             except:
-                raise bb.build.FuncFailed("%s: Unable to parse arguments for GROUPADD_PARAM_%s: '%s'" % (d.getVar('PN', True), pkg, param))
+                bb.fatal("%s: Unable to parse arguments for GROUPADD_PARAM_%s: '%s'" % (d.getVar('PN', True), pkg, param))
 
             # Read all group files specified in USERADD_GID_TABLES or files/group
             # Use the standard group layout:
@@ -323,7 +322,7 @@ python __anonymous() {
         and not bb.data.inherits_class('native', d):
         try:
             update_useradd_static_config(d)
-        except bb.build.FuncFailed as f:
+        except NotImplementedError as f:
             bb.debug(1, "Skipping recipe %s: %s" % (d.getVar('PN', True), f))
             raise bb.parse.SkipPackage(f)
 }

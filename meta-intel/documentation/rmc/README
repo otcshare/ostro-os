@@ -275,7 +275,14 @@ common/recipes-bsp/rmc/boards/T100-32bit
 This example is provided for validation on 32 bit X86 architecture. It doesn't
 provide any new function not mentioned in above examples.
 
-
+EXAMPLE 5: RMC for quark
+Galileo Gen 2
+common/recipes-bsp/rmc/boards/Galileo2
+This example doesn't show any feature not covered in the above examples. Note
+RMC only supports hddimg image format so far. Please refer to the section II.c
+in README in meta-intel for how to boot Galileo with images in hddimg format.
+Bootloader should show a board-specific boot option "Galileo Gen 2 boot" when
+the board boots off.
 
 Troubleshooting
 --------------------------------------------------------------------------------
