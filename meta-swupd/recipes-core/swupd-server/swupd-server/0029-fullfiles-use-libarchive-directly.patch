@@ -1,0 +1,626 @@
+From b02a3ba1a61868db334d516f2577aa7aa7f07d6f Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Wed, 30 Mar 2016 13:14:42 +0200
+Subject: [PATCH 06/13] fullfiles: use libarchive directly
+
+Calling an external tar command makes the code fairly complicated,
+because it is necessary to set up a suitable temporary directory with
+the desired content. By calling libarchive directly, no temporary copy
+is needed and directories and files can be treated (almost) the same
+way. The only difference is that for files, data has to be added to
+the archive.
+
+More important, performance under bitbake took a big hit because of
+the external commands. Launching them when running under pseudo is a
+lot slower compared to running natively as root. For example, the
+unmodified swupd-make-fullfiles took over 20min for
+ostro-image-swupd. With this change, it completes in 3:30min. When
+running natively as root, there is also some improvement because less
+work needs to be done, but total runtime only decreases from 2:28min
+to 2:14min.
+
+By calling libarchive directly, swupd also gets better control over
+error handling. bsdtar emits a warning for invalid filename or
+linkname encoding, which was silently ignored when using the external
+command. Now it is treated as an error.
+
+Archives always get created using the restricted pax interchange
+format (see
+https://github.com/libarchive/libarchive/wiki/ManPageLibarchiveFormats5),
+same as with using bsdtar as external command. GNU tar should be able
+to decode them properly as long as no extensions are needed (for
+example, for xattrs).
+
+Only the smallest archive really gets written to disk. Until then, the
+compressed archive is kept in memory. As an additional optimization,
+creating an archive gets aborted once it is already larger than the
+currently best one. In practice, that particular optimization did not
+have any significant impact on performance.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+
+---
+ Makefile.am                 |   6 +-
+ configure.ac                |   1 +
+ include/libarchive_helper.h |  42 ++++++
+ src/fullfiles.c             | 326 +++++++++++++++++++++++++-------------------
+ src/in_memory_archive.c     |  67 +++++++++
+ 5 files changed, 302 insertions(+), 140 deletions(-)
+ create mode 100644 include/libarchive_helper.h
+ create mode 100644 src/in_memory_archive.c
+
+diff --git a/Makefile.am b/Makefile.am
+index 0ae2643..c1c8e07 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -23,6 +23,7 @@ swupd_create_update_SOURCES = \
+ 	src/helpers.c \
+ 	src/heuristics.c \
+ 	src/log.c \
++	src/in_memory_archive.c \
+ 	src/manifest.c \
+ 	src/pack.c \
+ 	src/rename.c \
+@@ -56,6 +57,7 @@ swupd_make_fullfiles_SOURCES = \
+ 	src/globals.c \
+ 	src/groups.c \
+ 	src/helpers.c \
++	src/in_memory_archive.c \
+ 	src/log.c \
+ 	src/make_fullfiles.c \
+ 	src/manifest.c \
+@@ -65,12 +67,13 @@ swupd_make_fullfiles_SOURCES = \
+ 	src/stats.c \
+ 	src/xattrs.c
+ 
+-AM_CPPFLAGS = $(glib_CFLAGS) -I$(top_srcdir)/include
++AM_CPPFLAGS = $(glib_CFLAGS) $(libarchive_CFLAGS) -I$(top_srcdir)/include
+ 
+ swupd_create_update_LDADD = \
+ 	$(glib_LIBS) \
+ 	$(zlib_LIBS) \
+ 	$(openssl_LIBS) \
++	$(libarchive_LIBS) \
+ 	$(bsdiff_LIBS)
+ 
+ swupd_make_pack_LDADD = \
+@@ -83,6 +86,7 @@ swupd_make_fullfiles_LDADD = \
+ 	$(glib_LIBS) \
+ 	$(zlib_LIBS) \
+ 	$(openssl_LIBS) \
++	$(libarchive_LIBS) \
+ 	$(bsdiff_LIBS)
+ 
+ if ENABLE_LZMA
+diff --git a/configure.ac b/configure.ac
+index 277146b..b4943b1 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -36,6 +36,7 @@ AC_ARG_ENABLE(
+ 		AC_DEFINE([SWUPD_WITH_BSDTAR], 0, [Use default tar command])),
+ 	AC_DEFINE([SWUPD_WITH_BSDTAR], 0, [Use default tar command])
+ )
++PKG_CHECK_MODULES([libarchive], [libarchive])
+ 
+ AC_ARG_ENABLE(
+   [tests],
+diff --git a/include/libarchive_helper.h b/include/libarchive_helper.h
+new file mode 100644
+index 0000000..ad28def
+--- /dev/null
++++ b/include/libarchive_helper.h
+@@ -0,0 +1,42 @@
++/*
++ *   Software Updater - server side
++ *
++ *      Copyright © 2016 Intel Corporation.
++ *
++ *   This program is free software: you can redistribute it and/or modify
++ *   it under the terms of the GNU General Public License as published by
++ *   the Free Software Foundation, version 2 or later of the License.
++ *
++ *   This program is distributed in the hope that it will be useful,
++ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *   GNU General Public License for more details.
++ *
++ *   You should have received a copy of the GNU General Public License
++ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ *
++ *   Authors:
++ *         Patrick Ohly <patrick.ohly@intel.com>
++ *
++ */
++
++#ifndef __INCLUDE_GUARD_LIBARCHIVE_HELPER_H
++#define __INCLUDE_GUARD_LIBARCHIVE_HELPER_H
++
++#include <archive.h>
++#include <stdint.h>
++
++/*
++ * Used by archive_write_open() callbacks to store the resulting archive in memory.
++ */
++struct in_memory_archive {
++	uint8_t *buffer;
++	size_t allocated;
++	size_t used;
++	/* If not 0, aborts writing when the used data would become larger than this. */
++	size_t maxsize;
++};
++
++ssize_t in_memory_write(struct archive *, void *client_data, const void *buffer, size_t length);
++
++#endif /* __INCLUDE_GUARD_LIBARCHIVE_HELPER_H */
+diff --git a/src/fullfiles.c b/src/fullfiles.c
+index 882e83b..e27d9ce 100644
+--- a/src/fullfiles.c
++++ b/src/fullfiles.c
+@@ -22,6 +22,8 @@
+  */
+ 
+ #define _GNU_SOURCE
++#include <archive.h>
++#include <archive_entry.h>
+ #include <assert.h>
+ #include <errno.h>
+ #include <fcntl.h>
+@@ -33,24 +35,27 @@
+ #include <string.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#include <sys/xattr.h>
+ #include <unistd.h>
+ 
+ #include "swupd.h"
++#include "libarchive_helper.h"
+ 
+ /* output must be a file, which is a (compressed) tar file, of the file denoted by "file", without any of its
+    directory paths etc etc */
+ static void create_fullfile(struct file *file)
+ {
+-	char *origin;
++	char *origin = NULL;
+ 	char *tarname = NULL;
+-	char *rename_source = NULL;
+-	char *rename_target = NULL;
+-	char *rename_tmpdir = NULL;
+-	int ret;
+ 	struct stat sbuf;
+ 	char *empty, *indir, *outdir;
+-	char *param1, *param2;
+-	int stderrfd;
++	struct archive_entry *entry = NULL;
++	struct archive *from = NULL, *to = NULL;
++	struct in_memory_archive best = { .buffer = NULL };
++	struct in_memory_archive current = { .buffer = NULL };
++	uint8_t *file_content = NULL;
++	size_t file_size;
++	int fd = -1;
+ 
+ 	if (file->is_deleted) {
+ 		return; /* file got deleted -> by definition we cannot tar it up */
+@@ -59,15 +64,17 @@ static void create_fullfile(struct file *file)
+ 	empty = config_empty_dir();
+ 	indir = config_image_base();
+ 	outdir = config_output_dir();
++	entry = archive_entry_new();
++	assert(entry);
++	from = archive_read_disk_new();
++	assert(from);
+ 
+ 	string_or_die(&tarname, "%s/%i/files/%s.tar", outdir, file->last_change, file->hash);
+ 	if (access(tarname, R_OK) == 0) {
+ 		/* output file already exists...done */
+-		free(tarname);
++		goto done;
+ 		return;
+ 	}
+-	free(tarname);
+-	//printf("%s was missing\n", file->hash);
+ 
+ 	string_or_die(&origin, "%s/%i/full/%s", indir, file->last_change, file->filename);
+ 	if (lstat(origin, &sbuf) < 0) {
+@@ -76,156 +83,197 @@ static void create_fullfile(struct file *file)
+ 		assert(0);
+ 	}
+ 
+-	if (file->is_dir) { /* directories are easy */
+-		char *tmp1, *tmp2, *dir, *base;
+-
+-		tmp1 = strdup(origin);
+-		assert(tmp1);
+-		base = basename(tmp1);
+-
+-		tmp2 = strdup(origin);
+-		assert(tmp2);
+-		dir = dirname(tmp2);
+-
+-		string_or_die(&rename_tmpdir, "%s/XXXXXX", outdir);
+-		if (!mkdtemp(rename_tmpdir)) {
+-			LOG(NULL, "Failed to create temporary directory for %s move", origin);
+-			assert(0);
+-		}
+-
+-		string_or_die(&param1, "--exclude=%s/?*", base);
+-		string_or_die(&param2, "./%s", base);
+-		char *const tarcfcmd[] = { TAR_COMMAND, "-C", dir, TAR_PERM_ATTR_ARGS_STRLIST, "-cf", "-", param1, param2, NULL };
+-		char *const tarxfcmd[] = { TAR_COMMAND, "-C", rename_tmpdir, TAR_PERM_ATTR_ARGS_STRLIST, "-xf", "-", NULL };
+-
+-		stderrfd = open("/dev/null", O_WRONLY);
+-		if (stderrfd == -1) {
+-			LOG(NULL, "Failed to open /dev/null", "");
+-			assert(0);
+-		}
+-		if (system_argv_pipe(tarcfcmd, -1, stderrfd, tarxfcmd, -1, stderrfd) != 0) {
+-			assert(0);
+-		}
+-		free(param1);
+-		free(param2);
+-		close(stderrfd);
+-
+-		string_or_die(&rename_source, "%s/%s", rename_tmpdir, base);
+-		string_or_die(&rename_target, "%s/%s", rename_tmpdir, file->hash);
+-		if (rename(rename_source, rename_target)) {
+-			LOG(NULL, "rename failed for %s to %s", rename_source, rename_target);
++	/* step 1: tar it with each compression type  */
++	typedef int (*filter_t)(struct archive *);
++	static const filter_t compression_filters[] = {
++		/*
++		 * Start with the compression method that is most likely (*) to produce
++		 * the best result. That will allow aborting creation of archives earlier
++		 * when they become larger than the currently smallest archive.
++		 *
++		 * (*) statistics for ostro-image-swupd:
++		 *     43682 LZMA
++		 *     13398 gzip
++		 *       844 bzip2
++		 */
++		archive_write_add_filter_lzma,
++		archive_write_add_filter_gzip,
++		archive_write_add_filter_bzip2,
++		/*
++		 * TODO (?): can archive_write_add_filter_none ever be better than compressing?
++		 */
++		NULL
++	};
++	file_size = S_ISREG(sbuf.st_mode) ? sbuf.st_size : 0;
++
++	archive_entry_copy_sourcepath(entry, origin);
++	if (archive_read_disk_entry_from_file(from, entry, -1, &sbuf)) {
++		LOG(NULL, "Getting directory attributes failed", "%s: %s",
++		    origin, archive_error_string(from));
++		assert(0);
++	}
++	archive_entry_copy_pathname(entry, file->hash);
++	if (file_size) {
++		file_content = malloc(file_size);
++		if (!file_content) {
++			LOG(NULL, "out of memory", "");
+ 			assert(0);
+ 		}
+-		free(rename_source);
+-
+-		/* for a directory file, tar up simply with gzip */
+-		string_or_die(&param1, "%s/%i/files/%s.tar", outdir, file->last_change, file->hash);
+-		char *const tarcmd[] = { TAR_COMMAND, "-C", rename_tmpdir, TAR_PERM_ATTR_ARGS_STRLIST, "-zcf", param1, file->hash, NULL };
+-
+-		if (system_argv(tarcmd) != 0) {
++		fd = open(origin, O_RDONLY);
++		if (fd == -1) {
++			LOG(NULL, "Failed to open file", "%s: %s",
++			    origin, strerror(errno));
+ 			assert(0);
+ 		}
+-		free(param1);
+-
+-		if (rmdir(rename_target)) {
+-			LOG(NULL, "rmdir failed for %s", rename_target);
+-		}
+-		free(rename_target);
+-		if (rmdir(rename_tmpdir)) {
+-			LOG(NULL, "rmdir failed for %s", rename_tmpdir);
+-		}
+-		free(rename_tmpdir);
+-
+-		free(tmp1);
+-		free(tmp2);
+-	} else { /* files are more complex */
+-		char *gzfile = NULL, *bzfile = NULL, *xzfile = NULL;
+-		char *tempfile;
+-		uint64_t gz_size = LONG_MAX, bz_size = LONG_MAX, xz_size = LONG_MAX;
+-
+-		/* step 1: hardlink the guy to an empty directory with the hash as the filename */
+-		string_or_die(&tempfile, "%s/%s", empty, file->hash);
+-		if (link(origin, tempfile) < 0) {
+-			LOG(NULL, "hardlink failed", "%s due to %s (%s -> %s)", file->filename, strerror(errno), origin, tempfile);
+-			char *const argv[] = { "cp", "-a", origin, tempfile, NULL };
+-			if (system_argv(argv) != 0) {
++		size_t done = 0;
++		while (done < file_size) {
++			ssize_t curr;
++			curr = read(fd, file_content + done, file_size - done);
++			if (curr == -1) {
++				LOG(NULL, "Failed to read from file", "%s: %s",
++				    origin, strerror(errno));
+ 				assert(0);
+ 			}
++			done += curr;
+ 		}
++		close(fd);
++		fd = -1;
++	}
+ 
+-		/* step 2a: tar it with each compression type  */
+-		// lzma
+-		string_or_die(&param1, "--directory=%s", empty);
+-		string_or_die(&param2, "%s/%i/files/%s.tar.xz", outdir, file->last_change, file->hash);
+-		char *const tarlzmacmd[] = { TAR_COMMAND, param1, TAR_PERM_ATTR_ARGS_STRLIST, "-Jcf", param2, file->hash, NULL };
+-
+-		if (system_argv(tarlzmacmd) != 0) {
++	for (int i = 0; compression_filters[i]; i++) {
++		/* Need to re-initialize the archive handle, it cannot be re-used. */
++		if (to) {
++			archive_write_free(to);
++		}
++		/*
++		 * Use the recommended restricted pax interchange
++		 * format. Numeric uid/gid values are stored in the archive
++		 * (no uid/gid lookup enabled) because symbolic names can lead
++		 * to a hash mismatch during unpacking when /etc/passwd or
++		 * /etc/group change during an update (see
++		 * https://github.com/clearlinux/swupd-client/issues/101).
++		 *
++		 * Filenames read from the file system are expected to be
++		 * valid according to the current locale. archive_write_header()
++		 * will warn about filenames that it cannot properly decode
++		 * and proceeds by writing the raw bytes, but we treat this an
++		 * error by not distinguishing between ARCHIVE_FATAL
++		 * and ARCHIVE_WARN.
++		 *
++		 * When we fail with "Can't translate" errors, make sure that
++		 * LANG and/or LC_ env variables are set.
++		 */
++		to = archive_write_new();
++		assert(to);
++		if (archive_write_set_format_pax_restricted(to)) {
++			LOG(NULL, "PAX format", "%s", archive_error_string(to));
+ 			assert(0);
+ 		}
+-		free(param1);
+-		free(param2);
+-
+-		// gzip
+-		string_or_die(&param1, "--directory=%s", empty);
+-		string_or_die(&param2, "%s/%i/files/%s.tar.gz", outdir, file->last_change, file->hash);
+-		char *const targzipcmd[] = { TAR_COMMAND, param1, TAR_PERM_ATTR_ARGS_STRLIST, "-zcf", param2, file->hash, NULL };
+-
+-		if (system_argv(targzipcmd) != 0) {
++		do {
++			/* Try compression methods until we find one which is supported. */
++			if (!compression_filters[i](to)) {
++				break;
++			}
++		} while(compression_filters[++i]);
++		/*
++		 * Regardless of the block size below, never pad the
++		 * last block, it just makes the archive larger.
++		 */
++		if (archive_write_set_bytes_in_last_block(to, 1)) {
++			LOG(NULL, "Removing padding failed", "");
+ 			assert(0);
+ 		}
+-		free(param1);
+-		free(param2);
+-
+-#ifdef SWUPD_WITH_BZIP2
+-		string_or_die(&param1, "--directory=%s", empty);
+-		string_or_die(&param2, "%s/%i/files/%s.tar.bz2", outdir, file->last_change, file->hash);
+-		char *const tarbzip2cmd[] = { TAR_COMMAND, param1, TAR_PERM_ATTR_ARGS_STRLIST, "-jcf", param2, file->hash, NULL };
+-
+-		if (system_argv(tarbzip2cmd) != 0) {
++		/*
++		 * Invoke in_memory_write() as often as possible and check each
++		 * time whether we are already larger than the currently best
++		 * algorithm.
++		 */
++		current.maxsize = best.used;
++		if (archive_write_set_bytes_per_block(to, 0)) {
++			LOG(NULL, "Removing blocking failed", "");
+ 			assert(0);
+ 		}
+-		free(param1);
+-		free(param2);
+-
+-#endif
+-
+-		/* step 2b: pick the smallest of the three compression formats */
+-		string_or_die(&gzfile, "%s/%i/files/%s.tar.gz", outdir, file->last_change, file->hash);
+-		if (stat(gzfile, &sbuf) == 0) {
+-			gz_size = sbuf.st_size;
++		/*
++		 * We can make an educated guess how large the resulting archive will be.
++		 * Avoids realloc() calls when the file is big.
++		 */
++		if (!current.allocated) {
++			current.allocated = file_size + 4096;
++			current.buffer = malloc(current.allocated);
+ 		}
+-		string_or_die(&bzfile, "%s/%i/files/%s.tar.bz2", outdir, file->last_change, file->hash);
+-		if (stat(bzfile, &sbuf) == 0) {
+-			bz_size = sbuf.st_size;
++		if (!current.buffer) {
++			LOG(NULL, "out of memory", "");
++			assert(0);
+ 		}
+-		string_or_die(&xzfile, "%s/%i/files/%s.tar.xz", outdir, file->last_change, file->hash);
+-		if (stat(xzfile, &sbuf) == 0) {
+-			xz_size = sbuf.st_size;
++		if (archive_write_open(to, &current, NULL, in_memory_write, NULL)) {
++			LOG(NULL, "Failed to create archive", "%s",
++			    archive_error_string(to));
++			assert(0);
+ 		}
+-		string_or_die(&tarname, "%s/%i/files/%s.tar", outdir, file->last_change, file->hash);
+-		if (gz_size <= xz_size && gz_size <= bz_size) {
+-			ret = rename(gzfile, tarname);
+-		} else if (xz_size <= bz_size) {
+-			ret = rename(xzfile, tarname);
+-		} else {
+-			ret = rename(bzfile, tarname);
++		if (archive_write_header(to, entry) ||
++		    file_content && archive_write_data(to, file_content, file_size) != (ssize_t)file_size ||
++		    archive_write_close(to)) {
++			if (current.maxsize && current.used >= current.maxsize) {
++				archive_write_free(to);
++				to = NULL;
++				continue;
++			}
++			LOG(NULL, "Failed to store file in archive", "%s: %s",
++			    origin, archive_error_string(to));
++			assert(0);
+ 		}
+-		if (ret != 0) {
+-			LOG(file, "post-tar rename failed", "ret=%d", ret);
++		if (!best.used || current.used < best.used) {
++			free(best.buffer);
++			best = current;
++			memset(&current, 0, sizeof(current));
++		} else {
++			/* Simply re-use the buffer for the next iteration. */
++			current.used = 0;
+ 		}
+-		unlink(bzfile);
+-		unlink(xzfile);
+-		unlink(gzfile);
+-		free(bzfile);
+-		free(xzfile);
+-		free(gzfile);
+-		free(tarname);
+-
+-		/* step 3: remove the hardlink */
+-		unlink(tempfile);
+-		free(tempfile);
++	}
++	if (!best.used) {
++		LOG(NULL, "creating archive failed with all compression methods", "");
++		assert(0);
+ 	}
+ 
++	/* step 2: write out to disk. Archives are immutable and thus read-only. */
++	fd = open(tarname, O_CREAT|O_WRONLY, S_IRUSR|S_IRGRP|S_IROTH);
++	if (fd <= 0) {
++		LOG(NULL, "Failed to create archive", "%s: %s",
++		    tarname, strerror(errno));
++		assert(0);
++	}
++	size_t done = 0;
++	while (done < best.used) {
++		ssize_t curr;
++		curr = write(fd, best.buffer + done, best.used - done);
++		if (curr == -1) {
++			LOG(NULL, "Failed to write archive", "%s: %s",
++			    tarname, strerror(errno));
++			assert(0);
++		}
++		done += curr;
++	}
++	if (close(fd)) {
++		LOG(NULL, "Failed to complete writing archive", "%s: %s",
++		    tarname, strerror(errno));
++		assert(0);
++	}
++	fd = -1;
++	free(best.buffer);
++	free(current.buffer);
++	free(file_content);
++
++ done:
++	if (fd >= 0) {
++		close(fd);
++	}
++	archive_read_free(from);
++	if (to) {
++		archive_write_free(to);
++	}
++	archive_entry_free(entry);
++	free(tarname);
+ 	free(indir);
+ 	free(outdir);
+ 	free(empty);
+diff --git a/src/in_memory_archive.c b/src/in_memory_archive.c
+new file mode 100644
+index 0000000..abd7e54
+--- /dev/null
++++ b/src/in_memory_archive.c
+@@ -0,0 +1,67 @@
++/*
++ *   Software Updater - server side
++ *
++ *      Copyright © 2016 Intel Corporation.
++ *
++ *   This program is free software: you can redistribute it and/or modify
++ *   it under the terms of the GNU General Public License as published by
++ *   the Free Software Foundation, version 2 or later of the License.
++ *
++ *   This program is distributed in the hope that it will be useful,
++ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *   GNU General Public License for more details.
++ *
++ *   You should have received a copy of the GNU General Public License
++ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ *
++ *   Authors:
++ *         Patrick Ohly <patrick.ohly@intel.com>
++ *
++ */
++
++#include <errno.h>
++#include <stdlib.h>
++
++#include "libarchive_helper.h"
++
++ssize_t in_memory_write(struct archive *archive, void *client_data, const void *buffer, size_t length)
++{
++	struct in_memory_archive *in_memory = client_data;
++	void *newbuff;
++
++	if (in_memory->maxsize && in_memory->used + length >= in_memory->maxsize) {
++		archive_set_error(archive, EFBIG, "resulting archive would become larger than %lu",
++				  (unsigned long)in_memory->maxsize);
++		archive_write_fail(archive);
++		/*
++		 * Despite the error and archive_write_fail(), libarchive internally calls us
++		 * again and when we fail again, overwrites our error with something about
++		 * "Failed to clean up compressor". Therefore our caller needs to check for "used == maxsize"
++		 * to detect that we caused the failure.
++		 */
++		in_memory->used = in_memory->maxsize;
++		return -1;
++	}
++
++	if (in_memory->used + length > in_memory->allocated) {
++		/* Start with a small chunk, double in size to avoid too many reallocs. */
++		size_t new_size = in_memory->allocated ?
++			in_memory->allocated * 2 :
++			4096;
++		while (new_size < in_memory->used + length) {
++			new_size *= 2;
++		}
++		newbuff = realloc(in_memory->buffer, new_size);
++		if (!newbuff) {
++			archive_set_error(archive, ENOMEM, "failed to enlarge buffer");
++			return -1;
++		}
++		in_memory->buffer = newbuff;
++		in_memory->allocated = new_size;
++	}
++
++	memcpy(in_memory->buffer + in_memory->used, buffer, length);
++	in_memory->used += length;
++	return length;
++}
+-- 
+2.1.4
+

@@ -1,0 +1,58 @@
+From 88fd362785ae8871537573fd7073e499542b0a0d Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Thu, 17 Nov 2016 10:09:27 +0100
+Subject: [PATCH 3/3] create_pack: abort delta handling early when impossible
+ due to IMA
+
+Currently, deltas cannot be computed for systems using IMA because IMA
+relies on a security.ima xattr which changes each time the file
+content changes and swupd doesn't support deltas for files with
+different xattrs.
+
+It would be worthwhile to add such a support, but that's a bit
+complicated (needs to be done in client and server and implies a
+format change), so for now just abort early when a security.xattr is
+found.
+
+This speeds up delta computation considerably in Ostro OS because it
+skips the slow downloading of the old file.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/delta.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/src/delta.c b/src/delta.c
+index 8fff4c9..d3c4b35 100644
+--- a/src/delta.c
++++ b/src/delta.c
+@@ -30,6 +30,7 @@
+ #include <string.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#include <attr/xattr.h>
+ #include <unistd.h>
+ 
+ #include "swupd.h"
+@@ -64,6 +65,18 @@ void __create_delta(struct file *file, int from_version, int to_version)
+ 
+ 	string_or_die(&original, "%s/%i/full/%s", conf, from_version, file->peer->filename);
+ 
++	if (lgetxattr(newfile, "security.ima", NULL, 0) > 0) {
++		/* There is a non-empty security.ima xattr on the new file.
++		 * That xattr contains a hash of the file content. We know that
++		 * the file content has changed, so  the xattr will be different
++		 * from the one on the old file and we can bail out early without
++		 * even bothering with retrieving the original file. A better
++		 * solution for systems with IMA would be to support deltas even
++		 * when xattrs are different.
++		 */
++		goto out;
++	}
++
+ 	if (access(original, F_OK) &&
+ 	    content_url) {
+ 		/* File does not exist. Try to get it from the online update repo instead.
+-- 
+2.1.4
+

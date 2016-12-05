@@ -1,0 +1,28 @@
+From a8b77a7d4479df7662faf3a15f5aca6828d1c67a Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 27 Sep 2016 08:12:49 +0200
+Subject: [PATCH 26/29] fullfiles.c: fix invalid LOG() call
+
+LOG() takes an additional fixed string before the format string.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/fullfiles.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/fullfiles.c b/src/fullfiles.c
+index 31b9ab5..3be43d1 100644
+--- a/src/fullfiles.c
++++ b/src/fullfiles.c
+@@ -72,7 +72,7 @@ static void create_fullfile(struct file *file)
+ 	string_or_die(&origin, "%s/%i/full/%s", indir, file->last_change, file->filename);
+ 	if (lstat(origin, &sbuf) < 0) {
+ 		/* no input file: means earlier phase of update creation failed */
+-		LOG(NULL, "Failed to stat %s\n", origin);
++		LOG(NULL, "Failed to stat", "%s: %s", origin, strerror(errno));
+ 		assert(0);
+ 	}
+ 
+-- 
+2.1.4
+

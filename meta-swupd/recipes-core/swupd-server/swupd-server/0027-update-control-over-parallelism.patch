@@ -1,0 +1,134 @@
+From 5926a6ea8ca389ba11b467b231038b5bc5320a8b Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 27 Sep 2016 08:25:40 +0200
+Subject: [PATCH 04/13] update control over parallelism
+
+The SWUPD_NUM_THREADS env variable is now understood by all three
+commands and overrides the default number of threads. Setting it to 1
+is useful while debugging the code that runs inside threads (only one
+thread hits breakpoints there). If SWUPD_NUM_THREADS is invalid, a
+warning is printed and the variable gets ignored, i.e. the default
+parallelism is used.
+
+The hard-coded parallelism of 12 threads when analysing the file system
+gets replaced with n, where n is the number of available CPUs. The default
+is the same as before elsewhere (n for packing, 3 * n for fullfiles).
+
+Upstream-Status: Submitted [https://github.com/clearlinux/swupd-server/pull/43]
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+
+---
+ include/swupd.h  |  1 +
+ src/analyze_fs.c |  3 ++-
+ src/fullfiles.c  |  5 +++--
+ src/helpers.c    | 26 ++++++++++++++++++++++++++
+ src/pack.c       |  5 +++--
+ 5 files changed, 35 insertions(+), 5 deletions(-)
+
+diff --git a/include/swupd.h b/include/swupd.h
+index f9c0583..f334bdb 100644
+--- a/include/swupd.h
++++ b/include/swupd.h
+@@ -258,6 +258,7 @@ extern int system_argv(char *const argv[]);
+ extern int system_argv_fd(char *const argv[], int newstdin, int newstdout, int newstderr);
+ extern int system_argv_pipe(char *const argvp1[], int stdinp1, int stderrp1,
+ 			    char *const argvp2[], int stdoutp2, int stderrp2);
++extern int num_threads(float scaling);
+ 
+ extern bool signature_initialize(void);
+ extern void signature_terminate(void);
+diff --git a/src/analyze_fs.c b/src/analyze_fs.c
+index a220d79..ce30393 100644
+--- a/src/analyze_fs.c
++++ b/src/analyze_fs.c
+@@ -387,6 +387,7 @@ struct manifest *full_manifest_from_directory(int version)
+ {
+ 	struct manifest *manifest;
+ 	char *dir;
++	int numthreads = num_threads(1.0);
+ 
+ 	LOG(NULL, "Computing hashes", "for %i/full", version);
+ 
+@@ -394,7 +395,7 @@ struct manifest *full_manifest_from_directory(int version)
+ 
+ 	string_or_die(&dir, "%s/%i/full", image_dir, version);
+ 
+-	threadpool = g_thread_pool_new(get_hash, dir, 12, FALSE, NULL);
++	threadpool = g_thread_pool_new(get_hash, dir, numthreads, FALSE, NULL);
+ 
+ 	iterate_directory(manifest, dir, "", true);
+ 
+diff --git a/src/fullfiles.c b/src/fullfiles.c
+index ca8feda..882e83b 100644
+--- a/src/fullfiles.c
++++ b/src/fullfiles.c
+@@ -291,10 +291,11 @@ static void submit_fullfile_tasks(GList *files)
+ 	int ret;
+ 	int count = 0;
+ 	GError *err = NULL;
++	int numthreads = num_threads(3.0);
+ 
+-	LOG(NULL, "fullfile threadpool", "%d threads", sysconf(_SC_NPROCESSORS_ONLN) * 3);
++	LOG(NULL, "fullfile threadpool", "%d threads", numthreads);
+ 	threadpool = g_thread_pool_new(create_fullfile_task, NULL,
+-				       sysconf(_SC_NPROCESSORS_ONLN) * 3,
++				       numthreads,
+ 				       TRUE, NULL);
+ 
+ 	printf("Starting downloadable fullfiles data creation\n");
+diff --git a/src/helpers.c b/src/helpers.c
+index 95d000c..c2ae10e 100644
+--- a/src/helpers.c
++++ b/src/helpers.c
+@@ -284,3 +284,29 @@ void check_root(void)
+ 		exit(EXIT_FAILURE);
+ 	}
+ }
++
++int num_threads(float scaling)
++{
++	const char *var = getenv("SWUPD_NUM_THREADS");
++	int result = sysconf(_SC_NPROCESSORS_ONLN) * scaling;
++	float scaled_result;
++
++	if (var && *var) {
++		char *endptr;
++		long int value;
++
++		errno = 0;
++		value = strtol(var, &endptr, 0);
++
++		if ((errno != 0 && value == 0) || *endptr) {
++			LOG(NULL, "SWUPD_NUM_THREADS must be an integer", "%s", var);
++		} else if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN)) ||
++			   value < 1 || value > INT_MAX) {
++			LOG(NULL, "SWUPD_NUM_THREADS out of range", "%s", var);
++		} else {
++			result = (int)value;
++		}
++	}
++
++	return result;
++}
+diff --git a/src/pack.c b/src/pack.c
+index 12d7443..2753e1f 100644
+--- a/src/pack.c
++++ b/src/pack.c
+@@ -285,10 +285,11 @@ static void make_pack_deltas(GList *files)
+ 	struct file *file;
+ 	int ret;
+ 	GError *err = NULL;
++	int numthreads = num_threads(1.0);
+ 
+-	LOG(NULL, "pack deltas threadpool", "%d threads", sysconf(_SC_NPROCESSORS_ONLN));
++	LOG(NULL, "pack deltas threadpool", "%d threads", numthreads);
+ 	threadpool = g_thread_pool_new(create_delta, NULL,
+-				       sysconf(_SC_NPROCESSORS_ONLN), FALSE, NULL);
++				       numthreads, FALSE, NULL);
+ 
+ 	item = g_list_first(files);
+ 	while (item) {
+-- 
+2.1.4
+

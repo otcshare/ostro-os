@@ -1,0 +1,38 @@
+From 7b9e1bc78b704a2fb9610dddc6f0925bb6412f55 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 8 Nov 2016 18:34:44 +0100
+Subject: [PATCH 2/3] pack.c: do not clean packstage
+
+This works around a bug in pseudo
+(https://bugzilla.yoctoproject.org/show_bug.cgi?id=10623) where
+unlinking the linked entries in the staging area also removes the
+xattrs of the original files in the full directory tree.
+
+This works as long as the swupd_create_pack command does not get
+called again without cleaning the packstage.
+
+Upstream-Status: Inappropriate [workaround]
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/pack.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/pack.c b/src/pack.c
+index 46c7c68..984c2d6 100644
+--- a/src/pack.c
++++ b/src/pack.c
+@@ -46,7 +46,9 @@ static void empty_pack_stage(int full, int from_version, int to_version, char *m
+ 	// clean any stale data (eg: re-run after a failure)
+ 	string_or_die(&param, "%s/%s/%i_to_%i/", packstage_dir, module, from_version, to_version);
+ 	char *const rmcmd[] = { "rm", "-fr", param, NULL };
+-	if (system_argv(rmcmd) != 0) {
++	if (true) {
++		LOG(NULL, "Skipping removal of packstage", "%s/%s/%i_to_%i/", packstage_dir, module, from_version, to_version);
++	} else if (system_argv(rmcmd) != 0) {
+ 		fprintf(stderr, "Failed to clean %s/%s/%i_to_%i\n",
+ 			packstage_dir, module, from_version, to_version);
+ 		free(param);
+-- 
+2.1.4
+

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #######################################
 # This script will be called after an updated kernel has been installed

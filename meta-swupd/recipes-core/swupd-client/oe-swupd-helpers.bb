@@ -35,5 +35,4 @@ do_install () {
     done
 }
 
-RDEPENDS_${PN} += "bash"
 FILES_${PN} += "${systemd_system_unitdir}"

@@ -1,0 +1,341 @@
+From f35a8484f100ac0da0fbe173fcd5e8843321b000 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Fri, 30 Sep 2016 08:42:08 +0200
+Subject: [PATCH 07/13] swupd-create-update: alternative input layout
+
+In Ostro OS, we already have a "full" directory with all files.
+Splitting it up into bundles just so that swupd-create-update can
+reconstruct the "full" directory is a waste of IO, and noticably slow
+when run under pseudo.
+
+To streamline the required work, a new layout for the "image" input
+directory gets introduced:
+- The "full" directory gets created by the caller before invoking
+  swupd-create-update.
+- For each bundle, instead of a <bundle> directory, there is a
+  <bundle>.content.txt file, listing all entries (including directories)
+  of the bundle.
+
+The traditional mode of operation still works as before because each operation
+which normally works with a bundle directory checks whether there is such a
+directory and if not, switches to the new mode.
+
+That way it is even possible to mix the two modes, i.e. replacing only
+some bundles with a content list, although that's probably not all
+that useful.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+
+---
+ src/analyze_fs.c    | 176 +++++++++++++++++++++++++++++++++++++++-------------
+ src/chroot.c        |  24 ++++---
+ src/create_update.c |   6 +-
+ 3 files changed, 153 insertions(+), 53 deletions(-)
+
+diff --git a/src/analyze_fs.c b/src/analyze_fs.c
+index ce30393..ac3731c 100644
+--- a/src/analyze_fs.c
++++ b/src/analyze_fs.c
+@@ -275,7 +275,7 @@ static void get_hash(gpointer data, gpointer user_data)
+ /* disallow characters which can do unexpected things when the filename is
+  * used on a tar command line via system("tar [args] filename [more args]");
+  */
+-static bool illegal_characters(char *filename)
++static bool illegal_characters(const char *filename)
+ {
+ 	char c;
+ 	int i;
+@@ -301,27 +301,151 @@ static bool illegal_characters(char *filename)
+ 	return false;
+ }
+ 
++static struct file *add_file(struct manifest *manifest,
++                             const char *entry_name,
++                             char *sub_filename,
++                             char *fullname,
++                             bool do_hash)
++{
++	GError *err = NULL;
++	struct file *file;
++
++	if (illegal_characters(entry_name)) {
++		printf("WARNING: Filename %s includes illegal character(s) ...skipping.\n", sub_filename);
++		free(sub_filename);
++		free(fullname);
++		return NULL;
++	}
++
++	file = calloc(1, sizeof(struct file));
++	assert(file);
++
++	file->last_change = manifest->version;
++	file->filename = sub_filename;
++
++	populate_file_struct(file, fullname);
++	if (file->is_deleted) {
++		/*
++		 * populate_file_struct() logs a stat() failure, but
++		 * does not abort. When adding files that should
++		 * exist, this case is an error.
++		 */
++		LOG(NULL, "file not found", "%s", fullname);
++		assert(0);
++	}
++
++
++	/* if for some reason there is a file in the official build
++	 * which should not be included in the Manifest, then open a bug
++	 * to get it removed, and work around its presence by
++	 * excluding it here, eg:
++	 if (strncmp(file->filename, "/dev/", 5) == 0) {
++	 continue;
++	 }
++	*/
++
++	if (do_hash) {
++		/* compute the hash from a thread */
++		int ret;
++		ret = g_thread_pool_push(threadpool, file, &err);
++		if (ret == FALSE) {
++			printf("GThread hash computation push error\n");
++			printf("%s\n", err->message);
++			assert(0);
++		}
++	}
++	manifest->files = g_list_prepend(manifest->files, file);
++	manifest->count++;
++        return file;
++}
++
++
+ static void iterate_directory(struct manifest *manifest, char *pathprefix,
+ 			      char *subpath, bool do_hash)
+ {
+ 	DIR *dir;
+ 	struct dirent *entry;
+ 	char *fullpath;
+-	int ret;
+-	GError *err = NULL;
+ 
+ 	string_or_die(&fullpath, "%s/%s", pathprefix, subpath);
+ 
+ 	dir = opendir(fullpath);
+ 	if (!dir) {
++		bool fatal_error = errno != ENOENT;
++		FILE *content;
++
+ 		free(fullpath);
++		if (fatal_error) {
++			return;
++		}
++		/*
++		 * If there is a <dir>.content.txt instead of
++		 * the actual directory, then read that
++		 * file. It has a list of path names,
++		 * including all directories. The
++		 * corresponding file system entry is then
++		 * expected to be in a pre-populated "full"
++		 * directory.
++		 *
++		 * Only supported at top level (i.e. empty
++		 * subpath) to keep the code and testing
++		 * simpler.
++		 */
++		assert(!subpath[0]);
++		string_or_die(&fullpath, "%s.content.txt", pathprefix);
++		content = fopen(fullpath, "r");
++		free(fullpath);
++		fullpath = NULL;
++		if (content) {
++			char *line = NULL;
++			size_t len = 0;
++			ssize_t read;
++			const char *full;
++			int full_len;
++			/*
++			 * determine path to "full" directory: it is assumed to be alongside
++			 * "pathprefix", i.e. pathprefix/../full. But pathprefix does not exit,
++			 * so we have to strip the last path component.
++			 */
++			full = strrchr(pathprefix, '/');
++			if (full) {
++				full_len = full - pathprefix + 1;
++				full = pathprefix;
++			} else {
++				full = "";
++				full_len = 0;
++			}
++			while ((read = getline(&line, &len, content)) != -1) {
++				if (read) {
++					const char *entry_name = strrchr(line, '/');
++					if (entry_name) {
++						entry_name++;
++					} else {
++						entry_name = line;
++					}
++					if (line[read - 1] == '\n') {
++						line[read - 1] = 0;
++					}
++					string_or_die(&fullpath, "%.*sfull/%s", full_len, full, line);
++					add_file(manifest,
++						 entry_name,
++						 strdup(line),
++						 fullpath,
++						 do_hash);
++				}
++			}
++			free(line);
++		}
++
++		// If both directory and content file are missing, silently (?)
++		// don't add anything to the manifest.
+ 		return;
+ 	}
+ 
+ 	while (dir) {
+-		struct file *file;
+ 		char *sub_filename;
+ 		char *fullname;
++                struct file *file;
+ 
+ 		entry = readdir(dir);
+ 		if (!entry) {
+@@ -334,50 +458,14 @@ static void iterate_directory(struct manifest *manifest, char *pathprefix,
+ 		}
+ 
+ 		string_or_die(&sub_filename, "%s/%s", subpath, entry->d_name);
+-
+-		if (illegal_characters(entry->d_name)) {
+-			printf("WARNING: Filename %s includes illegal character(s) ...skipping.\n", sub_filename);
+-			free(sub_filename);
+-			continue;
+-		}
+-
+-		file = calloc(1, sizeof(struct file));
+-		if (!file) {
+-			break;
+-		}
+-
+-		file->last_change = manifest->version;
+-		file->filename = sub_filename;
+-
+ 		string_or_die(&fullname, "%s/%s", fullpath, entry->d_name);
+-		populate_file_struct(file, fullname);
+-		free(fullname);
+ 
+-		if (file->is_dir) {
+-			iterate_directory(manifest, pathprefix, file->filename, do_hash);
+-		}
++		/* takes ownership of the strings, so we don't need to free it */
++		file = add_file(manifest, entry->d_name, sub_filename, fullname, do_hash);
+ 
+-		/* if for some reason there is a file in the official build
+-		 * which should not be included in the Manifest, then open a bug
+-		 * to get it removed, and work around its presence by
+-		 * excluding it here, eg:
+-		if (strncmp(file->filename, "/dev/", 5) == 0) {
+-			continue;
+-		}
+-		 */
+-
+-		if (do_hash) {
+-			/* compute the hash from a thread */
+-			ret = g_thread_pool_push(threadpool, file, &err);
+-			if (ret == FALSE) {
+-				printf("GThread hash computation push error\n");
+-				printf("%s\n", err->message);
+-				closedir(dir);
+-				return;
+-			}
++                if (file && file->is_dir) {
++                    iterate_directory(manifest, pathprefix, file->filename, do_hash);
+ 		}
+-		manifest->files = g_list_prepend(manifest->files, file);
+-		manifest->count++;
+ 	}
+ 	closedir(dir);
+ 	free(fullpath);
+diff --git a/src/chroot.c b/src/chroot.c
+index 32ed997..f3832e1 100644
+--- a/src/chroot.c
++++ b/src/chroot.c
+@@ -39,15 +39,21 @@ void chroot_create_full(int newversion)
+ 	char *full_dir;
+ 
+ 	string_or_die(&full_dir, "%s/%i/full/", image_dir, newversion);
++	if (!access(full_dir, R_OK|X_OK)) {
++		free(full_dir);
++		return;
++	}
+ 
+ 	g_mkdir_with_parents(full_dir, S_IRWXU);
+ 
+ 	/* start with base */
+-	LOG(NULL, "Copying chroot os-core to full", "");
+ 	string_or_die(&param, "%s/%i/os-core/", image_dir, newversion);
+-	char *const rsynccmd[] = { "rsync", "-aAX", param, full_dir, NULL };
+-	if (system_argv(rsynccmd) != 0) {
+-		assert(0);
++	if (!access(param, F_OK)) {
++		LOG(NULL, "Copying chroot os-core to full", "");
++		char *const rsynccmd[] = { "rsync", "-aAX", param, full_dir, NULL };
++		if (system_argv(rsynccmd) != 0) {
++			assert(0);
++		}
+ 	}
+ 	free(param);
+ 
+@@ -58,11 +64,13 @@ void chroot_create_full(int newversion)
+ 			break;
+ 		}
+ 
+-		LOG(NULL, "Overlaying bundle chroot onto full", "%s", group);
+ 		string_or_die(&param, "%s/%i/%s/", image_dir, newversion, group);
+-		char *const rsynccmd[] = { "rsync", "-aAX", "--ignore-existing", param, full_dir, NULL };
+-		if (system_argv(rsynccmd) != 0) {
+-			assert(0);
++		if (!access(param, F_OK)) {
++			LOG(NULL, "Overlaying bundle chroot onto full", "%s", group);
++			char *const rsynccmd[] = { "rsync", "-aAX", "--ignore-existing", param, full_dir, NULL };
++			if (system_argv(rsynccmd) != 0) {
++				assert(0);
++			}
+ 		}
+ 		free(param);
+ 	}
+diff --git a/src/create_update.c b/src/create_update.c
+index 4a8156b..4a00a25 100644
+--- a/src/create_update.c
++++ b/src/create_update.c
+@@ -141,6 +141,7 @@ static bool parse_options(int argc, char **argv)
+ static void populate_dirs(int version)
+ {
+ 	char *newversiondir;
++	char *newversiondircontent = NULL;
+ 
+ 	string_or_die(&newversiondir, "%s/%d", image_dir, version);
+ 
+@@ -182,9 +183,11 @@ static void populate_dirs(int version)
+ 			}
+ 
+ 			string_or_die(&newversiondir, "%s/%d/%s", image_dir, version, group);
++			string_or_die(&newversiondircontent, "%s/%d/%s.content.txt", image_dir, version, group);
+ 
+ 			/* Create the bundle directory(s) as needed */
+-			if (access(newversiondir, F_OK | R_OK) != 0) {
++			if (access(newversiondir, F_OK | R_OK) != 0 &&
++			    access(newversiondircontent, F_OK | R_OK) != 0) {
+ 				printf("%s does not exist...creating\n", group);
+ 				if (mkdir(newversiondir, 0755) != 0) {
+ 					printf("Failed to create %s subdirectory\n", group);
+@@ -193,6 +196,7 @@ static void populate_dirs(int version)
+ 		}
+ 	}
+ 	free(newversiondir);
++	free(newversiondircontent);
+ }
+ 
+ static int check_build_env(void)
+-- 
+2.1.4
+

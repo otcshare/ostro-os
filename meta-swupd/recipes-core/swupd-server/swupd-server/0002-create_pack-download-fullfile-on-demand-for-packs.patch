@@ -1,0 +1,40 @@
+From c9e9fb971ab0494047b4d8c0e656e0a06ad9b236 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 8 Nov 2016 18:39:49 +0100
+Subject: [PATCH 2/3] create_pack: download fullfile on demand for packs
+
+The fullfile .tar is needed for a pack as fallback when linking from
+the full rootfs isn't possible. In practice this shouldn't happen.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/pack.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/src/pack.c b/src/pack.c
+index ccb28bd..e331da2 100644
+--- a/src/pack.c
++++ b/src/pack.c
+@@ -187,6 +187,19 @@ static int stage_entry(struct file *file,
+ 
+ 	if (ret) {
+ 		ret = link(tarfrom, tarto);
++		if (ret && errno == ENOENT && content_url) {
++			LOG(NULL, "Download fallback for pack", "%s: %s to %s", packname, tarfrom, tarto);
++
++			/* Must be "tarfrom" that is missing. Download directly into target location.*/
++			char *cmd;
++			string_or_die(&cmd, "curl -s -o '%s' %s/%d/files/%s.tar",
++				      tarto, content_url, file->last_change, file->hash);
++			if (system(cmd)) {
++				LOG(file, "Downloading failed", "%s", cmd);
++			} else {
++				ret = 0;
++			}
++		}
+ 		if (ret && errno != EEXIST) {
+ 			LOG(NULL, "Failure to link for fullfile pack", "%s to %s (%s) %i", tarfrom, tarto, strerror(errno), errno);
+ 		}
+-- 
+2.1.4
+

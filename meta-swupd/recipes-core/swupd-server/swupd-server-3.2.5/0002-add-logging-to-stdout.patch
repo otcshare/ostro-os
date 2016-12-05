@@ -1,0 +1,198 @@
+From 2e3eb8abcdef496d0ce30d03da7befcb9978aceb Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Sat, 1 Oct 2016 13:51:02 +0200
+Subject: [PATCH 2/2] add logging to stdout
+
+When a CI system (like the one from Ostro) captures the output of
+commands, but not necessarily intermediate log files, then it is
+useful to also log to stdout. Another use case is calling the tools
+interactively during development.
+
+The new --log-stdout option in all three commands enables logging to
+stdout in addition to the traditional log files.
+
+The implementation recycles the existing init_log_stdout() (not used
+before) and gives it the slightly different meaning of "also log to
+stdout".
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/create_update.c  |  5 +++++
+ src/log.c            | 27 +++++++++++++++++----------
+ src/make_fullfiles.c |  5 +++++
+ src/make_packs.c     |  5 +++++
+ 4 files changed, 32 insertions(+), 10 deletions(-)
+
+diff --git a/src/create_update.c b/src/create_update.c
+index 74d5376..f1c840d 100644
+--- a/src/create_update.c
++++ b/src/create_update.c
+@@ -50,6 +50,7 @@ static void banner(void)
+ static const struct option prog_opts[] = {
+ 	{ "help", no_argument, 0, 'h' },
+ 	{ "version", no_argument, 0, 'v' },
++	{ "log-stdout", no_argument, 0, 'l' },
+ 	{ "osversion", required_argument, 0, 'o' },
+ 	{ "minversion", required_argument, 0, 'm' },
+ 	{ "format", required_argument, 0, 'F' },
+@@ -68,6 +69,7 @@ static void print_help(const char *name)
+ 	printf("   -v, --version           Show software version\n");
+ 	printf("\n");
+ 	printf("Application Options:\n");
++	printf("   -l, --log-stdout        Write log messages also to stdout\n");
+ 	printf("   -o, --osversion         The OS version for which to create an update\n");
+ 	printf("   -m, --minversion        Optional minimum file version to write into manifests per file\n");
+ 	printf("   -F, --format            Format number for the update\n");
+@@ -87,6 +89,9 @@ static bool parse_options(int argc, char **argv)
+ 		case 'h':
+ 			print_help(argv[0]);
+ 			return false;
++		case 'l':
++			init_log_stdout();
++			break;
+ 		case 'v':
+ 			banner();
+ 			return false;
+diff --git a/src/log.c b/src/log.c
+index e8bf9c3..45a4d66 100644
+--- a/src/log.c
++++ b/src/log.c
+@@ -33,7 +33,7 @@
+ 
+ #include "swupd.h"
+ 
+-static FILE *logfile;
++static FILE *logfile[2];
+ 
+ static struct timeval start_time;
+ 
+@@ -41,13 +41,13 @@ void init_log(const char *prefix, const char *bundle, int start, int end)
+ {
+ 	char *filename;
+ 	string_or_die(&filename, "%s%s-from-%i-to-%i.log", prefix, bundle, start, end);
+-	logfile = fopen(filename, "w");
++	logfile[0] = fopen(filename, "w");
+ 	free(filename);
+ 	gettimeofday(&start_time, NULL);
+ }
+ void init_log_stdout(void)
+ {
+-	logfile = stdout;
++	logfile[1] = stdout;
+ 	gettimeofday(&start_time, NULL);
+ }
+ 
+@@ -91,8 +91,9 @@ void __log_message(struct file *file, char *msg, char *filename, int linenr, con
+ 	char *logstring = NULL;
+ 	char filebuf[4096];
+ 	char filebuf2[4096];
++	int i;
+ 
+-	if (!logfile) {
++	if (!logfile[0] && !logfile[1]) {
+ 		return;
+ 	}
+ 
+@@ -119,12 +120,16 @@ void __log_message(struct file *file, char *msg, char *filename, int linenr, con
+ 		strcat(filebuf2, " ");
+ 	}
+ 
+-	fprintf(logfile, "%3i.%03i %5s %s:%03i\t| %s\t| %s\t| %s\n",
+-		(int)current_time.tv_sec, (int)current_time.tv_usec / 1000, logstring, filebuf, linenr, filebuf2, msg, buf);
++	for (i = 0; i < 2; i++) {
++		if (logfile[i]) {
++			fprintf(logfile[i], "%3i.%03i %5s %s:%03i\t| %s\t| %s\t| %s\n",
++				(int)current_time.tv_sec, (int)current_time.tv_usec / 1000, logstring, filebuf, linenr, filebuf2, msg, buf);
++			fflush(logfile[i]);
++		}
++	}
+ 
+ 	free(logstring);
+ 	free(buf);
+-	fflush(logfile);
+ }
+ 
+ void close_log(int version, int exit_status)
+@@ -133,7 +138,7 @@ void close_log(int version, int exit_status)
+ 	int t_sec;
+ 	int t_msec;
+ 
+-	if (!logfile) {
++	if (!logfile[0] && !logfile[1]) {
+ 		return;
+ 	}
+ 
+@@ -159,6 +164,8 @@ void close_log(int version, int exit_status)
+ 		printf("Update build failed for version %i\n", version);
+ 	}
+ 
+-	fclose(logfile);
+-	logfile = NULL;
++	if (logfile[0]) {
++		fclose(logfile[0]);
++		logfile[0] = NULL;
++	}
+ }
+diff --git a/src/make_fullfiles.c b/src/make_fullfiles.c
+index 2a1e2e9..0216e91 100644
+--- a/src/make_fullfiles.c
++++ b/src/make_fullfiles.c
+@@ -33,6 +33,7 @@
+ 
+ static const struct option prog_opts[] = {
+ 	{ "help", no_argument, 0, 'h' },
++	{ "log-stdout", no_argument, 0, 'l' },
+ 	{ "statedir", required_argument, 0, 'S' },
+ 	{ 0, 0, 0, 0 }
+ };
+@@ -43,6 +44,7 @@ static void usage(const char *name)
+ 	printf("   %s <version>\n\n", name);
+ 	printf("Help options:\n");
+ 	printf("   -h, --help              Show help options\n");
++	printf("   -l, --log-stdout        Write log messages also to stdout\n");
+ 	printf("   -S, --statedir          Optional directory to use for state [ default:=%s ]\n", SWUPD_SERVER_STATE_DIR);
+ 	printf("\n");
+ }
+@@ -57,6 +59,9 @@ static bool parse_options(int argc, char **argv)
+ 		case 'h':
+ 			usage(argv[0]);
+ 			return false;
++		case 'l':
++			init_log_stdout();
++			break;
+ 		case 'S':
+ 			if (!optarg || !set_state_dir(optarg)) {
+ 				printf("Invalid --statedir argument '%s'\n\n", optarg);
+diff --git a/src/make_packs.c b/src/make_packs.c
+index 8560b3f..2d3e25e 100644
+--- a/src/make_packs.c
++++ b/src/make_packs.c
+@@ -46,6 +46,7 @@ static void banner(void)
+ 
+ static const struct option prog_opts[] = {
+ 	{ "help", no_argument, 0, 'h' },
++	{ "log-stdout", no_argument, 0, 'l' },
+ 	{ "statedir", required_argument, 0, 'S' },
+ 	{ "signcontent", no_argument, 0, 's' },
+ 	{ 0, 0, 0, 0 }
+@@ -57,6 +58,7 @@ static void usage(const char *name)
+ 	printf("   %s <start version> <latest version> <bundle>\n\n", name);
+ 	printf("Help options:\n");
+ 	printf("   -h, --help              Show help options\n");
++	printf("   -l, --log-stdout        Write log messages also to stdout\n");
+ 	printf("   -S, --statedir          Optional directory to use for state [ default:=%s ]\n", SWUPD_SERVER_STATE_DIR);
+ 	printf("   -s, --signcontent       Enables cryptographic signing of update content\n");
+ 	printf("\n");
+@@ -72,6 +74,9 @@ static bool parse_options(int argc, char **argv)
+ 		case 'h':
+ 			usage(argv[0]);
+ 			return false;
++		case 'l':
++			init_log_stdout();
++			break;
+ 		case 'S':
+ 			if (!optarg || !set_state_dir(optarg)) {
+ 				printf("Invalid --statedir argument ''%s'\n\n", optarg);
+-- 
+2.1.4
+

@@ -1,0 +1,44 @@
+From 691e21a94d1f859efcefa9f65996c3080d88a133 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Thu, 1 Dec 2016 17:16:02 +0100
+Subject: [PATCH] type_change.c: allow transition dir -> symlink
+
+swupd client (tested with 2.87) supports replacing an empty directory
+with a symlink, so the check in the server is overly restrictive.
+
+Upstream wants to invest some more work before officially supporting
+such a state change (https://github.com/clearlinux/swupd-server/issues/50).
+
+In the meantime we already need to support it for updates from Ostro
+OS 1.0 because of /usr/lib/ssl/certs changing to a symlink.
+
+Upstream-Status: Inappropriate [Workaround]
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/type_change.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/type_change.c b/src/type_change.c
+index 99f4ae4..20f0cb3 100644
+--- a/src/type_change.c
++++ b/src/type_change.c
+@@ -81,11 +81,14 @@ static bool type_has_changed(struct file *file)
+ 	if (((type1 == 'F') && (type2 == 'L')) ||
+ 	    ((type1 == 'F') && (type2 == 'D')) ||
+ 	    ((type1 == 'L') && (type2 == 'F')) ||
+-	    ((type1 == 'L') && (type2 == 'D'))) {
++	    ((type1 == 'L') && (type2 == 'D')) ||
++	    ((type1 == 'D') && (type2 == 'L' || type2 == 'F'))) {
+ 		/* 1) file to symlink is an OK transition
+ 		 * 2) file to directory is an OK transition
+ 		 * 3) symlink to file is an OK transition
+ 		 * 4) symlink to directory is an OK transition
++		 * 5) *empty* directory to something else is an OK transition,
++		 *    so we allow it although the non-empty case doesn't work
+ 		 */
+ 		return false;
+ 	}
+-- 
+2.1.4
+

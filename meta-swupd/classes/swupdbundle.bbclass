@@ -19,6 +19,15 @@
 # BUNDLE_CONTENTS[bar] = "bar baz quux"
 # BBCLASSEXTEND = "swupdbundle:foo"
 
+fakeroot do_mega_archive () {
+    # Extracting files from this archive will be done using file lists which
+    # do not have a leading ./. Some versions of GNU tar had problems finding
+    # those files when we stored them with that prefix, so although we now use bsdtar,
+    # let's keep it consistent (and shorter) and store without the prefix.
+    bsdtar -cf ${MEGA_IMAGE_ARCHIVE} -C ${MEGA_IMAGE_ROOTFS} \
+        $(ls -1 -a ${MEGA_IMAGE_ROOTFS} | grep -v -e '^\.$' -e '^\.\.$')
+}
+
 python swupdbundle_virtclass_handler () {
     pn = e.data.getVar("PN", True)
     cls = e.data.getVar("BBEXTENDCURR", True)
@@ -43,6 +52,12 @@ python swupdbundle_virtclass_handler () {
 
     # Not producing any real images, only the rootfs directory.
     e.data.setVar("IMAGE_FSTYPES", "")
+
+    # Only the "mega" bundle gets archived in the work directory
+    # with a custom task.
+    if bundle == 'mega':
+        bb.build.addtask('do_mega_archive', 'do_image_complete', 'do_image', e.data)
+
     # Delete the bootimg task as we don't require it for transient images and
     # its dependent tasks are unlikely to be scheduled due to unsetting
     # IMAGE_FSTYPES above.

@@ -33,6 +33,9 @@ python swupdimage_virtclass_handler () {
     pn = pn + '-' + imageext
     e.data.setVar("PN", pn)
 
+    # Unset BUNDLE_NAME because we are not a bundle.
+    e.data.delVar("BUNDLE_NAME")
+
     # Sanity check settings to catch errors already during parsing.
     imagebundles = (e.data.getVarFlag('SWUPD_IMAGES', imageext, True) or '').split()
     if not imagebundles:
@@ -47,15 +50,18 @@ python swupdimage_virtclass_handler () {
     # Needed by do_image_append() in swupd-image.bbclass.
     e.data.setVar("IMAGE_BUNDLE_NAME", imageext)
     # We override the default methods such that they only copy from the mega rootfs.
-    e.data.setVar("do_image", "    swupd_create_rootfs(d)\n")
+    e.data.setVar("do_image", "    import swupd.rootfs\n    swupd.rootfs.create_rootfs(d)\n")
     # do_rootfs must not be empty, because empty tasks get skipped
     # and we don't want that for do_rootfs because its cleandirs
     # variable triggers the creation of the IMGDEPLOYDIR that we
     # are going to write into.
     e.data.setVar("do_rootfs", "    bb.utils.mkdirhier(d.getVar('IMAGE_ROOTFS', True))\n")
     # Depend on complete bundle generation in the base image.
-    dep = ' %s:do_swupd_update' % pn_base
+    dep = ' %s:do_stage_swupd_inputs' % pn_base
     e.data.appendVarFlag('do_image', 'depends', dep)
+    # Ensure update stream is generated when only building virt image
+    dep = ' %s:do_swupd_update' % pn_base
+    e.data.appendVarFlag('do_swupd_update', 'depends', dep)
 }
 
 addhandler swupdimage_virtclass_handler

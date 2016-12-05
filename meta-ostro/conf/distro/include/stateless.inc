@@ -49,23 +49,9 @@ STATELESS_RM_pn-systemd += " \
 # from the bundles. Short-term solution, something like this will
 # have to be handled by meta-swupd.
 STATELESS_ETC_WHITELIST += "machine-id"
-# This postfunc runs after the do_copy_bundle_contents task and ensures that
-# machine-id is removed from the bundle directories (to be moved into meta-swupd,
-# probably using the STATEFUL_FILES variable).
+# These files must be ignored by swupd.
 STATEFUL_FILES += "/etc/machine-id"
-python stateless_rm_config_files () {
-  for bundle in d.getVar('SWUPD_BUNDLES', True).split() + ['os-core']:
-    bundledir = d.expand('${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/') + bundle
-    for tgt in d.getVar('STATEFUL_FILES', True).split():
-      try:
-        # Can't use os.path.join() because of the leading slash in tgt.
-        path = bundledir + tgt
-        bb.note('stateless: trying to remove %s from bundle %s = %s' % (tgt, bundle, path))
-        os.remove(path)
-      except Exception as e:
-        bb.note('Failed to delete file: %s due to %s' % (tgt, str(e)))
-}
-do_swupd_update[prefuncs] += "stateless_rm_config_files"
+SWUPD_FILE_BLACKLIST_append = " ${STATEFUL_FILES}"
 
 # Depend on the installed components and thus has to be computed on
 # the device. Handled by systemd during booting or updates.

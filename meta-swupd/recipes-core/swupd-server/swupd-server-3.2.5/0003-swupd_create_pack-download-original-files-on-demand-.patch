@@ -1,0 +1,244 @@
+From ee076ebeb041b725e40041e77d8f368f866f3216 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 8 Nov 2016 18:39:49 +0100
+Subject: [PATCH 3/3] swupd_create_pack: download original files on demand for
+ diffing
+
+The new, optional mode gets enabled via the --content-url parameter.
+When specified, swupd_create_pack will download the <original
+version>/files/<hash>.tar file from the update server if the required
+file is missing.
+
+This mode is meant for use with meta-swupd where new CI builds start
+with an empty "image" directory. NFS access to the full, expanded
+"image" directories of the previous build is not possible in such a
+setup (would require root for special file attributes).
+
+Downloading and unpacking image directories of previous builds would
+be possible, but is expected to be slower (when downloading all files,
+not just those needed for diffing) or more complex (when deciding about
+required files outside of swupd_create_pack).
+
+The downside of this new approach is that it relies on not changing
+the content or naming of the tar files. For example, switching from
+GNU tar to bsdtar would not work. But that's not an issue for the
+intended usage in Ostro OS, which already made the switch to
+bsdtar.
+
+If for some reason a format change is necessary, delta computation
+becomes impossible and falls back to staging the full files.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ include/swupd.h  |  2 ++
+ src/delta.c      | 90 ++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ src/globals.c    | 13 ++++++++
+ src/make_packs.c |  8 +++++
+ 4 files changed, 111 insertions(+), 2 deletions(-)
+
+diff --git a/include/swupd.h b/include/swupd.h
+index 31c7191..c1c0e96 100644
+--- a/include/swupd.h
++++ b/include/swupd.h
+@@ -147,12 +147,14 @@ extern char *state_dir;
+ extern char *packstage_dir;
+ extern char *image_dir;
+ extern char *staging_dir;
++extern char *content_url;
+ 
+ extern bool init_globals(void);
+ extern void free_globals(void);
+ extern bool set_format(char *);
+ extern void check_root(void);
+ extern bool set_state_dir(char *);
++extern bool set_content_url(const char *);
+ extern bool init_state_globals(void);
+ extern void free_state_globals(void);
+ 
+diff --git a/src/delta.c b/src/delta.c
+index 67e7df7..7e978b1 100644
+--- a/src/delta.c
++++ b/src/delta.c
+@@ -37,8 +37,14 @@
+ 
+ void __create_delta(struct file *file, int from_version)
+ {
+-	char *original, *newfile, *outfile, *dotfile, *testnewfile;
+-	char *conf, *param1, *param2;
++	char *original = NULL, *newfile = NULL, *outfile = NULL, *dotfile = NULL, *testnewfile = NULL;
++	char *tmpdir = NULL;
++	char *url = NULL;
++	char *cmd = NULL;
++	char *conf = NULL, *param1 = NULL, *param2 = NULL;
++	bool delete_original = false;
++	struct manifest *manifest = NULL;
++	GError *gerror = NULL;
+ 	int ret;
+ 
+ 	if (file->is_link) {
+@@ -58,6 +64,74 @@ void __create_delta(struct file *file, int from_version)
+ 
+ 	string_or_die(&original, "%s/%i/full/%s", conf, from_version, file->peer->filename);
+ 
++	if (access(original, F_OK) &&
++	    content_url) {
++		/* File does not exist. Try to get it from the online update repo instead.
++		 * This fallback is meant to be used for CI builds which start with no local
++		 * state and only HTTP(S) access to the published www directory.
++		 * Not being able to retrieve the file is not an error and will merely
++		 * prevent computing the delta.
++		 */
++		string_or_die(&tmpdir, "%s/make-pack-tmpdir-XXXXXX", state_dir);
++		tmpdir = g_dir_make_tmp("make-pack-XXXXXX", &gerror);
++		if (!tmpdir) {
++			LOG(NULL, "Failed to create temporary directory for untarring original file", "%s",
++			    gerror->message);
++			assert(0);
++		}
++		/* Determine hash of original file in the corresponding Manifest. */
++		manifest = manifest_from_file(from_version, "full");
++		if (!manifest) {
++			LOG(NULL, "Failed to read full Manifest", "version %d, cannot retrieve original file",
++			    from_version);
++			goto out;
++		}
++		const char *last_hash = NULL;
++		GList *list = g_list_first(manifest->files);
++		while (list) {
++			struct file *original_file = list->data;
++			if (!strcmp(file->filename, original_file->filename)) {
++				last_hash = original_file->hash;
++				break;
++			}
++			list = g_list_next(list);
++		}
++		if (!last_hash) {
++			LOG(NULL, "Original file not found", "%s in full manifest for %d - inconsistent update data?!",
++			    file->filename, from_version);
++			goto out;
++		}
++
++		/* We use a temporary copy because we don't want to
++		 * tamper with the original "full" folder which
++		 * probably does not even exist. Using a temporary file
++		 * file implies re-downloading in the future, but that's
++		 * consistent with the intended usage in a CI environment
++		 * which always starts from scratch.
++		 */
++		free(original);
++		string_or_die(&original, "%s/%s", tmpdir, last_hash);
++		delete_original = true;
++
++		/*
++		 * This is a proof-of-concept. A real implementation should use
++		 * a combination of libcurl + libarchive calls to unpack the files.
++		 * For current Ostro OS, deltas despite xattr differences would
++		 * be needed, otherwise this code here is of little use (all
++		 * modified files fail the xattr sameness check, because security.ima
++		 * changes when file content changes).
++		 */
++		string_or_die(&url, "%s/%d/files/%s.tar", content_url, from_version, last_hash);
++		LOG(file, "Downloading original file", "%s to %s", url, original);
++
++		/* bsdtar can detect compression when reading from stdin, GNU tar can't. */
++		string_or_die(&cmd, "curl -s %s | bsdtar -C %s -xf -", url, tmpdir);
++		if (system(cmd)) {
++			LOG(file, "Downloading/unpacking failed, skipping delta", "%s", url);
++			goto out;
++		}
++	}
++
+ 	free(conf);
+ 
+ 	conf = config_output_dir();
+@@ -141,6 +215,18 @@ void __create_delta(struct file *file, int from_version)
+ 		LOG(NULL, "Failed to rename", "");
+ 	}
+ out:
++	if (delete_original) {
++		unlink(original);
++	}
++	if (tmpdir) {
++		rmdir(tmpdir);
++		g_free(tmpdir);
++	}
++	if (manifest) {
++		free_manifest(manifest);
++	}
++	g_clear_error(&gerror);
++	free(cmd);
+ 	free(testnewfile);
+ 	free(conf);
+ 	free(newfile);
+diff --git a/src/globals.c b/src/globals.c
+index 74758ce..0e047e2 100644
+--- a/src/globals.c
++++ b/src/globals.c
+@@ -40,6 +40,7 @@ char *state_dir = NULL;
+ char *packstage_dir = NULL;
+ char *image_dir = NULL;
+ char *staging_dir = NULL;
++char *content_url = NULL;
+ 
+ bool set_format(char *userinput)
+ {
+@@ -76,6 +77,17 @@ bool set_state_dir(char *dir)
+ 	return true;
+ }
+ 
++bool set_content_url(const char *url)
++{
++	if (content_url) {
++		free(content_url);
++	}
++	string_or_die(&content_url, "%s", url);
++
++	return true;
++}
++
++
+ bool init_globals(void)
+ {
+ 	if (format == 0) {
+@@ -123,4 +135,5 @@ void free_state_globals(void)
+ 	free(packstage_dir);
+ 	free(image_dir);
+ 	free(staging_dir);
++	free(content_url);
+ }
+diff --git a/src/make_packs.c b/src/make_packs.c
+index 2d3e25e..827be56 100644
+--- a/src/make_packs.c
++++ b/src/make_packs.c
+@@ -49,6 +49,7 @@ static const struct option prog_opts[] = {
+ 	{ "log-stdout", no_argument, 0, 'l' },
+ 	{ "statedir", required_argument, 0, 'S' },
+ 	{ "signcontent", no_argument, 0, 's' },
++	{ "content-url", required_argument, 0, 'u' },
+ 	{ 0, 0, 0, 0 }
+ };
+ 
+@@ -61,6 +62,7 @@ static void usage(const char *name)
+ 	printf("   -l, --log-stdout        Write log messages also to stdout\n");
+ 	printf("   -S, --statedir          Optional directory to use for state [ default:=%s ]\n", SWUPD_SERVER_STATE_DIR);
+ 	printf("   -s, --signcontent       Enables cryptographic signing of update content\n");
++	printf("   -u, --content-url       Base URL of the update repo (optional, used to retrieve missing files on demand");
+ 	printf("\n");
+ }
+ 
+@@ -86,6 +88,12 @@ static bool parse_options(int argc, char **argv)
+ 		case 's':
+ 			enable_signing = true;
+ 			break;
++		case 'u':
++			if (!optarg || !set_content_url(optarg)) {
++				printf("Invalid --content-url argument ''%s''\n\n", optarg);
++				return false;
++			}
++			break;
+ 		}
+ 	}
+ 
+-- 
+2.1.4
+

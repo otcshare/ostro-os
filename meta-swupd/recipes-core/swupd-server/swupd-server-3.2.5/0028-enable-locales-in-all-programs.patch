@@ -1,0 +1,98 @@
+From f74807f9aebbb7b8feb1f50107e268bd869f2691 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Wed, 28 Sep 2016 16:55:22 +0200
+Subject: [PATCH 1/3] enable locales in all programs
+
+This is a pre-condition for using libarchive directly: libarchive
+needs to know what the encoding of filenames is, and it uses the
+current locale for that. Without setlocale(), the locale is "C", which
+only supports ASCII filenames, leading to warnings about "Can't
+encode..." from libarchive when it is forced to fall back to copying
+strings verbatim when writing archives that require UTF-8 encoding.
+
+As a side effect, error messages from libc will get translated
+according to the user's environment.
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+
+---
+ src/create_update.c  | 6 ++++++
+ src/make_fullfiles.c | 6 ++++++
+ src/make_packs.c     | 6 ++++++
+ 3 files changed, 18 insertions(+)
+
+diff --git a/src/create_update.c b/src/create_update.c
+index 97045e5..766609b 100644
+--- a/src/create_update.c
++++ b/src/create_update.c
+@@ -29,6 +29,7 @@
+ #include <errno.h>
+ #include <getopt.h>
+ #include <glib.h>
++#include <locale.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -240,6 +241,11 @@ int main(int argc, char **argv)
+ 	/* keep valgrind working well */
+ 	setenv("G_SLICE", "always-malloc", 0);
+ 
++	if (!setlocale(LC_ALL, "")) {
++		fprintf(stderr, "%s: setlocale() failed\n", argv[0]);
++		return EXIT_FAILURE;
++	}
++
+ 	if (!parse_options(argc, argv)) {
+ 		free_globals();
+ 		return EXIT_FAILURE;
+diff --git a/src/make_fullfiles.c b/src/make_fullfiles.c
+index 4ea2f01..2a1e2e9 100644
+--- a/src/make_fullfiles.c
++++ b/src/make_fullfiles.c
+@@ -23,6 +23,7 @@
+ #define _GNU_SOURCE
+ #include <assert.h>
+ #include <getopt.h>
++#include <locale.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -88,6 +89,11 @@ int main(int argc, char **argv)
+ 	/* keep valgrind working well */
+ 	setenv("G_SLICE", "always-malloc", 0);
+ 
++	if (!setlocale(LC_ALL, "")) {
++		fprintf(stderr, "%s: setlocale() failed\n", argv[0]);
++		return EXIT_FAILURE;
++	}
++
+ 	if (!parse_options(argc, argv)) {
+ 		free_state_globals();
+ 		return EXIT_FAILURE;
+diff --git a/src/make_packs.c b/src/make_packs.c
+index 4002cd9..8560b3f 100644
+--- a/src/make_packs.c
++++ b/src/make_packs.c
+@@ -27,6 +27,7 @@
+ #include <getopt.h>
+ #include <getopt.h>
+ #include <glib.h>
++#include <locale.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+@@ -101,6 +102,11 @@ int main(int argc, char **argv)
+ 	int exit_status = EXIT_FAILURE;
+ 	char *file_path = NULL;
+ 
++	if (!setlocale(LC_ALL, "")) {
++		fprintf(stderr, "%s: setlocale() failed\n", argv[0]);
++		return EXIT_FAILURE;
++	}
++
+ 	if (!parse_options(argc, argv)) {
+ 		free_state_globals();
+ 		return EXIT_FAILURE;
+-- 
+2.1.4
+

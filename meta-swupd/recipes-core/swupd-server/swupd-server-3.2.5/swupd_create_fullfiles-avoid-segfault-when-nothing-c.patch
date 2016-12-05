@@ -1,0 +1,32 @@
+From edd16ae9b9aa2315aa6d1b8ee73239a3baa2f998 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Mon, 7 Nov 2016 09:05:40 +0100
+Subject: [PATCH] swupd_create_fullfiles: avoid segfault when nothing changes
+
+In the (unlikely) case that nothing changed between two builds,
+get_deduplicated_fullfile_list() segfaults because it uses
+manifest->files without checking for NULL, aka the empty list.
+
+Upstream-Status: Submitted [https://github.com/clearlinux/swupd-server/pull/36]
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/fullfiles.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/fullfiles.c b/src/fullfiles.c
+index 214b7b4..0d6ecf2 100644
+--- a/src/fullfiles.c
++++ b/src/fullfiles.c
+@@ -300,7 +300,7 @@ static GList *get_deduplicated_fullfile_list(struct manifest *manifest)
+ 	manifest->files = g_list_sort(manifest->files, file_sort_hash);
+ 
+ 	list = g_list_first(manifest->files);
+-	while (prev == NULL) {
++	while (prev == NULL && list != NULL) {
+ 		tmp = list->data;
+ 		list = g_list_next(list);
+ 
+-- 
+2.1.4
+

@@ -7,7 +7,6 @@ PACKAGECONFIG_remove = "stateless"
 
 SRC_URI_append = "file://0001-Disable-boot-file-heuristics.patch \
                   file://efi_combo_updater.c \
-                  file://ostroprojectorg.key \
                   ${@ 'file://efi-combo-trigger.service' if ${OSTRO_USE_DSK_IMAGES} else ''} \
                  "
 
@@ -23,10 +22,6 @@ SYSTEMD_SERVICE_${PN} += "${@ 'efi-combo-trigger.service' if ${OSTRO_USE_DSK_IMA
 
 # And activate it.
 SYSTEMD_AUTO_ENABLE_${PN} = "enable"
-
-SWUPD_VERSION_URL ?= "https://download.ostroproject.org/updates/ostro-os/milestone/${MACHINE}/ostro-image-swupd"
-SWUPD_CONTENT_URL ?= "https://download.ostroproject.org/updates/ostro-os/milestone/${MACHINE}/ostro-image-swupd"
-SWUPD_PINNED_PUBKEY ?= "${datadir}/clear/update-ca/ostroproject.key"
 
 do_compile_append() {
     if [ "${OSTRO_USE_DSK_IMAGES}" = "True" ]; then
@@ -44,9 +39,6 @@ do_install_append () {
 
     # Don't install and enable check-update.timer by default
     rm -f ${D}/${systemd_system_unitdir}/check-update.* ${D}/${systemd_system_unitdir}/multi-user.target.wants/check-update.*
-
-    install -d ${D}${datadir}/clear/update-ca
-    install -m 0644 ${WORKDIR}/ostroprojectorg.key ${D}${datadir}/clear/update-ca/ostroproject.key
 }
 
 pkg_postinst_${PN}_append () {

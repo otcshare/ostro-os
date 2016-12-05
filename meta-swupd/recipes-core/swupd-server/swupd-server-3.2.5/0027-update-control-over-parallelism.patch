@@ -1,0 +1,87 @@
+From 8686189b3b080446fae732a85b72528b7fe68ba6 Mon Sep 17 00:00:00 2001
+From: Patrick Ohly <patrick.ohly@intel.com>
+Date: Tue, 27 Sep 2016 08:25:40 +0200
+Subject: [PATCH 27/29] update control over parallelism
+
+The SWUPD_NUM_THREADS env variable is now understood by all three
+commands and overrides the default number of threads. Setting it to 1
+is useful while debugging the code that runs inside threads (only one
+thread hits breakpoints there).
+
+The hard-coded parallelism of 12 threads when analysing the file system
+gets replaced with n, where n is the number of available CPUs. The default
+is the same as before elsewhere (n for packing, 3 * n for fullfiles).
+
+Signed-off-by: Patrick Ohly <patrick.ohly@intel.com>
+---
+ src/analyze_fs.c | 5 ++++-
+ src/fullfiles.c  | 7 +++++--
+ src/pack.c       | 7 +++++--
+ 3 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/src/analyze_fs.c b/src/analyze_fs.c
+index 3bfb288..0f16343 100644
+--- a/src/analyze_fs.c
++++ b/src/analyze_fs.c
+@@ -387,6 +387,9 @@ struct manifest *full_manifest_from_directory(int version)
+ {
+ 	struct manifest *manifest;
+ 	char *dir;
++	int numthreads = getenv("SWUPD_NUM_THREADS") ?
++		atoi(getenv("SWUPD_NUM_THREADS")) :
++		sysconf(_SC_NPROCESSORS_ONLN);
+ 
+ 	LOG(NULL, "Computing hashes", "for %i/full", version);
+ 
+@@ -394,7 +397,7 @@ struct manifest *full_manifest_from_directory(int version)
+ 
+ 	string_or_die(&dir, "%s/%i/full", image_dir, version);
+ 
+-	threadpool = g_thread_pool_new(get_hash, dir, 12, FALSE, NULL);
++	threadpool = g_thread_pool_new(get_hash, dir, numthreads, FALSE, NULL);
+ 
+ 	iterate_directory(manifest, dir, "", true);
+ 
+diff --git a/src/fullfiles.c b/src/fullfiles.c
+index 3be43d1..216a1d7 100644
+--- a/src/fullfiles.c
++++ b/src/fullfiles.c
+@@ -291,10 +291,13 @@ static void submit_fullfile_tasks(GList *files)
+ 	int ret;
+ 	int count = 0;
+ 	GError *err = NULL;
++	int numthreads = getenv("SWUPD_NUM_THREADS") ?
++		atoi(getenv("SWUPD_NUM_THREADS")) :
++		sysconf(_SC_NPROCESSORS_ONLN) * 3;
+ 
+-	LOG(NULL, "fullfile threadpool", "%d threads", sysconf(_SC_NPROCESSORS_ONLN) * 3);
++	LOG(NULL, "fullfile threadpool", "%d threads", numthreads);
+ 	threadpool = g_thread_pool_new(create_fullfile_task, NULL,
+-				       sysconf(_SC_NPROCESSORS_ONLN) * 3,
++				       numthreads,
+ 				       TRUE, NULL);
+ 
+ 	printf("Starting downloadable fullfiles data creation\n");
+diff --git a/src/pack.c b/src/pack.c
+index 12d7443..3ffb88a 100644
+--- a/src/pack.c
++++ b/src/pack.c
+@@ -285,10 +285,13 @@ static void make_pack_deltas(GList *files)
+ 	struct file *file;
+ 	int ret;
+ 	GError *err = NULL;
++	int numthreads = getenv("SWUPD_NUM_THREADS") ?
++		atoi(getenv("SWUPD_NUM_THREADS")) :
++		sysconf(_SC_NPROCESSORS_ONLN);
+ 
+-	LOG(NULL, "pack deltas threadpool", "%d threads", sysconf(_SC_NPROCESSORS_ONLN));
++	LOG(NULL, "pack deltas threadpool", "%d threads", numthreads);
+ 	threadpool = g_thread_pool_new(create_delta, NULL,
+-				       sysconf(_SC_NPROCESSORS_ONLN), FALSE, NULL);
++				       numthreads, FALSE, NULL);
+ 
+ 	item = g_list_first(files);
+ 	while (item) {
+-- 
+2.1.4
+
