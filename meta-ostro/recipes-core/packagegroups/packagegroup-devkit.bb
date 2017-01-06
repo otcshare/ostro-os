@@ -8,4 +8,5 @@ RDEPENDS_${PN} = " \
     mraa \
     mraa-utils \
     upm \
+    soletta-dev-app \
 "
