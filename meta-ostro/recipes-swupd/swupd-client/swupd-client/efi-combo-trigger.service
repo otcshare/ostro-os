@@ -7,4 +7,4 @@ WantedBy=update-triggers.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/efi_combo_updater
+ExecStart=/usr/bin/efi_combo_updater.sh
