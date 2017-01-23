@@ -1,7 +1,8 @@
+PR = "r1"
 SUMMARY = "IoTivity framework and SDK sponsored by the Open Connectivity Foundation."
 DESCRIPTION = "IoTivity is an open source software framework enabling seamless device-to-device connectivity to address the emerging needs of the Internet of Things."
 HOMEPAGE = "https://www.iotivity.org/"
-DEPENDS = "boost virtual/gettext chrpath-replacement-native expat openssl util-linux curl glib-2.0"
+DEPENDS = "boost virtual/gettext chrpath-replacement-native expat openssl util-linux curl glib-2.0 glib-2.0-native"
 EXTRANATIVEPATH += "chrpath-native"
 SECTION = "libs"
 LICENSE = "Apache-2.0"
@@ -381,7 +382,7 @@ do_install() {
     copy_file ${S}/iotivity.pc ${D}${libdir}/pkgconfig/
     ln -s iotivity/resource ${D}${includedir}/resource
     ln -s iotivity/service ${D}${includedir}/service
-    ln -s ../iotivity/resource/oc_logger/targets ${D}${includedir}/resource/
+    ln -s oc_logger/targets ${D}${includedir}/resource/
 
     chrpath -d ${D}${libdir}/*.so
 }
