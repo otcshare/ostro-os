@@ -1,0 +1,48 @@
+From 6554de025f4819f9f458cde70d706beab3ed11b8 Mon Sep 17 00:00:00 2001
+From: Philippe Coval <philippe.coval@osg.samsung.com>
+Date: Thu, 10 Nov 2016 12:47:39 +0100
+Subject: [PATCH 081/341] yocto: Add aarch64 for DragonBoard-410c
+
+Backported to 1.1-rel branch
+
+Change-Id: I0ebf93ca17a9a6624da3caaaf7487529b2c556d6
+Credit-to: Kotaro HASHIMOTO <Hashimoto.Kotaro@ds.MitsubishiElectric.co.jp>
+Origin: https://lists.linuxfoundation.org/pipermail/automotive-discussions/2016-November/002805.html
+Signed-off-by: Philippe Coval <philippe.coval@osg.samsung.com>
+Reviewed-on: https://gerrit.iotivity.org/gerrit/14187
+Tested-by: jenkins-iotivity <jenkins-iotivity@opendaylight.org>
+Reviewed-by: Habib Virji <habib.virji@samsung.com>
+---
+ build_common/SConscript                     | 2 +-
+ resource/csdk/connectivity/build/SConscript | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/build_common/SConscript b/build_common/SConscript
+index 1427f08..56ea713 100644
+--- a/build_common/SConscript
++++ b/build_common/SConscript
+@@ -26,7 +26,7 @@ os_arch_map = {
+ 		'darwin': ['i386', 'x86_64'],
+ 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
+ 		'arduino': ['avr', 'arm'],
+-		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
++		'yocto': ['i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+ 		}
+ 
+ host = platform.system().lower()
+diff --git a/resource/csdk/connectivity/build/SConscript b/resource/csdk/connectivity/build/SConscript
+index b812fed..44c7d09 100644
+--- a/resource/csdk/connectivity/build/SConscript
++++ b/resource/csdk/connectivity/build/SConscript
+@@ -21,7 +21,7 @@ os_arch_map = {
+ 		'darwin': ['i386', 'x86_64'],
+ 		'ios': ['i386', 'x86_64', 'armv7', 'armv7s', 'arm64'],
+ 		'arduino': ['avr', 'arm'],
+-                'yocto': ['i586', 'i686', 'x86_64', 'arm', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
++                'yocto': ['i586', 'i686', 'x86_64', 'arm', 'aarch64', 'powerpc', 'powerpc64', 'mips', 'mipsel'],
+ 		}
+ 
+ host = platform.system().lower()
+-- 
+1.9.1
+
