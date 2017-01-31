@@ -7,5 +7,4 @@ RDEPENDS_${PN} = " \
     iotivity-node \
     iot-rest-api-server \
     nodejs \
-    soletta-nodejs \
 "
