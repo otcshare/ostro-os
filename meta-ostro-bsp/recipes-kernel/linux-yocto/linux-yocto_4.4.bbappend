@@ -86,6 +86,7 @@ SRC_URI_append_intel-quark = " file://bluetooth.cfg"
 # Galileo 2 GPIO
 SRC_URI_append_intel-quark = " file://galileo2.cfg"
 SRC_URI_append_intel-quark = " file://iio.cfg"
+SRC_URI_append_intel-quark = " file://0001-gpio-pca953x-add-PCAL9535-interrupt-support.patch"
 
 # Enable/disable GFX console and support as necessary
 SRC_URI_append_intel-core2-32 = "${@bb.utils.contains('DISTRO_FEATURES', 'x11', ' file://gfx.cfg', ' file://no-gfx.cfg', d)}"
