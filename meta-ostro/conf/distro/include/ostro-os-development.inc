@@ -17,3 +17,5 @@ OSTRO_EXTRA_MOTD () {
 # Everything ready, avoid initial sanity check.
 OSTRO_IMAGE_BUILD_MODE_SELECTED = "1"
 
+# Test build
+OSTRO_IMAGE_EXTRA_INSTALL_append = " librealsense-examples"
