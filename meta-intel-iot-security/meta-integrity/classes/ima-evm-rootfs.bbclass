@@ -13,6 +13,9 @@ IMA_EVM_PRIVKEY ?= "${IMA_EVM_KEY_DIR}/privkey_ima.pem"
 IMA_EVM_X509 ?= "${IMA_EVM_KEY_DIR}/x509_ima.der"
 
 # Root CA to be compiled into the kernel, none by default.
+# Must be the absolute path to a der-encoded x509 CA certificate
+# with a .x509 suffix. See linux-%.bbappend for details.
+#
 # ima-local-ca.x509 is what ima-gen-local-ca.sh creates.
 IMA_EVM_ROOT_CA ?= ""
 

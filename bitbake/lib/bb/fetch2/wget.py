@@ -33,7 +33,6 @@ import logging
 import bb
 import bb.progress
 import urllib.request, urllib.parse, urllib.error
-from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
@@ -84,9 +83,9 @@ class Wget(FetchMethod):
         else:
             ud.basename = os.path.basename(ud.path)
 
-        ud.localfile = data.expand(urllib.parse.unquote(ud.basename), d)
+        ud.localfile = d.expand(urllib.parse.unquote(ud.basename))
         if not ud.localfile:
-            ud.localfile = data.expand(urllib.parse.unquote(ud.host + ud.path).replace("/", "."), d)
+            ud.localfile = d.expand(urllib.parse.unquote(ud.host + ud.path).replace("/", "."))
 
         self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget -t 2 -T 30 --passive-ftp --no-check-certificate"
 
@@ -108,9 +107,8 @@ class Wget(FetchMethod):
             bb.utils.mkdirhier(os.path.dirname(dldir + os.sep + ud.localfile))
             fetchcmd += " -O " + dldir + os.sep + ud.localfile
 
-        if ud.user:
-            up = ud.user.split(":")
-            fetchcmd += " --user=%s --password=%s --auth-no-challenge" % (up[0],up[1])
+        if ud.user and ud.pswd:
+            fetchcmd += " --user=%s --password=%s --auth-no-challenge" % (ud.user, ud.pswd)
 
         uri = ud.url.split(";")[0]
         if os.path.exists(ud.localpath):
@@ -305,11 +303,23 @@ class Wget(FetchMethod):
             r = urllib.request.Request(uri)
             r.get_method = lambda: "HEAD"
 
-            if ud.user:
+            def add_basic_auth(login_str, request):
+                '''Adds Basic auth to http request, pass in login:password as string'''
                 import base64
-                encodeuser = base64.b64encode(ud.user.encode('utf-8')).decode("utf-8")
+                encodeuser = base64.b64encode(login_str.encode('utf-8')).decode("utf-8")
                 authheader =  "Basic %s" % encodeuser
                 r.add_header("Authorization", authheader)
+
+            if ud.user:
+                add_basic_auth(ud.user, r)
+
+            try:
+                import netrc, urllib.parse
+                n = netrc.netrc()
+                login, unused, password = n.authenticators(urllib.parse.urlparse(uri).hostname)
+                add_basic_auth("%s:%s" % (login, password), r)
+            except (TypeError, ImportError, IOError, netrc.NetrcParseError):
+                 pass
 
             opener.open(r)
         except urllib.error.URLError as e:
@@ -535,7 +545,7 @@ class Wget(FetchMethod):
 
         # src.rpm extension was added only for rpm package. Can be removed if the rpm
         # packaged will always be considered as having to be manually upgraded
-        psuffix_regex = "(tar\.gz|tgz|tar\.bz2|zip|xz|rpm|bz2|orig\.tar\.gz|tar\.xz|src\.tar\.gz|src\.tgz|svnr\d+\.tar\.bz2|stable\.tar\.gz|src\.rpm)"
+        psuffix_regex = "(tar\.gz|tgz|tar\.bz2|zip|xz|tar\.lz|rpm|bz2|orig\.tar\.gz|tar\.xz|src\.tar\.gz|src\.tgz|svnr\d+\.tar\.bz2|stable\.tar\.gz|src\.rpm)"
 
         # match name, version and archive type of a package
         package_regex_comp = re.compile("(?P<name>%s?\.?v?)(?P<pver>%s)(?P<arch>%s)?[\.-](?P<type>%s$)"

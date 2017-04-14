@@ -8,12 +8,12 @@ SRC_URI = "http://fast.dpdk.org/rel/${BP}.tar.gz;name=dpdk \
 	   file://dpdk-16.07-add-sysroot-option-within-app-makefile.patch \
 	   file://dpdk-16.04-point-to-the-right-include-and-lib-path.patch \
 	   file://dpdk-16.04-Fix-for-misleading-indentation-error.patch \
-	   file://dpdk-16.11-dpdk-fix-installation-warning-and-issue.patch \
 	   file://dpdk-16.04-dpdk-fix-compilation-with-dynamic-libs.patch \
 	   file://dpdk-16.07-dpdk-fix-for-parellel-make-issue.patch \
+	   file://dpdk-17.02-dpdk-fix-installation-warning-and-issue.patch \
 	  "
 
-COMPATIBLE_MACHINE = "crystalforest|intel-corei7-64"
+COMPATIBLE_MACHINE = "intel-corei7-64"
 
 # dpdk example apps dpdk_qat and vhost have dependancy on fuse and qat.
 # fuse is in meta-filesystems and qat is not yet upstreamed.
@@ -29,8 +29,8 @@ export CONFIG_EXAMPLE_DPDK_QAT = "${@bb.utils.contains('PACKAGECONFIG', 'dpdk_qa
 export CONFIG_EXAMPLE_VM_POWER_MANAGER = "${@bb.utils.contains('PACKAGECONFIG', 'libvirt', 'y', 'n', d)}"
 export CONFIG_VHOST_ENABLED = "${@bb.utils.contains('PACKAGECONFIG', 'vhost', 'y', 'n', d)}"
 
-RDEPENDS_${PN} += "python-subprocess"
-DEPENDS = "virtual/kernel"
+RDEPENDS_${PN} += "python-subprocess dpdk-dev-libibverbs"
+DEPENDS = "virtual/kernel dpdk-dev-libibverbs"
 do_configure[depends] += "virtual/kernel:do_shared_workdir"
 
 inherit module
@@ -134,12 +134,12 @@ FILES_${PN}-dev += " \
 	${includedir} \
 	${includedir}/${ARCHDIR} \
 	${includedir}/exec-env \
-	${INSTALL_PATH}/scripts/ \
+	${INSTALL_PATH}/buildtools/ \
 	${INSTALL_PATH}/${RTE_TARGET}/include \
 	${INSTALL_PATH}/${RTE_TARGET}/lib \
 	"
 
-FILES_${PN} += " ${INSTALL_PATH}/tools/ \
+FILES_${PN} += " ${INSTALL_PATH}/usertools/ \
 		 ${prefix}/sbin/ \
 		 ${prefix}/bin/ \
 		 ${libdir}/ \

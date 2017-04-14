@@ -82,15 +82,31 @@ following this example, so that RMC recipes can pick up them correctly in build.
           |- ...more files
 
 Note 0:
-To add your boards into RMC feature, simply put this line in your
-rmc-db.bbappend:
+Developers are expected to use variable RMC_BOARD_DATA_DIRS to specify data of
+boards packed into RMC database file generated in a build. The default value of
+the variable in meta-intel specifies a group of boards. They work as examples
+and necessary quirks for these boards to function properly. Developers can
+override, append to the default boards with data of their own boards in the
+database file, or even disable the generation of the database file.
 
-RMC_BOARD_DATA_DIRS_append := " ${THISDIR}/my_top_dir"
+For example, in your local.conf file:
 
-RMC db recipe takes all top directories specified in RMC_BOARD_DATA_DIRS to
-construct and deploy a central RMC database inside image. The bbclass of the
-bare RMC project also provide function for other components to construct their
-own RMC database file. Please refer to rmc-db.bbclass for more information.
+This line adds your boards along with the default boards into RMC database file,
+assuming you have a directory named "rmc" which has a subdirectory for each
+board:
+
+RMC_BOARD_DATA_DIRS_append = " /path_of/rmc"
+
+This line directs RMC to pack data of your boards only, without data of the
+default boards in meta-intel:
+
+RMC_BOARD_DATA_DIRS = "/path_of/rmc"
+
+And this line disables database generation:
+
+RMC_BOARD_DATA_DIRS = ""
+
+Please also refer to the "Example 1" in this document.
 
 Subdirectory is not supported in a board's directory.
 
@@ -165,15 +181,18 @@ steps still can override results from this hook for boot entries and KBOOTPARAM.
 
 Enable RMC Feature
 --------------------------------------------------------------------------------
-To Enable RMC feature in build, add the below lines in a conf file:
+To enable the RMC feature please add the following variables to your local.conf.
+
 DISTRO_FEATURES_append = " rmc"
-EFI_PROVIDER = "rmc-systemd-boot"
+EFI_PROVIDER = "rmc-boot"
+
+The default EFI bootloader used with RMC is systemd-boot. To change the default
+bootloader please overwrite the RMC_BOOTLOADER variable in your local.conf
 
 Note:
 Image could be still bootable if you only have either of two lines, but RMC
-feature won't be fully functional.
-
-
+feature could not be fully functional, depending on the availability of the
+database file, installer and the rmc tool.
 
 Examples
 --------------------------------------------------------------------------------
@@ -190,7 +209,7 @@ EXAMPLE 1: Support a new board type:
 (1) enable the feature and do a build to get a live-boot image by adding these
     lines in conf/local.conf:
     DISTRO_FEATURES_append = " rmc"
-    EFI_PROVIDER = "rmc-systemd-boot"
+    EFI_PROVIDER = "rmc-boot"
 
 (2) flash the image to a USB stick and boot it on your board
 

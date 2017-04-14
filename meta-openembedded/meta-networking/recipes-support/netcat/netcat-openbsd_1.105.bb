@@ -14,6 +14,8 @@ SRC_URI[netcat.sha256sum] = "40653fe66c1516876b61b07e093d826e2a5463c5d994f1b7e6c
 SRC_URI[netcat-patch.md5sum] = "e914f8eb7eda5c75c679dd77787ac76b"
 SRC_URI[netcat-patch.sha256sum] = "eee759327ffea293e81d0dde67921b7fcfcad279ffd7a2c9d037bbc8f882b363"
 
+inherit pkgconfig
+
 S = "${WORKDIR}/${BPN}-${PV}"
 
 EXTRA_OEMAKE += "'LDFLAGS=${LDFLAGS}'"
@@ -41,4 +43,4 @@ do_install() {
     install -d ${D}${bindir}
     install -m 755 ${S}/nc ${D}${bindir}/nc.${BPN}
 }
-ALTERNATIVE_PRIORITY = "50"
+ALTERNATIVE_PRIORITY = "60"

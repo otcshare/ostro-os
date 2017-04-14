@@ -8,13 +8,13 @@ information."
 
 LICENSE = "MIT"
 
-LIC_FILES_CHKSUM = "file://${COREBASE}/LICENSE;md5=4d92cd373abda3937c2bc47fbc49d690"
+LIC_FILES_CHKSUM = "file://${COREBASE}/meta/files/common-licenses/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
 S = "${WORKDIR}"
 
 inherit rmc-db
 
-RMC_BOARD_DATA_DIRS_append := " ${THISDIR}/boards/"
+RMC_BOARD_DATA_DIRS ?= "${THISDIR}/boards/"
 RMC_DB_DIR = "${WORKDIR}/db"
 
 # Let sstate be aware of change in any added board directories
@@ -41,6 +41,7 @@ do_deploy () {
 	if [ -f ${RMC_DB_DIR}/rmc.db ]; then
 		install -m 0400 ${RMC_DB_DIR}/rmc.db ${DEPLOYDIR}
 	else
+		rm -f ${DEPLOYDIR}/rmc.db
 		echo "Warning: no RMC central database found, skip deployment."
 	fi
 }

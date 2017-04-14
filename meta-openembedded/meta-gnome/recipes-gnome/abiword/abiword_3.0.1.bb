@@ -3,11 +3,26 @@ HOMEPAGE = "http://www.abiword.org"
 SECTION = "x11/office"
 LICENSE = "GPLv2"
 LIC_FILES_CHKSUM = "file://COPYING;md5=ecd3ac329fca77e2d0e412bec38e1c20"
-DEPENDS     = "perl-native wv libglade libfribidi jpeg libpng \
-               librsvg libwmf-native gtkmathview asio gtk+ evolution-data-server \
-               ${@bb.utils.contains('BBFILE_COLLECTIONS', 'office-layer', 'redland rasqal', '', d)}"
-RDEPENDS_${PN}    = "glibc-gconv-ibm850 glibc-gconv-cp1252 \
-               glibc-gconv-iso8859-15 glibc-gconv-iso8859-1"
+DEPENDS  = " \
+    perl-native \
+    gtk+ \
+    gtkmathview \
+    wv \
+    libglade \
+    libfribidi \
+    jpeg \
+    libpng \
+    librsvg \
+    libwmf-native \
+    asio \
+    evolution-data-server \
+    libxslt \
+    ${@bb.utils.contains('BBFILE_COLLECTIONS', 'office-layer', 'redland rasqal', '', d)} \
+"
+RDEPENDS_${PN}_append_libc-glibc = " \
+    glibc-gconv-ibm850 glibc-gconv-cp1252 \
+    glibc-gconv-iso8859-15 glibc-gconv-iso8859-1 \
+"
 RCONFLICTS_${PN} = "${PN}-embedded"
 
 SRC_URI = " \
@@ -22,7 +37,7 @@ SRC_URI[md5sum] = "f3f8052e7b4979a43b75775a381e6cb8"
 SRC_URI[sha256sum] = "e094f6fbf0afc5c5538b4894888e7c346f8ee8f49c9d24821dd696d0734865c6"
 
 #want 3.x from 3.x.y for the installation directory
-SHRT_VER = "${@d.getVar('PV',1).split('.')[0]}.${@d.getVar('PV',1).split('.')[1]}"
+SHRT_VER = "${@d.getVar('PV').split('.')[0]}.${@d.getVar('PV').split('.')[1]}"
 
 inherit autotools-brokensep pkgconfig
 
@@ -46,6 +61,8 @@ EXTRA_OECONF = " --disable-static  \
                  --with-gtk2 \
                  --with-libwmf-config=${STAGING_DIR} \
 "
+
+LDFLAGS += "-lgmodule-2.0"
 
 do_compile() {
     cd goffice-bits2

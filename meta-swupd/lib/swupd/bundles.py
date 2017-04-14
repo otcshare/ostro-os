@@ -55,20 +55,13 @@ def copy_core_contents(d):
     d -- the bitbake datastore
     """
     imagedir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}')
-    corefile = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/os-core')
+    fulltar = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/full.tar')
     contentsuffix = d.getVar('SWUPD_ROOTFS_MANIFEST_SUFFIX', True)
-    imagesuffix = d.getVar('SWUPD_IMAGE_MANIFEST_SUFFIX', True)
-    fullfile = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/full')
-    bundle = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/full.tar')
-    rootfs = d.getVar('IMAGE_ROOTFS', True)
+    source = d.expand('${WORKDIR}/swupd')
+    target = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/os-core')
 
-    # Generate a manifest of the bundle content.
     bb.utils.mkdirhier(imagedir)
-    unwanted_files = (d.getVar('SWUPD_FILE_BLACKLIST', True) or '').split()
-    swupd.utils.create_content_manifests(rootfs,
-                                         corefile + contentsuffix,
-                                         corefile + imagesuffix,
-                                         unwanted_files)
+    shutil.copy(source + contentsuffix, target + contentsuffix)
 
     # Create full.tar.gz instead of directory - speeds up
     # do_stage_swupd_input from ~11min in the Ostro CI to 6min.
@@ -77,49 +70,48 @@ def copy_core_contents(d):
     # directly with the rootfs of the main image recipe.
     havebundles = (d.getVar('SWUPD_BUNDLES', True) or '') != ''
     if not havebundles:
-        for suffix in (contentsuffix, imagesuffix):
-            shutil.copy2(corefile + suffix, fullfile + suffix)
-        bb.debug(1, "Copying from image rootfs (%s) to full bundle (%s)" % (imgrootfs, bundle))
-        swupd.path.copyxattrfiles(d, manifest_files, imgrootfs, bundle, True)
+        rootfs = d.getVar('IMAGE_ROOTFS', True)
+        workdir = d.getVar('WORKDIR', True)
+        bb.debug(1, "Copying from image rootfs (%s) to full bundle (%s)" % (rootfs, fulltar))
+        swupd.path.copyxattrfiles(d, swupd.utils.manifest_to_file_list(source + contentsuffix),
+                                  rootfs, fulltar, True)
     else:
-        mega_rootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
         mega_archive = d.getVar('MEGA_IMAGE_ARCHIVE', True)
-        swupd.utils.create_content_manifests(mega_rootfs,
-                                             fullfile + contentsuffix,
-                                             fullfile + imagesuffix,
-                                             unwanted_files)
-        os.link(mega_archive, bundle)
+        if os.path.exists(fulltar):
+            os.unlink(fulltar)
+        os.link(mega_archive, fulltar)
 
 
-def stage_image_bundle_contents(d, bundle):
+def list_bundle_contents(d):
     """
-    Determine bundle contents which aren't part of os-core from the mega-image rootfs
+    Determine bundle contents, i.e. the rootfs entries which are
+    in the bundle and (for non-os-core bundles) not in the os-core.
 
-    For an image-based bundle, generate a list of files which exist in the
-    bundle but not os-core and stage those files from the mega image rootfs to
-    the swupd inputs directory
+    Creates the .content.txt files. Must be called when
+    the base image has created its rootfs, because those
+    entries need to be excluded.
 
     d -- the bitbake datastore
-    bundle -- the name of the bundle to be staged
     """
 
     # Construct paths to manifest files and directories
     pn = d.getVar('PN', True)
-    corefile = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/os-core')
-    bundlefile = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}/') + bundle
+    base_pn = d.getVar('PN_BASE', True)
+    rootfs = d.getVar('IMAGE_ROOTFS', True)
+    contentbase = os.path.join(d.getVar('WORKDIR', True), 'swupd')
     contentsuffix = d.getVar('SWUPD_ROOTFS_MANIFEST_SUFFIX', True)
     imagesuffix = d.getVar('SWUPD_IMAGE_MANIFEST_SUFFIX', True)
-    megarootfs = d.getVar('MEGA_IMAGE_ROOTFS', True)
-    imagesrc = megarootfs.replace('mega', bundle)
 
     # Generate the manifest of the bundle image's file contents,
     # excluding blacklisted files and the content of the os-core.
-    bb.debug(3, 'Writing bundle image file manifests %s' % bundlefile)
     unwanted_files = set((d.getVar('SWUPD_FILE_BLACKLIST', True) or '').split())
-    unwanted_files.update(['/' + x for x in swupd.utils.manifest_to_file_list(corefile + contentsuffix)])
-    swupd.utils.create_content_manifests(imagesrc,
-                                         bundlefile + contentsuffix,
-                                         bundlefile + imagesuffix,
+    if base_pn:
+        parts = d.getVar('WORKDIR', True).rsplit(pn, 1)
+        os_core_content = parts[0] + base_pn + parts[1] + '/swupd' + contentsuffix
+        unwanted_files.update(['/' + x for x in swupd.utils.manifest_to_file_list(os_core_content)])
+    swupd.utils.create_content_manifests(rootfs,
+                                         contentbase + contentsuffix,
+                                         contentbase + imagesuffix,
                                          unwanted_files)
 
 def stage_empty_bundle(d, bundle):
@@ -138,16 +130,24 @@ def copy_bundle_contents(d):
     """
     Stage bundle contents
 
-    Copy the contents of all bundles from the mega image rootfs to the swupd
-    inputs directory to ensure that any image postprocessing which modifies
-    files is reflected in os-core bundle
+    Copy the content list of all existing bundles to the swupd
+    inputs directory. Empty bundles no longer have any content,
+    so an empty directory is enough.
 
     d -- the bitbake datastore
     """
-    bb.debug(1, 'Copying contents of bundles for %s from mega image rootfs' % d.getVar('PN', True))
+    import shutil
+
+    pn = d.getVar('PN', True)
+    bb.debug(1, 'Copying contents of bundles for %s' % pn)
     bundles = (d.getVar('SWUPD_BUNDLES', True) or '').split()
+    workdir = d.getVar('WORKDIR', True)
+    bundledir = d.expand('${SWUPDIMAGEDIR}/${OS_VERSION}')
+    contentsuffix = d.getVar('SWUPD_ROOTFS_MANIFEST_SUFFIX', True)
+    parts = workdir.rsplit(pn, 1)
     for bndl in bundles:
-        stage_image_bundle_contents(d, bndl)
+        shutil.copyfile(parts[0] + ('bundle-%s-%s' % (pn, bndl)) + parts[1] + '/swupd' + contentsuffix,
+                        os.path.join(bundledir, bndl + contentsuffix))
     bundles = (d.getVar('SWUPD_EMPTY_BUNDLES', True) or '').split()
     for bndl in bundles:
         stage_empty_bundle(d, bndl)

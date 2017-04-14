@@ -22,6 +22,7 @@ SRC_URI = "http://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz;name=zlib \
            file://zlib-qat-0.4.7-002-zlib-qat-add-a-install-target-to-makefile.patch \
            file://zlib-qat-0.4.7-002-zlib-Remove-rpaths-from-makefile.patch \
            "
+SRC_URI_append_libc-musl = " file://0001-qat_zlib.h-Add-pthread.h-for-MUSL.patch"
 
 SRC_URI[zlib.md5sum] = "44d667c142d7cda120332623eab69f40"
 SRC_URI[zlib.sha256sum] = "36658cb768a54c1d4dec43c3116c27ed893e88b02ecfcb44f2166f9c0b7f2a0d"
@@ -81,6 +82,9 @@ python do_patch() {
     bb.build.exec_func('patch_do_patch', d)
 }
 
+#addtask zlibqat_patch after do_prepare_recipe_sysroot before patch_do_patch
+#addtask do_zlibqat_patch after do_prepare_recipe_sysroot before do_configure
+
 do_configure() {
         ./configure --prefix=${prefix} --shared --libdir=${libdir}
 }
@@ -125,3 +129,5 @@ FILES_${PN}-app += " \
 FILES_${PN}-dbg += " \
 		${bindir}/.debug \
 		"
+
+EXCLUDE_FROM_WORLD_core2-32-intel-common = "1"

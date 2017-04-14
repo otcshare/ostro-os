@@ -50,10 +50,12 @@ def copyxattrfiles(d, filelist, src, dst, archive=False):
             bb.fatal('Extracting files from an archive and writing into an archive not implemented yet.')
         else:
             cmd = "bsdtar --no-recursion -C %s -xf %s -T %s" % (dst, src, copyfile)
-    output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
-    if output:
-        bb.fatal('Unexpected output from the following command:\n%s\n%s' % (cmd, output))
-    os.remove(copyfile)
+    try:
+        output = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT)
+        if output:
+            bb.fatal('Unexpected output from the following command:\n%s\n%s' % (cmd, output))
+    finally:
+        os.remove(copyfile)
 
 
 def remove_empty_directories(tree):

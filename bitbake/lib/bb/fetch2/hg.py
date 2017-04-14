@@ -29,7 +29,6 @@ import sys
 import logging
 import bb
 import errno
-from bb import data
 from bb.fetch2 import FetchMethod
 from bb.fetch2 import FetchError
 from bb.fetch2 import MissingParameterError
@@ -67,7 +66,7 @@ class Hg(FetchMethod):
         else:
             ud.proto = "hg"
 
-        ud.setup_revisons(d)
+        ud.setup_revisions(d)
 
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']

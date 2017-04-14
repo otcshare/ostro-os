@@ -12,17 +12,22 @@ LIC_FILES_CHKSUM = " \
     file://common/jack/jack.h;beginline=1;endline=19;md5=6b736ed6b810592b135480a5e853392e \
 "
 
-DEPENDS = "libsamplerate0 libsndfile1 libopus readline"
+DEPENDS = "libsamplerate0 libsndfile1 readline"
 
-SRC_URI = "git://github.com/jackaudio/jack2.git"
-SRCREV = "364159f8212393442670b9c3b68b75aa39d98975"
+SRC_URI = " \
+    git://github.com/jackaudio/jack2.git \
+    file://0001-Add-ARM-NEON-acceleration-for-all-non-dithering-samp.patch \
+    file://0002-jack_simdtests-add-application-checking-accurracy-an.patch \
+"
+SRCREV = "0279a2d65a36d1378f5bab56d95bf9e99cc8cefb"
 PV = "1.9.10+git${SRCPV}"
 S = "${WORKDIR}/git"
 
 inherit waf pkgconfig
 
 PACKAGECONFIG ??= "alsa"
-PACKAGECONFIG[alsa] = "--alsa=yes,alsa=no,alsa-lib"
+PACKAGECONFIG[alsa] = "--alsa=yes,--alsa=no,alsa-lib"
+PACKAGECONFIG[opus] = "--opus=yes,--opus=no,libopus"
 
 # portaudio is for windows builds only
 EXTRA_OECONF = "--portaudio=no"

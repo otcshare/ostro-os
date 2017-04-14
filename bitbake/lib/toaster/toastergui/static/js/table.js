@@ -39,6 +39,8 @@ function tableInit(ctx){
                               ', .show-all-'+ctx.tableName);
 
   function loadData(tableParams){
+    table.trigger("table-loading");
+
     $.ajax({
         type: "GET",
         url: ctx.url,
@@ -706,7 +708,7 @@ function tableInit(ctx){
             if (action) {
               // Setup the current selected filter; default to 'all' if
               // no current filter selected
-              var radioInput = action.find('input[name]="filter"]');
+              var radioInput = action.find('input[name="filter"]');
               if ((tableParams.filter &&
                   tableParams.filter === radioInput.val()) ||
                   filterActionData.action_name == 'all') {
@@ -835,4 +837,12 @@ function tableInit(ctx){
 
     $('#filter-modal-'+ctx.tableName).modal('hide');
   });
+
+  table.on("table-loading", function(){
+    table.css("opacity", 0.5);
+  });
+
+  table.on("table-done", function(){
+    table.css("opacity", 1);
+  })
 }

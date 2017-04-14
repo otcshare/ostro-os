@@ -150,6 +150,7 @@ libpcre@core
 libpng@core
 libsocketcan@openembedded-layer
 libtool@core
+libunistring@core
 liburcu@core
 libusb-compat@core
 libusb1@core

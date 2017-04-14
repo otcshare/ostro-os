@@ -20,6 +20,7 @@
 
 import re
 import logging
+import json
 from collections import Counter
 
 from orm.models import Project, ProjectTarget, Build, Layer_Version
@@ -136,14 +137,63 @@ class XhrBuildRequest(View):
 
 
 class XhrLayer(View):
-    """ Get and Update Layer information """
+    """ Delete, Get, Add and Update Layer information
+
+        Methods: GET POST DELETE PUT
+    """
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get layer information
+
+        Method: GET
+        Entry point: /xhr_layer/<project id>/<layerversion_id>
+        """
+
+        try:
+            layer_version = Layer_Version.objects.get(
+                pk=kwargs['layerversion_id'])
+
+            project = Project.objects.get(pk=kwargs['pid'])
+
+            project_layers = ProjectLayer.objects.filter(
+                project=project).values_list("layercommit_id",
+                                             flat=True)
+
+            ret = {
+                'error': 'ok',
+                'id': layer_version.pk,
+                'name': layer_version.layer.name,
+                'layerdetailurl':
+                layer_version.get_detailspage_url(project.pk),
+                'vcs_ref': layer_version.get_vcs_reference(),
+                'vcs_url': layer_version.layer.vcs_url,
+                'local_source_dir': layer_version.layer.local_source_dir,
+                'layerdeps': {
+                    "list": [
+                        {
+                            "id": dep.id,
+                            "name": dep.layer.name,
+                            "layerdetailurl":
+                            dep.get_detailspage_url(project.pk),
+                            "vcs_url": dep.layer.vcs_url,
+                            "vcs_reference": dep.get_vcs_reference()
+                        }
+                        for dep in layer_version.get_alldeps(project.id)]
+                },
+                'projectlayers': list(project_layers)
+            }
+
+            return JsonResponse(ret)
+        except Layer_Version.DoesNotExist:
+            error_response("No such layer")
 
     def post(self, request, *args, **kwargs):
         """
           Update a layer
 
-          Entry point: /xhr_layer/<layerversion_id>
           Method: POST
+          Entry point: /xhr_layer/<layerversion_id>
 
           Args:
               vcs_url, dirpath, commit, up_branch, summary, description,
@@ -201,9 +251,100 @@ class XhrLayer(View):
             return error_response("Could not update layer version entry: %s"
                                   % e)
 
-        return JsonResponse({"error": "ok"})
+        return error_response("ok")
+
+    def put(self, request, *args, **kwargs):
+        """ Add a new layer
+
+        Method: PUT
+        Entry point: /xhr_layer/<project id>/
+        Args:
+            project_id, name,
+            [vcs_url, dir_path, git_ref], [local_source_dir], [layer_deps
+            (csv)]
+
+        """
+        try:
+            project = Project.objects.get(pk=kwargs['pid'])
+
+            layer_data = json.loads(request.body.decode('utf-8'))
+
+            # We require a unique layer name as otherwise the lists of layers
+            # becomes very confusing
+            existing_layers = \
+                project.get_all_compatible_layer_versions().values_list(
+                    "layer__name",
+                    flat=True)
+
+            add_to_project = False
+            layer_deps_added = []
+            if 'add_to_project' in layer_data:
+                add_to_project = True
+
+            if layer_data['name'] in existing_layers:
+                return JsonResponse({"error": "layer-name-exists"})
+
+            layer = Layer.objects.create(name=layer_data['name'])
+
+            layer_version = Layer_Version.objects.create(
+                layer=layer,
+                project=project,
+                layer_source=LayerSource.TYPE_IMPORTED)
+
+            # Local layer
+            if 'local_source_dir' in layer_data:
+                layer.local_source_dir = layer_data['local_source_dir']
+            # git layer
+            elif 'vcs_url' in layer_data:
+                layer.vcs_url = layer_data['vcs_url']
+                layer_version.dirpath = layer_data['dir_path']
+                layer_version.commit = layer_data['get_ref']
+                layer_version.branch = layer_data['get_ref']
+
+            layer.save()
+            layer_version.save()
+
+            if add_to_project:
+                ProjectLayer.objects.get_or_create(
+                    layercommit=layer_version, project=project)
+
+            # Add the layer dependencies
+            if 'layer_deps' in layer_data:
+                for layer_dep_id in layer_data['layer_deps'].split(","):
+                    layer_dep = Layer_Version.objects.get(pk=layer_dep_id)
+                    LayerVersionDependency.objects.get_or_create(
+                        layer_version=layer_version, depends_on=layer_dep)
+
+                    # Add layer deps to the project if specified
+                    if add_to_project:
+                        created, pl = ProjectLayer.objects.get_or_create(
+                            layercommit=layer_dep, project=project)
+                        layer_deps_added.append(
+                            {'name': layer_dep.layer.name,
+                             'layerdetailurl':
+                             layer_dep.get_detailspage_url(project.pk)})
+
+        except Layer_Version.DoesNotExist:
+            return error_response("layer-dep-not-found")
+        except Project.DoesNotExist:
+            return error_response("project-not-found")
+        except KeyError:
+            return error_response("incorrect-parameters")
+
+        return JsonResponse({'error': "ok",
+                             'imported_layer': {
+                                 'name': layer.name,
+                                 'layerdetailurl':
+                                 layer_version.get_detailspage_url()},
+                             'deps_added': layer_deps_added})
 
     def delete(self, request, *args, **kwargs):
+        """ Delete an imported layer
+
+        Method: DELETE
+        Entry point: /xhr_layer/<projed id>/<layerversion_id>
+
+        """
         try:
             # We currently only allow Imported layers to be deleted
             layer_version = Layer_Version.objects.get(
@@ -793,6 +934,9 @@ class XhrProject(View):
                 "url": layer.layercommit.layer.layer_index_url,
                 "layerdetailurl": layer.layercommit.get_detailspage_url(
                     project.pk),
+                "xhrLayerUrl": reverse("xhr_layer",
+                                       args=(project.pk,
+                                             layer.layercommit.pk)),
                 "layersource": layer.layercommit.layer_source
             })
 

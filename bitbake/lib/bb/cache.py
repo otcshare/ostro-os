@@ -37,7 +37,7 @@ import bb.utils
 
 logger = logging.getLogger("BitBake.Cache")
 
-__cache_version__ = "150"
+__cache_version__ = "151"
 
 def getCacheFile(path, filename, data_hash):
     return os.path.join(path, filename + "." + data_hash)
@@ -462,6 +462,10 @@ class Cache(NoCache):
                         self.depends_cache[key] = [value]
                     # only fire events on even percentage boundaries
                     current_progress = cachefile.tell() + previous_progress
+                    if current_progress > cachesize:
+                        # we might have calculated incorrect total size because a file
+                        # might've been written out just after we checked its size
+                        cachesize = current_progress
                     current_percent = 100 * current_progress / cachesize
                     if current_percent > previous_percent:
                         previous_percent = current_percent

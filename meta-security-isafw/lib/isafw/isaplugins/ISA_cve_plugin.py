@@ -36,6 +36,7 @@ pkglist = "/cve_check_tool_pkglist"
 
 class ISA_CVEChecker:
     initialized = False
+    cve_tool_present = False
 
     def __init__(self, ISA_config):
         self.proxy = ISA_config.proxy
@@ -45,6 +46,9 @@ class ISA_CVEChecker:
         self.logfile = ISA_config.logdir + "/isafw_cvelog"
         self.report_name = ISA_config.reportdir + "/cve_report_" + \
             ISA_config.machine + "_" + ISA_config.timestamp
+        self.initialized = True
+        with open(self.logfile, 'a') as flog:
+            flog.write("\nPlugin ISA_CVEChecker initialized!\n")
         output = ""
         # check that cve-check-tool is installed
         try:
@@ -57,9 +61,7 @@ class ISA_CVEChecker:
                 flog.write("error executing which cve-check-tool\n")
         else:
             if output:
-                self.initialized = True
-                with open(self.logfile, 'a') as flog:
-                    flog.write("\nPlugin ISA_CVEChecker initialized!\n")
+                self.cve_tool_present = True
             else:
                 with open(self.logfile, 'a') as flog:
                     flog.write("cve-check-tool is missing!\n")
@@ -156,6 +158,13 @@ class ISA_CVEChecker:
             tree.write(output, encoding='UTF-8', xml_declaration=True)
 
     def process_report_type(self, rtype):
+        if (not self.cve_tool_present):
+            # we cannot proceed without cve-check-tool being present
+            with open(self.logfile, 'a') as flog:
+                flog.write("cve-check-tool is missing! Abort.\n")
+                flog.write(
+                        "Please install it from https://github.com/ikeydoherty/cve-check-tool.\n")
+            return;
         # now faux file is ready and we can process it
         args = ""
         result = ""

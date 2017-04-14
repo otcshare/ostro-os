@@ -1,0 +1,81 @@
+From 363817bf84286fc167e0c3c255a7fd522bf87d8c Mon Sep 17 00:00:00 2001
+From: Shashwat Pandey <shashwatx.p@intel.com>
+Date: Mon, 20 Feb 2017 15:46:22 +0800
+Subject: [PATCH] dpdk: fix installation warning and issue
+
+Upstream-Status: Inappropriate [configuration]
+
+Ensure that all compiled libs should be installed to correct location.
+For cross compiling cp -r and extra tar flags used to avoid  QA warning
+[host-user-contaminated].
+Added excluded files from bin and removing mk and app/dpdk-pmdinfogen files
+installation since it is not needed as a part of image.
+
+Signed-off-by: Shashwat Pandey <shashwatx.p@intel.com>
+---
+ mk/rte.sdkinstall.mk | 29 ++++++++++++++---------------
+ 1 file changed, 14 insertions(+), 15 deletions(-)
+
+diff --git a/mk/rte.sdkinstall.mk b/mk/rte.sdkinstall.mk
+index dbac2a2..563954e 100644
+--- a/mk/rte.sdkinstall.mk
++++ b/mk/rte.sdkinstall.mk
+@@ -115,16 +115,17 @@ endif
+ 
+ install-runtime:
+ 	$(Q)$(call rte_mkdir, $(DESTDIR)$(libdir))
+-	$(Q)cp -a    $O/lib/* $(DESTDIR)$(libdir)
++	$(Q)cp -r    $O/lib/* $(DESTDIR)$(libdir)
+ 	$(Q)$(call rte_mkdir, $(DESTDIR)$(bindir))
+-	$(Q)tar -cf -      -C $O --exclude 'app/*.map' \
+-		--exclude app/dpdk-pmdinfogen \
+-		--exclude 'app/cmdline*' --exclude app/test \
+-		--exclude app/testacl --exclude app/testpipeline app | \
+-	    tar -xf -      -C $(DESTDIR)$(bindir) --strip-components=1 \
+-		--keep-newer-files
++	$(Q)tar -cf -      -C $O --exclude app/dpdk-pmdinfogen app | \
++	tar -xf -      -C $(DESTDIR)$(bindir) --no-same-owner --no-same-permissions \
++		--strip-components=1 --keep-newer-files --warning=no-ignore-newer
+ 	$(Q)$(call rte_mkdir,      $(DESTDIR)$(datadir))
+-	$(Q)cp -a $(RTE_SDK)/usertools $(DESTDIR)$(datadir)
++	$(Q)cp -r $(RTE_SDK)/usertools $(DESTDIR)$(datadir)
++	$(Q)$(call rte_symlink,    $(DESTDIR)$(datadir)/usertools/dpdk-setup.sh, \
++	                           $(DESTDIR)$(datadir)/usertools/setup.sh)
++	$(Q)$(call rte_symlink,    $(DESTDIR)$(datadir)/usertools/dpdk-devbind.py, \
++	                           $(DESTDIR)$(datadir)/usertools/dpdk_nic_bind.py)
+ 	$(Q)$(call rte_mkdir,      $(DESTDIR)$(sbindir))
+ 	$(Q)$(call rte_symlink,    $(DESTDIR)$(datadir)/usertools/dpdk-devbind.py, \
+ 	                           $(DESTDIR)$(sbindir)/dpdk-devbind)
+@@ -142,7 +143,7 @@ endif
+ install-kmod:
+ ifneq ($(wildcard $O/kmod/*),)
+ 	$(Q)$(call rte_mkdir, $(DESTDIR)$(kerneldir))
+-	$(Q)cp -a   $O/kmod/* $(DESTDIR)$(kerneldir)
++	$(Q)cp -r   $O/kmod/* $(DESTDIR)$(kerneldir)
+ endif
+ 
+ install-sdk:
+@@ -151,11 +152,9 @@ install-sdk:
+ 	    tar -xf -      -C $(DESTDIR)$(includedir) --strip-components=1 \
+ 		--keep-newer-files
+ 	$(Q)$(call rte_mkdir,                            $(DESTDIR)$(sdkdir))
+-	$(Q)cp -a               $(RTE_SDK)/mk            $(DESTDIR)$(sdkdir)
+-	$(Q)cp -a               $(RTE_SDK)/buildtools    $(DESTDIR)$(sdkdir)
+-	$(Q)$(call rte_mkdir,                            $(DESTDIR)$(targetdir)/app)
+-	$(Q)cp -a               $O/.config               $(DESTDIR)$(targetdir)
+-	$(Q)cp -a               $O/app/dpdk-pmdinfogen   $(DESTDIR)$(targetdir)/app
++	$(Q)cp -r               $(RTE_SDK)/buildtools       $(DESTDIR)$(sdkdir)
++	$(Q)$(call rte_mkdir,                            $(DESTDIR)$(targetdir))
++	$(Q)cp -r               $O/.config               $(DESTDIR)$(targetdir)
+ 	$(Q)$(call rte_symlink, $(DESTDIR)$(includedir), $(DESTDIR)$(targetdir)/include)
+ 	$(Q)$(call rte_symlink, $(DESTDIR)$(libdir),     $(DESTDIR)$(targetdir)/lib)
+ 
+@@ -171,4 +170,4 @@ ifneq ($(wildcard $O/doc/*/*/*pdf),)
+ 	$(Q)cp -a $O/doc/*/*/*pdf $(DESTDIR)$(docdir)/guides
+ endif
+ 	$(Q)$(call rte_mkdir,         $(DESTDIR)$(datadir))
+-	$(Q)cp -a $(RTE_SDK)/examples $(DESTDIR)$(datadir)
++	$(Q)cp -r $(RTE_SDK)/examples $(DESTDIR)$(datadir)
+-- 
+1.9.1
+

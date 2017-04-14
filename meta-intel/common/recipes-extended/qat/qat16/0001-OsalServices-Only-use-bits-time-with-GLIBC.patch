@@ -1,0 +1,27 @@
+From f83ac703a6babfa7f177b8f14ff3263a08fd8871 Mon Sep 17 00:00:00 2001
+From: Saul Wold <sgw@linux.intel.com>
+Date: Thu, 9 Feb 2017 14:35:57 -0800
+Subject: [PATCH] OsalServices: Only use bits/time with GLIBC
+
+Upstream-Status: Pending
+Signed-off-by: Saul Wold <sgw@linux.intel.com>
+---
+ quickassist/utilities/osal/src/linux/user_space/OsalServices.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/quickassist/utilities/osal/src/linux/user_space/OsalServices.c b/quickassist/utilities/osal/src/linux/user_space/OsalServices.c
+index 49fde45..5f50aaa 100755
+--- a/quickassist/utilities/osal/src/linux/user_space/OsalServices.c
++++ b/quickassist/utilities/osal/src/linux/user_space/OsalServices.c
+@@ -41,7 +41,7 @@
+ 
+ #include <stdarg.h>
+ #include <stdio.h>
+-#ifdef __linux__
++#if defined(__linux__) && defined(__GLIBC__)
+ #include <bits/time.h>
+ #endif
+ #include <sched.h>
+-- 
+2.7.4
+

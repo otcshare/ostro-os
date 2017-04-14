@@ -23,9 +23,6 @@ ISAFW_LA_PLUGIN_IMAGE_BLACKLIST ?= ""
 
 # First, code to handle scanning each recipe that goes into the build
 
-do_analysesource[depends] += "cve-check-tool-native:do_populate_sysroot ca-certificates-native:do_populate_sysroot"
-do_analysesource[depends] += "rpm-native:do_populate_sysroot"
-do_analysesource[depends] += "python-lxml-native:do_populate_sysroot"
 do_analysesource[nostamp] = "1"
 do_analysesource[cleandirs] = "${ISAFW_WORKDIR}"
 
@@ -92,17 +89,24 @@ process_reports_handler[eventmask] = "bb.event.BuildCompleted"
 python process_reports_handler() {
     from isafw import isafw
 
+    dd = d.createCopy()
+    target_sysroot = dd.expand("${STAGING_DIR}/${MACHINE}")
+    native_sysroot = dd.expand("${STAGING_DIR}/${BUILD_ARCH}")
+    staging_populate_sysroot_dir(target_sysroot, native_sysroot, True, dd)
+ 
+    dd.setVar("STAGING_DIR_NATIVE", native_sysroot)
     savedenv = os.environ.copy()
-    os.environ["PATH"] = d.getVar("PATH", True)
+    os.environ["PATH"] = dd.getVar("PATH", True)
 
-    imageSecurityAnalyser = isafw_init(isafw, d)
-
+    imageSecurityAnalyser = isafw_init(isafw, dd)
     bb.debug(1, 'isafw: process reports')
     imageSecurityAnalyser.process_report()
 
     os.environ["PATH"] = savedenv["PATH"]
 }
 
+do_build[depends] += "cve-check-tool-native:do_populate_sysroot ca-certificates-native:do_populate_sysroot"
+do_build[depends] += "python-lxml-native:do_populate_sysroot"
 
 # These tasks are intended to be called directly by the user (e.g. bitbake -c)
 
@@ -156,14 +160,15 @@ fakeroot python do_analyse_image() {
         bb.debug(1, 'Kernel configuration file is missing. Not performing analysis on %s' % kernelconf)
 
     pkglist = manifest2pkglist(d)
+
     imagebasename = d.getVar('IMAGE_BASENAME', True)
 
-    pkg_list = isafw.ISA_pkg_list()
-    pkg_list.img_name = imagebasename
-    pkg_list.path_to_list = pkglist
-
-    bb.debug(1, 'do pkg list analysis on %s' % pkglist)
-    imageSecurityAnalyser.process_pkg_list(pkg_list)
+    if (pkglist):
+        pkg_list = isafw.ISA_pkg_list()
+        pkg_list.img_name = imagebasename
+        pkg_list.path_to_list = pkglist
+        bb.debug(1, 'do pkg list analysis on %s' % pkglist)
+        imageSecurityAnalyser.process_pkg_list(pkg_list)
 
     fs = isafw.ISA_filesystem()
     fs.img_name = imagebasename
@@ -259,17 +264,22 @@ def manifest2pkglist(d):
 
     with open(pkglist, 'a') as foutput:
         foutput.write("Packages for image " + imagebasename + "\n")
-        with open(manifest_file, 'r') as finput:
-            for line in finput:
-                items = line.split()
-                if items and (len(items) >= 3):
-                    pkgnames = map(os.path.basename, glob.glob(os.path.join(rr_dir, items[0])))
-                    for pkgname in pkgnames:
-                        originPkg = binary2source(rr_dir, pkgname)
-                        version = items[2]
-                        if not version:
-                            version = "undetermined"
-                        foutput.write(pkgname + " " + version + " " + originPkg + "\n")
+        try:
+            with open(manifest_file, 'r') as finput:
+                for line in finput:
+                    items = line.split()
+                    if items and (len(items) >= 3):
+                        pkgnames = map(os.path.basename, glob.glob(os.path.join(rr_dir, items[0])))
+                        for pkgname in pkgnames:
+                            originPkg = binary2source(rr_dir, pkgname)
+                            version = items[2]
+                            if not version:
+                                version = "undetermined"
+                            foutput.write(pkgname + " " + version + " " + originPkg + "\n")
+        except IOError:
+            bb.debug(1, 'isafw: manifest file not found. Skip pkg list analysis')
+            return "";
+
 
     return pkglist
 

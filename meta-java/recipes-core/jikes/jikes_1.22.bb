@@ -9,7 +9,7 @@ LIC_FILES_CHKSUM = " \
                    "
 SRC_URI = "${SOURCEFORGE_MIRROR}/jikes/jikes-${PV}.tar.bz2"
 
-inherit autotools update-alternatives
+inherit autotools update-alternatives relative_symlinks
 
 BBCLASSEXTEND = "native"
 

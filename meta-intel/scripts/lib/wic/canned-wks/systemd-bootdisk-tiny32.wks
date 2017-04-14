@@ -1,0 +1,8 @@
+# short-description: Create an EFI disk image with systemd-boot and core2-32
+# long-description: Creates a partitioned EFI disk image that the user
+# can directly dd to boot media. The selected bootloader is systemd-boot.
+# This disk image is meant to be used by core2-32 and core-image-tiny-initramfs
+
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot,initrd=core-image-tiny-initramfs-intel-core2-32.cpio.gz" --ondisk sda --label msdos --active --align 1024
+
+bootloader --ptable gpt --timeout=5 --append="init=/bin/busybox sh init console=ttyS0,115200 console=tty0 rw LABEL=boot debugshell=5"

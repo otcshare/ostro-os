@@ -37,7 +37,7 @@ export AR = "${HOST_PREFIX}ar cq"
 
 EXTRA_OECONF += "--disable-option-checking"
 
-PACKAGECONFIG ??= "${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ipv6', '', d)}"
+PACKAGECONFIG ??= "${@bb.utils.filter('DISTRO_FEATURES', 'ipv6', d)}"
 PACKAGECONFIG[ipv6] = "--enable-ipv6,--disable-ipv6,"
 
 # configure.in has errors
@@ -75,5 +75,5 @@ INITSCRIPT_PARAMS = "start 20 2 3 4 5 . stop 20 1 ."
 
 ALTERNATIVE_${PN} = "tftp"
 ALTERNATIVE_TARGET[tftp] = "${bindir}/tftp-hpa"
-ALTERNATIVE_PRIORITY = "50"
+ALTERNATIVE_PRIORITY = "60"
 

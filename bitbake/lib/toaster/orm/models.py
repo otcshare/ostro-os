@@ -902,7 +902,7 @@ class Target_Image_File(models.Model):
         'ext4.gz', 'ext3', 'ext3.gz', 'hdddirect', 'hddimg', 'iso', 'jffs2',
         'jffs2.sum', 'multiubi', 'qcow2', 'squashfs', 'squashfs-lzo',
         'squashfs-xz', 'tar', 'tar.bz2', 'tar.gz', 'tar.lz4', 'tar.xz', 'ubi',
-        'ubifs', 'vdi', 'vmdk', 'wic', 'wic.bz2', 'wic.gz', 'wic.lzma'
+        'ubifs', 'vdi', 'vmdk', 'wic', 'wic.bmap', 'wic.bz2', 'wic.gz', 'wic.lzma'
     }
 
     target = models.ForeignKey(Target)
@@ -1385,7 +1385,7 @@ class Layer(models.Model):
     name = models.CharField(max_length=100)
     layer_index_url = models.URLField()
     vcs_url = GitURLField(default=None, null=True)
-    local_source_dir = models.TextField(null = True, default = None)
+    local_source_dir = models.TextField(null=True, default=None)
     vcs_web_url = models.URLField(null=True, default=None)
     vcs_web_tree_base_url = models.URLField(null=True, default=None)
     vcs_web_file_base_url = models.URLField(null=True, default=None)
@@ -1493,7 +1493,13 @@ class Layer_Version(models.Model):
             return self.commit
         return 'N/A'
 
-    def get_detailspage_url(self, project_id):
+    def get_detailspage_url(self, project_id=None):
+        """ returns the url to the layer details page uses own project
+        field if project_id is not specified """
+
+        if project_id is None:
+            project_id = self.project.pk
+
         return reverse('layerdetails', args=(project_id, self.pk))
 
     def get_alldeps(self, project_id):

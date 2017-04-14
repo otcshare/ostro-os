@@ -1,0 +1,29 @@
+From 30c4a1181cbe696dd1b9f52c8e9422ef8c331e8f Mon Sep 17 00:00:00 2001
+From: Saul Wold <sgw@linux.intel.com>
+Date: Thu, 9 Feb 2017 12:40:47 -0800
+Subject: [PATCH] qat_zlib.h: Add pthread.h for MUSL
+
+MUSL is stricter when it comes to header file inclusion, so add
+the additional header thats needed to compile with MUSL.
+
+Upstream-Status: Pending
+Signed-off-by: Saul Wold <sgw@linux.intel.com>
+---
+ qat_zlib.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/qat_zlib.h b/qat_zlib.h
+index 2747f84..d9ac312 100644
+--- a/qat_zlib.h
++++ b/qat_zlib.h
+@@ -8,6 +8,7 @@
+ #include <stdlib.h>
+ #include <assert.h>
+ #include <time.h>
++#include <pthread.h>
+ 
+ #include "cpa_dc.h"
+ #ifdef USE_QAE_MEM
+-- 
+2.7.4
+

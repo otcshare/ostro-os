@@ -9,8 +9,10 @@
 #
 
 # Soft set linux-yocto as preferred kernel like x86-base.inc
-PREFERRED_PROVIDER_virtual/kernel ??= "linux-yocto"
-PREFERRED_VERSION_linux-yocto ?= "4.8%"
+PREFERRED_PROVIDER_virtual/kernel ?= "linux-intel"
+PREFERRED_PROVIDER_virtual/kernel_poky-tiny ?= "linux-intel"
+PREFERRED_PROVIDER_virtual/kernel_linuxstdbase ?= "linux-yocto"
+PREFERRED_VERSION_linux-intel ?= "4.9%"
 
 # for Xserver older than 1.13.0
 OLD_XSERVER_X86_EXT = "xserver-xorg-extension-dri \
@@ -28,11 +30,21 @@ XSERVER_X86_ASPEED_AST = "xf86-video-ast \
 # include the user space intel microcode loading support in the generated images.
 MACHINE_ESSENTIAL_EXTRA_RDEPENDS_append = "${@bb.utils.contains('MACHINE_FEATURES', 'intel-ucode', ' intel-microcode', '', d)}"
 
+# recommended extra packages common to all intel machines
+MACHINE_EXTRA_RRECOMMENDS_append = " kernel-modules linux-firmware thermald"
+
 # for the early boot time kernel microcode loading support,
 # merge the microcode data in the final initrd image.
 INITRD_LIVE_prepend = "${@bb.utils.contains('MACHINE_FEATURES', 'intel-ucode', '${DEPLOY_DIR_IMAGE}/microcode.cpio ', '', d)}"
 
-EFI_PROVIDER ?= "rmc-systemd-boot"
+EFI_PROVIDER ?= "rmc-boot"
 
 # Add general MACHINEOVERRIDE for meta-intel
 MACHINEOVERRIDES =. "intel-x86-common:"
+
+# Definition of (more or less) suitable virtual machines.
+require conf/machine/include/qemuboot-intel.inc
+
+# Ensure that the extra tools needed by qemu are built when building images
+# and tweak machine definition to make the result more usable under qemu.
+require conf/machine/include/qemu-intel.inc

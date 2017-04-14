@@ -1,0 +1,47 @@
+From f4c50648752ee1000f606585f4df9fa6bd9ff8e8 Mon Sep 17 00:00:00 2001
+From: Saul Wold <sgw@linux.intel.com>
+Date: Wed, 8 Feb 2017 17:36:48 -0800
+Subject: [PATCH] openssl-qat: Use sched_yield() instead of pthread_yield()
+
+sched_yield() is the correct POSIX API to use for thread switching
+This futher supports building with MUSL.
+
+Upstream-Status: Pending
+Signed-off-by: Saul Wold <sgw@linux.intel.com>
+---
+ engines/qat_engine/e_qat.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/engines/qat_engine/e_qat.c b/engines/qat_engine/e_qat.c
+index 17d7935..af543bc 100644
+--- a/engines/qat_engine/e_qat.c
++++ b/engines/qat_engine/e_qat.c
+@@ -90,6 +90,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#include <sched.h>
+ #include <pthread.h>
+ #include <unistd.h>
+ #include <ctype.h>
+@@ -545,7 +546,7 @@ CpaStatus myPerformOp(const CpaInstanceHandle instanceHandle,
+                                    pSrcBuffer, pDstBuffer, pVerifyResult);
+         if (status == CPA_STATUS_RETRY) {
+             qatPerformOpRetries++;
+-            pthread_yield();
++            sched_yield();
+             if (uiRetry >= iMsgRetry
+                 && iMsgRetry != QAT_INFINITE_MAX_NUM_RETRIES) {
+                 break;
+@@ -588,7 +589,7 @@ static void *sendPoll(void *ih)
+         if (likely(CPA_STATUS_SUCCESS == status)) {
+             /* Do nothing */
+         } else if (CPA_STATUS_RETRY == status) {
+-            pthread_yield();
++            sched_yield();
+         } else {
+             WARN("WARNING icp_sal_CyPollInstance returned status %d\n",
+                  status);
+-- 
+2.7.4
+

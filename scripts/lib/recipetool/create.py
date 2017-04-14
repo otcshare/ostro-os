@@ -59,6 +59,9 @@ class RecipeHandler(object):
     recipecmakefilemap = {}
     recipebinmap = {}
 
+    def __init__(self):
+        self._devtool = False
+
     @staticmethod
     def load_libmap(d):
         '''Load library->recipe mapping'''
@@ -68,8 +71,8 @@ class RecipeHandler(object):
             return
         # First build up library->package mapping
         shlib_providers = oe.package.read_shlib_providers(d)
-        libdir = d.getVar('libdir', True)
-        base_libdir = d.getVar('base_libdir', True)
+        libdir = d.getVar('libdir')
+        base_libdir = d.getVar('base_libdir')
         libpaths = list(set([base_libdir, libdir]))
         libname_re = re.compile('^lib(.+)\.so.*$')
         pkglibmap = {}
@@ -85,7 +88,7 @@ class RecipeHandler(object):
                         logger.debug('unable to extract library name from %s' % lib)
 
         # Now turn it into a library->recipe mapping
-        pkgdata_dir = d.getVar('PKGDATA_DIR', True)
+        pkgdata_dir = d.getVar('PKGDATA_DIR')
         for libname, pkg in pkglibmap.items():
             try:
                 with open(os.path.join(pkgdata_dir, 'runtime', pkg)) as f:
@@ -109,9 +112,9 @@ class RecipeHandler(object):
         '''Build up development file->recipe mapping'''
         if RecipeHandler.recipeheadermap:
             return
-        pkgdata_dir = d.getVar('PKGDATA_DIR', True)
-        includedir = d.getVar('includedir', True)
-        cmakedir = os.path.join(d.getVar('libdir', True), 'cmake')
+        pkgdata_dir = d.getVar('PKGDATA_DIR')
+        includedir = d.getVar('includedir')
+        cmakedir = os.path.join(d.getVar('libdir'), 'cmake')
         for pkg in glob.glob(os.path.join(pkgdata_dir, 'runtime', '*-dev')):
             with open(os.path.join(pkgdata_dir, 'runtime', pkg)) as f:
                 pn = None
@@ -140,9 +143,9 @@ class RecipeHandler(object):
         '''Build up native binary->recipe mapping'''
         if RecipeHandler.recipebinmap:
             return
-        sstate_manifests = d.getVar('SSTATE_MANIFESTS', True)
-        staging_bindir_native = d.getVar('STAGING_BINDIR_NATIVE', True)
-        build_arch = d.getVar('BUILD_ARCH', True)
+        sstate_manifests = d.getVar('SSTATE_MANIFESTS')
+        staging_bindir_native = d.getVar('STAGING_BINDIR_NATIVE')
+        build_arch = d.getVar('BUILD_ARCH')
         fileprefix = 'manifest-%s-' % build_arch
         for fn in glob.glob(os.path.join(sstate_manifests, '%s*-native.populate_sysroot' % fileprefix)):
             with open(fn, 'r') as f:
@@ -336,7 +339,7 @@ def determine_from_url(srcuri):
                 pn = res.group(1).strip().replace('_', '-')
                 pv = res.group(2).strip().replace('_', '.')
 
-        if not pn and not pv:
+        if not pn and not pv and parseres.scheme not in ['git', 'gitsm', 'svn', 'hg']:
             srcfile = os.path.basename(parseres.path.rstrip('/'))
             pn, pv = determine_from_filename(srcfile)
 
@@ -348,7 +351,6 @@ def supports_srcrev(uri):
     # This is a bit sad, but if you don't have this set there can be some
     # odd interactions with the urldata cache which lead to errors
     localdata.setVar('SRCREV', '${AUTOREV}')
-    bb.data.update_data(localdata)
     try:
         fetcher = bb.fetch2.Fetch([uri], localdata)
         urldata = fetcher.ud
@@ -417,12 +419,14 @@ def create_recipe(args):
             srcuri = rev_re.sub('', srcuri)
         tempsrc = tempfile.mkdtemp(prefix='recipetool-')
         srctree = tempsrc
+        d = bb.data.createCopy(tinfoil.config_data)
         if fetchuri.startswith('npm://'):
             # Check if npm is available
-            check_npm(tinfoil.config_data, args.devtool)
+            npm_bindir = check_npm(tinfoil, args.devtool)
+            d.prependVar('PATH', '%s:' % npm_bindir)
         logger.info('Fetching %s...' % srcuri)
         try:
-            checksums = scriptutils.fetch_uri(tinfoil.config_data, fetchuri, srctree, srcrev)
+            checksums = scriptutils.fetch_uri(d, fetchuri, srctree, srcrev)
         except bb.fetch2.BBFetchException as e:
             logger.error(str(e).rstrip())
             sys.exit(1)
@@ -567,7 +571,6 @@ def create_recipe(args):
         if name_pv and not realpv:
             realpv = name_pv
 
-
     if not srcuri:
         lines_before.append('# No information for SRC_URI yet (only an external source tree was specified)')
     lines_before.append('SRC_URI = "%s"' % srcuri)
@@ -601,6 +604,11 @@ def create_recipe(args):
         lines_after.append('INSANE_SKIP_${PN} += "already-stripped"')
         lines_after.append('')
 
+    if args.fetch_dev:
+        extravalues['fetchdev'] = True
+    else:
+        extravalues['fetchdev'] = None
+
     # Find all plugins that want to register handlers
     logger.debug('Loading recipe handlers')
     raw_handlers = []
@@ -617,6 +625,7 @@ def create_recipe(args):
     handlers.sort(key=lambda item: (item[1], -item[2]), reverse=True)
     for handler, priority, _ in handlers:
         logger.debug('Handler: %s (priority %d)' % (handler.__class__.__name__, priority))
+        setattr(handler, '_devtool', args.devtool)
     handlers = [item[0] for item in handlers]
 
     # Apply the handlers
@@ -837,7 +846,7 @@ def get_license_md5sums(d, static_only=False):
     md5sums = {}
     if not static_only:
         # Gather md5sums of license files in common license dir
-        commonlicdir = d.getVar('COMMON_LICENSE_DIR', True)
+        commonlicdir = d.getVar('COMMON_LICENSE_DIR')
         for fn in os.listdir(commonlicdir):
             md5value = bb.utils.md5_file(os.path.join(commonlicdir, fn))
             md5sums[md5value] = fn
@@ -1007,7 +1016,7 @@ def split_pkg_licenses(licvalues, packages, outlines, fallback_licenses=None, pn
     return outlicenses
 
 def read_pkgconfig_provides(d):
-    pkgdatadir = d.getVar('PKGDATA_DIR', True)
+    pkgdatadir = d.getVar('PKGDATA_DIR')
     pkgmap = {}
     for fn in glob.glob(os.path.join(pkgdatadir, 'shlibs2', '*.pclist')):
         with open(fn, 'r') as f:
@@ -1116,10 +1125,21 @@ def convert_rpm_xml(xmlfile):
     return values
 
 
-def check_npm(d, debugonly=False):
-    if not os.path.exists(os.path.join(d.getVar('STAGING_BINDIR_NATIVE', True), 'npm')):
-        log_error_cond('npm required to process specified source, but npm is not available - you need to build nodejs-native first', debugonly)
+def check_npm(tinfoil, debugonly=False):
+    try:
+        rd = tinfoil.parse_recipe('nodejs-native')
+    except bb.providers.NoProvider:
+        # We still conditionally show the message and exit with the special
+        # return code, otherwise we can't show the proper message for eSDK
+        # users
+        log_error_cond('nodejs-native is required for npm but is not available - you will likely need to add a layer that provides nodejs', debugonly)
         sys.exit(14)
+    bindir = rd.getVar('STAGING_BINDIR_NATIVE')
+    npmpath = os.path.join(bindir, 'npm')
+    if not os.path.exists(npmpath):
+        log_error_cond('npm required to process specified source, but npm is not available - you need to run bitbake -c addto_recipe_sysroot nodejs-native first', debugonly)
+        sys.exit(14)
+    return bindir
 
 def register_commands(subparsers):
     parser_create = subparsers.add_parser('create',
@@ -1136,6 +1156,10 @@ def register_commands(subparsers):
     parser_create.add_argument('--src-subdir', help='Specify subdirectory within source tree to use', metavar='SUBDIR')
     parser_create.add_argument('-a', '--autorev', help='When fetching from a git repository, set SRCREV in the recipe to a floating revision instead of fixed', action="store_true")
     parser_create.add_argument('--keep-temp', action="store_true", help='Keep temporary directory (for debugging)')
+    parser_create.add_argument('--fetch-dev', action="store_true", help='For npm, also fetch devDependencies')
     parser_create.add_argument('--devtool', action="store_true", help=argparse.SUPPRESS)
-    parser_create.set_defaults(func=create_recipe)
+    # FIXME I really hate having to set parserecipes for this, but given we may need
+    # to call into npm (and we don't know in advance if we will or not) and in order
+    # to do so we need to know npm's recipe sysroot path, there's not much alternative
+    parser_create.set_defaults(func=create_recipe, parserecipes=True)
 

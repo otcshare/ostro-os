@@ -56,8 +56,11 @@ python swupdimage_virtclass_handler () {
     # variable triggers the creation of the IMGDEPLOYDIR that we
     # are going to write into.
     e.data.setVar("do_rootfs", "    bb.utils.mkdirhier(d.getVar('IMAGE_ROOTFS', True))\n")
-    # Depend on complete bundle generation in the base image.
-    dep = ' %s:do_stage_swupd_inputs' % pn_base
+    # Depends on the content files from those bundles which contribute to the
+    # image.
+    imageext = d.getVar('IMAGE_BUNDLE_NAME', True) or ''
+    imagebundles = d.getVarFlag('SWUPD_IMAGES', imageext, True).split() if imageext else []
+    dep = ' '.join(['bundle-%s-%s:do_swupd_list_bundle' % (pn_base, x) for x in imagebundles])
     e.data.appendVarFlag('do_image', 'depends', dep)
     # Ensure update stream is generated when only building virt image
     dep = ' %s:do_swupd_update' % pn_base

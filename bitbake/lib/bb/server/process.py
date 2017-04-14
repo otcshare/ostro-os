@@ -103,7 +103,7 @@ class ProcessServer(Process, BaseImplServer):
             self.event_queue.put(event)
         self.event_handle.value = bb.event.register_UIHhandler(self, True)
 
-        heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT', True)
+        heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT')
         if heartbeat_event:
             try:
                 self.heartbeat_seconds = float(heartbeat_event)
@@ -224,7 +224,6 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
                 if isinstance(event, logging.LogRecord):
                     logger.handle(event)
 
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
         self.procserver.stop()
 
         while self.procserver.is_alive():
@@ -234,6 +233,9 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.ui_channel.close()
         self.event_queue.close()
         self.event_queue.setexit()
+        # XXX: Call explicity close in _writer to avoid
+        # fd leakage because isn't called on Queue.close()
+        self.event_queue._writer.close()
 
 # Wrap Queue to provide API which isn't server implementation specific
 class ProcessEventQueue(multiprocessing.queues.Queue):
@@ -264,7 +266,6 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
             if self.exit:
                 sys.exit(1)
             return None
-
 
 class BitBakeServer(BitBakeBaseServer):
     def initServer(self, single_use=True):

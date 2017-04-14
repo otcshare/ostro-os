@@ -196,7 +196,7 @@ def emit_env(o=sys.__stdout__, d = init(), all=False):
     keys = sorted((key for key in d.keys() if not key.startswith("__")), key=isfunc)
     grouped = groupby(keys, isfunc)
     for isfunc, keys in grouped:
-        for key in keys:
+        for key in sorted(keys):
             emit_var(key, o, d, all and not isfunc) and o.write('\n')
 
 def exported_keys(d):
@@ -220,7 +220,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     keys = (key for key in d.keys() if not key.startswith("__") and not d.getVarFlag(key, "func", False))
-    for key in keys:
+    for key in sorted(keys):
         emit_var(key, o, d, False)
 
     o.write('\n')
@@ -296,11 +296,13 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             newvalue = ""
             for k in sorted(contains):
                 l = (d.getVar(k) or "").split()
-                for word in sorted(contains[k]):
-                    if word in l:
-                        newvalue += "\n%s{%s} = Set" %  (k, word)
+                for item in sorted(contains[k]):
+                    for word in item.split():
+                        if not word in l:
+                            newvalue += "\n%s{%s} = Unset" % (k, item)
+                            break
                     else:
-                        newvalue += "\n%s{%s} = Unset" %  (k, word)
+                        newvalue += "\n%s{%s} = Set" % (k, item)
             if not newvalue:
                 return value
             if not value:
@@ -357,6 +359,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
 
         deps |= set((vardeps or "").split())
         deps -= set(varflags.get("vardepsexclude", "").split())
+    except bb.parse.SkipRecipe:
+        raise
     except Exception as e:
         bb.warn("Exception during build_dependencies for %s" % key)
         raise

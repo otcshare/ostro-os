@@ -4,7 +4,7 @@ LICENSE = "GPL-2.0"
 LIC_FILES_CHKSUM = "file://COPYING;md5=0636e73ff0215e8d672dc4c32c317bb3"
 
 DEPENDS = "zlib classpath virtual/javac-native libffi virtual/java-initial-native"
-DEPENDS_virtclass-native = "zlib-native classpath-native ecj-initial-native libffi-native"
+DEPENDS_virtclass-native = "virtual/java-initial-native classpath-initial-native zlib-native classpath-native ecj-initial-native libffi-native"
 
 RDEPENDS_${PN} = "classpath"
 RDEPENDS_${PN}_virtclass-native = ""
@@ -16,7 +16,7 @@ RPROVIDES_${PN}_virtclass-native = ""
 BBCLASSEXTEND = "native"
 
 
-inherit java autotools update-alternatives pkgconfig
+inherit java autotools update-alternatives pkgconfig relative_symlinks
 
 # This uses 32 bit arm, so force the instruction set to arm, not thumb
 ARM_INSTRUCTION_SET = "arm"

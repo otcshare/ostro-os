@@ -20,6 +20,8 @@ do_configure_prepend() {
     sed -i -e s:help::g ${S}/Makefile.am
 }
 
+CXXFLAGS += "--std=c++11"
+
 RRECOMMENDS_${PN} = "adwaita-icon-theme"
 
 FILES_${PN} += "${datadir}/icons \
@@ -29,3 +31,5 @@ FILES_${PN} += "${datadir}/icons \
 
 FILES_${PN}-doc += "${datadir}/omf \
                     ${datadir}/gnome/help "
+
+PNBLACKLIST[gnome-system-monitor] ?= "Fails to build with RSS http://errors.yoctoproject.org/Errors/Details/131635/ - the recipe will be removed on 2017-09-01 unless the issue is fixed"

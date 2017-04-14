@@ -1,6 +1,6 @@
 meta-oic
 ========
-This layer contains recipes for the IoTivity Project (v1.1.1)
+This layer contains recipes for the IoTivity Project (v1.2.1)
 , sample applications and related components for any Yocto target.
 
 Contents

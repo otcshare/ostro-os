@@ -34,14 +34,23 @@ do_install_append() {
 
     # Installed eggs need to be passed directly to the interpreter via a pth file
     echo "./${SRCNAME}-${PV}-py${PYTHON_BASEVERSION}.egg" > ${D}${PYTHON_SITEPACKAGES_DIR}/${SRCNAME}-${PV}.pth
+
+    # Make sure we use /usr/bin/env python3
+    for PYTHSCRIPT in `grep -rIl ${bindir} ${D}${bindir}/pip3*`; do
+        sed -i -e '1s|^#!.*|#!/usr/bin/env python3|' $PYTHSCRIPT
+    done
 }
 
 RDEPENDS_${PN} = "\
   python3-compile \
   python3-io \
+  python3-enum \
+  python3-html \
   python3-json \
   python3-netserver \
   python3-setuptools \
   python3-unixadmin \
   python3-xmlrpc \
 "
+
+BBCLASSEXTEND = "native"

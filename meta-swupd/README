@@ -10,7 +10,7 @@ This layer depends on:
  layers: meta
  branch: master
 
-Layer Maintainer: Joshua Lock <joshua.g.lock@intel.com>
+Layer Maintainer: Patrick Ohly <patrick.ohly@intel.com> (tentative)
 
 Please file bugs on the Yocto Project Bugzilla in the 'Layers' Product,
 selecting the 'layers' Component and prefixing the Summary with '[meta-swupd]'

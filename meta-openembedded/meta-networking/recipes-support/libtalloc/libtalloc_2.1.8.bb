@@ -3,7 +3,7 @@ HOMEPAGE = "http://talloc.samba.org"
 SECTION = "libs"
 LICENSE = "LGPL-3.0+ & GPL-3.0+"
 
-SRC_URI = "http://samba.org/ftp/talloc/talloc-${PV}.tar.gz \
+SRC_URI = "https://samba.org/ftp/talloc/talloc-${PV}.tar.gz \
            file://talloc-Add-configure-options-for-packages.patch \
 "
 LIC_FILES_CHKSUM = "file://talloc.h;beginline=3;endline=27;md5=a301712782cad6dd6d5228bfa7825249 \
@@ -16,7 +16,7 @@ SRC_URI[sha256sum] = "22d14911164d4de67ff76b5269fa5250d01f78c955bc77e28615350996
 inherit waf-samba
 
 PACKAGECONFIG ??= "\
-    ${@bb.utils.contains('DISTRO_FEATURES', 'acl', 'acl', '', d)} \
+    ${@bb.utils.filter('DISTRO_FEATURES', 'acl', d)} \
     ${@bb.utils.contains('DISTRO_FEATURES', 'xattr', 'attr', '', d)} \
 "
 PACKAGECONFIG[acl] = "--with-acl,--without-acl,acl"
@@ -37,7 +37,6 @@ EXTRA_OECONF += "--disable-rpath \
                  --disable-silent-rules \
                  --with-libiconv=${STAGING_DIR_HOST}${prefix}\
                 "
-DISABLE_STATIC = ""
 
 PACKAGES += "pytalloc pytalloc-dbg pytalloc-dev"
 

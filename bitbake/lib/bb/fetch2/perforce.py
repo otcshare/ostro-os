@@ -26,7 +26,6 @@ BitBake 'Fetch' implementation for perforce
 import os
 import logging
 import bb
-from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
@@ -87,9 +86,9 @@ class Perforce(FetchMethod):
         cleanedhost = ud.host.replace(':', '.')
         ud.pkgdir = os.path.join(ud.dldir, cleanedhost, cleanedpath)
 
-        ud.setup_revisons(d)
+        ud.setup_revisions(d)
 
-        ud.localfile = data.expand('%s_%s_%s.tar.gz' % (cleanedhost, cleanedpath, ud.revision), d)
+        ud.localfile = d.expand('%s_%s_%s.tar.gz' % (cleanedhost, cleanedpath, ud.revision))
 
     def _buildp4command(self, ud, d, command, depot_filename=None):
         """

@@ -3,9 +3,9 @@
 
 require musl.inc
 
-SRCREV = "54991729fd1e3d3a0cb71884d758d86afe6da9e0"
+SRCREV = "54807d47acecab778498ced88ce8f62bfa16e379"
 
-PV = "1.1.15+git${SRCPV}"
+PV = "1.1.16+git${SRCPV}"
 
 # mirror is at git://github.com/kraj/musl.git
 
@@ -49,7 +49,7 @@ do_install() {
 	oe_runmake install DESTDIR='${D}'
 
 	install -d ${D}${bindir}
-	ln -s ../../${libdir}/libc.so ${D}${bindir}/ldd
+	lnr ${D}${libdir}/libc.so ${D}${bindir}/ldd
 	for l in crypt dl m pthread resolv rt util xnet
 	do
 		ln -s libc.so ${D}${libdir}/lib$l.so

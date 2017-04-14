@@ -41,32 +41,7 @@ DEPENDS = "openssl-native bzip2-replacement-native zlib-native readline-native s
 
 inherit native
 
-RPROVIDES += " \
-    python3-compression-native \
-    python3-core-native \
-    python3-distutils-native \
-    python3-datetime-native \
-    python3-enum-native \
-    python3-terminal-native \
-    python3-email-native \
-    python3-importlib-native \
-    python3-io-native \
-    python3-json-native \
-    python3-lang-native \
-    python3-misc-native \
-    python3-modules-native \
-    python3-netclient-native \
-    python3-netserver-native \
-    python3-numbers-native \
-    python3-pkgutil-native \
-    python3-pprint-native \
-    python3-re-native \
-    python3-shell-native \
-    python3-subprocess-native \
-    python3-textutils-native \
-    python3-threading-native \
-    python3-unittest-native \
-"
+require python-native-${PYTHON_MAJMIN}-manifest.inc
 
 EXTRA_OECONF_append = " --bindir=${bindir}/${PN} --without-ensurepip"
 
@@ -98,4 +73,7 @@ do_install() {
 	for PYTHSCRIPT in `grep -rIl ${bindir}/${PN}/python ${D}${bindir}/${PN}`; do
 		sed -i -e '1s|^#!.*|#!/usr/bin/env python3|' $PYTHSCRIPT
 	done
+
+	# Tests are large and we don't need them in the native sysroot
+	rm ${D}${libdir}/python${PYTHON_MAJMIN}/test -rf
 }

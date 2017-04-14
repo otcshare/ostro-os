@@ -39,6 +39,7 @@ def create_rootfs(d):
     imagebundles = d.getVarFlag('SWUPD_IMAGES', imageext, True).split() if imageext else []
     rootfs = d.getVar('IMAGE_ROOTFS', True)
     rootfs_contents = set()
+    parts = d.getVar('WORKDIR', True).rsplit(pn, 1)
     if not pn_base: # the base image
         import subprocess
 
@@ -57,13 +58,12 @@ def create_rootfs(d):
     else: # non-base image, i.e. swupdimage
         manifest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/os-core")
         for suffix in suffixes:
-            rootfs_contents.update(manifest_to_file_list(manifest + suffix))
+            rootfs_contents.update(manifest_to_file_list(parts[0] + pn_base + parts[1] + '/swupd' + suffix))
 
     bb.debug(3, 'rootfs_contents has %s entries' % (len(rootfs_contents)))
     for bundle in imagebundles:
-        manifest = d.expand("${DEPLOY_DIR_SWUPD}/image/${OS_VERSION}/") + bundle
         for suffix in suffixes:
-            rootfs_contents.update(manifest_to_file_list(manifest + suffix))
+            rootfs_contents.update(manifest_to_file_list(parts[0] + ('bundle-%s-%s' % (pn_base, bundle)) + parts[1] + '/swupd' + suffix))
 
     mega_archive = d.getVar('MEGA_IMAGE_ARCHIVE', True)
     bb.debug(2, 'Re-copying rootfs contents from mega image %s to %s' % (mega_archive, rootfs))

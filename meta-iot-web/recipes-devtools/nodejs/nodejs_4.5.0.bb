@@ -12,7 +12,6 @@ COMPATIBLE_MACHINE_mips64 = "(!.*mips64).*"
 
 SRC_URI = "http://nodejs.org/dist/v${PV}/node-v${PV}.tar.xz;name=node \
            http://nodejs.org/dist/v${PV}/node-v${PV}-headers.tar.gz;name=node-headers;unpack=false \
-           file://0002-generate-pkg-config-file-for-node-and-install.patch \
 "
 SRC_URI_append_quark = "file://0001-nodejs-add-compile-flag-options-for-quark.patch"
 SRC_URI_append_intel-quark = "file://0001-nodejs-add-compile-flag-options-for-quark.patch"
@@ -46,7 +45,7 @@ do_configure () {
     export LD="${CXX}"
     GYP_DEFINES="${GYP_DEFINES}" export GYP_DEFINES
     # $TARGET_ARCH settings don't match --dest-cpu settings
-   ./configure --prefix=${prefix} --libdir=${libdir} --without-snapshot --shared-openssl \
+   ./configure --prefix=${prefix} --without-snapshot --shared-openssl \
                --dest-cpu="${@map_nodejs_arch(d.getVar('TARGET_ARCH', True), d)}" \
                --dest-os=linux \
                ${ARCHFLAGS}
@@ -101,7 +100,6 @@ pkg_prerm_${PN} () {
 
 PACKAGES =+ "${PN}-npm"
 FILES_${PN}-npm = "${exec_prefix}/lib/node_modules ${bindir}/npm"
-FILES_${PN}-dev += "${libdir}/pkgconfig/node.pc"
 RDEPENDS_${PN}-npm = "bash python-shell python-datetime python-subprocess python-textutils \
                       python-netclient python-ctypes python-misc python-compiler python-multiprocessing"
 

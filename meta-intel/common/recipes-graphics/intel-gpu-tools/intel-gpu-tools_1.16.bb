@@ -23,6 +23,7 @@ PACKAGECONFIG[libunwind] = "--with-libunwind,--without-libunwind,libunwind,libun
 
 EXTRA_OECONF = "--disable-nouveau --disable-shader-debugger"
 COMPATIBLE_HOST = "(x86_64.*|i.86.*)-linux"
+COMPATIBLE_HOST_libc-musl_class-target = "null"
 
 gputools_sysroot_preprocess() {
 	rm -f ${SYSROOT_DESTDIR}${libdir}/pkgconfig/intel-gen4asm.pc

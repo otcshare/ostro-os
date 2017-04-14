@@ -1,1 +1,1 @@
-video=efifb maxcpus=4 noxsave reboot=efi kmemleak=off console=tty0 console=ttyS2,115200
+video=efifb maxcpus=4 reboot=efi kmemleak=off console=tty0 console=ttyS2,115200

@@ -10,6 +10,8 @@ BPN="lms"
 SRC_URI = "http://software.intel.com/sites/default/files/${BPN}-${PV}.tar.gz \
            file://readlink-declaration.patch \
            file://0001-Protocol.cpp-Add-whitespace-for-gcc6-compile-error.patch \
+           file://0001-Include-sys-select.h-for-fd_set.patch \
+           file://0002-Use-proper-netinet-in.h-API.patch \
            "
 
 COMPATIBLE_HOST = '(i.86|x86_64).*-linux'

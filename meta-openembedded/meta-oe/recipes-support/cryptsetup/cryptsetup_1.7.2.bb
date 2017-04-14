@@ -28,6 +28,9 @@ RRECOMMENDS_${PN} = "kernel-module-aes-generic \
                      kernel-module-md5 \
                      kernel-module-cbc \
                      kernel-module-sha256-generic \
+                     kernel-module-xts \
 "
 
 EXTRA_OECONF = "--enable-static"
+
+BBCLASSEXTEND = "native nativesdk"

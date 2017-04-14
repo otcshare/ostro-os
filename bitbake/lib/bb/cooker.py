@@ -252,6 +252,10 @@ class BBCooker:
         signal.signal(signal.SIGHUP, self.sigterm_exception)
 
     def config_notifications(self, event):
+        if event.maskname == "IN_Q_OVERFLOW":
+            bb.warn("inotify event queue overflowed, invalidating caches.")
+            self.baseconfig_valid = False
+            return
         if not event.pathname in self.configwatcher.bbwatchedfiles:
             return
         if not event.pathname in self.inotify_modified_files:
@@ -259,6 +263,10 @@ class BBCooker:
         self.baseconfig_valid = False
 
     def notifications(self, event):
+        if event.maskname == "IN_Q_OVERFLOW":
+            bb.warn("inotify event queue overflowed, invalidating caches.")
+            self.parsecache_valid = False
+            return
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
         self.parsecache_valid = False
@@ -350,6 +358,7 @@ class BBCooker:
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
         self.data_hash = self.databuilder.data_hash
+        self.extraconfigdata = {}
 
         if consolelog:
             self.data.setVar("BB_CONSOLELOG", consolelog)
@@ -358,9 +367,7 @@ class BBCooker:
         # Copy of the data store which has been expanded.
         # Used for firing events and accessing variables where expansion needs to be accounted for
         #
-        self.expanded_data = bb.data.createCopy(self.data)
-        bb.data.update_data(self.expanded_data)
-        bb.parse.init_parser(self.expanded_data)
+        bb.parse.init_parser(self.data)
 
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.disableDataTracking()
@@ -575,13 +582,12 @@ class BBCooker:
 
     def showVersions(self):
 
-        pkg_pn = self.recipecaches[''].pkg_pn
-        (latest_versions, preferred_versions) = bb.providers.findProviders(self.data, self.recipecaches[''], pkg_pn)
+        (latest_versions, preferred_versions) = self.findProviders()
 
         logger.plain("%-35s %25s %25s", "Recipe Name", "Latest Version", "Preferred Version")
         logger.plain("%-35s %25s %25s\n", "===========", "==============", "=================")
 
-        for p in sorted(pkg_pn):
+        for p in sorted(self.recipecaches[''].pkg_pn):
             pref = preferred_versions[p]
             latest = latest_versions[p]
 
@@ -611,7 +617,7 @@ class BBCooker:
             fn = self.matchFile(fn)
             fn = bb.cache.realfn2virtual(fn, cls, mc)
         elif len(pkgs_to_build) == 1:
-            ignore = self.expanded_data.getVar("ASSUME_PROVIDED") or ""
+            ignore = self.data.getVar("ASSUME_PROVIDED") or ""
             if pkgs_to_build[0] in set(ignore.split()):
                 bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
 
@@ -636,14 +642,13 @@ class BBCooker:
             logger.plain(env.getvalue())
 
         # emit variables and shell functions
-        data.update_data(envdata)
         with closing(StringIO()) as env:
             data.emit_env(env, envdata, True)
             logger.plain(env.getvalue())
 
         # emit the metadata which isnt valid shell
         data.expandKeys(envdata)
-        for e in envdata.keys():
+        for e in sorted(envdata.keys()):
             if envdata.getVarFlag(e, 'func', False) and envdata.getVarFlag(e, 'python', False):
                 logger.plain("\npython %s () {\n%s}\n", e, envdata.getVar(e, False))
 
@@ -657,15 +662,46 @@ class BBCooker:
         # A task of None means use the default task
         if task is None:
             task = self.configuration.cmd
+        if not task.startswith("do_"):
+            task = "do_%s" % task
 
-        fulltargetlist = self.checkPackages(pkgs_to_build, task)
+        targetlist = self.checkPackages(pkgs_to_build, task)
+        fulltargetlist = []
+        defaulttask_implicit = ''
+        defaulttask_explicit = False
+        wildcard = False
+
+        # Wild card expansion:
+        # Replace string such as "multiconfig:*:bash"
+        # into "multiconfig:A:bash multiconfig:B:bash bash"
+        for k in targetlist:
+            if k.startswith("multiconfig:"):
+                if wildcard:
+                    bb.fatal('multiconfig conflict')
+                if k.split(":")[1] == "*":
+                    wildcard = True
+                    for mc in self.multiconfigs:
+                        if mc:
+                            fulltargetlist.append(k.replace('*', mc))
+                        # implicit default task
+                        else:
+                            defaulttask_implicit = k.split(":")[2]
+                else:
+                    fulltargetlist.append(k)
+            else:
+                defaulttask_explicit = True
+                fulltargetlist.append(k)
+
+        if not defaulttask_explicit and defaulttask_implicit != '':
+            fulltargetlist.append(defaulttask_implicit)
+
+        bb.debug(1,"Target list: %s" % (str(fulltargetlist)))
         taskdata = {}
         localdata = {}
 
         for mc in self.multiconfigs:
             taskdata[mc] = bb.taskdata.TaskData(abort, skiplist=self.skiplist, allowincomplete=allowincomplete)
             localdata[mc] = data.createCopy(self.databuilder.mcdata[mc])
-            bb.data.update_data(localdata[mc])
             bb.data.expandKeys(localdata[mc])
 
         current = 0
@@ -715,6 +751,9 @@ class BBCooker:
         Create a dependency graph of pkgs_to_build including reverse dependency
         information.
         """
+        if not task.startswith("do_"):
+            task = "do_%s" % task
+
         runlist, taskdata = self.prepareTreeData(pkgs_to_build, task)
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
         rq.rqdata.prepare()
@@ -723,7 +762,7 @@ class BBCooker:
     @staticmethod
     def add_mc_prefix(mc, pn):
         if mc:
-            return "multiconfig:%s.%s" % (mc, pn)
+            return "multiconfig:%s:%s" % (mc, pn)
         return pn
 
     def buildDependTree(self, rq, taskdata):
@@ -818,6 +857,9 @@ class BBCooker:
         """
         Create a dependency tree of pkgs_to_build, returning the data.
         """
+        if not task.startswith("do_"):
+            task = "do_%s" % task
+
         _, taskdata = self.prepareTreeData(pkgs_to_build, task)
 
         seen_fns = []
@@ -905,61 +947,53 @@ class BBCooker:
 
         depgraph = self.generateTaskDepTreeData(pkgs_to_build, task)
 
-        # Prints a flattened form of package-depends below where subpackages of a package are merged into the main pn
-        depends_file = open('pn-depends.dot', 'w' )
-        buildlist_file = open('pn-buildlist', 'w' )
-        print("digraph depends {", file=depends_file)
-        for pn in depgraph["pn"]:
-            fn = depgraph["pn"][pn]["filename"]
-            version = depgraph["pn"][pn]["version"]
-            print('"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn), file=depends_file)
-            print("%s" % pn, file=buildlist_file)
-        buildlist_file.close()
+        with open('pn-buildlist', 'w') as f:
+            for pn in depgraph["pn"]:
+                f.write(pn + "\n")
         logger.info("PN build list saved to 'pn-buildlist'")
-        for pn in depgraph["depends"]:
-            for depend in depgraph["depends"][pn]:
-                print('"%s" -> "%s" [style=solid]' % (pn, depend), file=depends_file)
-        for pn in depgraph["rdepends-pn"]:
-            for rdepend in depgraph["rdepends-pn"][pn]:
-                print('"%s" -> "%s" [style=dashed]' % (pn, rdepend), file=depends_file)
-        print("}", file=depends_file)
-        depends_file.close()
-        logger.info("PN dependencies saved to 'pn-depends.dot'")
 
-        depends_file = open('package-depends.dot', 'w' )
-        print("digraph depends {", file=depends_file)
-        for package in depgraph["packages"]:
-            pn = depgraph["packages"][package]["pn"]
-            fn = depgraph["packages"][package]["filename"]
-            version = depgraph["packages"][package]["version"]
-            if package == pn:
-                print('"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn), file=depends_file)
-            else:
-                print('"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn), file=depends_file)
-            for depend in depgraph["depends"][pn]:
-                print('"%s" -> "%s" [style=solid]' % (package, depend), file=depends_file)
-        for package in depgraph["rdepends-pkg"]:
-            for rdepend in depgraph["rdepends-pkg"][package]:
-                print('"%s" -> "%s" [style=dashed]' % (package, rdepend), file=depends_file)
-        for package in depgraph["rrecs-pkg"]:
-            for rdepend in depgraph["rrecs-pkg"][package]:
-                print('"%s" -> "%s" [style=dotted]' % (package, rdepend), file=depends_file)
-        print("}", file=depends_file)
-        depends_file.close()
-        logger.info("Package dependencies saved to 'package-depends.dot'")
+        # Remove old format output files to ensure no confusion with stale data
+        try:
+            os.unlink('pn-depends.dot')
+        except FileNotFoundError:
+            pass
+        try:
+            os.unlink('package-depends.dot')
+        except FileNotFoundError:
+            pass
 
-        tdepends_file = open('task-depends.dot', 'w' )
-        print("digraph depends {", file=tdepends_file)
-        for task in depgraph["tdepends"]:
-            (pn, taskname) = task.rsplit(".", 1)
-            fn = depgraph["pn"][pn]["filename"]
-            version = depgraph["pn"][pn]["version"]
-            print('"%s.%s" [label="%s %s\\n%s\\n%s"]' % (pn, taskname, pn, taskname, version, fn), file=tdepends_file)
-            for dep in depgraph["tdepends"][task]:
-                print('"%s" -> "%s"' % (task, dep), file=tdepends_file)
-        print("}", file=tdepends_file)
-        tdepends_file.close()
+        with open('task-depends.dot', 'w') as f:
+            f.write("digraph depends {\n")
+            for task in depgraph["tdepends"]:
+                (pn, taskname) = task.rsplit(".", 1)
+                fn = depgraph["pn"][pn]["filename"]
+                version = depgraph["pn"][pn]["version"]
+                f.write('"%s.%s" [label="%s %s\\n%s\\n%s"]\n' % (pn, taskname, pn, taskname, version, fn))
+                for dep in depgraph["tdepends"][task]:
+                    f.write('"%s" -> "%s"\n' % (task, dep))
+            f.write("}\n")
         logger.info("Task dependencies saved to 'task-depends.dot'")
+
+        with open('recipe-depends.dot', 'w') as f:
+            f.write("digraph depends {\n")
+            pndeps = {}
+            for task in depgraph["tdepends"]:
+                (pn, taskname) = task.rsplit(".", 1)
+                if pn not in pndeps:
+                    pndeps[pn] = set()
+                for dep in depgraph["tdepends"][task]:
+                    (deppn, deptaskname) = dep.rsplit(".", 1)
+                    pndeps[pn].add(deppn)
+            for pn in pndeps:
+                fn = depgraph["pn"][pn]["filename"]
+                version = depgraph["pn"][pn]["version"]
+                f.write('"%s" [label="%s\\n%s\\n%s"]\n' % (pn, pn, version, fn))
+                for dep in pndeps[pn]:
+                    if dep == pn:
+                        continue
+                    f.write('"%s" -> "%s"\n' % (pn, dep))
+            f.write("}\n")
+        logger.info("Flatened recipe dependencies saved to 'recipe-depends.dot'")
 
     def show_appends_with_no_recipes(self):
         # Determine which bbappends haven't been applied
@@ -991,7 +1025,6 @@ class BBCooker:
 
         for mc in self.multiconfigs:
             localdata = data.createCopy(self.databuilder.mcdata[mc])
-            bb.data.update_data(localdata)
             bb.data.expandKeys(localdata)
 
             # Handle PREFERRED_PROVIDERS
@@ -1067,6 +1100,20 @@ class BBCooker:
 
         if matches:
             bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.data)
+
+    def findProviders(self, mc=''):
+        return bb.providers.findProviders(self.data, self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+
+    def findBestProvider(self, pn, mc=''):
+        if pn in self.recipecaches[mc].providers:
+            filenames = self.recipecaches[mc].providers[pn]
+            eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.data, self.recipecaches[mc])
+            filename = eligible[0]
+            return None, None, None, filename
+        elif pn in self.recipecaches[mc].pkg_pn:
+            return bb.providers.findBestProvider(pn, self.data, self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+        else:
+            return None, None, None, None
 
     def findConfigFiles(self, varname):
         """
@@ -1274,7 +1321,7 @@ class BBCooker:
             bf = os.path.abspath(bf)
 
         self.collection = CookerCollectFiles(self.bbfile_config_priorities)
-        filelist, masked = self.collection.collect_bbfiles(self.data, self.expanded_data)
+        filelist, masked = self.collection.collect_bbfiles(self.data, self.data)
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1305,15 +1352,16 @@ class BBCooker:
             raise NoSpecificMatch
         return matches[0]
 
-    def buildFile(self, buildfile, task):
+    def buildFile(self, buildfile, task, hidewarning=False):
         """
         Build the file matching regexp buildfile
         """
-        bb.event.fire(bb.event.BuildInit(), self.expanded_data)
+        bb.event.fire(bb.event.BuildInit(), self.data)
 
-        # Too many people use -b because they think it's how you normally
-        # specify a target to be built, so show a warning
-        bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
+        if not hidewarning:
+            # Too many people use -b because they think it's how you normally
+            # specify a target to be built, so show a warning
+            bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
 
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
@@ -1322,6 +1370,8 @@ class BBCooker:
         # If we are told to do the None task then query the default task
         if (task == None):
             task = self.configuration.cmd
+        if not task.startswith("do_"):
+            task = "do_%s" % task
 
         fn, cls, mc = bb.cache.virtualfn2realfn(buildfile)
         fn = self.matchFile(fn)
@@ -1348,6 +1398,7 @@ class BBCooker:
         item = info_array[0].pn
         self.recipecaches[mc].ignored_dependencies = set()
         self.recipecaches[mc].bbfile_priority[fn] = 1
+        self.configuration.limited_deps = True
 
         # Remove external dependencies
         self.recipecaches[mc].task_deps[fn]['depends'] = {}
@@ -1358,8 +1409,6 @@ class BBCooker:
         # Invalidate task for target if force mode active
         if self.configuration.force:
             logger.verbose("Invalidate task %s, %s", task, fn)
-            if not task.startswith("do_"):
-                task = "do_%s" % task
             bb.parse.siggen.invalidate_task(task, self.recipecaches[mc], fn)
 
         # Setup taskdata structure
@@ -1368,11 +1417,9 @@ class BBCooker:
         taskdata[mc].add_provider(self.data, self.recipecaches[mc], item)
 
         buildname = self.data.getVar("BUILDNAME")
-        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
+        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.data)
 
         # Execute the runqueue
-        if not task.startswith("do_"):
-            task = "do_%s" % task
         runlist = [[mc, item, task, fn]]
 
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
@@ -1400,7 +1447,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.expanded_data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.data)
                 self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
@@ -1455,7 +1502,7 @@ class BBCooker:
 
         packages = [target if ':' in target else '%s:%s' % (target, task) for target in targets]
 
-        bb.event.fire(bb.event.BuildInit(packages), self.expanded_data)
+        bb.event.fire(bb.event.BuildInit(packages), self.data)
 
         taskdata, runlist = self.buildTaskData(targets, task, self.configuration.abort)
 
@@ -1583,7 +1630,8 @@ class BBCooker:
         if self.state != state.parsing and not self.parsecache_valid:
             self.parseConfiguration ()
             if CookerFeatures.SEND_SANITYEVENTS in self.featureset:
-                bb.event.fire(bb.event.SanityCheck(False), self.data)
+                for mc in self.multiconfigs:
+                    bb.event.fire(bb.event.SanityCheck(False), self.databuilder.mcdata[mc])
 
             for mc in self.multiconfigs:
                 ignore = self.databuilder.mcdata[mc].getVar("ASSUME_PROVIDED") or ""
@@ -1593,7 +1641,7 @@ class BBCooker:
                     self.recipecaches[mc].ignored_dependencies.add(dep)
 
             self.collection = CookerCollectFiles(self.bbfile_config_priorities)
-            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.expanded_data)
+            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.data)
 
             self.parser = CookerParser(self, filelist, masked)
             self.parsecache_valid = True
@@ -1627,7 +1675,7 @@ class BBCooker:
         if len(pkgs_to_build) == 0:
             raise NothingToBuild
 
-        ignore = (self.expanded_data.getVar("ASSUME_PROVIDED") or "").split()
+        ignore = (self.data.getVar("ASSUME_PROVIDED") or "").split()
         for pkg in pkgs_to_build:
             if pkg in ignore:
                 parselog.warning("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
@@ -1647,6 +1695,15 @@ class BBCooker:
             pkgs_to_build.remove('universe')
             for mc in self.multiconfigs:
                 for t in self.recipecaches[mc].universe_target:
+                    if task:
+                        foundtask = False
+                        for provider_fn in self.recipecaches[mc].providers[t]:
+                            if task in self.recipecaches[mc].task_deps[provider_fn]['tasks']:
+                                foundtask = True
+                                break
+                        if not foundtask:
+                            bb.debug(1, "Skipping %s for universe tasks as task %s doesn't exist" % (t, task))
+                            continue
                     if mc:
                         t = "multiconfig:" + mc + ":" + t
                     pkgs_to_build.append(t)
@@ -1660,13 +1717,13 @@ class BBCooker:
         try:
             self.prhost = prserv.serv.auto_start(self.data)
         except prserv.serv.PRServiceConfigError:
-            bb.event.fire(CookerExit(), self.expanded_data)
+            bb.event.fire(CookerExit(), self.data)
             self.state = state.error
         return
 
     def post_serve(self):
         prserv.serv.auto_shutdown(self.data)
-        bb.event.fire(CookerExit(), self.expanded_data)
+        bb.event.fire(CookerExit(), self.data)
         lockfile = self.lock.name
         self.lock.close()
         self.lock = None
@@ -1704,12 +1761,21 @@ class BBCooker:
 
         if self.parser:
             self.parser.shutdown(clean=not force, force=force)
+        self.notifier.stop()
+        self.confignotifier.stop()
 
     def finishcommand(self):
         self.state = state.initial
 
     def reset(self):
         self.initConfigurationData()
+
+    def clientComplete(self):
+        """Called when the client is done using the server"""
+        if self.configuration.server_only:
+            self.finishcommand()
+        else:
+            self.shutdown(True)
 
     def lockBitbake(self):
         if not hasattr(self, 'lock'):
@@ -1834,6 +1900,11 @@ class CookerCollectFiles(object):
             # that do not compile
             bbmasks = []
             for mask in bbmask.split():
+                # When constructing an older style single regex, it's possible for BBMASK
+                # to end up beginning with '|', which matches and masks _everything_.
+                if mask.startswith("|"):
+                    collectlog.warn("BBMASK contains regular expression beginning with '|', fixing: %s" % mask)
+                    mask = mask[1:]
                 try:
                     re.compile(mask)
                     bbmasks.append(mask)

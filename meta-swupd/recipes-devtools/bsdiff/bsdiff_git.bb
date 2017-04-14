@@ -10,7 +10,9 @@ SRCREV = "fb5ced7c2cd6aeab0231f0cc3dee6bef72ddfb1e"
 
 S = "${WORKDIR}/git"
 
-DEPENDS = "xz bzip2 zlib"
+DEPENDS_BZIP2 = "bzip2-replacement-native"
+DEPENDS_BZIP2_class-target = "bzip2"
+DEPENDS = "xz zlib ${DEPENDS_BZIP2}"
 
 inherit pkgconfig autotools
 

@@ -16,7 +16,7 @@ SRC_URI = "http://ftp.mozilla.org/pub/nspr/releases/v${PV}/src/nspr-${PV}.tar.gz
 CACHED_CONFIGUREVARS_append_libc-musl = " CFLAGS='${CFLAGS} -D_PR_POLL_AVAILABLE \
                                           -D_PR_HAVE_OFF64_T -D_PR_INET6 -D_PR_HAVE_INET_NTOP \
                                           -D_PR_HAVE_GETHOSTBYNAME2 -D_PR_HAVE_GETADDRINFO \
-                                          -D_PR_INET6_PROBE'"
+                                          -D_PR_INET6_PROBE -DNO_DLOPEN_NULL'"
 
 UPSTREAM_CHECK_URI = "http://ftp.mozilla.org/pub/nspr/releases/"
 UPSTREAM_CHECK_REGEX = "v(?P<pver>\d+(\.\d+)+)/"
@@ -147,7 +147,7 @@ TESTS = " \
 
 inherit autotools
 
-PACKAGECONFIG ??= "${@bb.utils.contains('DISTRO_FEATURES', 'ipv6', 'ipv6', '', d)}"
+PACKAGECONFIG ??= "${@bb.utils.filter('DISTRO_FEATURES', 'ipv6', d)}"
 PACKAGECONFIG[ipv6] = "--enable-ipv6,--disable-ipv6,"
 
 do_compile_prepend() {
@@ -160,10 +160,13 @@ do_compile_append() {
 
 do_install_append() {
     install -D ${WORKDIR}/nspr.pc.in ${D}${libdir}/pkgconfig/nspr.pc
-    sed -i s:OEPREFIX:${prefix}:g ${D}${libdir}/pkgconfig/nspr.pc
-    sed -i s:OELIBDIR:${libdir}:g ${D}${libdir}/pkgconfig/nspr.pc
-    sed -i s:OEINCDIR:${includedir}:g ${D}${libdir}/pkgconfig/nspr.pc
-    sed -i s:OEEXECPREFIX:${exec_prefix}:g ${D}${libdir}/pkgconfig/nspr.pc
+    sed -i  \
+    -e 's:NSPRVERSION:${PV}:g' \
+    -e 's:OEPREFIX:${prefix}:g' \
+    -e 's:OELIBDIR:${libdir}:g' \
+    -e 's:OEINCDIR:${includedir}:g' \
+    -e 's:OEEXECPREFIX:${exec_prefix}:g' \
+    ${D}${libdir}/pkgconfig/nspr.pc
 
     mkdir -p ${D}${libdir}/nspr/tests
     install -m 0755 ${S}/pr/tests/runtests.pl ${D}${libdir}/nspr/tests

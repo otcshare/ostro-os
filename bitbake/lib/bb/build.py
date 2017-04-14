@@ -92,6 +92,7 @@ class TaskBase(event.Event):
     def __init__(self, t, logfile, d):
         self._task = t
         self._package = d.getVar("PF")
+        self._mc = d.getVar("BB_CURRENT_MC")
         self.taskfile = d.getVar("FILE")
         self.taskname = self._task
         self.logfile = logfile
@@ -194,13 +195,13 @@ def exec_func(func, d, dirs = None, pythonexception=False):
         oldcwd = None
 
     flags = d.getVarFlags(func)
-    cleandirs = flags.get('cleandirs')
+    cleandirs = flags.get('cleandirs') if flags else None
     if cleandirs:
         for cdir in d.expand(cleandirs).split():
             bb.utils.remove(cdir, True)
             bb.utils.mkdirhier(cdir)
 
-    if dirs is None:
+    if flags and dirs is None:
         dirs = flags.get('dirs')
         if dirs:
             dirs = d.expand(dirs).split()
@@ -562,6 +563,7 @@ def _exec_task(fn, task, d, quieterr):
 
     localdata.setVar('BB_LOGFILE', logfn)
     localdata.setVar('BB_RUNTASK', task)
+    localdata.setVar('BB_TASK_LOGGER', bblogger)
 
     flags = localdata.getVarFlags(task)
 
@@ -860,3 +862,46 @@ def deltask(task, d):
         if task in deps:
             deps.remove(task)
             d.setVarFlag(bbtask, 'deps', deps)
+
+def preceedtask(task, with_recrdeptasks, d):
+    """
+    Returns a set of tasks in the current recipe which were specified as
+    precondition by the task itself ("after") or which listed themselves
+    as precondition ("before"). Preceeding tasks specified via the
+    "recrdeptask" are included in the result only if requested. Beware
+    that this may lead to the task itself being listed.
+    """
+    preceed = set()
+    preceed.update(d.getVarFlag(task, 'deps') or [])
+    if with_recrdeptasks:
+        recrdeptask = d.getVarFlag(task, 'recrdeptask')
+        if recrdeptask:
+            preceed.update(recrdeptask.split())
+    return preceed
+
+def tasksbetween(task_start, task_end, d):
+    """
+    Return the list of tasks between two tasks in the current recipe,
+    where task_start is to start at and task_end is the task to end at
+    (and task_end has a dependency chain back to task_start).
+    """
+    outtasks = []
+    tasks = list(filter(lambda k: d.getVarFlag(k, "task"), d.keys()))
+    def follow_chain(task, endtask, chain=None):
+        if not chain:
+            chain = []
+        chain.append(task)
+        for othertask in tasks:
+            if othertask == task:
+                continue
+            if task == endtask:
+                for ctask in chain:
+                    if ctask not in outtasks:
+                        outtasks.append(ctask)
+            else:
+                deps = d.getVarFlag(othertask, 'deps', False)
+                if task in deps:
+                    follow_chain(othertask, endtask, chain)
+        chain.pop()
+    follow_chain(task_start, task_end)
+    return outtasks

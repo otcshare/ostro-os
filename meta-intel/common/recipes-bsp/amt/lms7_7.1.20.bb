@@ -12,6 +12,8 @@ SRC_URI = "http://software.intel.com/sites/default/files/m/4/e/a/9/b/37962-${BPN
            file://atnetworktool-printf-fix.patch \
            file://readlink-declaration.patch \
            file://0001-Protocol.cpp-Add-whitespace-for-gcc6-compile-error.patch \
+           file://0001-Include-sys-select.h-for-fd_set.patch \
+           file://0002-Use-proper-netinet-in.h-API.patch \
            "
 
 LOCALSRC = "file://${WORKDIR}/outputdir/${BPN}-${PV}-${PV_SUB}.tar.gz"

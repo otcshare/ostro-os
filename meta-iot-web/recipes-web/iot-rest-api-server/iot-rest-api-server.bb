@@ -14,7 +14,7 @@ SRC_URI = "git://git@github.com/01org/iot-rest-api-server.git;protocol=https \
            file://${PN}-ipv4.conf \
            file://${PN}-ipv6.conf \
           "
-SRCREV = "a1ea26d1116a2326b55c05e9bad42ebc1ec68457"
+SRCREV = "3979442c554d4aa0a73dd642f8448aeb78ee86ec"
 
 S = "${WORKDIR}/git"
 
@@ -27,8 +27,7 @@ SYSTEMD_AUTO_ENABLE_${PN} = "disable"
 USERADD_PACKAGES = "${PN}"
 GROUPADD_PARAM_${PN} = "-r restful"
 USERADD_PARAM_${PN} = "\
---system --home ${localstatedir}/lib/empty \
---no-create-home --shell /bin/false \
+--system --create-home --shell /bin/false \
 --gid restful restful \
 "
 
@@ -75,6 +74,8 @@ do_compile () {
             echo "targetArch = 64"
             ;;
         arm) targetArch="arm"
+            ;;
+        aarch64) targetArch="arm64"
             ;;
         mips) targetArch="mips"
             ;;

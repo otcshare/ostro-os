@@ -19,6 +19,7 @@ SRC_URI="file://qat16_2.3.0-34-qat-fix-for-cross-compilation-issue.patch \
          "
 
 COMPATIBLE_MACHINE = "crystalforest|intel-corei7-64"
+COMPATIBLE_HOST_linux-gnux32 = "null"
 
 S = "${WORKDIR}/${ICP_DRIVER_TYPE}"
 ICP_TOOLS = "accelcomp"
@@ -118,3 +119,5 @@ FILES_${PN} += "\
 FILES_${PN}-dbg += "${sysconfdir}/init.d/.debug"
 
 FILES_${PN}-app += "${bindir}/*"
+
+EXCLUDE_FROM_WORLD_core2-32-intel-common = "1"

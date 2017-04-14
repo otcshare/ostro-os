@@ -19,7 +19,7 @@ SRC_URI = "http://mosh.mit.edu/mosh-${PV}.tar.gz"
 SRC_URI[md5sum] = "c2d918f4d91fdc32546e2e089f9281b2"
 SRC_URI[sha256sum] = "e74d0d323226046e402dd469a176075fc2013b69b0e67cea49762c957175df46"
 
-inherit autotools
+inherit autotools pkgconfig
 
 PACKAGE_BEFORE_PN += "${PN}-server"
 FILES_${PN}-server = "${bindir}/mosh-server"

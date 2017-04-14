@@ -361,6 +361,17 @@ class RecipeEvent(Event):
 class RecipePreFinalise(RecipeEvent):
     """ Recipe Parsing Complete but not yet finialised"""
 
+class RecipeTaskPreProcess(RecipeEvent):
+    """
+    Recipe Tasks about to be finalised
+    The list of tasks should be final at this point and handlers
+    are only able to change interdependencies
+    """
+    def __init__(self, fn, tasklist):
+        self.fn = fn
+        self.tasklist = tasklist
+        Event.__init__(self)
+
 class RecipeParsed(RecipeEvent):
     """ Recipe Parsing Complete """
 
@@ -382,7 +393,7 @@ class StampUpdate(Event):
     targets = property(getTargets)
 
 class BuildBase(Event):
-    """Base class for bbmake run events"""
+    """Base class for bitbake build events"""
 
     def __init__(self, n, p, failures = 0):
         self._name = n
@@ -427,13 +438,13 @@ class BuildInit(BuildBase):
         BuildBase.__init__(self, name, p)
 
 class BuildStarted(BuildBase, OperationStarted):
-    """bbmake build run started"""
+    """Event when builds start"""
     def __init__(self, n, p, failures = 0):
         OperationStarted.__init__(self, "Building Started")
         BuildBase.__init__(self, n, p, failures)
 
 class BuildCompleted(BuildBase, OperationCompleted):
-    """bbmake build run completed"""
+    """Event when builds have completed"""
     def __init__(self, total, n, p, failures=0, interrupted=0):
         if not failures:
             OperationCompleted.__init__(self, total, "Building Succeeded")

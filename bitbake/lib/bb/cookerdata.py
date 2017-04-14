@@ -146,6 +146,9 @@ class CookerConfiguration(object):
         self.tracking = False
         self.interface = []
         self.writeeventlog = False
+        self.server_only = False
+        self.limited_deps = False
+        self.runall = None
 
         self.env = {}
 
@@ -288,7 +291,7 @@ class CookerDataBuilder(object):
 
             multiconfig = (self.data.getVar("BBMULTICONFIG") or "").split()
             for config in multiconfig:
-                mcdata = self.parseConfigurationFiles(['conf/multiconfig/%s.conf' % config] + self.prefiles, self.postfiles)
+                mcdata = self.parseConfigurationFiles(self.prefiles, self.postfiles, config)
                 bb.event.fire(bb.event.ConfigParsed(), mcdata)
                 self.mcdata[config] = mcdata
 
@@ -304,8 +307,9 @@ class CookerDataBuilder(object):
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
 
-    def parseConfigurationFiles(self, prefiles, postfiles):
+    def parseConfigurationFiles(self, prefiles, postfiles, mc = "default"):
         data = bb.data.createCopy(self.basedata)
+        data.setVar("BB_CURRENT_MC", mc)
 
         # Parse files for loading *before* bitbake.conf and any includes
         for f in prefiles:

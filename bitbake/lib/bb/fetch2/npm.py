@@ -25,7 +25,6 @@ import json
 import subprocess
 import signal
 import bb
-from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import ChecksumError
@@ -80,6 +79,7 @@ class Npm(FetchMethod):
         if not ud.version:
             raise ParameterError("NPM fetcher requires a version parameter", ud.url)
         ud.bbnpmmanifest = "%s-%s.deps.json" % (ud.pkgname, ud.version)
+        ud.bbnpmmanifest = ud.bbnpmmanifest.replace('/', '-')
         ud.registry = "http://%s" % (ud.url.replace('npm://', '', 1).split(';'))[0]
         prefixdir = "npm/%s" % ud.pkgname
         ud.pkgdatadir = d.expand("${DL_DIR}/%s" % prefixdir)
@@ -92,6 +92,7 @@ class Npm(FetchMethod):
 
         ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS") or "0") != "0")
         ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
+        ud.mirrortarball = ud.mirrortarball.replace('/', '-')
         ud.fullmirror = os.path.join(d.getVar("DL_DIR"), ud.mirrortarball)
 
     def need_update(self, ud, d):
@@ -133,8 +134,7 @@ class Npm(FetchMethod):
 
     def unpack(self, ud, destdir, d):
         dldir = d.getVar("DL_DIR")
-        depdumpfile = "%s-%s.deps.json" % (ud.pkgname, ud.version)
-        with open("%s/npm/%s" % (dldir, depdumpfile)) as datafile:
+        with open("%s/npm/%s" % (dldir, ud.bbnpmmanifest)) as datafile:
             workobj = json.load(datafile)
         dldir = "%s/%s" % (os.path.dirname(ud.localpath), ud.pkgname)
 
@@ -182,7 +182,12 @@ class Npm(FetchMethod):
             if pkg_os:
                 if not isinstance(pkg_os, list):
                     pkg_os = [pkg_os]
-                if 'linux' not in pkg_os or '!linux' in pkg_os:
+                blacklist = False
+                for item in pkg_os:
+                    if item.startswith('!'):
+                        blacklist = True
+                        break
+                if (not blacklist and 'linux' not in pkg_os) or '!linux' in pkg_os:
                     logger.debug(2, "Skipping %s since it's incompatible with Linux" % pkg)
                     return
         #logger.debug(2, "Output URL is %s - %s - %s" % (ud.basepath, ud.basename, ud.localfile))
@@ -195,6 +200,7 @@ class Npm(FetchMethod):
 
         dependencies = pdata.get('dependencies', {})
         optionalDependencies = pdata.get('optionalDependencies', {})
+        dependencies.update(optionalDependencies)
         depsfound = {}
         optdepsfound = {}
         data[pkg]['deps'] = {}

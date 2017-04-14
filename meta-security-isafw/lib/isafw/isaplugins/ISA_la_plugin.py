@@ -40,6 +40,7 @@ funwanted = "/configs/la/violations"
 
 class ISA_LicenseChecker():
     initialized = False
+    rpm_present = False
 
     def __init__(self, ISA_config):
         self.proxy = ISA_config.proxy
@@ -51,23 +52,29 @@ class ISA_LicenseChecker():
         self.image_pkgs = []
         self.la_plugin_image_whitelist = ISA_config.la_plugin_image_whitelist
         self.la_plugin_image_blacklist = ISA_config.la_plugin_image_blacklist
+        self.initialized = True
+        with open(self.logfile, 'a') as flog:
+            flog.write("\nPlugin ISA_LA initialized!\n")
         # check that rpm is installed (supporting only rpm packages for now)
         DEVNULL = open(os.devnull, 'wb')
         rc = subprocess.call(["which", "rpm"], stdout=DEVNULL, stderr=DEVNULL)
         DEVNULL.close()
         if rc == 0:
-            self.initialized = True
-            with open(self.logfile, 'a') as flog:
-                flog.write("\nPlugin ISA_LA initialized!\n")
+            self.rpm_present = True
         else:
             with open(self.logfile, 'a') as flog:
-                flog.write("rpm tool is missing!\n")
+                flog.write("rpm tool is missing! Licence info is expected from build system\n")
 
     def process_package(self, ISA_pkg):
         if (self.initialized):
             if ISA_pkg.name:
                 if (not ISA_pkg.licenses):
                     # need to determine licenses first
+                    # for this we need rpm tool to be present
+                    if (not self.rpm_present):
+                        with open(self.logfile, 'a') as flog:
+                            flog.write("rpm tool is missing and licence info is not provided. Cannot proceed.\n")
+                            return;     
                     if (not ISA_pkg.source_files):
                         if (not ISA_pkg.path_to_sources):
                             self.initialized = False

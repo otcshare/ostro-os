@@ -378,7 +378,7 @@ def _print_exception(t, value, tb, realfile, text, context):
 
         # If the exception is from spwaning a task, let's be helpful and display
         # the output (which hopefully includes stderr).
-        if isinstance(value, subprocess.CalledProcessError):
+        if isinstance(value, subprocess.CalledProcessError) and value.output:
             error.append("Subprocess output:")
             error.append(value.output.decode("utf-8", errors="ignore"))
     finally:
@@ -523,12 +523,8 @@ def md5_file(filename):
     """
     Return the hex string representation of the MD5 checksum of filename.
     """
-    try:
-        import hashlib
-        m = hashlib.md5()
-    except ImportError:
-        import md5
-        m = md5.new()
+    import hashlib
+    m = hashlib.md5()
 
     with open(filename, "rb") as f:
         for line in f:
@@ -538,14 +534,9 @@ def md5_file(filename):
 def sha256_file(filename):
     """
     Return the hex string representation of the 256-bit SHA checksum of
-    filename.  On Python 2.4 this will return None, so callers will need to
-    handle that by either skipping SHA checks, or running a standalone sha256sum
-    binary.
+    filename.
     """
-    try:
-        import hashlib
-    except ImportError:
-        return None
+    import hashlib
 
     s = hashlib.sha256()
     with open(filename, "rb") as f:
@@ -557,10 +548,7 @@ def sha1_file(filename):
     """
     Return the hex string representation of the SHA1 checksum of the filename
     """
-    try:
-        import hashlib
-    except ImportError:
-        return None
+    import hashlib
 
     s = hashlib.sha1()
     with open(filename, "rb") as f:
@@ -911,10 +899,19 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
-def which(path, item, direction = 0, history = False):
+def which(path, item, direction = 0, history = False, executable=False):
     """
-    Locate a file in a PATH
+    Locate `item` in the list of paths `path` (colon separated string like $PATH).
+    If `direction` is non-zero then the list is reversed.
+    If `history` is True then the list of candidates also returned as result,history.
+    If `executable` is True then the candidate has to be an executable file,
+    otherwise the candidate simply has to exist.
     """
+
+    if executable:
+        is_candidate = lambda p: os.path.isfile(p) and os.access(p, os.X_OK)
+    else:
+        is_candidate = lambda p: os.path.exists(p)
 
     hist = []
     paths = (path or "").split(':')
@@ -924,7 +921,7 @@ def which(path, item, direction = 0, history = False):
     for p in paths:
         next = os.path.join(p, item)
         hist.append(next)
-        if os.path.exists(next):
+        if is_candidate(next):
             if not os.path.isabs(next):
                 next = os.path.abspath(next)
             if history:
@@ -990,6 +987,30 @@ def contains_any(variable, checkvalues, truevalue, falsevalue, d):
     if checkvalues & val:
         return truevalue
     return falsevalue
+
+def filter(variable, checkvalues, d):
+    """Return all words in the variable that are present in the checkvalues.
+
+    Arguments:
+
+    variable -- the variable name. This will be fetched and expanded (using
+    d.getVar(variable)) and then split into a set().
+
+    checkvalues -- if this is a string it is split on whitespace into a set(),
+    otherwise coerced directly into a set().
+
+    d -- the data store.
+    """
+
+    val = d.getVar(variable)
+    if not val:
+        return ''
+    val = set(val.split())
+    if isinstance(checkvalues, str):
+        checkvalues = set(checkvalues.split())
+    else:
+        checkvalues = set(checkvalues)
+    return ' '.join(sorted(checkvalues & val))
 
 def cpu_count():
     return multiprocessing.cpu_count()
@@ -1503,3 +1524,14 @@ def load_plugins(logger, plugins, pluginpath):
                 plugins.append(obj or plugin)
             else:
                 plugins.append(plugin)
+
+
+class LogCatcher(logging.Handler):
+    """Logging handler for collecting logged messages so you can check them later"""
+    def __init__(self):
+        self.messages = []
+        logging.Handler.__init__(self, logging.WARNING)
+    def emit(self, record):
+        self.messages.append(bb.build.logformatter.format(record))
+    def contains(self, message):
+        return (message in self.messages)
